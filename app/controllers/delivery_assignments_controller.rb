@@ -151,15 +151,17 @@ class DeliveryAssignmentsController < ApplicationController
     created_count = 0
     
     while current_date <= delivery_schedule.end_date
+
       # Create delivery assignment for current date
-      assignment = DeliveryAssignment.new(
-        customer_id: delivery_schedule.customer_id,
-        user_id: delivery_schedule.user_id,
-        product_id: delivery_schedule.product_id,
-        quantity: delivery_schedule.default_quantity,
-        scheduled_date: current_date,
-        status: 'pending'
-      )
+        assignment = DeliveryAssignment.new(
+          customer_id: delivery_schedule.customer_id,
+          user_id: delivery_schedule.user_id,
+          product_id: delivery_schedule.product_id,
+          quantity: delivery_schedule.default_quantity,
+          scheduled_date: current_date,
+          status: 'pending',
+          unit: delivery_schedule.product.unit_type
+        )
       if assignment.save
         created_count += 1
       end
