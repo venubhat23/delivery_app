@@ -1,143 +1,297 @@
-<!-- app/views/delivery_people/new.html.erb -->
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h1 class="h2">
-    <i class="fas fa-user-plus me-2"></i>Add New Delivery Person
-  </h1>
-  <%= link_to delivery_people_path, class: "btn btn-outline-secondary" do %>
-    <i class="fas fa-arrow-left me-2"></i>Back to List
-  <% end %>
+  <h1 class="h2">New Delivery Assignment</h1>
+  <%= link_to "Back to Assignments", delivery_assignments_path, class: "btn btn-secondary" %>
 </div>
 
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <div class="card shadow">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">
-          <i class="fas fa-user-plus me-2"></i>Delivery Person Information
-        </h5>
-      </div>
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
       <div class="card-body">
-        <%= form_with model: @delivery_person, url: delivery_people_path, local: true, class: "needs-validation", novalidate: true do |form| %>
-          
-          <!-- Display errors if any -->
-          <% if @delivery_person.errors.any? %>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              <strong>Please fix the following errors:</strong>
-              <ul class="mb-0 mt-2">
-                <% @delivery_person.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <%= form_with model: @delivery_assignment, local: true, class: "row g-3", id: "delivery-form" do |form| %>
+          <% if @delivery_assignment.errors.any? %>
+            <div class="col-12">
+              <div class="alert alert-danger">
+                <h5>Please fix the following errors:</h5>
+                <ul class="mb-0">
+                  <% @delivery_assignment.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
             </div>
           <% end %>
 
-          <div class="row">
-            <!-- Name Field -->
-            <div class="col-md-6 mb-3">
-              <%= form.label :name, class: "form-label" do %>
-                <i class="fas fa-user me-1"></i>Full Name <span class="text-danger">*</span>
-              <% end %>
-              <%= form.text_field :name, 
-                  class: "form-control #{'is-invalid' if @delivery_person.errors[:name].any?}",
-                  placeholder: "Enter full name",
-                  required: true %>
-              <% if @delivery_person.errors[:name].any? %>
-                <div class="invalid-feedback">
-                  <%= @delivery_person.errors[:name].first %>
+          <!-- Delivery Type Selection -->
+          <div class="col-12">
+            <div class="card border-primary">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">Delivery Type</h6>
+              </div>
+              <div class="card-body">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="delivery_type" id="single_delivery" value="single" checked>
+                  <label class="form-check-label" for="single_delivery">
+                    <i class="fas fa-calendar-day me-1"></i>Single Delivery
+                  </label>
                 </div>
-              <% end %>
-            </div>
-
-            <!-- Email Field -->
-            <div class="col-md-6 mb-3">
-              <%= form.label :email, class: "form-label" do %>
-                <i class="fas fa-envelope me-1"></i>Email Address <span class="text-danger">*</span>
-              <% end %>
-              <%= form.email_field :email, 
-                  class: "form-control #{'is-invalid' if @delivery_person.errors[:email].any?}",
-                  placeholder: "Enter email address",
-                  required: true %>
-              <% if @delivery_person.errors[:email].any? %>
-                <div class="invalid-feedback">
-                  <%= @delivery_person.errors[:email].first %>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="delivery_type" id="scheduled_delivery" value="scheduled">
+                  <label class="form-check-label" for="scheduled_delivery">
+                    <i class="fas fa-calendar-alt me-1"></i>Scheduled Deliveries
+                  </label>
                 </div>
-              <% end %>
+              </div>
             </div>
           </div>
 
-          <div class="row">
-            <!-- Phone Field -->
-            <div class="col-md-6 mb-3">
-              <%= form.label :phone, class: "form-label" do %>
-                <i class="fas fa-phone me-1"></i>Phone Number <span class="text-danger">*</span>
-              <% end %>
-              <%= form.text_field :phone, 
-                  class: "form-control #{'is-invalid' if @delivery_person.errors[:phone].any?}",
-                  placeholder: "Enter phone number",
-                  required: true %>
-              <% if @delivery_person.errors[:phone].any? %>
-                <div class="invalid-feedback">
-                  <%= @delivery_person.errors[:phone].first %>
-                </div>
-              <% end %>
-            </div>
-
-            <!-- Password Field -->
-            <div class="col-md-6 mb-3">
-              <%= form.label :password, class: "form-label" do %>
-                <i class="fas fa-lock me-1"></i>Password <span class="text-danger">*</span>
-              <% end %>
-              <%= form.password_field :password, 
-                  class: "form-control #{'is-invalid' if @delivery_person.errors[:password].any?}",
-                  placeholder: "Enter password",
-                  required: true %>
-              <% if @delivery_person.errors[:password].any? %>
-                <div class="invalid-feedback">
-                  <%= @delivery_person.errors[:password].first %>
-                </div>
-              <% end %>
-            </div>
+          <div class="col-md-6">
+            <%= form.label :customer_id, class: "form-label" %>
+            <%= form.select :customer_id, 
+                options_for_select([['Select Customer', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
+                {}, { class: "form-select", required: true } %>
           </div>
 
-          <!-- Hidden role field -->
-          <%= form.hidden_field :role, value: "delivery_person" %>
+          <div class="col-md-6">
+            <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
+            <%= form.select :delivery_person_id, 
+                options_for_select([['Select Delivery Person', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, @delivery_assignment.user_id), 
+                {}, { class: "form-select", required: true } %>
+          </div>
 
-          <!-- Form Actions -->
-          <div class="d-flex justify-content-between pt-3 border-top">
-            <%= link_to delivery_people_path, class: "btn btn-outline-secondary" do %>
-              <i class="fas fa-times me-2"></i>Cancel
-            <% end %>
-            
-            <%= form.submit "Add Delivery Person", 
-                class: "btn btn-primary",
-                data: { disable_with: '<i class="fas fa-spinner fa-spin me-2"></i>Adding...' } do %>
-              <i class="fas fa-user-plus me-2"></i>Add Delivery Person
-            <% end %>
+          <div class="col-md-6">
+            <%= form.label :product_id, class: "form-label" %>
+            <%= form.select :product_id, 
+                options_for_select([['Select Product', '']] + @products.map { |p| ["#{p.name} - $#{p.price}", p.id] }, @delivery_assignment.product_id), 
+                {}, { class: "form-select", required: true } %>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :quantity, class: "form-label" %>
+            <%= form.number_field :quantity, class: "form-control", min: 1, required: true %>
+          </div>
+
+          <!-- Single Delivery Date (shown by default) -->
+          <div class="col-md-6" id="single-date-field">
+            <%= form.label :delivery_date, class: "form-label" %>
+            <%= form.date_field :delivery_date, class: "form-control", required: true, min: Date.current %>
+          </div>
+
+          <!-- Scheduled Delivery Fields (hidden by default) -->
+          <div class="col-md-6" id="start-date-field" style="display: none;">
+            <%= form.label :start_date, "Start Date", class: "form-label" %>
+            <%= form.date_field :start_date, class: "form-control", min: Date.current %>
+          </div>
+
+          <div class="col-md-6" id="end-date-field" style="display: none;">
+            <%= form.label :end_date, "End Date", class: "form-label" %>
+            <%= form.date_field :end_date, class: "form-control", min: Date.current %>
+          </div>
+
+          <div class="col-md-6" id="frequency-field" style="display: none;">
+            <%= form.label :frequency, class: "form-label" %>
+            <%= form.select :frequency, 
+                options_for_select([
+                  ['Daily', 'daily'],
+                  ['Weekly', 'weekly'],
+                  ['Bi-Weekly', 'bi_weekly'],
+                  ['Monthly', 'monthly']
+                ], 'daily'), 
+                { prompt: 'Select Frequency' }, 
+                { class: "form-select" } %>
+          </div>
+
+
+
+          <div class="col-12">
+            <%= form.label :special_instructions, class: "form-label" %>
+            <%= form.text_area :special_instructions, class: "form-control", rows: 3, 
+                placeholder: "Any special delivery instructions..." %>
+          </div>
+
+          <div class="col-12">
+            <div class="d-flex gap-2">
+              <%= form.submit "Create Assignment", class: "btn btn-primary", id: "submit-btn" %>
+              <%= link_to "Cancel", delivery_assignments_path, class: "btn btn-secondary" %>
+            </div>
           </div>
         <% end %>
       </div>
     </div>
   </div>
+
+  <!-- Preview/Info Panel -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Assignment Info</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Status:</strong><br>
+          <span class="badge bg-warning text-dark">Pending</span>
+        </div>
+        
+        <div class="mb-3">
+          <strong>Available Delivery People:</strong><br>
+          <small class="text-muted"><%= @delivery_people.count %> available</small>
+        </div>
+        
+        <div class="mb-3">
+          <strong>Total Customers:</strong><br>
+          <small class="text-muted"><%= @customers.count %> customers</small>
+        </div>
+        
+        <div class="mb-3">
+          <strong>Available Products:</strong><br>
+          <small class="text-muted"><%= @products.count %> products</small>
+        </div>
+
+        <div id="schedule-preview" style="display: none;">
+          <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-1"></i>Schedule Preview</h6>
+            <small id="schedule-info">Select dates and frequency to see preview</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Quick Tips</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled small">
+          <li class="mb-2">
+            <i class="fas fa-info-circle text-info me-1"></i>
+            <span id="tip-1">Choose single delivery for one-time orders</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-calendar text-warning me-1"></i>
+            <span id="tip-2">Delivery date cannot be in the past</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-truck text-success me-1"></i>
+            <span id="tip-3">Delivery person assignment can be changed later</span>
+          </li>
+          <li class="mb-2" id="tip-4" style="display: none;">
+            <i class="fas fa-repeat text-primary me-1"></i>
+            <span>Scheduled deliveries create multiple assignments automatically</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Optional: Add some JavaScript for form validation -->
 <script>
-  // Bootstrap form validation
-  (function() {
-    'use strict';
-    window.addEventListener('load', function() {
-      var forms = document.getElementsByClassName('needs-validation');
-      var validation = Array.prototype.filter.call(forms, function(form) {
-        form.addEventListener('submit', function(event) {
-          if (form.checkValidity() === false) {
-            event.preventDefault();
-            event.stopPropagation();
+document.addEventListener('DOMContentLoaded', function() {
+  const singleRadio = document.getElementById('single_delivery');
+  const scheduledRadio = document.getElementById('scheduled_delivery');
+  const singleDateField = document.getElementById('single-date-field');
+  const startDateField = document.getElementById('start-date-field');
+  const endDateField = document.getElementById('end-date-field');
+  const frequencyField = document.getElementById('frequency-field');
+  const schedulePreview = document.getElementById('schedule-preview');
+  const submitBtn = document.getElementById('submit-btn');
+  const tip1 = document.getElementById('tip-1');
+  const tip4 = document.getElementById('tip-4');
+
+  function toggleDeliveryType() {
+    if (scheduledRadio.checked) {
+      // Show scheduled delivery fields
+      singleDateField.style.display = 'none';
+      startDateField.style.display = 'block';
+      endDateField.style.display = 'block';
+      frequencyField.style.display = 'block';
+      schedulePreview.style.display = 'block';
+      tip1.textContent = 'Scheduled deliveries create recurring assignments';
+      tip4.style.display = 'block';
+      submitBtn.textContent = 'Create Delivery Schedule';
+      
+      // Make scheduled fields required
+      document.getElementById('delivery_assignment_start_date').setAttribute('required', 'required');
+      document.getElementById('delivery_assignment_end_date').setAttribute('required', 'required');
+      document.getElementById('delivery_assignment_frequency').setAttribute('required', 'required');
+      
+      // Remove required from single delivery date
+      document.getElementById('delivery_assignment_delivery_date').removeAttribute('required');
+    } else {
+      // Show single delivery fields
+      singleDateField.style.display = 'block';
+      startDateField.style.display = 'none';
+      endDateField.style.display = 'none';
+      frequencyField.style.display = 'none';
+      schedulePreview.style.display = 'none';
+      tip1.textContent = 'Choose single delivery for one-time orders';
+      tip4.style.display = 'none';
+      submitBtn.textContent = 'Create Assignment';
+      
+      // Make single delivery date required
+      document.getElementById('delivery_assignment_delivery_date').setAttribute('required', 'required');
+      
+      // Remove required from scheduled fields
+      document.getElementById('delivery_assignment_start_date').removeAttribute('required');
+      document.getElementById('delivery_assignment_end_date').removeAttribute('required');
+      document.getElementById('delivery_assignment_frequency').removeAttribute('required');
+    }
+  }
+
+  function updateSchedulePreview() {
+    if (!scheduledRadio.checked) return;
+    
+    const startDate = document.getElementById('delivery_assignment_start_date').value;
+    const endDate = document.getElementById('delivery_assignment_end_date').value;
+    const frequency = document.getElementById('delivery_assignment_frequency').value;
+    
+    if (startDate && endDate && frequency) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (start <= end) {
+        let deliveryCount = 0;
+        let current = new Date(start);
+        
+        // Calculate approximate number of deliveries
+        while (current <= end) {
+          deliveryCount++;
+          switch (frequency) {
+            case 'daily':
+              current.setDate(current.getDate() + 1);
+              break;
+            case 'weekly':
+              current.setDate(current.getDate() + 7);
+              break;
+            case 'bi_weekly':
+              current.setDate(current.getDate() + 14);
+              break;
+            case 'monthly':
+              current.setMonth(current.getMonth() + 1);
+              break;
           }
-          form.classList.add('was-validated');
-        }, false);
-      });
-    }, false);
-  })();
+        }
+        
+        document.getElementById('schedule-info').innerHTML = 
+          `<strong>${deliveryCount}</strong> delivery assignments will be created<br>
+           <small>From ${start.toLocaleDateString()} to ${end.toLocaleDateString()}</small>`;
+      } else {
+        document.getElementById('schedule-info').innerHTML = 
+          '<span class="text-danger">End date must be after start date</span>';
+      }
+    } else {
+      document.getElementById('schedule-info').textContent = 'Select dates and frequency to see preview';
+    }
+  }
+
+  // Event listeners
+  singleRadio.addEventListener('change', toggleDeliveryType);
+  scheduledRadio.addEventListener('change', toggleDeliveryType);
+  
+  // Preview update listeners
+  document.getElementById('delivery_assignment_start_date').addEventListener('change', updateSchedulePreview);
+  document.getElementById('delivery_assignment_end_date').addEventListener('change', updateSchedulePreview);
+  document.getElementById('delivery_assignment_frequency').addEventListener('change', updateSchedulePreview);
+  
+  // Initialize
+  toggleDeliveryType();
+});
 </script>
