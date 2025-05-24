@@ -1,0 +1,265 @@
+<!-- app/views/invoices/show.html.erb -->
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-file-invoice"></i> Invoice Details</h1>
+        <div class="btn-group">
+          <%= link_to 'Back', invoices_path, class: 'btn btn-secondary' %>
+          <%= link_to 'Edit', edit_invoice_path(@invoice), class: 'btn btn-primary' %>
+          <% if @invoice.status != 'paid' %>
+            <%= link_to 'Mark as Paid', 
+                  mark_as_paid_invoice_path(@invoice), 
+                  method: :patch,
+                  data: { confirm: 'Are you sure you want to mark this invoice as paid?' },
+                  class: 'btn btn-success' %>
+          <% end %>
+          <button onclick="window.print()" class="btn btn-info">
+            <i class="fas fa-print"></i> Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Invoice Header -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h2 class="text-primary">Invoice #<%= @invoice.formatted_number %></h2>
+              <p class="mb-1"><strong>Invoice Date:</strong> <%= @invoice.invoice_date.strftime('%d %B %Y') %></p>
+              <p class="mb-1"><strong>Due Date:</strong> <%= @invoice.due_date.strftime('%d %B %Y') %></p>
+              <p class="mb-1"><strong>Type:</strong> 
+                <span class="badge bg-info"><%= @invoice.invoice_type&.humanize || 'Manual' %></span>
+              </p>
+            </div>
+            <div class="col-md-6 text-end">
+              <div class="mb-3">
+                <% case @invoice.status %>
+                <% when 'pending' %>
+                  <span class="badge bg-warning fs-6">Pending Payment</span>
+                <% when 'paid' %>
+                  <span class="badge bg-success fs-6">Paid</span>
+                  <% if @invoice.paid_at %>
+                    <p class="text-muted mt-1">Paid on: <%= @invoice.paid_at.strftime('%d %B %Y') %></p>
+                  <% end %>
+                <% when 'overdue' %>
+                  <span class="badge bg-danger fs-6">Overdue</span>
+                  <p class="text-danger mt-1">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <%= @invoice.days_overdue %> days overdue
+                  </p>
+                <% end %>
+              </div>
+              
+              <h3 class="text-success">
+                Total: ₹<%= number_with_delimiter(@invoice.total_amount) %>
+              </h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Information -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5><i class="fas fa-user"></i> Customer Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6><strong><%= @invoice.customer.name %></strong></h6>
+              <% if @invoice.customer.address.present? %>
+                <p class="mb-1"><%= @invoice.customer.address %></p>
+              <% end %>
+              <% if @invoice.customer.user.phone.present? %>
+                <p class="mb-1"><i class="fas fa-phone"></i> <%= @invoice.customer.user.phone %></p>
+              <% end %>
+              <% if @invoice.customer.user.email.present? %>
+                <p class="mb-1"><i class="fas fa-envelope"></i> <%= @invoice.customer.user.email %></p>
+              <% end %>
+            </div>
+            <div class="col-md-6">
+              <% if @invoice.customer.delivery_person.present? %>
+                <h6><strong>Delivery Person:</strong></h6>
+                <p class="mb-1"><%= @invoice.customer.delivery_person.name %></p>
+                <% if @invoice.customer.delivery_person.phone.present? %>
+                  <p class="mb-1"><i class="fas fa-phone"></i> <%= @invoice.customer.delivery_person.phone %></p>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Items -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5><i class="fas fa-list"></i> Invoice Items</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead class="table-dark">
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @invoice_items.each do |item| %>
+                  <tr>
+                    <td>
+                      <strong><%= item.product.name %></strong>
+                      <% if item.product.description.present? %>
+                        <br><small class="text-muted"><%= item.product.description %></small>
+                      <% end %>
+                    </td>
+                    <td>
+                      <%= item.quantity %> <%= item.product.unit_type %>
+                    </td>
+                    <td>₹<%= number_with_delimiter(item.unit_price) %></td>
+                    <td>₹<%= number_with_delimiter(item.total_price) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <th colspan="3" class="text-end">Subtotal:</th>
+                  <th>₹<%= number_with_delimiter(@invoice.total_amount) %></th>
+                </tr>
+                <tr>
+                  <th colspan="3" class="text-end">Tax (0%):</th>
+                  <th>₹0.00</th>
+                </tr>
+                <tr class="table-success">
+                  <th colspan="3" class="text-end">Total Amount:</th>
+                  <th>₹<%= number_with_delimiter(@invoice.total_amount) %></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <% if @invoice.notes.present? %>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5><i class="fas fa-sticky-note"></i> Notes</h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-0"><%= simple_format(@invoice.notes) %></p>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Related Deliveries (if monthly invoice) -->
+      <% if @invoice.invoice_type == 'monthly' && @invoice.delivery_assignments.present? %>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5><i class="fas fa-truck"></i> Related Deliveries</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @invoice.delivery_assignments.includes(:product).order(:completed_at).each do |assignment| %>
+                    <tr>
+                      <td>
+                        <%= assignment.completed_at&.strftime('%d %b %Y') || assignment.scheduled_date.strftime('%d %b %Y') %>
+                      </td>
+                      <td><%= assignment.product.name %></td>
+                      <td><%= assignment.quantity %> <%= assignment.unit %></td>
+                      <td>
+                        <span class="badge bg-success">
+                          <%= assignment.status.humanize %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Payment Information -->
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fas fa-credit-card"></i> Payment Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Status:</strong> 
+                <% case @invoice.status %>
+                <% when 'pending' %>
+                  <span class="badge bg-warning">Payment Pending</span>
+                <% when 'paid' %>
+                  <span class="badge bg-success">Paid</span>
+                <% when 'overdue' %>
+                  <span class="badge bg-danger">Overdue</span>
+                <% end %>
+              </p>
+              
+              <% if @invoice.status == 'paid' && @invoice.paid_at %>
+                <p><strong>Payment Date:</strong> <%= @invoice.paid_at.strftime('%d %B %Y at %I:%M %p') %></p>
+              <% end %>
+            </div>
+            
+            <div class="col-md-6">
+              <% if @invoice.last_reminder_sent_at %>
+                <p><strong>Last Reminder:</strong> 
+                  <%= @invoice.last_reminder_sent_at.strftime('%d %B %Y') %>
+                </p>
+              <% end %>
+              
+              <% if @invoice.overdue? %>
+                <div class="alert alert-danger">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <strong>This invoice is <%= @invoice.days_overdue %> days overdue!</strong>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    .btn-group, .card-header, nav, footer {
+      display: none !important;
+    }
+    
+    .card {
+      border: none !important;
+      box-shadow: none !important;
+    }
+    
+    .container {
+      max-width: 100% !important;
+    }
+  }
+  
+  .fs-6 {
+    font-size: 1rem !important;
+  }
+  
+  .badge {
+    font-size: 0.8em;
+  }
+</style>

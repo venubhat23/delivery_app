@@ -1,0 +1,36 @@
+<!-- app/views/products/new.html.erb -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-plus-circle me-2"></i>Add New Product
+  </h1>
+  <%= link_to products_path, class: "btn btn-outline-secondary" do %>
+    <i class="fas fa-arrow-left me-2"></i>Back to Products
+  <% end %>
+</div>
+
+<div class="card shadow">
+  <div class="card-header bg-primary text-white">
+    <h6 class="m-0">
+      <i class="fas fa-box me-2"></i>Product Information
+    </h6>
+  </div>
+  <div class="card-body">
+    <%= render 'form', product: @product %>
+  </div>
+</div>
+
+
+<style>
+.progress {
+  background-color: #eaecf4;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.badge {
+  font-size: 0.85em;
+}
+</style>

@@ -1,0 +1,154 @@
+<!-- app/views/invoice_mailer/payment_reminder.html.erb -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Reminder</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 5px; }
+    .content { padding: 20px 0; }
+    .invoice-details { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+    .footer { text-align: center; color: #666; font-size: 0.9em; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Payment Reminder</h1>
+    </div>
+    
+    <div class="content">
+      <p>Dear <%= @customer.name %>,</p>
+      
+      <p>This is a friendly reminder that payment for the following invoice is 
+         <% if @days_until_due > 0 %>
+           due in <%= @days_until_due %> day<%= 's' if @days_until_due != 1 %>.
+         <% elsif @days_until_due == 0 %>
+           due today.
+         <% else %>
+           overdue by <%= -@days_until_due %> day<%= 's' if @days_until_due != -1 %>.
+         <% end %>
+      </p>
+      
+      <div class="invoice-details">
+        <h3>Invoice Details:</h3>
+        <ul>
+          <li><strong>Invoice Number:</strong> <%= @invoice.invoice_number %></li>
+          <li><strong>Invoice Date:</strong> <%= @invoice.invoice_date.strftime("%B %d, %Y") %></li>
+          <li><strong>Due Date:</strong> <%= @invoice.due_date.strftime("%B %d, %Y") %></li>
+          <li><strong>Amount Due:</strong> $<%= number_with_precision(@invoice.total_amount, precision: 2) %></li>
+        </ul>
+      </div>
+      
+      <p>Please process your payment at your earliest convenience to avoid any late fees or service interruptions.</p>
+      
+      <p>If you have any questions about this invoice or need to discuss payment arrangements, please don't hesitate to contact us.</p>
+      
+      <p>Thank you for your business!</p>
+      
+      <p>Best regards,<br>
+         Your Company Name<br>
+         Phone: (555) 123-4567<br>
+         Email: billing@yourcompany.com
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>This is an automated reminder. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>
+
+<!-- app/views/invoice_mailer/invoice_generated.html.erb -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Invoice</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #28a745; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+    .content { padding: 20px 0; }
+    .invoice-details { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .items-table th { background-color: #f8f9fa; }
+    .total-row { background-color: #e9ecef; font-weight: bold; }
+    .footer { text-align: center; color: #666; font-size: 0.9em; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>New Invoice Generated</h1>
+    </div>
+    
+    <div class="content">
+      <p>Dear <%= @customer.name %>,</p>
+      
+      <p>A new invoice has been generated for your recent deliveries.</p>
+      
+      <div class="invoice-details">
+        <h3>Invoice Information:</h3>
+        <ul>
+          <li><strong>Invoice Number:</strong> <%= @invoice.invoice_number %></li>
+          <li><strong>Invoice Date:</strong> <%= @invoice.invoice_date.strftime("%B %d, %Y") %></li>
+          <li><strong>Due Date:</strong> <%= @invoice.due_date.strftime("%B %d, %Y") %></li>
+          <li><strong>Total Amount:</strong> $<%= number_with_precision(@invoice.total_amount, precision: 2) %></li>
+        </ul>
+      </div>
+      
+      <h3>Invoice Items:</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoice.invoice_items.each do |item| %>
+            <tr>
+              <td><%= item.product.name %></td>
+              <td><%= item.quantity %></td>
+              <td>$<%= number_with_precision(item.unit_price, precision: 2) %></td>
+              <td>$<%= number_with_precision(item.total_price, precision: 2) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="3">Total Amount</td>
+            <td>$<%= number_with_precision(@invoice.total_amount, precision: 2) %></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p>Please review the invoice and arrange payment by the due date to avoid any delays or disruptions.</p>
+
+      <p>If you have any questions or need further details, feel free to reach out to us.</p>
+
+      <p>Thank you for choosing our services!</p>
+
+      <p>Best regards,<br>
+         Your Company Name<br>
+         Phone: (555) 123-4567<br>
+         Email: billing@yourcompany.com
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>

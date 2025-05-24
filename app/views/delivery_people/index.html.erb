@@ -1,0 +1,178 @@
+<!-- app/views/delivery_people/index.html.erb -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-truck me-2"></i>Delivery Personnel
+    <span class="badge bg-primary ms-2"><%= @total_delivery_people %></span>
+  </h1>
+  <%= link_to new_delivery_person_path, class: "btn btn-primary" do %>
+    <i class="fas fa-user-plus me-2"></i>Add Delivery Person
+  <% end %>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-primary shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+              Total Delivery People
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= @total_delivery_people %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-truck fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+              Assigned Customers
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= @total_assigned_customers %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-users fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+              Unassigned Customers
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= @unassigned_customers %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-user-clock fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-info shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+              Average Load
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= (@total_assigned_customers.to_f / [@total_delivery_people, 1].max).round(1) %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow">
+  <div class="card-header bg-white py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-list me-2"></i>Delivery Personnel List
+    </h6>
+  </div>
+  <div class="card-body">
+    <% if @delivery_people.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th><i class="fas fa-user me-1"></i>Name</th>
+              <th><i class="fas fa-envelope me-1"></i>Email</th>
+              <th><i class="fas fa-phone me-1"></i>Phone</th>
+              <th><i class="fas fa-users me-1"></i>Assigned Customers</th>
+              <th><i class="fas fa-chart-pie me-1"></i>Capacity</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @delivery_people.each do |person| %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-2">
+                      <%= person.name.first.upcase %>
+                    </div>
+                    <strong class="text-primary"><%= person.name %></strong>
+                  </div>
+                </td>
+                <td><%= person.email %></td>
+                <td><%= person.phone %></td>
+                <td>
+                  <span class="badge bg-info fs-6">
+                    <%= person.assigned_customers.count %> customers
+                  </span>
+                </td>
+                <td>
+                  <% capacity_percentage = (person.assigned_customers.count.to_f / 50 * 100).round(1) %>
+                  <div class="progress" style="width: 100px; height: 20px;">
+                    <div class="progress-bar <%= capacity_percentage > 80 ? 'bg-danger' : capacity_percentage > 60 ? 'bg-warning' : 'bg-success' %>" 
+                         style="width: <%= capacity_percentage %>%">
+                      <%= capacity_percentage %>%
+                    </div>
+                  </div>
+                  <small class="text-muted"><%= person.available_customer_slots %> slots left</small>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to delivery_person_path(person), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to assign_customers_delivery_person_path(person), class: "btn btn-sm btn-outline-success", title: "Assign Customers" do %>
+                      <i class="fas fa-user-plus"></i>
+                    <% end %>
+                    <%= link_to edit_delivery_person_path(person), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <%= link_to delivery_person_path(person), method: :delete, 
+                        class: "btn btn-sm btn-outline-danger", 
+                        title: "Delete",
+                        confirm: "Are you sure? This will unassign all customers." do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="fas fa-truck fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No Delivery Personnel Found</h4>
+        <p class="text-muted">Start by adding your first delivery person to the system.</p>
+        <%= link_to new_delivery_person_path, class: "btn btn-primary mt-3" do %>
+          <i class="fas fa-user-plus me-2"></i>Add First Delivery Person
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

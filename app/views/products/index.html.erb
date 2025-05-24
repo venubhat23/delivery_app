@@ -1,0 +1,113 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-box me-2"></i>Products
+    <span class="badge bg-primary ms-2"><%= @total_products %></span>
+  </h1>
+  <%= link_to new_product_path, class: "btn btn-primary" do %>
+    <i class="fas fa-plus me-2"></i>Add New Product
+  <% end %>
+</div>
+
+<div class="card shadow">
+  <div class="card-header bg-white py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-list me-2"></i>Product List
+    </h6>
+  </div>
+  <div class="card-body">
+    <% if @products.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th><i class="fas fa-tag me-1"></i>Name</th>
+              <th><i class="fas fa-info-circle me-1"></i>Description</th>
+              <th><i class="fas fa-balance-scale me-1"></i>Unit Type</th>
+              <th><i class="fas fa-warehouse me-1"></i>Available Qty</th>
+              <th><i class="fas fa-dollar-sign me-1"></i>Price</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @products.each do |product| %>
+              <tr>
+                <td>
+                  <strong class="text-primary"><%= product.name %></strong>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    <%= truncate(product.description, length: 50) if product.description %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-info"><%= product.unit_type %></span>
+                </td>
+                <td>
+                  <span class="fw-bold <%= product.available_quantity.to_f < 10 ? 'text-danger' : 'text-success' %>">
+                    <%= product.available_quantity %>
+                  </span>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">
+                    $<%= number_with_precision(product.price, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to product_path(product), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_product_path(product), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <%= link_to product_path(product), method: :delete, 
+                        class: "btn btn-sm btn-outline-danger", 
+                        title: "Delete",
+                        confirm: "Are you sure you want to delete this product?" do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No Products Found</h4>
+        <p class="text-muted">Start by adding your first product to the system.</p>
+        <%= link_to new_product_path, class: "btn btn-primary mt-3" do %>
+          <i class="fas fa-plus me-2"></i>Add First Product
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #5a5c69;
+}
+
+.btn-group .btn {
+  border-radius: 0.35rem !important;
+  margin-right: 2px;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0,123,255,.075);
+}
+</style>

@@ -1,0 +1,27 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  host: localhost
+  port: 5432
+  username: mahadev
+  password: your_secure_password
+
+development:
+  <<: *default
+  database: mahadev_db3
+
+test:
+  <<: *default
+  database: mahadev_test_db
+
+production:
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  host: dpg-d0i1ard6ubrc73d2niqg-a.oregon-postgres.render.com
+  port: 5432
+  database: milk_delivery_app1
+  username: milk_delivery_app1_user
+  password: EYg2kvaGJcg1Z24exdkQzrmaKPSLS1Bg
+

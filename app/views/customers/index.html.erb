@@ -1,0 +1,140 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-users me-2"></i>Customers
+    <span class="badge bg-primary ms-2"><%= @total_customers %></span>
+  </h1>
+  <%= link_to new_customer_path, class: "btn btn-primary" do %>
+    <i class="fas fa-user-plus me-2"></i>Add New Customer
+  <% end %>
+</div>
+
+<div class="card shadow">
+  <div class="card-header bg-white py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-list me-2"></i>Customer List
+    </h6>
+  </div>
+  <div class="card-body">
+    <% if @customers.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th><i class="fas fa-user me-1"></i>Name</th>
+              <th><i class="fas fa-map-marker-alt me-1"></i>Address</th>
+              <th><i class="fas fa-globe me-1"></i>Location</th>
+              <th><i class="fas fa-user-tie me-1"></i>Added By</th>
+              <th><i class="fas fa-calendar me-1"></i>Added Date</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @customers.each do |customer| %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-2">
+                      <%= customer.name.first.upcase %>
+                    </div>
+                    <strong class="text-primary"><%= customer.name %></strong>
+                  </div>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    <%= truncate(customer.address, length: 50) if customer.address %>
+                  </span>
+                </td>
+                <td>
+                  <% if customer.latitude && customer.longitude %>
+                    <span class="badge bg-success">
+                      <i class="fas fa-map-pin me-1"></i>
+                      <%= number_with_precision(customer.latitude, precision: 4) %>, 
+                      <%= number_with_precision(customer.longitude, precision: 4) %>
+                    </span>
+                  <% else %>
+                    <span class="badge bg-secondary">No coordinates</span>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    <i class="fas fa-user me-1"></i>
+                    <%= customer.user.name %>
+                  </span>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    <%= customer.created_at.strftime("%b %d, %Y") %>
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to customer_path(customer), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_customer_path(customer), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <%= link_to customer_path(customer), method: :delete, 
+                        class: "btn btn-sm btn-outline-danger", 
+                        title: "Delete",
+                        confirm: "Are you sure you want to delete this customer?" do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="fas fa-users fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No Customers Found</h4>
+        <p class="text-muted">Start by adding your first customer to the system.</p>
+        <%= link_to new_customer_path, class: "btn btn-primary mt-3" do %>
+          <i class="fas fa-user-plus me-2"></i>Add First Customer
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #5a5c69;
+}
+
+.btn-group .btn {
+  border-radius: 0.35rem !important;
+  margin-right: 2px;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0,123,255,.075);
+}
+
+.avatar-circle {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+</style>

@@ -1,0 +1,143 @@
+<!-- app/views/delivery_people/new.html.erb -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-user-plus me-2"></i>Add New Delivery Person
+  </h1>
+  <%= link_to delivery_people_path, class: "btn btn-outline-secondary" do %>
+    <i class="fas fa-arrow-left me-2"></i>Back to List
+  <% end %>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="fas fa-user-plus me-2"></i>Delivery Person Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <%= form_with model: @delivery_person, url: delivery_people_path, local: true, class: "needs-validation", novalidate: true do |form| %>
+          
+          <!-- Display errors if any -->
+          <% if @delivery_person.errors.any? %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Please fix the following errors:</strong>
+              <ul class="mb-0 mt-2">
+                <% @delivery_person.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% end %>
+
+          <div class="row">
+            <!-- Name Field -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :name, class: "form-label" do %>
+                <i class="fas fa-user me-1"></i>Full Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :name, 
+                  class: "form-control #{'is-invalid' if @delivery_person.errors[:name].any?}",
+                  placeholder: "Enter full name",
+                  required: true %>
+              <% if @delivery_person.errors[:name].any? %>
+                <div class="invalid-feedback">
+                  <%= @delivery_person.errors[:name].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <!-- Email Field -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :email, class: "form-label" do %>
+                <i class="fas fa-envelope me-1"></i>Email Address <span class="text-danger">*</span>
+              <% end %>
+              <%= form.email_field :email, 
+                  class: "form-control #{'is-invalid' if @delivery_person.errors[:email].any?}",
+                  placeholder: "Enter email address",
+                  required: true %>
+              <% if @delivery_person.errors[:email].any? %>
+                <div class="invalid-feedback">
+                  <%= @delivery_person.errors[:email].first %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Phone Field -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :phone, class: "form-label" do %>
+                <i class="fas fa-phone me-1"></i>Phone Number <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :phone, 
+                  class: "form-control #{'is-invalid' if @delivery_person.errors[:phone].any?}",
+                  placeholder: "Enter phone number",
+                  required: true %>
+              <% if @delivery_person.errors[:phone].any? %>
+                <div class="invalid-feedback">
+                  <%= @delivery_person.errors[:phone].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <!-- Password Field -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :password, class: "form-label" do %>
+                <i class="fas fa-lock me-1"></i>Password <span class="text-danger">*</span>
+              <% end %>
+              <%= form.password_field :password, 
+                  class: "form-control #{'is-invalid' if @delivery_person.errors[:password].any?}",
+                  placeholder: "Enter password",
+                  required: true %>
+              <% if @delivery_person.errors[:password].any? %>
+                <div class="invalid-feedback">
+                  <%= @delivery_person.errors[:password].first %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Hidden role field -->
+          <%= form.hidden_field :role, value: "delivery_person" %>
+
+          <!-- Form Actions -->
+          <div class="d-flex justify-content-between pt-3 border-top">
+            <%= link_to delivery_people_path, class: "btn btn-outline-secondary" do %>
+              <i class="fas fa-times me-2"></i>Cancel
+            <% end %>
+            
+            <%= form.submit "Add Delivery Person", 
+                class: "btn btn-primary",
+                data: { disable_with: '<i class="fas fa-spinner fa-spin me-2"></i>Adding...' } do %>
+              <i class="fas fa-user-plus me-2"></i>Add Delivery Person
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Optional: Add some JavaScript for form validation -->
+<script>
+  // Bootstrap form validation
+  (function() {
+    'use strict';
+    window.addEventListener('load', function() {
+      var forms = document.getElementsByClassName('needs-validation');
+      var validation = Array.prototype.filter.call(forms, function(form) {
+        form.addEventListener('submit', function(event) {
+          if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    }, false);
+  })();
+</script>

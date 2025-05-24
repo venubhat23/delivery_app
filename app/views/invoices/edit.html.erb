@@ -1,0 +1,264 @@
+
+
+<!-- app/views/invoices/edit.html.erb -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-edit me-2"></i>Edit Invoice #<%= @invoice.invoice_number || @invoice.id %></h2>
+  <div>
+    <%= link_to "View Invoice", @invoice, class: "btn btn-info me-2" %>
+    <%= link_to "Back to Invoices", invoices_path, class: "btn btn-secondary" %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <%= form_with model: @invoice, local: true, id: "invoice-form" do |form| %>
+      <% if @invoice.errors.any? %>
+        <div class="alert alert-danger">
+          <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+          <ul class="mb-0">
+            <% @invoice.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :customer_id, class: "form-label" %>
+            <%= form.select :customer_id, 
+                           options_from_collection_for_select(@customers, :id, :name, @invoice.customer_id),
+                           { prompt: "Select Customer" }, 
+                           { class: "form-select", required: true } %>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <%= form.label :due_date, class: "form-label" %>
+            <%= form.date_field :due_date, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <%= form.label :status, class: "form-label" %>
+            <%= form.select :status, 
+                           options_for_select([
+                             ['Pending', 'pending'],
+                             ['Paid', 'paid'],
+                             ['Overdue', 'overdue'],
+                             ['Cancelled', 'cancelled']
+                           ], @invoice.status),
+                           {}, { class: "form-select" } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Items Section -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5><i class="fas fa-list me-2"></i>Invoice Items</h5>
+          <button type="button" id="add-item" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus me-1"></i>Add Item
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="invoice-items">
+            <%= form.fields_for :invoice_items do |item_form| %>
+              <div class="invoice-item row mb-3 border-bottom pb-3">
+                <div class="col-md-4">
+                  <%= item_form.label :product_id, "Product", class: "form-label" %>
+                  <%= item_form.select :product_id,
+                                      options_from_collection_for_select(@products, :id, :name, item_form.object.product_id),
+                                      { prompt: "Select Product" },
+                                      { class: "form-select product-select", required: true } %>
+                </div>
+                <div class="col-md-2">
+                  <%= item_form.label :quantity, class: "form-label" %>
+                  <%= item_form.number_field :quantity, 
+                                            step: 0.01, min: 0,
+                                            class: "form-control quantity-input", 
+                                            required: true %>
+                </div>
+                <div class="col-md-2">
+                  <%= item_form.label :unit_price, "Unit Price", class: "form-label" %>
+                  <%= item_form.number_field :unit_price, 
+                                            step: 0.01, min: 0,
+                                            class: "form-control unit-price-input", 
+                                            readonly: true %>
+                </div>
+                <div class="col-md-2">
+                  <%= item_form.label :total_price, "Total", class: "form-label" %>
+                  <%= item_form.number_field :total_price, 
+                                            step: 0.01,
+                                            class: "form-control total-price-input", 
+                                            readonly: true %>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <%= item_form.hidden_field :_destroy %>
+                  <button type="button" class="btn btn-danger btn-sm remove-item">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          
+          <!-- Total Section -->
+          <div class="row mt-4">
+            <div class="col-md-8"></div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                    <strong>Total Amount:</strong>
+                    <strong id="total-amount">₹<%= number_with_delimiter(@invoice.total_amount || 0) %></strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <%= form.submit "Update Invoice", class: "btn btn-primary" %>
+        <%= link_to "Cancel", @invoice, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const invoiceForm = document.getElementById('invoice-form');
+  const addItemBtn = document.getElementById('add-item');
+  const itemsContainer = document.getElementById('invoice-items');
+  let itemIndex = document.querySelectorAll('.invoice-item').length;
+  
+  // Product prices data (you can fetch this via AJAX)
+  const productPrices = {
+    <% @products.each do |product| %>
+      <%= product.id %>: <%= product.price %>,
+    <% end %>
+  };
+
+  // Add new item functionality
+  addItemBtn.addEventListener('click', function() {
+    const newItemHtml = `
+      <div class="invoice-item row mb-3 border-bottom pb-3">
+        <div class="col-md-4">
+          <label class="form-label">Product</label>
+          <select name="invoice[invoice_items_attributes][${itemIndex}][product_id]" class="form-select product-select" required>
+            <option value="">Select Product</option>
+            <% @products.each do |product| %>
+              <option value="<%= product.id %>"><%= product.name %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Quantity</label>
+          <input type="number" name="invoice[invoice_items_attributes][${itemIndex}][quantity]" 
+                 step="0.01" min="0" class="form-control quantity-input" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Unit Price</label>
+          <input type="number" name="invoice[invoice_items_attributes][${itemIndex}][unit_price]" 
+                 step="0.01" min="0" class="form-control unit-price-input" readonly>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Total</label>
+          <input type="number" name="invoice[invoice_items_attributes][${itemIndex}][total_price]" 
+                 step="0.01" class="form-control total-price-input" readonly>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-danger btn-sm remove-item">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+    
+    itemsContainer.insertAdjacentHTML('beforeend', newItemHtml);
+    itemIndex++;
+    updateEventListeners();
+  });
+
+  // Remove item functionality
+  function updateEventListeners() {
+    // Product selection change
+    document.querySelectorAll('.product-select').forEach(select => {
+      select.addEventListener('change', function() {
+        const row = this.closest('.invoice-item');
+        const productId = this.value;
+        const unitPriceInput = row.querySelector('.unit-price-input');
+        
+        if (productId && productPrices[productId]) {
+          unitPriceInput.value = productPrices[productId];
+          calculateRowTotal(row);
+        } else {
+          unitPriceInput.value = '';
+          calculateRowTotal(row);
+        }
+      });
+    });
+
+    // Quantity change
+    document.querySelectorAll('.quantity-input').forEach(input => {
+      input.addEventListener('input', function() {
+        const row = this.closest('.invoice-item');
+        calculateRowTotal(row);
+      });
+    });
+
+    // Remove item
+    document.querySelectorAll('.remove-item').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('.invoice-item');
+        const destroyInput = row.querySelector('input[name*="_destroy"]');
+        
+        if (destroyInput) {
+          destroyInput.value = '1';
+          row.style.display = 'none';
+        } else {
+          row.remove();
+        }
+        calculateTotal();
+      });
+    });
+  }
+
+  // Calculate row total
+  function calculateRowTotal(row) {
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+    const totalPriceInput = row.querySelector('.total-price-input');
+    
+    const total = quantity * unitPrice;
+    totalPriceInput.value = total.toFixed(2);
+    
+    calculateTotal();
+  }
+
+  // Calculate grand total
+  function calculateTotal() {
+    let grandTotal = 0;
+    
+    document.querySelectorAll('.invoice-item').forEach(row => {
+      if (row.style.display !== 'none') {
+        const total = parseFloat(row.querySelector('.total-price-input').value) || 0;
+        grandTotal += total;
+      }
+    });
+    
+    document.getElementById('total-amount').textContent = '₹' + grandTotal.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // Initialize event listeners
+  updateEventListeners();
+  calculateTotal();
+});
+</script>

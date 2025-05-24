@@ -1,0 +1,250 @@
+
+<!-- app/views/delivery_people/assign_customers.html.erb -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-user-plus me-2"></i>Assign Customers
+    <small class="text-muted">to <%= @delivery_person.name %></small>
+  </h1>
+  <%= link_to delivery_person_path(@delivery_person), class: "btn btn-outline-secondary" do %>
+    <i class="fas fa-arrow-left me-2"></i>Back to <%= @delivery_person.name %>
+  <% end %>
+</div>
+
+<!-- Capacity Info -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card border-left-info shadow">
+      <div class="card-body">
+        <h6 class="text-info">Current Capacity</h6>
+        <h4><%= @current_count %> / 50 customers</h4>
+        <div class="progress mt-2">
+          <div class="progress-bar bg-info" style="width: <%= (@current_count.to_f / 50 * 100).round(1) %>%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-left-success shadow">
+      <div class="card-body">
+        <h6 class="text-success">Available Slots</h6>
+        <h4><%= @available_slots %> slots</h4>
+        <p class="text-muted mb-0">Can assign up to <%= @available_slots %> more customers</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-left-warning shadow">
+      <div class="card-body">
+        <h6 class="text-warning">Available Customers</h6>
+        <h4><%= @available_customers.count %> customers</h4>
+        <p class="text-muted mb-0">Unassigned customers ready for assignment</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if @available_customers.any? && @available_slots > 0 %>
+  <%= form_with url: update_assignments_delivery_person_path(@delivery_person), method: :patch, local: true, id: "assignment-form" do |form| %>
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h6 class="m-0">
+          <i class="fas fa-users me-2"></i>Select Customers to Assign
+          <span class="float-end">
+            <span id="selected-count">0</span> selected
+          </span>
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <button type="button" class="btn btn-outline-primary btn-sm me-2" id="select-all">
+            <i class="fas fa-check-square me-1"></i>Select All
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="clear-all">
+            <i class="fas fa-square me-1"></i>Clear All
+          </button>
+          <small class="text-muted">
+            You can select up to <%= @available_slots %> customers
+          </small>
+        </div>
+
+        <div class="row">
+          <% @available_customers.each do |customer| %>
+            <div class="col-md-6 col-lg-4 mb-3">
+              <div class="card customer-card">
+                <div class="card-body p-3">
+                  <div class="form-check">
+                    <%= check_box_tag "customer_ids[]", customer.id, false, 
+                        class: "form-check-input customer-checkbox", 
+                        id: "customer_#{customer.id}" %>
+                    <%= label_tag "customer_#{customer.id}", class: "form-check-label w-100" do %>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-circle-small me-2">
+                          <%= customer.name.first.upcase %>
+                        </div>
+                        <div class="flex-grow-1">
+                          <strong class="text-primary"><%= customer.name %></strong>
+                          <br>
+                          <small class="text-muted">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            <%= truncate(customer.address, length: 30) %>
+                          </small>
+                          <% if customer.has_coordinates? %>
+                            <br>
+                            <small class="text-success">
+                              <i class="fas fa-map-pin me-1"></i>GPS Available
+                            </small>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <div>
+            <button type="submit" class="btn btn-primary" id="assign-btn" disabled>
+              <i class="fas fa-user-plus me-2"></i>
+              Assign Selected Customers
+              <span class="spinner-border spinner-border-sm ms-2 d-none" id="loading-spinner"></span>
+            </button>
+          </div>
+          <div class="text-muted">
+            <small>
+              <i class="fas fa-info-circle me-1"></i>
+              Selected customers will be assigned to <%= @delivery_person.name %>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="card shadow">
+    <div class="card-body text-center py-5">
+      <% if @available_slots <= 0 %>
+        <i class="fas fa-users-slash fa-4x text-warning mb-3"></i>
+        <h4 class="text-warning">Capacity Full</h4>
+        <p class="text-muted">This delivery person has reached the maximum capacity of 50 customers.</p>
+      <% else %>
+        <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No Available Customers</h4>
+        <p class="text-muted">All customers have been assigned to delivery personnel.</p>
+        <%= link_to new_customer_path, class: "btn btn-primary mt-3" do %>
+          <i class="fas fa-user-plus me-2"></i>Add New Customer
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const checkboxes = document.querySelectorAll('.customer-checkbox');
+  const selectAllBtn = document.getElementById('select-all');
+  const clearAllBtn = document.getElementById('clear-all');
+  const assignBtn = document.getElementById('assign-btn');
+  const selectedCount = document.getElementById('selected-count');
+  const loadingSpinner = document.getElementById('loading-spinner');
+  const maxSlots = <%= @available_slots %>;
+  
+  function updateUI() {
+    const checked = document.querySelectorAll('.customer-checkbox:checked').length;
+    selectedCount.textContent = checked;
+    assignBtn.disabled = checked === 0;
+    
+    // Disable unchecked checkboxes if limit reached
+    if (checked >= maxSlots) {
+      checkboxes.forEach(cb => {
+        if (!cb.checked) cb.disabled = true;
+      });
+    } else {
+      checkboxes.forEach(cb => cb.disabled = false);
+    }
+  }
+  
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateUI);
+  });
+  
+  selectAllBtn.addEventListener('click', function() {
+    let count = 0;
+    checkboxes.forEach(cb => {
+      if (count < maxSlots) {
+        cb.checked = true;
+        count++;
+      }
+    });
+    updateUI();
+  });
+  
+  clearAllBtn.addEventListener('click', function() {
+    checkboxes.forEach(cb => cb.checked = false);
+    updateUI();
+  });
+  
+  // Show loading spinner on form submit
+  document.getElementById('assignment-form').addEventListener('submit', function() {
+    assignBtn.disabled = true;
+    loadingSpinner.classList.remove('d-none');
+  });
+});
+</script>
+
+<style>
+.border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+.border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+.border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+.border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+.text-gray-300 { color: #dddfeb !important; }
+.text-gray-800 { color: #5a5c69 !important; }
+
+.avatar-circle, .avatar-circle-small {
+  border-radius: 50%;
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.avatar-circle {
+  width: 35px;
+  height: 35px;
+  font-size: 14px;
+}
+
+.avatar-circle-small {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.customer-card {
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.customer-card:hover {
+  border-color: #4e73df;
+  transform: translateY(-2px);
+}
+
+.customer-checkbox:checked + label .customer-card {
+  border-color: #1cc88a;
+  background-color: #f8fff9;
+}
+
+.progress {
+  height: 8px;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+</style>

@@ -1,0 +1,81 @@
+<div class="container">
+  <div class="row justify-content-center align-items-center min-vh-100">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow">
+        <div class="card-body p-5">
+          <div class="text-center mb-4">
+            <h2 class="text-primary">
+              <i class="fas fa-user-plus me-2"></i>
+              Create Account
+            </h2>
+            <p class="text-muted">Join our delivery management system</p>
+          </div>
+          
+          <%= form_with model: @user, url: signup_path, local: true, class: "needs-validation", novalidate: true do |form| %>
+            <% if @user.errors.any? %>
+              <div class="alert alert-danger">
+                <ul class="mb-0">
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :name, class: "form-label" %>
+                <%= form.text_field :name, class: "form-control", required: true %>
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <%= form.label :email, class: "form-label" %>
+                <%= form.email_field :email, class: "form-control", required: true %>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :phone, class: "form-label" %>
+                <%= form.telephone_field :phone, class: "form-control" %>
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <%= form.label :role, class: "form-label" %>
+                <%= form.select :role, 
+                    options_for_select([
+                      ['Admin', 'admin'],
+                      ['Delivery Person', 'delivery_person'],
+                      ['Customer', 'customer']
+                    ]), 
+                    { prompt: 'Select Role' }, 
+                    { class: "form-select", required: true } %>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :password, class: "form-label" %>
+                <%= form.password_field :password, class: "form-control", required: true %>
+              </div>
+              
+              <div class="col-md-6 mb-4">
+                <%= form.label :password_confirmation, "Confirm Password", class: "form-label" %>
+                <%= form.password_field :password_confirmation, class: "form-control", required: true %>
+              </div>
+            </div>
+            
+            <%= form.submit "Create Account", class: "btn btn-primary w-100 mb-3" %>
+          <% end %>
+          
+          <div class="text-center">
+            <p class="mb-0">
+              Already have an account? 
+              <%= link_to "Sign in", login_path, class: "text-primary text-decoration-none" %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,592 @@
+<!-- app/views/delivery_schedules/new.html.erb -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-calendar-plus me-2"></i>Create Delivery Schedule
+  </h1>
+  <%= link_to delivery_schedules_path, class: "btn btn-outline-secondary" do %>
+    <i class="fas fa-arrow-left me-2"></i>Back to Schedules
+  <% end %>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h6 class="m-0">
+          <i class="fas fa-calendar me-2"></i>Schedule Information
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= form_with(model: @delivery_schedule, local: true, id: "schedule-form") do |form| %>
+          <% if @delivery_schedule.errors.any? %>
+            <div class="alert alert-danger">
+              <h4><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h4>
+              <ul class="mb-0">
+                <% @delivery_schedule.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :customer_id, class: "form-label fw-bold" do %>
+                <i class="fas fa-user me-1"></i>Customer *
+              <% end %>
+              <%= form.select :customer_id, 
+                  options_from_collection_for_select(@customers, :id, :name, @delivery_schedule.customer_id),
+                  { prompt: 'Select Customer' },
+                  { class: "form-select", required: true, id: "customer-select" } %>
+              <div id="customer-info" class="mt-2 p-2 border rounded d-none">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  <span id="customer-details"></span>
+                </small>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :product_id, class: "form-label fw-bold" do %>
+                <i class="fas fa-box me-1"></i>Product *
+              <% end %>
+              <%= form.select :product_id, 
+                  options_from_collection_for_select(@products, :id, :display_name, @delivery_schedule.product_id),
+                  { prompt: 'Select Product' },
+                  { class: "form-select", required: true, id: "product-select" } %>
+              <div id="product-info" class="mt-2 p-2 border rounded d-none">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  <span id="product-details"></span>
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <%= form.label :frequency, class: "form-label fw-bold" do %>
+                <i class="fas fa-repeat me-1"></i>Frequency *
+              <% end %>
+              <%= form.select :frequency, 
+                  options_for_select([
+                    ['Daily', 'daily'],
+                    ['Weekly', 'weekly'], 
+                    ['Monthly', 'monthly']
+                  ], @delivery_schedule.frequency),
+                  { prompt: 'Select Frequency' },
+                  { class: "form-select", required: true, id: "frequency-select" } %>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <%= form.label :start_date, class: "form-label fw-bold" do %>
+                <i class="fas fa-calendar-alt me-1"></i>Start Date *
+              <% end %>
+              <%= form.date_field :start_date, class: "form-control", required: true, id: "start-date" %>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <%= form.label :end_date, class: "form-label fw-bold" do %>
+                <i class="fas fa-calendar-check me-1"></i>End Date *
+              <% end %>
+              <%= form.date_field :end_date, class: "form-control", required: true, id: "end-date" %>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :default_quantity, class: "form-label fw-bold" do %>
+                <i class="fas fa-balance-scale me-1"></i>Default Quantity
+              <% end %>
+              <%= form.number_field :default_quantity, 
+                  class: "form-control", 
+                  step: 0.01,
+                  min: 0,
+                  placeholder: "1.00",
+                  value: @delivery_schedule.default_quantity || 1 %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :default_unit, class: "form-label fw-bold" do %>
+                <i class="fas fa-weight me-1"></i>Default Unit
+              <% end %>
+              <%= form.select :default_unit,
+                  options_for_select([
+                    ['Liters', 'liters'],
+                    ['Kilograms', 'kg'],
+                    ['Pieces', 'pieces'],
+                    ['Bottles', 'bottles'],
+                    ['Packets', 'packets']
+                  ], @delivery_schedule.default_unit || 'pieces'),
+                  {},
+                  { class: "form-select" } %>
+            </div>
+          </div>
+
+          <!-- Assignment Preview -->
+          <div id="assignment-preview" class="alert alert-info d-none">
+            <h6><i class="fas fa-eye me-2"></i>Assignment Preview</h6>
+            <p class="mb-1">
+              <strong>Total assignments to be created:</strong> <span id="total-assignments">0</span>
+            </p>
+            <p class="mb-1">
+              <strong>Schedule duration:</strong> <span id="duration-days">0</span> days
+            </p>
+            <p class="mb-0">
+              <strong>Estimated processing time:</strong> <span id="processing-time">< 1 minute</span>
+            </p>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="form-actions">
+              <%= form.submit "Create Schedule & Generate Assignments", 
+                  class: "btn btn-primary", 
+                  id: "submit-btn",
+                  data: { disable_with: '<i class="fas fa-spinner fa-spin me-2"></i>Creating Schedule...' } %>
+              <%= link_to delivery_schedules_path, class: "btn btn-secondary ms-2" do %>
+                <i class="fas fa-times me-2"></i>Cancel
+              <% end %>
+            </div>
+            
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              Assignments will be generated automatically
+            </small>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Schedule Summary -->
+    <div class="card shadow mb-4">
+      <div class="card-header bg-info text-white">
+        <h6 class="m-0">
+          <i class="fas fa-info-circle me-2"></i>Schedule Summary
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <small class="text-muted">Selected Customer</small>
+          <p class="mb-0 fw-bold" id="summary-customer">Not selected</p>
+        </div>
+        
+        <div class="mb-3">
+          <small class="text-muted">Selected Product</small>
+          <p class="mb-0 fw-bold" id="summary-product">Not selected</p>
+        </div>
+        
+        <div class="mb-3">
+          <small class="text-muted">Delivery Frequency</small>
+          <p class="mb-0 fw-bold" id="summary-frequency">Not selected</p>
+        </div>
+        
+        <div class="mb-3">
+          <small class="text-muted">Schedule Period</small>
+          <p class="mb-0 fw-bold" id="summary-period">Not set</p>
+        </div>
+        
+        <div>
+          <small class="text-muted">Default Quantity</small>
+          <p class="mb-0 fw-bold" id="summary-quantity">1 pieces</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Processing Information -->
+    <div class="card shadow">
+      <div class="card-header bg-warning text-white">
+        <h6 class="m-0">
+          <i class="fas fa-cogs me-2"></i>Processing Information
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-warning">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Please Note:</strong> Creating assignments for long schedules may take some time. 
+          You'll be notified when the process is complete.
+        </div>
+        
+        <h6>What happens after creation?</h6>
+        <ul class="small">
+          <li>Schedule is created immediately</li>
+          <li>Assignments are generated in background</li>
+          <li>You can monitor progress in the schedule details</li>
+          <li>Email notification when complete</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Schedule Creation Modal -->
+<div class="modal fade" id="bulkScheduleModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-calendar-plus me-2"></i>Create Bulk Schedules
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fas fa-lightbulb me-2"></i>
+          Create schedules for multiple customers at once with the same settings.
+        </div>
+        
+        <form id="bulk-schedule-form">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">
+                <i class="fas fa-users me-1"></i>Select Customers
+              </label>
+              <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                <% @customers.each do |customer| %>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="<%= customer.id %>" 
+                           id="bulk_customer_<%= customer.id %>" name="customer_ids[]">
+                    <label class="form-check-label" for="bulk_customer_<%= customer.id %>">
+                      <%= customer.name %> - <%= truncate(customer.address, length: 30) %>
+                    </label>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Product</label>
+                <select class="form-select" name="product_id" required>
+                  <option value="">Select Product</option>
+                  <% @products.each do |product| %>
+                    <option value="<%= product.id %>"><%= product.display_name %></option>
+                  <% end %>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Frequency</label>
+                <select class="form-select" name="frequency" required>
+                  <option value="">Select Frequency</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Start Date</label>
+                <input type="date" class="form-control" name="start_date" required>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">End Date</label>
+                <input type="date" class="form-control" name="end_date" required>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="create-bulk-schedules">
+          <i class="fas fa-plus me-2"></i>Create Schedules
+          <span class="spinner-border spinner-border-sm ms-2 d-none" id="bulk-loading"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const customerSelect = document.getElementById('customer-select');
+  const productSelect = document.getElementById('product-select');
+  const frequencySelect = document.getElementById('frequency-select');
+  const startDateInput = document.getElementById('start-date');
+  const endDateInput = document.getElementById('end-date');
+  const quantityInput = document.querySelector('#delivery_schedule_default_quantity');
+  const unitSelect = document.querySelector('#delivery_schedule_default_unit');
+  
+  // Customer data for info display
+  const customerData = {
+    <% @customers.each do |customer| %>
+      '<%= customer.id %>': {
+        name: '<%= customer.name %>',
+        address: '<%= customer.address %>',
+        deliveryPerson: '<%= customer.delivery_person_name %>',
+        hasCoordinates: <%= customer.has_coordinates? %>
+      },
+    <% end %>
+  };
+  
+  // Product data for info display
+  const productData = {
+    <% @products.each do |product| %>
+      '<%= product.id %>': {
+        name: '<%= product.name %>',
+        price: '<%= product.price %>',
+        availableQuantity: '<%= product.available_quantity %>',
+        unitType: '<%= product.unit_type %>'
+      },
+    <% end %>
+  };
+  
+  // Update customer info display
+  customerSelect.addEventListener('change', function() {
+    const customerId = this.value;
+    const customerInfo = document.getElementById('customer-info');
+    const customerDetails = document.getElementById('customer-details');
+    const summaryCustomer = document.getElementById('summary-customer');
+    
+    if (customerId && customerData[customerId]) {
+      const customer = customerData[customerId];
+      customerDetails.innerHTML = `
+        <strong>${customer.name}</strong><br>
+        Address: ${customer.address}<br>
+        Delivery Person: ${customer.deliveryPerson}<br>
+        GPS: ${customer.hasCoordinates ? 'Available' : 'Not Available'}
+      `;
+      customerInfo.classList.remove('d-none');
+      summaryCustomer.textContent = customer.name;
+    } else {
+      customerInfo.classList.add('d-none');
+      summaryCustomer.textContent = 'Not selected';
+    }
+    updatePreview();
+  });
+  
+  // Update product info display
+  productSelect.addEventListener('change', function() {
+    const productId = this.value;
+    const productInfo = document.getElementById('product-info');
+    const productDetails = document.getElementById('product-details');
+    const summaryProduct = document.getElementById('summary-product');
+    
+    if (productId && productData[productId]) {
+      const product = productData[productId];
+      productDetails.innerHTML = `
+        <strong>${product.name}</strong><br>
+        Price: ${product.price} per ${product.unitType}<br>
+        Available: ${product.availableQuantity} ${product.unitType}
+      `;
+      productInfo.classList.remove('d-none');
+      summaryProduct.textContent = product.name;
+    } else {
+      productInfo.classList.add('d-none');
+      summaryProduct.textContent = 'Not selected';
+    }
+    updatePreview();
+  });
+  
+  // Update summary displays
+  frequencySelect.addEventListener('change', function() {
+    const frequency = this.value;
+    const summaryFrequency = document.getElementById('summary-frequency');
+    
+    if (frequency) {
+      const frequencyText = {
+        'daily': 'Every day',
+        'weekly': 'Once a week',
+        'monthly': 'Once a month'
+      };
+      summaryFrequency.textContent = frequencyText[frequency] || frequency;
+    } else {
+      summaryFrequency.textContent = 'Not selected';
+    }
+    updatePreview();
+  });
+  
+  // Update date summary
+  function updateDateSummary() {
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    const summaryPeriod = document.getElementById('summary-period');
+    
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      
+      summaryPeriod.textContent = `${startDate} to ${endDate} (${diffDays} days)`;
+    } else {
+      summaryPeriod.textContent = 'Not set';
+    }
+    updatePreview();
+  }
+  
+  startDateInput.addEventListener('change', updateDateSummary);
+  endDateInput.addEventListener('change', updateDateSummary);
+  
+  // Update quantity summary
+  function updateQuantitySummary() {
+    const quantity = quantityInput.value || '1';
+    const unit = unitSelect.value || 'pieces';
+    const summaryQuantity = document.getElementById('summary-quantity');
+    summaryQuantity.textContent = `${quantity} ${unit}`;
+  }
+  
+  quantityInput.addEventListener('input', updateQuantitySummary);
+  unitSelect.addEventListener('change', updateQuantitySummary);
+  
+  // Update assignment preview
+  function updatePreview() {
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    const frequency = frequencySelect.value;
+    
+    if (startDate && endDate && frequency) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      
+      let totalAssignments = 0;
+      let processingTime = '< 1 minute';
+      
+      switch (frequency) {
+        case 'daily':
+          totalAssignments = diffDays;
+          break;
+        case 'weekly':
+          totalAssignments = Math.ceil(diffDays / 7);
+          break;
+        case 'monthly':
+          const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + 
+                           (end.getMonth() - start.getMonth()) + 1;
+          totalAssignments = monthsDiff;
+          break;
+      }
+      
+      if (totalAssignments > 100) {
+        processingTime = '2-3 minutes';
+      } else if (totalAssignments > 50) {
+        processingTime = '1-2 minutes';
+      }
+      
+      document.getElementById('total-assignments').textContent = totalAssignments;
+      document.getElementById('duration-days').textContent = diffDays;
+      document.getElementById('processing-time').textContent = processingTime;
+      document.getElementById('assignment-preview').classList.remove('d-none');
+    } else {
+      document.getElementById('assignment-preview').classList.add('d-none');
+    }
+  }
+  
+  // Bulk schedule creation
+  document.getElementById('create-bulk-schedules').addEventListener('click', function() {
+    const form = document.getElementById('bulk-schedule-form');
+    const formData = new FormData(form);
+    const loadingSpinner = document.getElementById('bulk-loading');
+    
+    // Validate form
+    const customerIds = formData.getAll('customer_ids[]');
+    if (customerIds.length === 0) {
+      alert('Please select at least one customer');
+      return;
+    }
+    
+    // Show loading
+    this.disabled = true;
+    loadingSpinner.classList.remove('d-none');
+    
+    // Create schedules data
+    const schedules = customerIds.map(customerId => ({
+      customer_id: customerId,
+      product_id: formData.get('product_id'),
+      frequency: formData.get('frequency'),
+      start_date: formData.get('start_date'),
+      end_date: formData.get('end_date')
+    }));
+    
+    // Send to server
+    fetch('<%= delivery_schedules_path %>/create_bulk', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ schedules: schedules })
+    })
+    .then(response => response.json())
+    .then(data => {
+      this.disabled = false;
+      loadingSpinner.classList.add('d-none');
+      
+      if (data.success > 0) {
+        alert(`Successfully created ${data.success} schedules!`);
+        window.location.href = '<%= delivery_schedules_path %>';
+      } else {
+        alert('Failed to create schedules. Please try again.');
+      }
+    })
+    .catch(error => {
+      this.disabled = false;
+      loadingSpinner.classList.add('d-none');
+      alert('An error occurred. Please try again.');
+    });
+  });
+  
+  // Set default dates
+  const today = new Date();
+  const nextMonth = new Date(today);
+  nextMonth.setMonth(today.getMonth() + 1);
+  
+  startDateInput.value = today.toISOString().split('T')[0];
+  endDateInput.value = nextMonth.toISOString().split('T')[0];
+  
+  // Initial updates
+  updateDateSummary();
+  updateQuantitySummary();
+});
+</script>
+
+<style>
+.form-label {
+  color: #5a5c69;
+  margin-bottom: 0.5rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+#customer-info, #product-info {
+  background-color: #f8f9fc;
+  border-color: #e3e6f0 !important;
+}
+
+.modal-dialog {
+  max-width: 900px;
+}
+
+.form-check {
+  padding: 0.25rem 0;
+}
+
+.form-check-input:checked {
+  background-color: #4e73df;
+  border-color: #4e73df;
+}
+</style>

@@ -1,0 +1,116 @@
+<!-- app/views/invoices/new.html.erb -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-plus me-2"></i>Create New Invoice</h2>
+  <%= link_to "Back to Invoices", invoices_path, class: "btn btn-secondary" %>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <%= form_with model: @invoice, local: true, id: "invoice-form" do |form| %>
+      <% if @invoice.errors.any? %>
+        <div class="alert alert-danger">
+          <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+          <ul class="mb-0">
+            <% @invoice.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :customer_id, class: "form-label" %>
+            <%= form.select :customer_id, 
+                           options_from_collection_for_select(@customers, :id, :name, @invoice.customer_id),
+                           { prompt: "Select Customer" }, 
+                           { class: "form-select", required: true } %>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <%= form.label :due_date, class: "form-label" %>
+            <%= form.date_field :due_date, 
+                               value: @invoice.due_date || (Date.current + 30.days),
+                               class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <%= form.label :status, class: "form-label" %>
+            <%= form.select :status, 
+                           options_for_select([
+                             ['Pending', 'pending'],
+                             ['Paid', 'paid'],
+                             ['Overdue', 'overdue'],
+                             ['Cancelled', 'cancelled']
+                           ], @invoice.status || 'pending'),
+                           {}, { class: "form-select" } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Items Section -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5><i class="fas fa-list me-2"></i>Invoice Items</h5>
+          <button type="button" id="add-item" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus me-1"></i>Add Item
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="invoice-items">
+            <%= form.fields_for :invoice_items do |item_form| %>
+              <div class="invoice-item row mb-3 border-bottom pb-3">
+                <div class="col-md-4">
+                  <%= item_form.label :product_id, "Product", class: "form-label" %>
+                  <%= item_form.select :product_id,
+                                      options_from_collection_for_select(@products, :id, :name, item_form.object.product_id),
+                                      { prompt: "Select Product" },
+                                      { class: "form-select product-select", required: true } %>
+                </div>
+                <div class="col-md-2">
+                  <%= item_form.label :quantity, class: "form-label" %>
+                  <%= item_form.number_field :quantity, 
+                                            step: 0.01, min: 0,
+                                            class: "form-control quantity-input", 
+                                            required: true %>
+                </div>
+                <div class="col-md-2">
+                  <%= item_form.label :unit_price, "Unit Price", class: "form-label" %>
+                  <%= item_form.number_field :unit_price, 
+                                            step: 0.01, min: 0,
+                                            class: "form-control unit-price-input", 
+                                            readonly: true %>
+                </div>
+                <div class="col-md-2">
+                  <%= item_form.label :total_price, "Total", class: "form-label" %>
+                  <%= item_form.number_field :total_price, 
+                                            step: 0.01,
+                                            class: "form-control total-price-input", 
+                                            readonly: true %>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <%= item_form.hidden_field :_destroy %>
+                  <button type="button" class="btn btn-danger btn-sm remove-item">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          
+          <!-- Total Section -->
+          <div class="row mt-4">
+            <div class="col-md-8"></div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body">
+                  <div class="d-flex gap-2">
+        <%= form.submit "Create Invoice", class: "btn btn-primary" %>
+        <%= link_to "Cancel", invoices_path, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

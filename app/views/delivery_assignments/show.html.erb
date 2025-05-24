@@ -1,0 +1,215 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">Delivery Assignment #<%= @delivery_assignment.id %></h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <%= link_to "Back to List", delivery_assignments_path, class: "btn btn-secondary me-2" %>
+    <% if @delivery_assignment.status == 'pending' %>
+      <%= link_to "Edit", edit_delivery_assignment_path(@delivery_assignment), class: "btn btn-primary me-2" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Main Details -->
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Assignment Details</h5>
+        <% case @delivery_assignment.status %>
+        <% when 'pending' %>
+          <span class="badge bg-warning text-dark fs-6">Pending</span>
+        <% when 'in_progress' %>
+          <span class="badge bg-info fs-6">In Progress</span>
+        <% when 'completed' %>
+          <span class="badge bg-success fs-6">Completed</span>
+        <% when 'cancelled' %>
+          <span class="badge bg-danger fs-6">Cancelled</span>
+        <% end %>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="text-muted">Customer Information</h6>
+            <p class="mb-1"><strong><%= @delivery_assignment.customer.name %></strong></p>
+            <p class="mb-1"><%= @delivery_assignment.customer.email %></p>
+            <p class="mb-3"><%= @delivery_assignment.customer.phone if @delivery_assignment.customer.respond_to?(:phone) %></p>
+            
+            <h6 class="text-muted">Product Information</h6>
+            <p class="mb-1"><strong><%= @delivery_assignment.product.name %></strong></p>
+            <p class="mb-1">Price: $<%= @delivery_assignment.product.price %></p>
+            <p class="mb-3">Quantity: <%= @delivery_assignment.quantity %></p>
+          </div>
+          
+          <div class="col-md-6">
+            <h6 class="text-muted">Delivery Information</h6>
+            <% if @delivery_assignment.delivery_person %>
+              <p class="mb-1"><strong><%= @delivery_assignment.delivery_person.name %></strong></p>
+              <p class="mb-1"><%= @delivery_assignment.delivery_person.email %></p>
+              <p class="mb-3"><%= @delivery_assignment.delivery_person.phone if @delivery_assignment.delivery_person.respond_to?(:phone) %></p>
+            <% else %>
+              <p class="text-muted mb-3">No delivery person assigned</p>
+            <% end %>
+            
+            <h6 class="text-muted">Schedule</h6>
+            <p class="mb-1">Delivery Date: <strong><%= @delivery_assignment.delivery_date.strftime("%B %d, %Y") %></strong></p>
+            <% if @delivery_assignment.overdue? %>
+              <p class="text-danger mb-1"><i class="fas fa-exclamation-triangle"></i> Overdue</p>
+            <% end %>
+            <p class="mb-3">Priority: 
+              <% case @delivery_assignment.priority %>
+              <% when 'high' %>
+                <span class="badge bg-danger">High</span>
+              <% when 'medium' %>
+                <span class="badge bg-warning text-dark">Medium</span>
+              <% when 'low' %>
+                <span class="badge bg-secondary">Low</span>
+              <% else %>
+                <span class="badge bg-light text-dark">Normal</span>
+              <% end %>
+            </p>
+          </div>
+        </div>
+        
+        <% if @delivery_assignment.special_instructions.present? %>
+          <hr>
+          <h6 class="text-muted">Special Instructions</h6>
+          <p class="mb-0"><%= simple_format(@delivery_assignment.special_instructions) %></p>
+        <% end %>
+      </div>
+    </div>
+    
+    <!-- Timeline -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Timeline</h5>
+      </div>
+      <div class="card-body">
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-marker bg-primary"></div>
+            <div class="timeline-content">
+              <h6 class="mb-1">Assignment Created</h6>
+              <p class="text-muted mb-0"><%= @delivery_assignment.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+            </div>
+          </div>
+          
+          <% if @delivery_assignment.completed_at %>
+            <div class="timeline-item">
+              <div class="timeline-marker bg-success"></div>
+              <div class="timeline-content">
+                <h6 class="mb-1">Delivery Completed</h6>
+                <p class="text-muted mb-0"><%= @delivery_assignment.completed_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+              </div>
+            </div>
+          <% end %>
+          
+          <% if @delivery_assignment.cancelled_at %>
+            <div class="timeline-item">
+              <div class="timeline-marker bg-danger"></div>
+              <div class="timeline-content">
+                <h6 class="mb-1">Assignment Cancelled</h6>
+                <p class="text-muted mb-0"><%= @delivery_assignment.cancelled_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Actions Panel -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <% if @delivery_assignment.status == 'pending' %>
+            <%= link_to complete_delivery_assignment_path(@delivery_assignment), 
+                method: :patch, 
+                class: "btn btn-success",
+                confirm: "Mark this delivery as completed?" do %>
+              <i class="fas fa-check me-2"></i>Mark as Completed
+            <% end %>
+            
+            <%= link_to cancel_delivery_assignment_path(@delivery_assignment), 
+                method: :patch, 
+                class: "btn btn-warning",
+                confirm: "Cancel this delivery assignment?" do %>
+              <i class="fas fa-times me-2"></i>Cancel Assignment
+            <% end %>
+            
+            <%= link_to edit_delivery_assignment_path(@delivery_assignment), class: "btn btn-primary" do %>
+              <i class="fas fa-edit me-2"></i>Edit Assignment
+            <% end %>
+          <% end %>
+          
+          <%= link_to @delivery_assignment, 
+              method: :delete, 
+              class: "btn btn-danger",
+              confirm: "Are you sure you want to delete this assignment?" do %>
+            <i class="fas fa-trash me-2"></i>Delete Assignment
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Summary Card -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Summary</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-2">
+          <strong>Total Amount:</strong><br>
+          <span class="h4 text-success">$<%= @delivery_assignment.total_amount %></span>
+        </div>
+        
+        <hr>
+        
+        <div class="mb-2">
+          <strong>Created:</strong><br>
+          <small class="text-muted"><%= time_ago_in_words(@delivery_assignment.created_at) %> ago</small>
+        </div>
+        
+        <% if @delivery_assignment.updated_at != @delivery_assignment.created_at %>
+          <div class="mb-2">
+            <strong>Last Updated:</strong><br>
+            <small class="text-muted"><%= time_ago_in_words(@delivery_assignment.updated_at) %> ago</small>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -30px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 12px;
+  bottom: -20px;
+  width: 2px;
+  background-color: #dee2e6;
+}
+</style>
