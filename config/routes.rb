@@ -15,19 +15,35 @@ Rails.application.routes.draw do
   resources :customers
   
   # Delivery People Management
-  resources :delivery_people, path: 'delivery-person' do
-    member do
-      get :assign_customers
-      patch :update_assignments
-      delete :unassign_customer
-    end
+  # resources :delivery_people, path: 'delivery-person' do
+  #   member do
+  #     get :assign_customers
+  #     patch :update_assignments
+  #     delete :unassign_customer
+  #   end
     
-    collection do
-      post :bulk_assign
-      get :statistics
-    end
+  #   collection do
+  #     post :bulk_assign
+  #     get :statistics
+  #   end
+  # end
+  
+  resources :delivery_people, path: 'delivery-person' do
+  member do
+    get :assign_customers
+    patch :update_assignments
+    get :manage_customers        # New route for managing assigned customers
+    patch :update_customer_assignments  # New route for updating customer assignments
+    delete :unassign_customer
   end
   
+  collection do
+    post :bulk_assign
+    get :statistics
+  end
+end
+
+
   # Delivery Schedules
   resources :delivery_schedules, path: 'schedules' do
     member do
