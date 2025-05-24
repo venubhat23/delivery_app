@@ -16,14 +16,15 @@ test:
   database: mahadev_test_db
 
 production:
-  adapter: postgresql
-  encoding: unicode
-  pool: 5
-  host: dpg-d0i1ard6ubrc73d2niqg-a.oregon-postgres.render.com
-  port: 5432
-  database: milk_delivery_app1
-  username: milk_delivery_app1_user
-  password: EYg2kvaGJcg1Z24exdkQzrmaKPSLS1Bg
+  primary:
+    adapter: postgresql
+    encoding: unicode
+    pool: 5
+    host: dpg-d0i1ard6ubrc73d2niqg-a.oregon-postgres.render.com
+    port: 5432
+    database: milk_delivery_app1
+    username: milk_delivery_app1_user
+    password: EYg2kvaGJcg1Z24exdkQzrmaKPSLS1Bg
 
   cable:
     adapter: postgresql
