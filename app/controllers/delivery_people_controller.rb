@@ -77,7 +77,7 @@ class DeliveryPeopleController < ApplicationController
       end
 
       assigned_count = customer_ids.length
-      redirect_to @delivery_person, 
+      redirect_to assign_customers_delivery_person_path(@delivery_person), 
                   notice: "Successfully assigned #{assigned_count} customer(s) to #{@delivery_person.name}."
                   
     rescue ActiveRecord::RecordInvalid => e
@@ -91,9 +91,9 @@ class DeliveryPeopleController < ApplicationController
     
     if customer.delivery_person == @delivery_person
       customer.update(delivery_person: nil)
-      redirect_to @delivery_person, notice: "Customer #{customer.name} has been unassigned."
+      redirect_to assign_customers_delivery_person_path(@delivery_person), notice: "Customer #{customer.name} has been unassigned."
     else
-      redirect_to @delivery_person, alert: "Customer not found or not assigned to this delivery person."
+      redirect_to assign_customers_delivery_person_path(@delivery_person), alert: "Customer not found or not assigned to this delivery person."
     end
   end
 
