@@ -160,7 +160,8 @@ class DeliveryAssignmentsController < ApplicationController
           quantity: delivery_schedule.default_quantity,
           scheduled_date: current_date,
           status: 'pending',
-          unit: delivery_schedule.product.unit_type
+          unit: delivery_schedule.product.unit_type,
+          delivery_schedule_id: delivery_schedule.id
         )
       if assignment.save
         created_count += 1
