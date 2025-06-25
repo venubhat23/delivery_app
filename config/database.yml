@@ -20,35 +20,35 @@ production:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d0i1ard6ubrc73d2niqg-a.oregon-postgres.render.com
+    host: dpg-d1dotrripnbc73dh6ku0-a
     port: 5432
-    database: milk_delivery_app1
-    username: milk_delivery_app1_user
-    password: EYg2kvaGJcg1Z24exdkQzrmaKPSLS1Bg
+    database: milk_delivery_app2
+    username: milk_delivery_app2_user
+    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
   cable:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d0i1ard6ubrc73d2niqg-a.oregon-postgres.render.com
+    host: dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com
     port: 5432
-    database: milk_delivery_app1
-    username: milk_delivery_app1_user
-    password: EYg2kvaGJcg1Z24exdkQzrmaKPSLS1Bg
+    database: milk_delivery_app2
+    username: milk_delivery_app2_user
+    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
   queue:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d0i1ard6ubrc73d2niqg-a.oregon-postgres.render.com
+    host: dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com
     port: 5432
-    database: milk_delivery_app1
-    username: milk_delivery_app1_user
-    password: EYg2kvaGJcg1Z24exdkQzrmaKPSLS1Bg
+    database: milk_delivery_app2
+    username: milk_delivery_app2_user
+    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
   cache:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d0i1ard6ubrc73d2niqg-a.oregon-postgres.render.com
+    host: dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com
     port: 5432
-    database: milk_delivery_app1
-    username: milk_delivery_app1_user
-    password: EYg2kvaGJcg1Z24exdkQzrmaKPSLS1Bg
+    database: milk_delivery_app2
+    username: milk_delivery_app2_user
+    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
