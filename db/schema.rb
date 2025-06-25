@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_22_065935) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_25_051748) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -139,6 +139,60 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_22_065935) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "purchase_invoice_items", force: :cascade do |t|
+    t.bigint "purchase_invoice_id", null: false
+    t.bigint "purchase_product_id", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.decimal "price", precision: 10, scale: 2, null: false
+    t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0"
+    t.decimal "discount", precision: 10, scale: 2, default: "0.0"
+    t.decimal "amount", precision: 10, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["purchase_invoice_id", "purchase_product_id"], name: "index_purchase_items_on_invoice_and_product"
+    t.index ["purchase_invoice_id"], name: "index_purchase_invoice_items_on_purchase_invoice_id"
+    t.index ["purchase_product_id"], name: "index_purchase_invoice_items_on_purchase_product_id"
+  end
+
+  create_table "purchase_invoices", force: :cascade do |t|
+    t.string "invoice_number", null: false
+    t.string "invoice_type", null: false
+    t.string "party_name", null: false
+    t.date "invoice_date", null: false
+    t.date "due_date"
+    t.integer "payment_terms", default: 30
+    t.decimal "subtotal", precision: 10, scale: 2, default: "0.0"
+    t.decimal "tax_amount", precision: 10, scale: 2, default: "0.0"
+    t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0"
+    t.decimal "total_amount", precision: 10, scale: 2, default: "0.0"
+    t.decimal "amount_paid", precision: 10, scale: 2, default: "0.0"
+    t.decimal "balance_amount", precision: 10, scale: 2, default: "0.0"
+    t.string "status", default: "unpaid"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_number"], name: "index_purchase_invoices_on_invoice_number"
+    t.index ["invoice_type"], name: "index_purchase_invoices_on_invoice_type"
+    t.index ["party_name"], name: "index_purchase_invoices_on_party_name"
+    t.index ["status"], name: "index_purchase_invoices_on_status"
+  end
+
+  create_table "purchase_products", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "category"
+    t.decimal "purchase_price", precision: 10, scale: 2
+    t.decimal "sales_price", precision: 10, scale: 2
+    t.string "measuring_unit", default: "PCS"
+    t.integer "opening_stock", default: 0
+    t.integer "current_stock", default: 0
+    t.boolean "enable_serialization", default: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category"], name: "index_purchase_products_on_category"
+    t.index ["name"], name: "index_purchase_products_on_name"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -166,4 +220,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_22_065935) do
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoice_items", "products"
   add_foreign_key "invoices", "customers"
+  add_foreign_key "purchase_invoice_items", "purchase_invoices"
+  add_foreign_key "purchase_invoice_items", "purchase_products"
 end

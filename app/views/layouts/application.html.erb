@@ -64,7 +64,13 @@
                     <i class="fas fa-file-invoice me-2"></i>Invoice
                   <% end %>
                 </li>
-              </ul>
+
+                <li class="nav-item">
+                  <%= link_to purchase_products_path, class: "nav-link #{'active' if current_page?(purchase_products_path)}" do %>
+                    <i class="fas fa-boxes me-2"></i>Purchase Products
+                  <% end %>
+                </li>
+                </ul>
             </div>
           </nav>
           

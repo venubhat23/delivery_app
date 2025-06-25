@@ -1,0 +1,83 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Create New Purchase Product</h4>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @purchase_product, local: true, class: 'needs-validation', novalidate: true do |form| %>
+            <% if @purchase_product.errors.any? %>
+              <div class="alert alert-danger">
+                <ul class="mb-0">
+                  <% @purchase_product.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :name, class: 'form-label' %>
+                <%= form.text_field :name, class: 'form-control', required: true %>
+              </div>
+              <div class="col-md-6 mb-3">
+                <%= form.label :category, class: 'form-label' %>
+                <%= form.text_field :category, class: 'form-control' %>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :purchase_price, class: 'form-label' %>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <%= form.number_field :purchase_price, step: 0.01, class: 'form-control', required: true %>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <%= form.label :sales_price, class: 'form-label' %>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <%= form.number_field :sales_price, step: 0.01, class: 'form-control', required: true %>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <%= form.label :measuring_unit, class: 'form-label' %>
+                <%= form.select :measuring_unit, [['Pieces', 'PCS'], ['Kilograms', 'KG'], ['Liters', 'LTR'], ['Meters', 'MTR']], 
+                                {}, { class: 'form-select' } %>
+              </div>
+              <div class="col-md-4 mb-3">
+                <%= form.label :opening_stock, class: 'form-label' %>
+                <%= form.number_field :opening_stock, class: 'form-control', min: 0 %>
+              </div>
+              <div class="col-md-4 mb-3">
+                <%= form.label :current_stock, class: 'form-label' %>
+                <%= form.number_field :current_stock, class: 'form-control', min: 0 %>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <%= form.label :description, class: 'form-label' %>
+              <%= form.text_area :description, rows: 3, class: 'form-control' %>
+            </div>
+            
+            <div class="mb-3 form-check">
+              <%= form.check_box :enable_serialization, class: 'form-check-input' %>
+              <%= form.label :enable_serialization, 'Enable Serialization', class: 'form-check-label' %>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+              <%= link_to 'Cancel', purchase_products_path, class: 'btn btn-secondary' %>
+              <%= form.submit 'Create Product', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

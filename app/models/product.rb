@@ -30,27 +30,6 @@ class Product < ApplicationRecord
   scope :by_unit_type, ->(unit) { where(unit_type: unit) }
   scope :search, ->(term) { where("name ILIKE ? OR description ILIKE ?", "%#{term}%", "%#{term}%") }
 
-  has_many :invoice_items, dependent: :destroy
-  has_many :invoices, through: :invoice_items
-  has_many :delivery_assignments, dependent: :destroy
-  
-  validates :name,
-  validates :price, numericality: { greater_than: 0 }
-  validates :cost_price, numericality: { greater_than_or_equal_to: 0 }
-  
-  scope :active, -> { where(active: true) }
-  
-  def profit_margin
-    return 0 if price.zero?
-    ((price - cost_price) / price * 100).round(2)
-  end
-  
-  def profit_per_unit
-    price - cost_price
-  end
-
-
-
   # Instance methods
   def low_stock?
     available_quantity.to_f < 10
