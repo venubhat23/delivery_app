@@ -36,6 +36,7 @@ class InvoicesController < ApplicationController
   
   def show
     @invoice_items = @invoice.invoice_items.includes(:product)
+    @customer = @invoice.customer
   end
   
   def new
@@ -57,6 +58,55 @@ class InvoicesController < ApplicationController
     end
   end
   
+  # NEW: Generate monthly invoices for all customers
+  def generate_monthly_for_all
+    month = params[:month]&.to_i || Date.current.month
+    year = params[:year]&.to_i || Date.current.year
+    
+    begin
+      results = Invoice.generate_monthly_invoices_for_all_customers(month, year)
+      debugger
+      success_count = 0
+      failure_count = 0
+      errors = []
+      
+      results.each do |result|
+        if result[:result][:success]
+          success_count += 1
+          debugger
+          # Send WhatsApp message for successful invoice
+          begin
+            send_whatsapp_invoice(result[:result][:invoice])
+          rescue => e
+            Rails.logger.error "WhatsApp sending failed for invoice #{result[:result][:invoice].id}: #{e.message}"
+          end
+        else
+          failure_count += 1
+          errors << "#{result[:customer].name}: #{result[:result][:message]}"
+        end
+      end
+      
+      if success_count > 0
+        flash[:notice] = "Successfully generated #{success_count} invoices and sent WhatsApp notifications."
+      end
+      
+      if failure_count > 0
+        flash[:alert] = "#{failure_count} invoices could not be generated. #{errors.join(', ')}"
+      end
+      
+      if success_count == 0 && failure_count == 0
+        flash[:alert] = "No customers with completed deliveries found for #{Date::MONTHNAMES[month]} #{year}"
+      end
+      
+    rescue => e
+      Rails.logger.error "Error generating monthly invoices: #{e.message}"
+      flash[:alert] = "Error occurred while generating invoices: #{e.message}"
+    end
+    
+    # Always redirect back to invoices index
+    redirect_to invoices_path
+  end
+
   def edit
   end
   
@@ -73,7 +123,7 @@ class InvoicesController < ApplicationController
     redirect_to invoices_url, notice: 'Invoice was successfully deleted.'
   end
   
-  # New action for generating invoices
+  # Existing action for generating single customer invoice
   def generate
     if request.post?
       customer_id = params[:customer_id]
@@ -84,7 +134,14 @@ class InvoicesController < ApplicationController
         result = Invoice.generate_invoice_for_customer_month(customer_id, month, year)
         
         if result[:success]
-          redirect_to result[:invoice], notice: result[:message]
+          # Send WhatsApp message for single invoice
+          begin
+            send_whatsapp_invoice(result[:invoice])
+            redirect_to result[:invoice], notice: "#{result[:message]} WhatsApp notification sent successfully."
+          rescue => e
+            Rails.logger.error "WhatsApp sending failed: #{e.message}"
+            redirect_to result[:invoice], notice: "#{result[:message]} (WhatsApp notification failed)"
+          end
         else
           flash[:alert] = result[:message]
           redirect_to generate_invoices_path
@@ -125,15 +182,11 @@ class InvoicesController < ApplicationController
     end
   end
   
- 
-
-    def mark_as_paid
-      @invoice = Invoice.find(params[:id])
-      @invoice.update(status: 'paid', paid_at: Time.current)
-
-      redirect_to @invoice, notice: 'Invoice marked as paid.'
-    end
-
+  def mark_as_paid
+    @invoice = Invoice.find(params[:id])
+    @invoice.update(status: 'paid', paid_at: Time.current)
+    redirect_to @invoice, notice: 'Invoice marked as paid.'
+  end
   
   private
   
@@ -150,5 +203,53 @@ class InvoicesController < ApplicationController
       :customer_id, :invoice_date, :due_date, :status, :notes,
       invoice_items_attributes: [:id, :product_id, :quantity, :unit_price, :_destroy]
     )
+  end
+
+  # NEW: Send WhatsApp invoice notification
+  def send_whatsapp_invoice(invoice)
+    debugger
+    # return unless invoice&.customer&.phone_number.present?
+    
+    whatsapp_service = WhatsappService.new
+    
+    # Create personalized message
+    message = create_invoice_message(invoice)
+    
+    # PDF URL (using the dummy PDF you provided)
+    pdf_url = "https://conasems-ava-prod.s3.sa-east-1.amazonaws.com/aulas/ava/dummy-1641923583.pdf"
+    
+    # Send WhatsApp message with PDF
+    whatsapp_service.send_pdf(
+      invoice.customer.phone_number, 
+      pdf_url, 
+      message
+    )
+    
+    Rails.logger.info "WhatsApp invoice sent to #{invoice.customer.name} (#{invoice.customer.phone_number})"
+  end
+  
+  # NEW: Create personalized invoice message
+  def create_invoice_message(invoice)
+    month_year = invoice.invoice_date.strftime("%B %Y")
+    formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}"
+    
+    message = <<~MSG
+      Hello #{invoice.customer.name}! 👋
+      
+      Your #{month_year} invoice is ready! 📋
+      
+      📄 Invoice #: #{invoice.formatted_number}
+      💰 Total Amount: #{formatted_amount}
+      📅 Due Date: #{invoice.due_date.strftime('%d %B %Y')}
+      
+      Please find your detailed invoice attached as PDF. 
+      
+      Thank you for your continued business! 🙏
+      
+      For any queries, please contact us.
+    MSG
+    
+    message.strip
+
   end
 end

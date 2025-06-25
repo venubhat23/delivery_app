@@ -17,7 +17,7 @@ gem "stimulus-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 gem 'bcrypt', '~> 3.1.7'
-
+gem 'twilio-ruby'
 # UI and Styling
 gem 'bootstrap', '~> 5.2'
 gem 'jquery-rails'

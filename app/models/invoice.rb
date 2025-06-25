@@ -75,18 +75,39 @@ class Invoice < ApplicationRecord
     (Date.current - due_date).to_i
   end
   
+  def profit_amount
+    return 0 unless invoice_type == 'profit_invoice'
+    invoice_items.sum { |item| (item.unit_price - (item.product&.cost_price || 0)) * item.quantity }
+  end
+  
+  def is_profit_invoice?
+    invoice_type == 'profit_invoice'
+  end
+  
+  def is_sales_invoice?
+    invoice_type == 'sales_invoice'
+  end
   def month_year
     invoice_date.strftime("%B %Y")
   end
   
   # Class methods
-  def self.generate_invoice_number
-    last_invoice = Invoice.order(:created_at).last
+def self.generate_invoice_number(type = 'manual')
+    prefix = case type
+             when 'profit_invoice'
+               'PROF'
+             when 'sales_invoice'
+               'SALE'
+             else
+               'INV'
+             end
+    
+    last_invoice = Invoice.where("invoice_number LIKE ?", "#{prefix}-%").order(:created_at).last
     if last_invoice&.invoice_number
       last_number = last_invoice.invoice_number.gsub(/\D/, '').to_i
-      "INV-#{(last_number + 1).to_s.rjust(6, '0')}"
+      "#{prefix}-#{(last_number + 1).to_s.rjust(6, '0')}"
     else
-      "INV-000001"
+      "#{prefix}-000001"
     end
   end
   
@@ -132,7 +153,39 @@ class Invoice < ApplicationRecord
       { success: false, message: "Failed to generate invoice" }
     end
   end
+
+  def self.generate_monthly_invoices_for_all_customers(month = Date.current.month, year = Date.current.year)
+    results = []
+    customers_with_deliveries = Customer.joins(:delivery_assignments)
+                                      .where(delivery_assignments: { 
+                                        status: 'completed',
+                                        completed_at: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
+                                        invoice_generated: false
+                                      })
+                                      .distinct
     
+    customers_with_deliveries.each do |customer|
+      result = generate_invoice_for_customer_month(customer.id, month, year)
+      results << {
+        customer: customer,
+        result: result
+      }
+    end
+    
+    results
+  end
+
+ def generate_invoice_number
+    self.invoice_number = self.class.generate_invoice_number(invoice_type)
+  end
+  
+  def calculate_total_amount
+    self.total_amount = invoice_items.sum(:total_price)
+  end
+  
+  def mark_delivery_assignments_as_invoiced
+    delivery_assignments.update_all(invoice_generated: true, invoice_id: id)
+  end
   def self.create_invoice_from_assignments(customer, assignments, invoice_date)
     return nil if assignments.empty?
 

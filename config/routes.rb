@@ -1,4 +1,4 @@
-# config/routes.rb
+# config/routes.rb (ADD THESE ROUTES)
 Rails.application.routes.draw do
   root 'dashboard#index'
   
@@ -14,36 +14,41 @@ Rails.application.routes.draw do
   resources :products
   resources :customers
   
-  # Delivery People Management
-  # resources :delivery_people, path: 'delivery-person' do
-  #   member do
-  #     get :assign_customers
-  #     patch :update_assignments
-  #     delete :unassign_customer
-  #   end
+  # ADD THESE NEW ROUTES FOR PURCHASE SYSTEM
+  resources :purchase_products do
+    collection do
+      get :search
+    end
+  end
+  
+  resources :purchase_invoices do
+    member do
+      patch :mark_as_paid
+      get :download_pdf
+    end
     
-  #   collection do
-  #     post :bulk_assign
-  #     get :statistics
-  #   end
-  # end
+    collection do
+      get :profit_analysis
+      get :sales_analysis
+    end
+  end
   
+  # Delivery People Management
   resources :delivery_people, path: 'delivery-person' do
-  member do
-    get :assign_customers
-    patch :update_assignments
-    get :manage_customers        # New route for managing assigned customers
-    patch :update_customer_assignments  # New route for updating customer assignments
-    delete :unassign_customer
+    member do
+      get :assign_customers
+      patch :update_assignments
+      get :manage_customers
+      patch :update_customer_assignments
+      delete :unassign_customer
+    end
+    
+    collection do
+      post :bulk_assign
+      get :statistics
+    end
   end
   
-  collection do
-    post :bulk_assign
-    get :statistics
-  end
-end
-
-
   # Delivery Schedules
   resources :delivery_schedules, path: 'schedules' do
     member do
@@ -81,7 +86,8 @@ end
       get :generate
       post :generate
       get :monthly_preview
+      get :generate_monthly_for_all
+      post :generate_monthly_for_all
     end
   end
-
 end

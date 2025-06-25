@@ -1,265 +1,483 @@
-<!-- app/views/invoices/show.html.erb -->
-<div class="container">
-  <div class="row">
-    <div class="col-md-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-file-invoice"></i> Invoice Details</h1>
-        <div class="btn-group">
-          <%= link_to 'Back', invoices_path, class: 'btn btn-secondary' %>
-          <%= link_to 'Edit', edit_invoice_path(@invoice), class: 'btn btn-primary' %>
-          <% if @invoice.status != 'paid' %>
-            <%= link_to 'Mark as Paid', 
-                  mark_as_paid_invoice_path(@invoice), 
-                  method: :patch,
-                  data: { confirm: 'Are you sure you want to mark this invoice as paid?' },
-                  class: 'btn btn-success' %>
-          <% end %>
-          <button onclick="window.print()" class="btn btn-info">
-            <i class="fas fa-print"></i> Print
-          </button>
+<!-- app/views/customers/show.html.erb -->
+<div class="container-fluid p-4">
+  <!-- Invoice Header -->
+  <div class="invoice-container">
+    <div class="invoice-header">
+      <div class="row align-items-center">
+        <div class="col-md-2">
+          <div class="company-logo">
+            <div class="logo-circle">
+              <i class="fas fa-leaf"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-10">
+          <h1 class="company-name">Atma Nirbhar Farm</h1>
+          <p class="company-address">
+            # 827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi, Bangalore, Karnataka, 560072
+          </p>
+          <div class="company-details">
+            <span><strong>Mobile:</strong> 9972808044</span>
+            <span><strong>GSTIN:</strong> 29AOIPT8113K1ZC</span>
+            <span><strong>PAN Number:</strong> AOIPT8113K</span>
+          </div>
+          <p class="company-email"><strong>Email:</strong> atmanirbharfarm@gmail.com</p>
         </div>
       </div>
+    </div>
 
-      <!-- Invoice Header -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h2 class="text-primary">Invoice #<%= @invoice.formatted_number %></h2>
-              <p class="mb-1"><strong>Invoice Date:</strong> <%= @invoice.invoice_date.strftime('%d %B %Y') %></p>
-              <p class="mb-1"><strong>Due Date:</strong> <%= @invoice.due_date.strftime('%d %B %Y') %></p>
-              <p class="mb-1"><strong>Type:</strong> 
-                <span class="badge bg-info"><%= @invoice.invoice_type&.humanize || 'Manual' %></span>
-              </p>
+    <!-- Invoice Info Bar -->
+    <div class="invoice-info-bar">
+      <div class="row">
+        <div class="col-md-4">
+          <strong>Customer Details</strong>
+        </div>
+        <div class="col-md-4 text-center">
+          <strong>Member Since:</strong> <%= Date.today.strftime("%d/%m/%Y") %>
+        </div>
+        <div class="col-md-4 text-end">
+          <strong>Last Updated:</strong> <%= Date.today.strftime("%d/%m/%Y") %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="customer-section">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="bill-to-section">
+            <h5 class="section-title">CUSTOMER INFO</h5>
+            <div class="customer-info">
+              <h4>Mahadev Bhat</h4>
+              <p>Girinagar,<br>
+              Mobile: 9632850872</p>
             </div>
-            <div class="col-md-6 text-end">
-              <div class="mb-3">
-                <% case @invoice.status %>
-                <% when 'pending' %>
-                  <span class="badge bg-warning fs-6">Pending Payment</span>
-                <% when 'paid' %>
-                  <span class="badge bg-success fs-6">Paid</span>
-                  <% if @invoice.paid_at %>
-                    <p class="text-muted mt-1">Paid on: <%= @invoice.paid_at.strftime('%d %B %Y') %></p>
-                  <% end %>
-                <% when 'overdue' %>
-                  <span class="badge bg-danger fs-6">Overdue</span>
-                  <p class="text-danger mt-1">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <%= @invoice.days_overdue %> days overdue
-                  </p>
-                <% end %>
-              </div>
-              
-              <h3 class="text-success">
-                Total: ₹<%= number_with_delimiter(@invoice.total_amount) %>
-              </h3>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="ship-to-section">
+            <h5 class="section-title">ADDRESS</h5>
+            <div class="customer-info">
+              <h4>Mahadev Bhat</h4>
+              <p>Girinagar, Bangalore, Karnataka</p>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Customer Information -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5><i class="fas fa-user"></i> Customer Information</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h6><strong><%= @invoice.customer.name %></strong></h6>
-              <% if @invoice.customer.address.present? %>
-                <p class="mb-1"><%= @invoice.customer.address %></p>
-              <% end %>
-              <% if @invoice.customer.user.phone.present? %>
-                <p class="mb-1"><i class="fas fa-phone"></i> <%= @invoice.customer.user.phone %></p>
-              <% end %>
-              <% if @invoice.customer.user.email.present? %>
-                <p class="mb-1"><i class="fas fa-envelope"></i> <%= @invoice.customer.user.email %></p>
-              <% end %>
-            </div>
-            <div class="col-md-6">
-              <% if @invoice.customer.delivery_person.present? %>
-                <h6><strong>Delivery Person:</strong></h6>
-                <p class="mb-1"><%= @invoice.customer.delivery_person.name %></p>
-                <% if @invoice.customer.delivery_person.phone.present? %>
-                  <p class="mb-1"><i class="fas fa-phone"></i> <%= @invoice.customer.delivery_person.phone %></p>
-                <% end %>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Invoice Items -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5><i class="fas fa-list"></i> Invoice Items</h5>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-bordered">
-              <thead class="table-dark">
-                <tr>
-                  <th>Product</th>
-                  <th>Quantity</th>
-                  <th>Unit Price</th>
-                  <th>Total Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @invoice_items.each do |item| %>
-                  <tr>
-                    <td>
-                      <strong><%= item.product.name %></strong>
-                      <% if item.product.description.present? %>
-                        <br><small class="text-muted"><%= item.product.description %></small>
-                      <% end %>
-                    </td>
-                    <td>
-                      <%= item.quantity %> <%= item.product.unit_type %>
-                    </td>
-                    <td>₹<%= number_with_delimiter(item.unit_price) %></td>
-                    <td>₹<%= number_with_delimiter(item.total_price) %></td>
-                  </tr>
-                <% end %>
-              </tbody>
-              <tfoot class="table-light">
-                <tr>
-                  <th colspan="3" class="text-end">Subtotal:</th>
-                  <th>₹<%= number_with_delimiter(@invoice.total_amount) %></th>
-                </tr>
-                <tr>
-                  <th colspan="3" class="text-end">Tax (0%):</th>
-                  <th>₹0.00</th>
-                </tr>
-                <tr class="table-success">
-                  <th colspan="3" class="text-end">Total Amount:</th>
-                  <th>₹<%= number_with_delimiter(@invoice.total_amount) %></th>
-                </tr>
-              </tfoot>
+    <!-- Recent Orders Table -->
+    <div class="items-section">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>RECENT ORDERS</th>
+            <th>QTY.</th>
+            <th>RATE</th>
+            <th>AMOUNT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A2 MILK 500ML</td>
+            <td>28 PCS</td>
+            <td>50</td>
+            <td>1,400</td>
+          </tr>
+          <tr>
+            <td>LAST MONTH</td>
+            <td>1 PCS</td>
+            <td>1,800</td>
+            <td>1,800</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="subtotal-section">
+        <div class="row">
+          <div class="col-md-8"></div>
+          <div class="col-md-4">
+            <table class="subtotal-table">
+              <tr>
+                <td><strong>SUBTOTAL</strong></td>
+                <td><strong>29</strong></td>
+                <td><strong>₹ 3,200</strong></td>
+              </tr>
             </table>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Notes -->
-      <% if @invoice.notes.present? %>
-        <div class="card mb-4">
-          <div class="card-header">
-            <h5><i class="fas fa-sticky-note"></i> Notes</h5>
-          </div>
-          <div class="card-body">
-            <p class="mb-0"><%= simple_format(@invoice.notes) %></p>
+    <!-- Bottom Section -->
+    <div class="bottom-section">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="bank-details">
+            <h6><strong>CUSTOMER STATUS</strong></h6>
+            <p><strong>ID:</strong> #<%= @customer.id.to_s.rjust(6, '0') %></p>
+            <p><strong>Status:</strong> 
+              <% if @customer.latitude.present? && @customer.longitude.present? %>
+                <span class="status-badge active">GPS Available</span>
+              <% else %>
+                <span class="status-badge inactive">No GPS</span>
+              <% end %>
+            </p>
+            <p><strong>Added By:</strong> Atma Nirbhar Farm</p>
           </div>
         </div>
-      <% end %>
-
-      <!-- Related Deliveries (if monthly invoice) -->
-      <% if @invoice.invoice_type == 'monthly' && @invoice.delivery_assignments.present? %>
-        <div class="card mb-4">
-          <div class="card-header">
-            <h5><i class="fas fa-truck"></i> Related Deliveries</h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-sm table-striped">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% @invoice.delivery_assignments.includes(:product).order(:completed_at).each do |assignment| %>
-                    <tr>
-                      <td>
-                        <%= assignment.completed_at&.strftime('%d %b %Y') || assignment.scheduled_date.strftime('%d %b %Y') %>
-                      </td>
-                      <td><%= assignment.product.name %></td>
-                      <td><%= assignment.quantity %> <%= assignment.unit %></td>
-                      <td>
-                        <span class="badge bg-success">
-                          <%= assignment.status.humanize %>
-                        </span>
-                      </td>
-                    </tr>
-                  <% end %>
-                </tbody>
-              </table>
+        
+        <div class="col-md-4">
+          <div class="payment-qr">
+            <h6><strong>QUICK ACTIONS</strong></h6>
+            <div class="action-buttons">
+              <%= link_to edit_customer_path(@customer), class: "btn btn-warning btn-sm mb-1" do %>
+                <i class="fas fa-edit me-1"></i>Edit
+              <% end %>
+              <br>
+              <a href="#" class="btn btn-success btn-sm mb-1">
+                <i class="fas fa-file-invoice me-1"></i>New Invoice
+              </a>
+              <br>
+              <a href="#" class="btn btn-info btn-sm">
+                <i class="fas fa-eye me-1"></i>View History
+              </a>
             </div>
           </div>
         </div>
-      <% end %>
-
-      <!-- Payment Information -->
-      <div class="card">
-        <div class="card-header">
-          <h5><i class="fas fa-credit-card"></i> Payment Information</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <p><strong>Status:</strong> 
-                <% case @invoice.status %>
-                <% when 'pending' %>
-                  <span class="badge bg-warning">Payment Pending</span>
-                <% when 'paid' %>
-                  <span class="badge bg-success">Paid</span>
-                <% when 'overdue' %>
-                  <span class="badge bg-danger">Overdue</span>
-                <% end %>
-              </p>
-              
-              <% if @invoice.status == 'paid' && @invoice.paid_at %>
-                <p><strong>Payment Date:</strong> <%= @invoice.paid_at.strftime('%d %B %Y at %I:%M %p') %></p>
-              <% end %>
-            </div>
-            
-            <div class="col-md-6">
-              <% if @invoice.last_reminder_sent_at %>
-                <p><strong>Last Reminder:</strong> 
-                  <%= @invoice.last_reminder_sent_at.strftime('%d %B %Y') %>
-                </p>
-              <% end %>
-              
-              <% if @invoice.overdue? %>
-                <div class="alert alert-danger">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <strong>This invoice is <%= @invoice.days_overdue %> days overdue!</strong>
-                </div>
-              <% end %>
+        
+        <div class="col-md-4">
+          <div class="amount-section">
+            <table class="amount-table">
+              <tr>
+                <td>TOTAL ORDERS</td>
+                <td>₹ 3,200</td>
+              </tr>
+              <tr>
+                <td><strong>OUTSTANDING</strong></td>
+                <td><strong>₹ 3,200</strong></td>
+              </tr>
+              <tr>
+                <td>Received Amount</td>
+                <td>₹ 0</td>
+              </tr>
+            </table>
+            <div class="amount-words">
+              <p><strong>Total Amount (in words)</strong><br>
+              Three Thousand Two Hundred Rupees</p>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Terms and Signature -->
+    <div class="terms-section">
+      <div class="row">
+        <div class="col-md-8">
+          <h6><strong>TERMS AND CONDITIONS</strong></h6>
+          <ol>
+            <li>Kindly Do Make Every Month Payment on or Before the 10th of The Month</li>
+            <li>Kindly Share the Screenshot Immediately Once the Payment is Done to Confirm Your Payment</li>
+          </ol>
+        </div>
+        <div class="col-md-4 text-center">
+          <div class="signature-section">
+            <div class="signature-box"></div>
+            <p><strong>AUTHORISED SIGNATORY FOR<br>Atma Nirbhar Farm</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="actions-footer">
+      <div class="text-center">
+        <%= link_to customers_path, class: "btn btn-outline-secondary me-2" do %>
+          <i class="fas fa-arrow-left me-2"></i>Back to Customers
+        <% end %>
+        <%= link_to edit_customer_path(@customer), class: "btn btn-warning me-2" do %>
+          <i class="fas fa-edit me-2"></i>Edit Customer
+        <% end %>
+        <a href="#" class="btn btn-success me-2">
+          <i class="fas fa-download me-2"></i>Download PDF
+        </a>
+        <%= link_to customer_path(@customer), method: :delete, 
+            class: "btn btn-danger", 
+            confirm: "Are you sure you want to delete this customer? This action cannot be undone." do %>
+          <i class="fas fa-trash me-2"></i>Delete
+        <% end %>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-  @media print {
-    .btn-group, .card-header, nav, footer {
-      display: none !important;
-    }
-    
-    .card {
-      border: none !important;
-      box-shadow: none !important;
-    }
-    
-    .container {
-      max-width: 100% !important;
-    }
+.invoice-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.invoice-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+}
+
+.company-logo .logo-circle {
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 35px;
+  color: white;
+  border: 3px solid rgba(255,255,255,0.3);
+}
+
+.company-name {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.company-address {
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.9);
+}
+
+.company-details {
+  margin-bottom: 8px;
+}
+
+.company-details span {
+  display: inline-block;
+  margin-right: 20px;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.9);
+}
+
+.company-email {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.9);
+}
+
+.invoice-info-bar {
+  background: #f8f9fa;
+  padding: 15px 30px;
+  border-bottom: 2px solid #dee2e6;
+  color: #495057;
+}
+
+.customer-section {
+  padding: 30px;
+  background: #fff;
+}
+
+.section-title {
+  background: #6c757d;
+  color: white;
+  padding: 8px 15px;
+  margin-bottom: 15px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+.customer-info h4 {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.customer-info p {
+  color: #666;
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.items-section {
+  padding: 0 30px;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.items-table thead th {
+  background: #6c757d;
+  color: white;
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+  border: 1px solid #495057;
+}
+
+.items-table tbody td {
+  padding: 15px 12px;
+  border: 1px solid #dee2e6;
+  background: #fff;
+}
+
+.items-table tbody tr:nth-child(even) td {
+  background: #f8f9fa;
+}
+
+.subtotal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.subtotal-table td {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  background: #e9ecef;
+  text-align: right;
+}
+
+.bottom-section {
+  padding: 30px;
+  background: #f8f9fa;
+}
+
+.bank-details h6, .payment-qr h6 {
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.action-buttons .btn {
+  width: 120px;
+  text-align: left;
+}
+
+.amount-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.amount-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.amount-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.amount-table td:last-child {
+  text-align: right;
+  font-weight: bold;
+}
+
+.amount-words {
+  border-top: 2px solid #333;
+  padding-top: 15px;
+  font-size: 0.9rem;
+}
+
+.terms-section {
+  padding: 30px;
+  background: white;
+  border-top: 1px solid #dee2e6;
+}
+
+.terms-section h6 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.terms-section ol {
+  padding-left: 20px;
+  color: #666;
+}
+
+.terms-section li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.signature-section {
+  text-align: center;
+}
+
+.signature-box {
+  width: 150px;
+  height: 80px;
+  border: 2px solid #dee2e6;
+  margin: 0 auto 15px;
+  background: #f8f9fa;
+}
+
+.actions-footer {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.actions-footer .btn {
+  margin: 0 5px;
+}
+
+@media print {
+  .actions-footer {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .invoice-container {
+    margin: 10px;
   }
   
-  .fs-6 {
-    font-size: 1rem !important;
+  .company-name {
+    font-size: 1.8rem;
   }
   
-  .badge {
-    font-size: 0.8em;
+  .company-details span {
+    display: block;
+    margin-right: 0;
+    margin-bottom: 5px;
   }
+  
+  .items-table {
+    font-size: 0.85rem;
+  }
+  
+  .items-table thead th,
+  .items-table tbody td {
+    padding: 8px 6px;
+  }
+}
 </style>

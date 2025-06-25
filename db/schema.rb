@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_24_045754) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_22_065935) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_24_045754) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "delivery_person_id"
+    t.string "image_url"
+    t.string "phone_number"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
@@ -111,6 +113,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_24_045754) do
     t.datetime "paid_at"
     t.datetime "last_reminder_sent_at"
     t.text "notes"
+    t.string "phone_number"
     t.index ["customer_id"], name: "index_invoices_on_customer_id"
     t.index ["due_date"], name: "index_invoices_on_due_date"
     t.index ["invoice_date"], name: "index_invoices_on_invoice_date"

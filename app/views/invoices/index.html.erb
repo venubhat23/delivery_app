@@ -4,6 +4,14 @@
     <h1>Invoice Management</h1>
     <div class="btn-group">
       <%= link_to 'Generate Invoice', generate_invoices_path, class: 'btn btn-success' %>
+      <%= link_to 'Generate Monthly for All', 
+            generate_monthly_for_all_invoices_path, 
+            method: :post,
+            data: { 
+              confirm: 'This will generate invoices for all customers with completed deliveries this month and send WhatsApp notifications. Continue?',
+              disable_with: 'Generating...'
+            },
+            class: 'btn btn-primary ms-2' %>
     </div>
   </div>
 
@@ -53,6 +61,52 @@
         <div class="card-body">
           <h3><%= @stats[:pending] + @stats[:paid] + @stats[:overdue] %></h3>
           <p class="mb-0">All Time</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate Monthly Invoices Section -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5><i class="fas fa-calendar-alt"></i> Bulk Invoice Generation</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-8">
+          <p class="mb-2">
+            <strong>Generate Monthly Invoices for All Customers</strong><br>
+            <small class="text-muted">
+              This will automatically generate invoices for all customers who have completed deliveries this month 
+              and send WhatsApp notifications with PDF attachments.
+            </small>
+          </p>
+        </div>
+        <div class="col-md-4 text-end">
+          <%= form_with url: generate_monthly_for_all_invoices_path, method: :post, local: true, class: 'd-inline' do |form| %>
+            <div class="row g-2">
+              <div class="col-md-5">
+                <%= form.select :month,
+                      options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, Date.current.month),
+                      {},
+                      { class: 'form-select form-select-sm' } %>
+              </div>
+              <div class="col-md-4">
+                <%= form.select :year,
+                      options_for_select((2020..Date.current.year + 1).to_a.reverse.map { |y| [y, y] }, Date.current.year),
+                      {},
+                      { class: 'form-select form-select-sm' } %>
+              </div>
+              <div class="col-md-3">
+                <%= form.submit 'Generate All', 
+                      class: 'btn btn-primary btn-sm w-100',
+                      data: { 
+                        confirm: 'Generate invoices for all customers and send WhatsApp notifications?',
+                        disable_with: 'Processing...'
+                      } %>
+              </div>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
@@ -168,14 +222,11 @@
                   <div class="btn-group btn-group-sm">
                     <%= link_to 'View', invoice, class: 'btn btn-outline-primary btn-sm' %>
                     <% if invoice.status != 'paid' %>
-         
-<%= button_to 'Mark Paid', 
-      mark_as_paid_invoice_path(invoice), 
-      method: :patch,
-      data: { confirm: 'Are you sure you want to mark this invoice as paid?' },
-      class: 'btn btn-outline-success btn-sm' %>
-
-
+                      <%= button_to 'Mark Paid', 
+                            mark_as_paid_invoice_path(invoice), 
+                            method: :patch,
+                            data: { confirm: 'Are you sure you want to mark this invoice as paid?' },
+                            class: 'btn btn-outline-success btn-sm' %>
                     <% end %>
                   </div>
                 </td>
@@ -212,6 +263,10 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.125);
   }
   
+  .card-header.bg-primary {
+    background-color: #0d6efd !important;
+  }
+  
   .btn-group-sm .btn {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
@@ -223,5 +278,15 @@
   
   .badge {
     font-size: 0.75em;
+  }
+  
+  .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
   }
 </style>
