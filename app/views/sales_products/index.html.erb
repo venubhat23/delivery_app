@@ -1,0 +1,161 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">Sales Products</h2>
+        <%= link_to 'Add New Product', new_sales_product_path, class: 'btn btn-success' %>
+      </div>
+      
+      <!-- Summary Cards -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card bg-primary text-white">
+            <div class="card-body">
+              <h5 class="card-title">Total Products</h5>
+              <h3><%= @sales_products.count %></h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-success text-white">
+            <div class="card-body">
+              <h5 class="card-title">Total Stock Value</h5>
+              <h3>₹<%= number_with_precision(@total_stock_value, precision: 2) %></h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-warning text-white">
+            <div class="card-body">
+              <h5 class="card-title">Low Stock Items</h5>
+              <h3><%= @low_stock_count %></h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-info text-white">
+            <div class="card-body">
+              <h5 class="card-title">Categories</h5>
+              <h3><%= @categories_count %></h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <%= form_with url: sales_products_path, method: :get, local: true, class: 'row g-3' do |form| %>
+            <div class="col-md-3">
+              <%= form.text_field :search, placeholder: 'Search products...', 
+                                  value: params[:search], class: 'form-control' %>
+            </div>
+            <div class="col-md-3">
+              <%= form.select :category, options_for_select([['All Categories', '']] + 
+                              SalesProduct.categories.map { |c| [c, c] }, 
+                              params[:category]), {}, { class: 'form-select' } %>
+            </div>
+            <div class="col-md-3">
+              <%= form.select :stock_status, options_for_select([
+                                ['All Stock Status', ''], 
+                                ['In Stock', 'in_stock'], 
+                                ['Low Stock', 'low_stock'], 
+                                ['Out of Stock', 'out_of_stock']
+                              ], params[:stock_status]), {}, { class: 'form-select' } %>
+            </div>
+            <div class="col-md-3">
+              <%= form.submit 'Filter', class: 'btn btn-outline-primary me-2' %>
+              <%= link_to 'Clear', sales_products_path, class: 'btn btn-outline-secondary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Products Table -->
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Purchase Price</th>
+                  <th>Sales Price</th>
+                  <th>Profit Margin</th>
+                  <th>Current Stock</th>
+                  <th>Stock Value</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @sales_products.each do |product| %>
+                  <tr>
+                    <td>
+                      <strong><%= product.name %></strong>
+                      <% if product.description.present? %>
+                        <br><small class="text-muted"><%= truncate(product.description, length: 50) %></small>
+                      <% end %>
+                    </td>
+                    <td>
+                      <% if product.category.present? %>
+                        <span class="badge bg-info"><%= product.category %></span>
+                      <% else %>
+                        <span class="text-muted">-</span>
+                      <% end %>
+                    </td>
+                    <td>₹<%= number_with_precision(product.purchase_price, precision: 2) %></td>
+                    <td>₹<%= number_with_precision(product.sales_price, precision: 2) %></td>
+                    <td>
+                      <span class="badge <%= product.profit_margin > 0 ? 'bg-success' : 'bg-danger' %>">
+                        <%= product.profit_margin %>%
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge <%= case product.stock_status
+                                            when 'out_of_stock' then 'bg-danger'
+                                            when 'low_stock' then 'bg-warning'
+                                            else 'bg-success'
+                                            end %>">
+                        <%= product.current_stock %> <%= product.measuring_unit %>
+                      </span>
+                    </td>
+                    <td>₹<%= number_with_precision(product.stock_value, precision: 2) %></td>
+                    <td>
+                      <% case product.stock_status %>
+                      <% when 'out_of_stock' %>
+                        <span class="badge bg-danger">Out of Stock</span>
+                      <% when 'low_stock' %>
+                        <span class="badge bg-warning">Low Stock</span>
+                      <% else %>
+                        <span class="badge bg-success">In Stock</span>
+                      <% end %>
+                    </td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <%= link_to 'View', product, class: 'btn btn-sm btn-outline-primary' %>
+                        <%= link_to 'Edit', edit_sales_product_path(product), class: 'btn btn-sm btn-outline-secondary' %>
+                        <%= link_to 'Delete', product, method: :delete, 
+                                    confirm: 'Are you sure?', class: 'btn btn-sm btn-outline-danger' %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+          
+          <% if @sales_products.empty? %>
+            <div class="text-center py-5">
+              <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No products found</h5>
+              <p class="text-muted">Start by adding your first product for sale.</p>
+              <%= link_to 'Add Product', new_sales_product_path, class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

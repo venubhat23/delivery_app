@@ -3,7 +3,7 @@ class DeliveryAssignmentsController < ApplicationController
   before_action :set_delivery_assignment, only: [:show, :edit, :update, :destroy, :complete, :cancel]
 
   def index
-    @delivery_assignments = DeliveryAssignment.includes(:customer, :delivery_person, :product)
+    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product)
                                              .order(created_at: :desc)
     
     # Filter by status if provided
@@ -13,7 +13,8 @@ class DeliveryAssignmentsController < ApplicationController
     
     # Filter by delivery person if provided
     if params[:delivery_person_id].present?
-      @delivery_assignments = @delivery_assignments.where(delivery_person_id: params[:delivery_person_id])
+      @delivery_assignments = DeliveryAssignment.joins(:delivery_person)
+                                            .where(delivery_person: { id: params[:delivery_person_id] })
     end
 
     @delivery_people = User.delivery_people.all
@@ -58,16 +59,32 @@ class DeliveryAssignmentsController < ApplicationController
 
   def destroy
     @delivery_assignment.destroy
-    redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully deleted.'
+    respond_to do |format|
+      format.html { redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully deleted.' }
+      format.json { head :no_content }
+    end
+  rescue => e
+    respond_to do |format|
+      format.html { redirect_to delivery_assignments_path, alert: 'Failed to delete delivery assignment.' }
+      format.json { render json: { error: e.message }, status: :unprocessable_entity }
+    end
   end
 
   def complete
-    if @delivery_assignment.update(status: 'completed', completed_at: Time.current)
-      # Create invoice if not exists
+    @delivery_assignment.status = 'completed'
+    @delivery_assignment.completed_at = Time.current
+    
+    if @delivery_assignment.save
       create_invoice_for_delivery
-      redirect_to @delivery_assignment, notice: 'Delivery marked as completed.'
+      respond_to do |format|
+        format.html { redirect_to delivery_assignments_path, notice: 'Delivery marked as completed successfully!' }
+        format.json { render :show, status: :ok, location: @delivery_assignment }
+      end
     else
-      redirect_to @delivery_assignment, alert: 'Failed to complete delivery.'
+      respond_to do |format|
+        format.html { redirect_to delivery_assignments_path, alert: 'Failed to complete delivery.' }
+        format.json { render json: @delivery_assignment.errors, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -105,7 +122,8 @@ class DeliveryAssignmentsController < ApplicationController
   def create_single_delivery
     @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params.except(:start_date, :end_date, :frequency))
     @delivery_assignment.status = 'pending' if @delivery_assignment.status.blank?
-    
+    @delivery_assignment.scheduled_date = @delivery_assignment.delivery_date # alias for consistency
+
     if @delivery_assignment.save
       redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully created.'
     else
@@ -151,18 +169,17 @@ class DeliveryAssignmentsController < ApplicationController
     created_count = 0
     
     while current_date <= delivery_schedule.end_date
-
       # Create delivery assignment for current date
-        assignment = DeliveryAssignment.new(
-          customer_id: delivery_schedule.customer_id,
-          user_id: delivery_schedule.user_id,
-          product_id: delivery_schedule.product_id,
-          quantity: delivery_schedule.default_quantity,
-          scheduled_date: current_date,
-          status: 'pending',
-          unit: delivery_schedule.product.unit_type,
-          delivery_schedule_id: delivery_schedule.id
-        )
+      assignment = DeliveryAssignment.new(
+        customer_id: delivery_schedule.customer_id,
+        user_id: delivery_schedule.user_id,
+        product_id: delivery_schedule.product_id,
+        quantity: delivery_schedule.default_quantity,
+        scheduled_date: current_date,
+        status: 'pending',
+        unit: delivery_schedule.product.unit_type,
+        delivery_schedule_id: delivery_schedule.id
+      )
       if assignment.save
         created_count += 1
       end
@@ -198,15 +215,19 @@ class DeliveryAssignmentsController < ApplicationController
   def create_invoice_for_delivery
     return if @delivery_assignment.invoice.present?
     
-    invoice = Invoice.create!(
-      customer: @delivery_assignment.customer,
-      delivery_assignment: @delivery_assignment,
-      amount: calculate_delivery_amount,
-      due_date: 30.days.from_now,
-      status: 'pending'
-    )
-    
-    @delivery_assignment.update(invoice: invoice)
+    begin
+      invoice = Invoice.create!(
+        customer: @delivery_assignment.customer,
+        delivery_assignment: @delivery_assignment,
+        amount: calculate_delivery_amount,
+        due_date: 30.days.from_now,
+        status: 'pending'
+      )
+      
+      @delivery_assignment.update(invoice: invoice)
+    rescue => e
+      Rails.logger.error "Failed to create invoice: #{e.message}"
+    end
   end
 
   def calculate_delivery_amount

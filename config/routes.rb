@@ -1,4 +1,3 @@
-# config/routes.rb (ADD THESE ROUTES)
 Rails.application.routes.draw do
   root 'dashboard#index'
   
@@ -14,14 +13,35 @@ Rails.application.routes.draw do
   resources :products
   resources :customers
   
-  # ADD THESE NEW ROUTES FOR PURCHASE SYSTEM
+  # Purchase Products System
   resources :purchase_products do
     collection do
       get :search
     end
   end
   
+  # Sales Products System (NEW)
+  resources :sales_products do
+    collection do
+      get :search
+    end
+  end
+  
+  # Purchase Invoices
   resources :purchase_invoices do
+    member do
+      patch :mark_as_paid
+      get :download_pdf
+    end
+    
+    collection do
+      get :profit_analysis
+      get :sales_analysis
+    end
+  end
+  
+  # Sales Invoices (NEW)
+  resources :sales_invoices do
     member do
       patch :mark_as_paid
       get :download_pdf
@@ -49,6 +69,14 @@ Rails.application.routes.draw do
     end
   end
   
+  # Delivery Assignments (single resource, correct helpers)
+  resources :delivery_assignments, path: 'assign_deliveries' do
+    member do
+      patch :complete
+      patch :cancel
+    end
+  end
+  
   # Delivery Schedules
   resources :delivery_schedules, path: 'schedules' do
     member do
@@ -58,14 +86,6 @@ Rails.application.routes.draw do
     
     collection do
       post :create_bulk
-    end
-  end
-  
-  # Delivery Assignments
-  resources :delivery_assignments, path: 'assign_deliveries' do
-    member do
-      patch :complete
-      patch :cancel
     end
   end
   

@@ -47,6 +47,10 @@ class ProductsController < ApplicationController
   end
 
   def product_params
-    params.require(:product).permit(:name, :description, :unit_type, :available_quantity, :price)
+    params.require(:product).permit(
+      :name, :description, :unit_type, :available_quantity, :price,
+      :is_gst_applicable, :total_gst_percentage, :total_cgst_percentage,
+      :total_sgst_percentage, :total_igst_percentage
+    )
   end
 end

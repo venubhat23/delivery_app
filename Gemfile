@@ -26,6 +26,9 @@ group :development do
   gem 'pry'
   gem 'pry-rails'
 end
+gem 'wicked_pdf'
+gem 'wkhtmltopdf-binary'
+
 
 # Icons
 gem 'font-awesome-rails'

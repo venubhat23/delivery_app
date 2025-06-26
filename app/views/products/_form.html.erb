@@ -10,6 +10,25 @@
     </div>
   <% end %>
 
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+      <i class="fas fa-box me-2"></i><%= product.name.presence || 'New Product' %>
+      <% if product.persisted? && product.available_quantity.to_f < 10 %>
+        <span class="badge bg-danger ms-2">Low Stock</span>
+      <% end %>
+    </h1>
+    <div>
+      <% if product.persisted? %>
+        <%= link_to edit_product_path(product), class: "btn btn-warning me-2" do %>
+          <i class="fas fa-edit me-2"></i>Edit
+        <% end %>
+      <% end %>
+      <%= link_to products_path, class: "btn btn-outline-secondary" do %>
+        <i class="fas fa-arrow-left me-2"></i>Back to Products
+      <% end %>
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-md-6">
       <div class="mb-3">
@@ -22,7 +41,6 @@
         </div>
       </div>
     </div>
-    
     <div class="col-md-6">
       <div class="mb-3">
         <%= form.label :unit_type, class: "form-label fw-bold" do %>
@@ -69,14 +87,13 @@
         </div>
       </div>
     </div>
-    
     <div class="col-md-6">
       <div class="mb-3">
         <%= form.label :price, class: "form-label fw-bold" do %>
-          <i class="fas fa-dollar-sign me-1"></i>Price per Unit *
+          <i class="fas fa-rupee-sign me-1"></i>Price per Unit *
         <% end %>
         <div class="input-group">
-          <span class="input-group-text">$</span>
+          <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
           <%= form.number_field :price, 
               class: "form-control", 
               step: 0.01,
@@ -91,6 +108,54 @@
     </div>
   </div>
 
+  <!-- GST Section -->
+  <div class="mb-3">
+    <%= form.label :is_gst_applicable, class: "form-label fw-bold" do %>
+      <i class="fas fa-file-invoice-dollar me-1"></i>Is GST Applicable?
+    <% end %>
+    <div>
+      <%= form.check_box :is_gst_applicable, { class: "form-check-input", id: "is_gst_applicable_checkbox" }, true, false %>
+      <%= form.label :is_gst_applicable, "Yes", class: "form-check-label", for: "is_gst_applicable_checkbox" %>
+    </div>
+  </div>
+  <div id="gst-fields" style="<%= product.is_gst_applicable? ? '' : 'display:none;' %>">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="mb-3">
+          <%= form.label :total_gst_percentage, class: "form-label fw-bold" do %>
+            <i class="fas fa-percent me-1"></i>Total GST %
+          <% end %>
+          <%= form.number_field :total_gst_percentage, class: "form-control", step: 0.01, min: 0, max: 100, placeholder: "e.g. 18" %>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="mb-3">
+          <%= form.label :total_cgst_percentage, class: "form-label fw-bold" do %>
+            <i class="fas fa-percent me-1"></i>Total CGST %
+          <% end %>
+          <%= form.number_field :total_cgst_percentage, class: "form-control", step: 0.01, min: 0, max: 100, placeholder: "e.g. 9" %>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="mb-3">
+          <%= form.label :total_sgst_percentage, class: "form-label fw-bold" do %>
+            <i class="fas fa-percent me-1"></i>Total SGST %
+          <% end %>
+          <%= form.number_field :total_sgst_percentage, class: "form-control", step: 0.01, min: 0, max: 100, placeholder: "e.g. 9" %>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="mb-3">
+          <%= form.label :total_igst_percentage, class: "form-label fw-bold" do %>
+            <i class="fas fa-percent me-1"></i>Total IGST %
+          <% end %>
+          <%= form.number_field :total_igst_percentage, class: "form-control", step: 0.01, min: 0, max: 100, placeholder: "e.g. 18" %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End GST Section -->
+
   <div class="d-flex justify-content-between align-items-center mt-4">
     <div class="form-actions">
       <%= form.submit class: "btn btn-primary me-2" do %>
@@ -100,7 +165,6 @@
         <i class="fas fa-times me-2"></i>Cancel
       <% end %>
     </div>
-    
     <small class="text-muted">
       <i class="fas fa-info-circle me-1"></i>
       Fields marked with * are required
@@ -114,7 +178,7 @@
   'use strict';
   window.addEventListener('load', function() {
     var forms = document.getElementsByClassName('needs-validation');
-    var validation = Array.prototype.filter.call(forms, function(form) {
+    Array.prototype.filter.call(forms, function(form) {
       form.addEventListener('submit', function(event) {
         if (form.checkValidity() === false) {
           event.preventDefault();
@@ -123,6 +187,13 @@
         form.classList.add('was-validated');
       }, false);
     });
+    // GST field toggle
+    var gstCheckbox = document.getElementById('is_gst_applicable_checkbox');
+    if (gstCheckbox) {
+      gstCheckbox.addEventListener('change', function() {
+        document.getElementById('gst-fields').style.display = this.checked ? '' : 'none';
+      });
+    }
   }, false);
 })();
 </script>

@@ -67,50 +67,6 @@
   </div>
 
   <!-- Generate Monthly Invoices Section -->
-  <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-      <h5><i class="fas fa-calendar-alt"></i> Bulk Invoice Generation</h5>
-    </div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-8">
-          <p class="mb-2">
-            <strong>Generate Monthly Invoices for All Customers</strong><br>
-            <small class="text-muted">
-              This will automatically generate invoices for all customers who have completed deliveries this month 
-              and send WhatsApp notifications with PDF attachments.
-            </small>
-          </p>
-        </div>
-        <div class="col-md-4 text-end">
-          <%= form_with url: generate_monthly_for_all_invoices_path, method: :post, local: true, class: 'd-inline' do |form| %>
-            <div class="row g-2">
-              <div class="col-md-5">
-                <%= form.select :month,
-                      options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, Date.current.month),
-                      {},
-                      { class: 'form-select form-select-sm' } %>
-              </div>
-              <div class="col-md-4">
-                <%= form.select :year,
-                      options_for_select((2020..Date.current.year + 1).to_a.reverse.map { |y| [y, y] }, Date.current.year),
-                      {},
-                      { class: 'form-select form-select-sm' } %>
-              </div>
-              <div class="col-md-3">
-                <%= form.submit 'Generate All', 
-                      class: 'btn btn-primary btn-sm w-100',
-                      data: { 
-                        confirm: 'Generate invoices for all customers and send WhatsApp notifications?',
-                        disable_with: 'Processing...'
-                      } %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Filters -->
   <div class="card mb-4">

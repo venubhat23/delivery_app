@@ -3,9 +3,9 @@ require 'twilio-ruby'
 
 class WhatsappService
   # Configuration
-  #ACCOUNT_SID = 'ACa48d154788177a621c9acf8b0d99e7e5'
-  #AUTH_TOKEN  = '6cb8c1e23b39843e1ee104d76e5fc081'
-  #FROM_NUMBER = 'whatsapp:+14155238886' # Twilio Sandbox WhatsApp number
+  ACCOUNT_SID = 'ACc88b1a0b859971f4c033598e67967411'
+  AUTH_TOKEN  = 'efd613cbb6b44fec1c5df906c514c4e1'
+  FROM_NUMBER = 'whatsapp:+14155238886' # Twilio Sandbox WhatsApp number
   
   def initialize
     @client = Twilio::REST::Client.new(ACCOUNT_SID, AUTH_TOKEN)

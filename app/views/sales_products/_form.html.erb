@@ -1,0 +1,134 @@
+<%= form_with model: sales_product, local: true, class: 'needs-validation', novalidate: true do |form| %>
+  <% if sales_product.errors.any? %>
+    <div class="alert alert-danger">
+      <h6 class="alert-heading">Please fix the following errors:</h6>
+      <ul class="mb-0">
+        <% sales_product.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <%= form.label :name, 'Product Name *', class: 'form-label' %>
+      <%= form.text_field :name, class: 'form-control', required: true, 
+                          placeholder: 'Enter product name' %>
+      <div class="invalid-feedback">
+        Please provide a product name.
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <%= form.label :category, class: 'form-label' %>
+      <%= form.text_field :category, class: 'form-control', 
+                          placeholder: 'e.g., Electronics, Clothing' %>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <%= form.label :purchase_price, 'Purchase Price *', class: 'form-label' %>
+      <div class="input-group">
+        <span class="input-group-text">₹</span>
+        <%= form.number_field :purchase_price, step: 0.01, min: 0, class: 'form-control', 
+                              required: true, placeholder: '0.00', id: 'purchase_price' %>
+        <div class="invalid-feedback">
+          Please provide a valid purchase price.
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <%= form.label :sales_price, 'Sales Price *', class: 'form-label' %>
+      <div class="input-group">
+        <span class="input-group-text">₹</span>
+        <%= form.number_field :sales_price, step: 0.01, min: 0, class: 'form-control', 
+                              required: true, placeholder: '0.00', id: 'sales_price',
+                              onchange: 'calculateProfitMargin()' %>
+        <div class="invalid-feedback">
+          Please provide a valid sales price.
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 mb-3">
+      <%= form.label :measuring_unit, 'Unit *', class: 'form-label' %>
+      <%= form.select :measuring_unit, options_for_select([
+                        ['Pieces (PCS)', 'PCS'],
+                        ['Kilograms (KG)', 'KG'],
+                        ['Grams (GM)', 'GM'],
+                        ['Liters (LTR)', 'LTR'],
+                        ['Meters (MTR)', 'MTR'],
+                        ['Box', 'BOX'],
+                        ['Dozen', 'DOZ'],
+                        ['Pack', 'PACK']
+                      ], sales_product.measuring_unit), 
+                      { prompt: 'Select Unit' }, 
+                      { class: 'form-select', required: true } %>
+    </div>
+    <div class="col-md-3 mb-3">
+      <%= form.label :opening_stock, 'Opening Stock *', class: 'form-label' %>
+      <%= form.number_field :opening_stock, min: 0, class: 'form-control', 
+                            required: true, placeholder: '0' %>
+    </div>
+    <div class="col-md-3 mb-3">
+      <%= form.label :current_stock, 'Current Stock *', class: 'form-label' %>
+      <%= form.number_field :current_stock, min: 0, class: 'form-control', 
+                            required: true, placeholder: '0' %>
+    </div>
+    <div class="col-md-3 mb-3">
+      <label class="form-label">Profit Margin</label>
+      <div class="form-control-plaintext fw-bold text-success" id="profit_margin_display">
+        0.00%
+      </div>
+    </div>
+  </div>
+  
+  <div class="mb-3">
+    <%= form.label :description, class: 'form-label' %>
+    <%= form.text_area :description, rows: 3, class: 'form-control', 
+                       placeholder: 'Product description (optional)' %>
+  </div>
+  
+  <div class="form-check mb-3">
+    <%= form.check_box :enable_serialization, class: 'form-check-input' %>
+    <%= form.label :enable_serialization, 'Enable Serial Number Tracking', class: 'form-check-label' %>
+    <small class="form-text text-muted">Check this if you want to track individual serial numbers for this product.</small>
+  </div>
+  
+  <div class="d-flex justify-content-between">
+    <%= link_to 'Cancel', sales_products_path, class: 'btn btn-secondary' %>
+    <%= form.submit sales_product.new_record? ? 'Create Product' : 'Update Product', 
+                    class: 'btn btn-primary' %>
+  </div>
+<% end %>
+
+<script>
+function calculateProfitMargin() {
+  const purchasePrice = parseFloat(document.getElementById('purchase_price').value) || 0;
+  const salesPrice = parseFloat(document.getElementById('sales_price').value) || 0;
+  
+  if (purchasePrice > 0) {
+    const margin = ((salesPrice - purchasePrice) / purchasePrice * 100).toFixed(2);
+    document.getElementById('profit_margin_display').textContent = margin + '%';
+    
+    // Update color based on margin
+    const element = document.getElementById('profit_margin_display');
+    if (margin > 0) {
+      element.className = 'form-control-plaintext fw-bold text-success';
+    } else {
+      element.className = 'form-control-plaintext fw-bold text-danger';
+    }
+  } else {
+    document.getElementById('profit_margin_display').textContent = '0.00%';
+  }
+}
+
+// Calculate on page load if editing
+document.addEventListener('DOMContentLoaded', function() {
+  calculateProfitMargin();
+});
+</script>
+

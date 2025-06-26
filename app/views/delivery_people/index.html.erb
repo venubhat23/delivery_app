@@ -138,7 +138,6 @@
               <th><i class="fas fa-phone me-1"></i>Phone</th>
               <th><i class="fas fa-users me-1"></i>Assigned Customers</th>
               <th><i class="fas fa-chart-pie me-1"></i>Capacity</th>
-              <th><i class="fas fa-map-marker-alt me-1"></i>Coverage Area</th>
               <th><i class="fas fa-cogs me-1"></i>Actions</th>
             </tr>
           </thead>
@@ -153,7 +152,6 @@
                     <div>
                       <strong class="text-primary"><%= person.name %></strong>
                      
-                        <span class="badge bg-secondary ms-2">Inactive</span>
                     </div>
                   </div>
                 </td>
@@ -188,9 +186,6 @@
                   </small>
                 </td>
                 <td>
-          
-                </td>
-                <td>
                   <div class="btn-group" role="group">
                     <%= link_to delivery_person_path(person), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
                       <i class="fas fa-eye"></i>
@@ -221,11 +216,12 @@
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                          <%= link_to delivery_person_path(person), method: :delete, 
-                              class: "dropdown-item text-danger", 
-                              confirm: "Are you sure? This will unassign all customers and cannot be undone." do %>
-                            <i class="fas fa-trash me-2"></i>Delete
-                          <% end %>
+      <%= button_to delivery_person_path(person),
+            method: :delete,
+            form: { "data-turbo-confirm": "Are you sure? This will unassign all customers and cannot be undone.", class: "d-inline" },
+            class: "dropdown-item text-danger" do %>
+        <i class="fas fa-trash me-2"></i>Delete
+      <% end %>
                         </li>
                       </ul>
                     </div>

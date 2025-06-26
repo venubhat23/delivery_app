@@ -1,3 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body class="bg-light">
+<div class="container-fluid p-4">
+
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
   <h1 class="h2">
     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
@@ -6,19 +19,26 @@
 
 <div class="row">
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-primary shadow h-100 py-2">
+    <div class="card border-left-primary shadow h-100 py-2 hover-card">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
               Total Customers
             </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= @total_customers %>
+            <div class="d-flex align-items-center">
+              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="totalCustomers">
+                <%= @total_customers || 0 %>
+              </div>
+              <div class="trending-indicator positive">
+                <i class="fas fa-arrow-up me-1"></i>
+                <span class="percentage">+5.2%</span>
+              </div>
             </div>
+            <div class="trend-text">vs last month</div>
           </div>
           <div class="col-auto">
-            <i class="fas fa-users fa-2x text-gray-300"></i>
+            <i class="fas fa-users fa-2x text-gray-300 hover-icon"></i>
           </div>
         </div>
       </div>
@@ -26,19 +46,26 @@
   </div>
 
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-success shadow h-100 py-2">
+    <div class="card border-left-success shadow h-100 py-2 hover-card">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
               Total Products
             </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= @total_products %>
+            <div class="d-flex align-items-center">
+              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="totalProducts">
+                <%= @total_products || 0 %>
+              </div>
+              <div class="trending-indicator positive">
+                <i class="fas fa-arrow-up me-1"></i>
+                <span class="percentage">+8.1%</span>
+              </div>
             </div>
+            <div class="trend-text">vs last month</div>
           </div>
           <div class="col-auto">
-            <i class="fas fa-box fa-2x text-gray-300"></i>
+            <i class="fas fa-box fa-2x text-gray-300 hover-icon"></i>
           </div>
         </div>
       </div>
@@ -46,19 +73,26 @@
   </div>
 
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-info shadow h-100 py-2">
+    <div class="card border-left-info shadow h-100 py-2 hover-card">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
               Pending Deliveries
             </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= @pending_deliveries %>
+            <div class="d-flex align-items-center">
+              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="pendingDeliveries">
+                <%= @pending_deliveries || 0 %>
+              </div>
+              <div class="trending-indicator negative">
+                <i class="fas fa-arrow-down me-1"></i>
+                <span class="percentage">-3.4%</span>
+              </div>
             </div>
+            <div class="trend-text">vs last month</div>
           </div>
           <div class="col-auto">
-            <i class="fas fa-truck fa-2x text-gray-300"></i>
+            <i class="fas fa-truck fa-2x text-gray-300 hover-icon"></i>
           </div>
         </div>
       </div>
@@ -66,19 +100,26 @@
   </div>
 
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-warning shadow h-100 py-2">
+    <div class="card border-left-warning shadow h-100 py-2 hover-card">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
               Total Invoices
             </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= @total_invoices %>
+            <div class="d-flex align-items-center">
+              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="totalInvoices">
+                <%= @total_invoices || 0 %>
+              </div>
+              <div class="trending-indicator positive">
+                <i class="fas fa-arrow-up me-1"></i>
+                <span class="percentage">+12.7%</span>
+              </div>
             </div>
+            <div class="trend-text">vs last month</div>
           </div>
           <div class="col-auto">
-            <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+            <i class="fas fa-file-invoice fa-2x text-gray-300 hover-icon"></i>
           </div>
         </div>
       </div>
@@ -86,28 +127,140 @@
   </div>
 </div>
 
+<!-- Sales Analytics Row -->
 <div class="row">
-  <div class="col-lg-12">
+  <div class="col-lg-6">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-chart-line me-2"></i>Sales Analytics (Last 7 Days)
+        </h6>
+      </div>
+      <div class="card-body">
+        <canvas id="salesChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-success">
+          <i class="fas fa-medal me-2"></i>Top Products
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if @top_products&.any? %>
+          <% @top_products.each_with_index do |product, index| %>
+            <div class="product-item <%= 'border-0' if index == @top_products.length - 1 %>">
+              <div class="product-rank"><%= index + 1 %></div>
+              <div class="product-info">
+                <h6 class="mb-0"><%= product.name %></h6>
+                <small class="text-muted"><%= product.unit_type || 'General' %></small>
+              </div>
+              <div class="product-stats">
+                <div class="sales-count">Available: <%= product.available_quantity || 0 %></div>
+                <div class="revenue">$<%= number_with_delimiter(product.price || 0) %></div>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-box-open fa-3x mb-3"></i>
+            <p>No products available</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
     <div class="card shadow mb-4">
       <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-primary">Welcome to Delivery Management System</h6>
       </div>
       <div class="card-body">
         <p>Welcome to your delivery management dashboard! Here you can:</p>
-        <ul>
-          <li>Manage products and inventory</li>
-          <li>Track customer information</li>
-          <li>Assign deliveries to delivery personnel</li>
-          <li>Generate and manage invoices</li>
-          <li>Monitor delivery schedules</li>
+        <ul class="feature-list">
+          <li><i class="fas fa-box text-primary me-2"></i>Manage products and inventory</li>
+          <li><i class="fas fa-users text-success me-2"></i>Track customer information</li>
+          <li><i class="fas fa-truck text-info me-2"></i>Assign deliveries to delivery personnel</li>
+          <li><i class="fas fa-file-invoice text-warning me-2"></i>Generate and manage invoices</li>
+          <li><i class="fas fa-chart-line text-secondary me-2"></i>Monitor delivery schedules</li>
         </ul>
-        <p class="text-muted">
-          <i class="fas fa-info-circle me-1"></i>
-          Most features are currently under development and will be available soon.
-        </p>
+        <div class="mt-4 p-3 bg-light rounded">
+          <h6 class="text-primary">Quick Stats:</h6>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="stat-item">
+                <div class="stat-number"><%= @total_customers || 0 %></div>
+                <div class="stat-label">Customers</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-item">
+                <div class="stat-number"><%= @total_products || 0 %></div>
+                <div class="stat-label">Products</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-item">
+                <div class="stat-number"><%= @pending_deliveries || 0 %></div>
+                <div class="stat-label">Pending</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-item">
+                <div class="stat-number"><%= @total_invoices || 0 %></div>
+                <div class="stat-label">Invoices</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-crown me-2"></i>Recent Customers
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if @recent_customers&.any? %>
+          <% @recent_customers.each_with_index do |customer, index| %>
+            <div class="customer-item <%= 'border-0' if index == @recent_customers.length - 1 %>">
+              <div class="customer-avatar bg-<%= ['primary', 'success', 'info', 'warning', 'secondary'][index % 5] %>">
+                <%= customer.name.split.map(&:first).join.upcase %>
+              </div>
+              <div class="customer-info">
+                <h6 class="mb-0"><%= customer.name %></h6>
+                <small class="text-muted">
+                  <% if customer.phone_number %>
+                    <%= customer.phone_number %>
+                  <% else %>
+                    Customer
+                  <% end %>
+                </small>
+              </div>
+              <div class="customer-orders">
+                <i class="fas fa-map-marker-alt" title="<%= customer.address || 'No address' %>"></i>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-users fa-3x mb-3"></i>
+            <p>No customers yet</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <style>
@@ -134,4 +287,397 @@
 .text-gray-800 {
   color: #5a5c69 !important;
 }
+
+/* Enhanced Styles */
+.hover-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.hover-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.hover-card:hover::before {
+  left: 100%;
+}
+
+.hover-icon {
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover .hover-icon {
+  transform: scale(1.1) rotate(5deg);
+  color: #4e73df !important;
+}
+
+.counter-number {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* Trending Indicators */
+.trending-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 12px;
+  animation: slideIn 0.6s ease-out 0.5s both;
+}
+
+.trending-indicator.positive {
+  background-color: rgba(28, 200, 138, 0.1);
+  color: #1cc88a;
+  border: 1px solid rgba(28, 200, 138, 0.2);
+}
+
+.trending-indicator.negative {
+  background-color: rgba(231, 74, 59, 0.1);
+  color: #e74a3b;
+  border: 1px solid rgba(231, 74, 59, 0.2);
+}
+
+.trending-indicator i {
+  font-size: 0.7rem;
+  animation: bounce 2s infinite;
+}
+
+.trend-text {
+  font-size: 0.7rem;
+  color: #858796;
+  margin-top: 2px;
+  opacity: 0;
+  animation: fadeIn 0.8s ease-out 1s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+}
+
+.feature-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f4;
+  transition: all 0.3s ease;
+}
+
+.feature-list li:hover {
+  background-color: #f8f9fa;
+  padding-left: 10px;
+  border-radius: 5px;
+}
+
+.feature-list li:last-child {
+  border-bottom: none;
+}
+
+.customer-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f3f4;
+  transition: all 0.3s ease;
+}
+
+.customer-item:hover {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding-left: 10px;
+}
+
+.customer-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-right: 15px;
+  font-size: 0.9rem;
+}
+
+.customer-info {
+  flex: 1;
+}
+
+.customer-info h6 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.customer-orders {
+  background: linear-gradient(45deg, #4e73df, #36b9cc);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 35px;
+  text-align: center;
+}
+
+/* Product Item Styles */
+.product-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f3f4;
+  transition: all 0.3s ease;
+}
+
+.product-item:hover {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding-left: 10px;
+}
+
+.product-rank {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #1cc88a, #36b9cc);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 15px;
+  font-size: 0.8rem;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-info h6 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.product-stats {
+  text-align: right;
+}
+
+.sales-count {
+  font-size: 0.75rem;
+  color: #858796;
+  margin-bottom: 2px;
+}
+
+.revenue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1cc88a;
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Counter Animation */
+.counting {
+  color: #4e73df !important;
+  animation: pulse 0.1s ease-in-out;
+}
+
+/* Quick Stats Styles */
+.stat-item {
+  text-align: center;
+  padding: 10px;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #4e73df;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #858796;
+  text-transform: uppercase;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .trending-indicator {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+  }
+  
+  .counter-number {
+    font-size: 1.5rem !important;
+  }
+  
+  .trend-text {
+    font-size: 0.65rem;
+  }
+  
+  .stat-number {
+    font-size: 1.2rem;
+  }
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Get actual values from Rails
+  const totalCustomers = parseInt(<%= @total_customers || 0 %>);
+  const totalProducts = parseInt(<%= @total_products || 0 %>);
+  const pendingDeliveries = parseInt(<%= @pending_deliveries || 0 %>);
+  const totalInvoices = parseInt(<%= @total_invoices || 0 %>);
+
+  // Animated counter function
+  function animateCounter(elementId, targetValue, duration = 2000) {
+    const element = document.getElementById(elementId);
+    if (!element || targetValue === 0) {
+      if (element) element.textContent = '0';
+      return;
+    }
+    
+    const start = 0;
+    const increment = targetValue / (duration / 16);
+    let current = start;
+
+    element.classList.add('counting');
+    
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= targetValue) {
+        current = targetValue;
+        clearInterval(timer);
+        element.classList.remove('counting');
+      }
+      element.textContent = Math.floor(current).toLocaleString();
+    }, 16);
+  }
+
+  // Start animations after a short delay
+  setTimeout(() => {
+    animateCounter('totalCustomers', totalCustomers, 2000);
+    animateCounter('totalProducts', totalProducts, 2200);
+    animateCounter('pendingDeliveries', pendingDeliveries, 1800);
+    animateCounter('totalInvoices', totalInvoices, 2400);
+  }, 500);
+
+  // Sales Chart
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  const salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        label: 'Sales ($)',
+        data: [12000, 15000, 8000, 18000, 22000, 25000, 19000],
+        borderColor: '#4e73df',
+        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#4e73df',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0,0,0,0.1)'
+          },
+          ticks: {
+            callback: function(value) {
+              return '$' + value.toLocaleString();
+            }
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      },
+      elements: {
+        point: {
+          hoverRadius: 8
+        }
+      }
+    }
+  });
+});
+</script>
+
+</body>
+</html>

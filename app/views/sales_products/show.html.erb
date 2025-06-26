@@ -1,0 +1,191 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0"><%= @sales_product.name %></h2>
+        <div>
+          <%= link_to 'Edit', edit_sales_product_path(@sales_product), class: 'btn btn-primary' %>
+          <%= link_to 'Back to Products', sales_products_path, class: 'btn btn-secondary' %>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Product Info -->
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Product Information</h5></div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <table class="table table-borderless">
+                    <tr><td class="fw-bold">Name:</td><td><%= @sales_product.name %></td></tr>
+                    <tr>
+                      <td class="fw-bold">Category:</td>
+                      <td>
+                        <% if @sales_product.category.present? %>
+                          <span class="badge bg-info"><%= @sales_product.category %></span>
+                        <% else %>
+                          <span class="text-muted">Not categorized</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                    <tr><td class="fw-bold">Purchase Price:</td><td class="text-success">₹<%= number_with_precision(@sales_product.purchase_price, precision: 2) %></td></tr>
+                    <tr><td class="fw-bold">Sales Price:</td><td class="text-primary">₹<%= number_with_precision(@sales_product.sales_price, precision: 2) %></td></tr>
+                    <tr>
+                      <td class="fw-bold">Profit Margin:</td>
+                      <td>
+                        <span class="badge <%= @sales_product.profit_margin > 0 ? 'bg-success' : 'bg-danger' %> fs-6">
+                          <%= @sales_product.profit_margin %>%
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div class="col-md-6">
+                  <table class="table table-borderless">
+                    <tr><td class="fw-bold">Measuring Unit:</td><td><%= @sales_product.measuring_unit %></td></tr>
+                    <tr><td class="fw-bold">Opening Stock:</td><td><%= @sales_product.opening_stock %> <%= @sales_product.measuring_unit %></td></tr>
+                    <tr>
+                      <td class="fw-bold">Current Stock:</td>
+                      <td>
+                        <span class="badge <%= case @sales_product.stock_status
+                                                when 'out_of_stock' then 'bg-danger'
+                                                when 'low_stock' then 'bg-warning'
+                                                else 'bg-success'
+                                              end %> fs-6">
+                          <%= @sales_product.current_stock %> <%= @sales_product.measuring_unit %>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr><td class="fw-bold">Stock Value:</td><td class="text-info">₹<%= number_with_precision(@sales_product.stock_value, precision: 2) %></td></tr>
+                    <tr>
+                      <td class="fw-bold">Serial Tracking:</td>
+                      <td>
+                        <% if @sales_product.enable_serialization %>
+                          <span class="badge bg-success">Enabled</span>
+                        <% else %>
+                          <span class="badge bg-secondary">Disabled</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+
+              <% if @sales_product.description.present? %>
+                <div class="mt-4">
+                  <h6 class="fw-bold">Description:</h6>
+                  <p class="text-muted"><%= simple_format(@sales_product.description) %></p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Stock Status</h5></div>
+            <div class="card-body text-center">
+              <% case @sales_product.stock_status %>
+              <% when 'out_of_stock' %>
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h5 class="text-danger">Out of Stock</h5>
+                <p class="text-muted">This product is currently unavailable</p>
+              <% when 'low_stock' %>
+                <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                <h5 class="text-warning">Low Stock</h5>
+                <p class="text-muted">Stock is running low, consider restocking</p>
+              <% else %>
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h5 class="text-success">In Stock</h5>
+                <p class="text-muted">Product is available for sale</p>
+              <% end %>
+
+              <div class="mt-4 d-grid gap-2">
+                <%= link_to 'Edit Product', edit_sales_product_path(@sales_product), class: 'btn btn-primary' %>
+                <%= link_to 'View Sales History', sales_invoices_path(product_id: @sales_product.id), class: 'btn btn-outline-info' %>
+                <%= link_to 'Delete Product', @sales_product, method: :delete, data: { confirm: 'Are you sure? This will permanently delete the product and all associated data.' }, class: 'btn btn-outline-danger' %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="card mt-3">
+            <div class="card-header"><h6 class="mb-0">Quick Stats</h6></div>
+            <div class="card-body">
+              <small class="text-muted d-block mb-2">Total Sales (All Time)</small>
+              <div class="d-flex justify-content-between">
+                <span>Quantity Sold:</span>
+                <strong><%= @sales_product.sales_invoice_items.sum(:quantity) %> <%= @sales_product.measuring_unit %></strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Revenue Generated:</span>
+                <strong class="text-success">₹<%= number_with_precision(@sales_product.sales_invoice_items.sum(:amount), precision: 2) %></strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Total Invoices:</span>
+                <strong><%= @sales_product.sales_invoices.count %></strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Sales History -->
+      <% if @sales_product.sales_invoice_items.any? %>
+        <div class="card mt-4">
+          <div class="card-header"><h5 class="mb-0">Recent Sales History</h5></div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Invoice #</th>
+                    <th>Customer</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @sales_product.sales_invoice_items.includes(:sales_invoice).order(created_at: :desc).limit(10).each do |item| %>
+                    <tr>
+                      <td><%= item.sales_invoice.invoice_date.strftime('%d %b %Y') %></td>
+                      <td>
+                        <%= link_to item.sales_invoice.invoice_number, sales_invoice_path(item.sales_invoice), class: 'text-decoration-none' %>
+                      </td>
+                      <td><%= item.sales_invoice.customer_name %></td>
+                      <td><%= item.quantity %> <%= @sales_product.measuring_unit %></td>
+                      <td>₹<%= number_with_precision(item.price, precision: 2) %></td>
+                      <td>₹<%= number_with_precision(item.amount, precision: 2) %></td>
+                      <td>
+                        <span class="badge <%= case item.sales_invoice.status
+                                                when 'paid' then 'bg-success'
+                                                when 'pending' then 'bg-warning'
+                                                when 'overdue' then 'bg-danger'
+                                                else 'bg-secondary'
+                                              end %>">
+                          <%= item.sales_invoice.status.humanize %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <% if @sales_product.sales_invoice_items.count > 10 %>
+              <div class="text-center mt-3">
+                <%= link_to 'View All Sales History', sales_invoices_path(product_id: @sales_product.id), class: 'btn btn-outline-primary btn-sm' %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

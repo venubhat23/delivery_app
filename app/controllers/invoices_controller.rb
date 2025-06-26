@@ -185,7 +185,7 @@ class InvoicesController < ApplicationController
   def mark_as_paid
     @invoice = Invoice.find(params[:id])
     @invoice.update(status: 'paid', paid_at: Time.current)
-    redirect_to @invoice, notice: 'Invoice marked as paid.'
+    redirect_to invoices_path, notice: 'Invoice marked as paid.'
   end
   
   private
@@ -207,7 +207,6 @@ class InvoicesController < ApplicationController
 
   # NEW: Send WhatsApp invoice notification
   def send_whatsapp_invoice(invoice)
-    debugger
     # return unless invoice&.customer&.phone_number.present?
     
     whatsapp_service = WhatsappService.new
