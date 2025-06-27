@@ -34,10 +34,28 @@ class InvoicesController < ApplicationController
     end
   end
   
-  def show
-    @invoice_items = @invoice.invoice_items.includes(:product)
-    @customer = @invoice.customer
+  # def show
+  #   @invoice_items = @invoice.invoice_items.includes(:product)
+  #   @customer = @invoice.customer
+  # end
+
+def show
+  @invoice_items = @invoice.invoice_items.includes(:product)
+  @customer = @invoice.customer
+  
+  respond_to do |format|
+    format.html
+    format.pdf do
+      render pdf: "invoice_#{@invoice.id}",
+             template: 'invoices/show',  # Don't specify .html.erb or .pdf.erb
+             layout: false,
+             page_size: 'A4',
+             margin: { top: 5, bottom: 5, left: 5, right: 5 },
+             encoding: 'UTF-8'
+    end
   end
+end
+
   
   def new
     @invoice = Invoice.new
@@ -216,13 +234,9 @@ class InvoicesController < ApplicationController
     
     # PDF URL (using the dummy PDF you provided)
     pdf_url = "https://conasems-ava-prod.s3.sa-east-1.amazonaws.com/aulas/ava/dummy-1641923583.pdf"
-    
+    debugger
     # Send WhatsApp message with PDF
-    whatsapp_service.send_pdf(
-      invoice.customer.phone_number, 
-      pdf_url, 
-      message
-    )
+    whatsapp_service.send_pdf(invoice.customer.phone_number,pdf_url,message)
     
     Rails.logger.info "WhatsApp invoice sent to #{invoice.customer.name} (#{invoice.customer.phone_number})"
   end
@@ -250,5 +264,76 @@ class InvoicesController < ApplicationController
     
     message.strip
 
+  end
+
+
+  def render_pdf
+    # Option 1: Using WickedPDF (most common)
+    if defined?(WickedPdf)
+      render pdf: "invoice_#{@invoice.id}",
+             template: 'invoices/show.html.erb',
+             layout: false,
+             page_size: 'A4',
+             margin: { top: 5, bottom: 5, left: 5, right: 5 },
+             encoding: 'UTF-8',
+             show_as_html: params[:debug].present?,
+             footer: {
+               right: 'Page [page] of [topage]',
+               font_size: 8
+             }
+    
+    # Option 2: Using Prawn (if you prefer pure Ruby PDF generation)
+    elsif defined?(Prawn)
+      pdf_content = generate_pdf_with_prawn
+      send_data pdf_content, 
+                filename: "invoice_#{@invoice.id}.pdf", 
+                type: 'application/pdf', 
+                disposition: 'attachment'
+    
+    # Option 3: Using Grover (Chrome headless)
+    elsif defined?(Grover)
+      html_content = render_to_string(template: 'invoices/show.html.erb', layout: false)
+      pdf_content = Grover.new(html_content, format: 'A4', margin: '0.5in').to_pdf
+      send_data pdf_content, 
+                filename: "invoice_#{@invoice.id}.pdf", 
+                type: 'application/pdf', 
+                disposition: 'attachment'
+    
+    # Fallback: Render as HTML if no PDF gem is available
+    else
+      render template: 'invoices/show.html.erb', layout: false
+    end
+  end
+  
+  def generate_pdf_with_prawn
+    Prawn::Document.new do |pdf|
+      # Add your Prawn PDF generation logic here
+      pdf.text "Invoice ##{@invoice.id}", size: 20, style: :bold
+      pdf.move_down 20
+      
+      pdf.text "Customer: #{@invoice.customer.name}"
+      pdf.text "Date: #{@invoice.invoice_date.strftime('%d/%m/%Y')}"
+      pdf.text "Due Date: #{@invoice.due_date.strftime('%d/%m/%Y')}"
+      pdf.move_down 20
+      
+      # Add invoice items table
+      table_data = [['Product', 'Quantity', 'Rate', 'Amount']]
+      @invoice_items.each do |item|
+        table_data << [
+          item.product&.name || 'Product',
+          item.quantity.to_s,
+          "₹#{item.unit_price}",
+          "₹#{item.total_price || (item.quantity * item.unit_price)}"
+        ]
+      end
+      
+      pdf.table(table_data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        columns(1..3).align = :right
+      end
+      
+      pdf.move_down 20
+      pdf.text "Total: ₹#{@invoice.total_amount}", size: 14, style: :bold, align: :right
+    end.render
   end
 end

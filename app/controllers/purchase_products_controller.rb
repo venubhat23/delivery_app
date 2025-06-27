@@ -1,5 +1,5 @@
 class PurchaseProductsController < ApplicationController
-  before_action :set_purchase_product, only: [:show, :edit, :update, :destroy]
+  before_action :set_purchase_product, only: [:show, :edit, :update, :destroy, :mark_as_paid]
   
   def index
     @purchase_products = PurchaseProduct.all
@@ -8,11 +8,23 @@ class PurchaseProductsController < ApplicationController
     @purchase_products = @purchase_products
     
     @categories = PurchaseProduct.categories
+
+  @purchase_products = PurchaseProduct.all
+  @total_purchase_value = @purchase_products.sum { |p| p.purchase_price.to_f * p.current_stock.to_i }
+  @total_sales_value = @purchase_products.sum { |p| p.sales_price.to_f * p.current_stock.to_i }
+  @low_stock_count = @purchase_products.where('current_stock <= ?', 10).count
+  @categories_count = @purchase_products.distinct.count(:category)
+
   end
   
   def show
   end
   
+  def mark_as_paid
+    @purchase_product.update(status: "paid")
+    redirect_to purchase_products_path, notice: "Product marked as paid!"
+  end
+
   def new
     @purchase_product = PurchaseProduct.new
   end

@@ -4,7 +4,7 @@ require 'twilio-ruby'
 class WhatsappService
   # Configuration
   ACCOUNT_SID = 'ACc88b1a0b859971f4c033598e67967411'
-  AUTH_TOKEN  = 'efd613cbb6b44fec1c5df906c514c4e1'
+  AUTH_TOKEN  = '93ebd7621541cebb9ccb65cc01ef9316'
   FROM_NUMBER = 'whatsapp:+14155238886' # Twilio Sandbox WhatsApp number
   
   def initialize
@@ -14,12 +14,12 @@ class WhatsappService
   # Send a plain text WhatsApp message
   def send_text(to_number, message)
     formatted_number = format_phone_number(to_number)
-    
     @client.messages.create(
       from: FROM_NUMBER,
       to: "whatsapp:#{formatted_number}",
       body: message
     )
+
   rescue Twilio::REST::RestError => e
     Rails.logger.error "WhatsApp text sending failed: #{e.message}"
     raise e
@@ -28,13 +28,8 @@ class WhatsappService
   # Send a PDF (or other media) via WhatsApp
   def send_pdf(to_number, pdf_url, message = 'Please find the attached PDF')
     formatted_number = format_phone_number(to_number)
-    
-    @client.messages.create(
-      from: FROM_NUMBER,
-      to: "whatsapp:#{formatted_number}",
-      body: message,
-      media_url: [pdf_url]
-    )
+    debugger
+    @client.messages.create(from: FROM_NUMBER,to: "whatsapp:#{formatted_number}",body: message,media_url: [pdf_url])
   rescue Twilio::REST::RestError => e
     Rails.logger.error "WhatsApp PDF sending failed: #{e.message}"
     raise e
@@ -47,8 +42,8 @@ class WhatsappService
     begin
       message = build_invoice_message(invoice)
       pdf_url = "https://conasems-ava-prod.s3.sa-east-1.amazonaws.com/aulas/ava/dummy-1641923583.pdf"
-      
-      send_pdf(invoice.customer.phone_number, pdf_url, message)
+      binding.pry
+      send_text(invoice.customer.phone_number, pdf_url, message)
       
       # Log successful send
       Rails.logger.info "Invoice WhatsApp sent successfully to #{invoice.customer.name} (#{invoice.customer.phone_number})"

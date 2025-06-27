@@ -175,17 +175,32 @@
                   </span>
                 </td>
                 <td>
-                  <div class="btn-group btn-group-sm">
-                    <%= link_to 'View', invoice, class: 'btn btn-outline-primary btn-sm' %>
-                    <% if invoice.status != 'paid' %>
-                      <%= button_to 'Mark Paid', 
-                            mark_as_paid_invoice_path(invoice), 
-                            method: :patch,
-                            data: { confirm: 'Are you sure you want to mark this invoice as paid?' },
-                            class: 'btn btn-outline-success btn-sm' %>
-                    <% end %>
-                  </div>
-                </td>
+<div class="btn-group btn-group-sm" role="group" aria-label="Invoice Actions" style="gap: 0.5rem;">
+  <%= link_to invoice, class: 'btn btn-outline-primary btn-sm', title: 'View Invoice', data: { bs_toggle: 'tooltip' } do %>
+    <i class="fas fa-eye"></i>
+    <span class="d-none d-sm-inline ms-1">View</span>
+  <% end %>
+
+  <%= link_to invoice_path(invoice, format: :pdf), 
+        class: 'btn btn-outline-info btn-sm', 
+        title: 'Download PDF', 
+        target: '_blank', 
+        data: { bs_toggle: 'tooltip' } do %>
+    <i class="fas fa-file-pdf"></i>
+    <span class="d-none d-sm-inline ms-1">PDF</span>
+  <% end %>
+
+  <% if invoice.status != 'paid' %>
+    <%= button_to mark_as_paid_invoice_path(invoice), 
+          method: :patch, 
+          class: 'btn btn-outline-success btn-sm', 
+          data: { confirm: 'Are you sure you want to mark this invoice as paid?', bs_toggle: 'tooltip' }, 
+          title: 'Mark as Paid' do %>
+      <i class="fas fa-check-circle"></i>
+      <span class="d-none d-sm-inline ms-1">Mark Paid</span>
+    <% end %>
+  <% end %>
+</div>                </td>
               </tr>
             <% end %>
             <% if @invoices.empty? %>
@@ -244,5 +259,16 @@
   .btn-primary:hover {
     background-color: #0b5ed7;
     border-color: #0a58ca;
+  }
+  
+  .btn-outline-info {
+    color: #0dcaf0;
+    border-color: #0dcaf0;
+  }
+  
+  .btn-outline-info:hover {
+    color: #fff;
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
   }
 </style>

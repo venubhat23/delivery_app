@@ -86,7 +86,6 @@
                   <th>Current Stock</th>
                   <th>Stock Value</th>
                   <th>Status</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -131,14 +130,6 @@
                       <% else %>
                         <span class="badge bg-success">In Stock</span>
                       <% end %>
-                    </td>
-                    <td>
-                      <div class="btn-group" role="group">
-                        <%= link_to 'View', product, class: 'btn btn-sm btn-outline-primary' %>
-                        <%= link_to 'Edit', edit_sales_product_path(product), class: 'btn btn-sm btn-outline-secondary' %>
-                        <%= link_to 'Delete', product, method: :delete, 
-                                    confirm: 'Are you sure?', class: 'btn btn-sm btn-outline-danger' %>
-                      </div>
                     </td>
                   </tr>
                 <% end %>
