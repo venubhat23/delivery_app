@@ -3,7 +3,7 @@ class DeliveryAssignmentsController < ApplicationController
   before_action :set_delivery_assignment, only: [:show, :edit, :update, :destroy, :complete, :cancel]
 
   def index
-    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product)
+    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product).where(scheduled_date: Date.today)
                                              .order(created_at: :desc)
     
     # Filter by status if provided
