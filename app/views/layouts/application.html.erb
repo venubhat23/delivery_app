@@ -22,7 +22,8 @@
           
           <div class="navbar-nav ms-auto">
             <span class="navbar-text me-3">Welcome, <%= current_user.name %></span>
-            <%= link_to "Logout", logout_path, method: :delete, class: "btn btn-outline-light btn-sm" %>
+
+<%= button_to "Logout", logout_path, method: :delete, class: "btn btn-outline-light btn-sm" %>
           </div>
         </div>
       </nav>

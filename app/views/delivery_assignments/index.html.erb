@@ -1,3 +1,7 @@
+<% total = @delivery_assignments.count %>
+<% completed = @delivery_assignments.count { |a| a.status == 'completed' } %>
+<% percentage = total > 0 ? ((completed.to_f / total) * 100).round(1) : 0 %>
+
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
   <h1 class="h2">Delivery Assignments</h1>
   <%= link_to "New Assignment", new_delivery_assignment_path, class: "btn btn-primary" %>
@@ -5,16 +9,16 @@
 
 <!-- Summary Cards at Top -->
 <div class="row mb-4">
-  <div class="col-md-3">
+  <div class="col-md-2">
     <div class="card text-center bg-light">
       <div class="card-body">
         <i class="fas fa-clipboard-list fa-2x text-primary mb-2"></i>
         <h5 class="card-title">Total Assignments</h5>
-        <h2 class="text-primary"><%= @delivery_assignments.count %></h2>
+        <h2 class="text-primary"><%= total %></h2>
       </div>
     </div>
   </div>
-  <div class="col-md-3">
+  <div class="col-md-2">
     <div class="card text-center bg-light">
       <div class="card-body">
         <i class="fas fa-clock fa-2x text-warning mb-2"></i>
@@ -23,21 +27,33 @@
       </div>
     </div>
   </div>
-  <div class="col-md-3">
+  <div class="col-md-2">
     <div class="card text-center bg-light">
       <div class="card-body">
         <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
         <h5 class="card-title">Completed</h5>
-        <h2 class="text-success"><%= @delivery_assignments.count { |a| a.status == 'completed' } %></h2>
+        <h2 class="text-success"><%= completed %></h2>
       </div>
     </div>
   </div>
-  <div class="col-md-3">
+  <div class="col-md-2">
     <div class="card text-center bg-light">
       <div class="card-body">
         <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
         <h5 class="card-title">Overdue</h5>
         <h2 class="text-danger"><%= @delivery_assignments.count { |a| a.overdue? } %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center bg-light">
+      <div class="card-body">
+        <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+        <h5 class="card-title">Delivery %</h5>
+        <div class="progress mb-2">
+          <div class="progress-bar bg-info" role="progressbar" style="width: <%= percentage %>%;" aria-valuenow="<%= percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <h2 class="text-info"><%= percentage %>%</h2>
       </div>
     </div>
   </div>
@@ -90,7 +106,7 @@
           <tr class="<%= 'table-warning' if assignment.overdue? %>">
             <td><%= assignment.id %></td>
             <td>
-              <% if assignment.customer.name %>
+              <% if assignment.customer && assignment.customer.name %>
                 <strong><%= assignment.customer.name %></strong><br>
                 <small class="text-muted"><%= assignment.customer.phone_number %></small>
               <% else %>
