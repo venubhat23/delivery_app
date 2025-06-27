@@ -83,7 +83,6 @@ end
     
     begin
       results = Invoice.generate_monthly_invoices_for_all_customers(month, year)
-      debugger
       success_count = 0
       failure_count = 0
       errors = []
@@ -91,7 +90,6 @@ end
       results.each do |result|
         if result[:result][:success]
           success_count += 1
-          debugger
           # Send WhatsApp message for successful invoice
           begin
             send_whatsapp_invoice(result[:result][:invoice])
@@ -234,7 +232,6 @@ end
     
     # PDF URL (using the dummy PDF you provided)
     pdf_url = "https://conasems-ava-prod.s3.sa-east-1.amazonaws.com/aulas/ava/dummy-1641923583.pdf"
-    debugger
     # Send WhatsApp message with PDF
     whatsapp_service.send_pdf(invoice.customer.phone_number,pdf_url,message)
     
