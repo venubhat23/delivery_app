@@ -7,10 +7,6 @@ class Product < ApplicationRecord
     in: %w[liters kg pieces bottles packets],
     message: "%{value} is not a valid unit type" 
   }
-  validates :available_quantity, presence: true, numericality: { 
-    greater_than_or_equal_to: 0,
-    message: "must be a positive number" 
-  }
   validates :price, presence: true, numericality: { 
     greater_than: 0,
     message: "must be greater than 0" 

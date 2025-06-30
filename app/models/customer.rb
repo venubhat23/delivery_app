@@ -9,8 +9,6 @@ class Customer < ApplicationRecord
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
-  validates :address, presence: true, length: { minimum: 5, maximum: 255 }
-  validates :user_id, presence: true
   validates :latitude, numericality: { 
     greater_than_or_equal_to: -90, 
     less_than_or_equal_to: 90,
