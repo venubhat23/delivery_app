@@ -40,6 +40,233 @@ class Customer < ApplicationRecord
   scope :by_delivery_person, ->(dp) { where(delivery_person: dp) }
   scope :recent, -> { order(created_at: :desc) }
 
+
+  # CSV template for bulk import
+  def self.csv_template
+    "name,phone_number,address,email,gst_number,pan_number,member_id,latitude,longitude\n" +
+    "John Doe,9999999999,123 Main St,john@example.com,GST123,PAN123,MEM123,12.9716,77.5946\n" +
+    "Jane Smith,8888888888,456 Oak Ave,jane@example.com,,,,,\n"
+  end
+  
+  # Import customers from CSV data
+  def self.import_from_csv(csv_data, current_user)
+    require 'csv'
+    
+    begin
+      csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
+      
+      # Validate headers
+      required_headers = [:name, :phone_number, :address]
+      missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
+      
+      if missing_headers.any?
+        return {
+          success: false,
+          message: "Missing required columns: #{missing_headers.join(', ')}",
+          imported_count: 0,
+          errors: [],
+          skipped_rows: []
+        }
+      end
+      
+      # Limit to 50 customers max
+      rows_to_process = csv.first(50)
+      imported_count = 0
+      errors = []
+      skipped_rows = []
+      
+      rows_to_process.each_with_index do |row, index|
+        begin
+          # Skip empty rows
+          next if row.to_h.values.all?(&:blank?)
+          
+          customer_params = {
+            name: row[:name]&.strip,
+            phone_number: row[:phone_number]&.strip,
+            address: row[:address]&.strip,
+            email: row[:email]&.strip,
+            gst_number: row[:gst_number]&.strip,
+            pan_number: row[:pan_number]&.strip,
+            member_id: row[:member_id]&.strip,
+            latitude: row[:latitude]&.strip,
+            longitude: row[:longitude]&.strip,
+            user: current_user
+          }
+          
+          # Remove empty values
+          customer_params.reject! { |k, v| v.blank? }
+          
+          # Convert coordinates to float if present
+          if customer_params[:latitude].present?
+            customer_params[:latitude] = customer_params[:latitude].to_f
+          end
+          if customer_params[:longitude].present?
+            customer_params[:longitude] = customer_params[:longitude].to_f
+          end
+          
+          customer = Customer.new(customer_params)
+          
+          if customer.save
+            imported_count += 1
+          else
+            errors << {
+              row: index + 2, # +2 because index starts at 0 and we have header row
+              data: row.to_h,
+              errors: customer.errors.full_messages
+            }
+            skipped_rows << row.to_h
+          end
+          
+        rescue => e
+          errors << {
+            row: index + 2,
+            data: row.to_h,
+            errors: [e.message]
+          }
+          skipped_rows << row.to_h
+        end
+      end
+      
+      {
+        success: true,
+        message: "Import completed successfully",
+        imported_count: imported_count,
+        total_processed: rows_to_process.count,
+        errors: errors,
+        skipped_rows: skipped_rows
+      }
+      
+    rescue CSV::MalformedCSVError => e
+      {
+        success: false,
+        message: "Invalid CSV format: #{e.message}",
+        imported_count: 0,
+        errors: [],
+        skipped_rows: []
+      }
+    rescue => e
+      {
+        success: false,
+        message: "Error processing CSV: #{e.message}",
+        imported_count: 0,
+        errors: [],
+        skipped_rows: []
+      }
+    end
+  end
+  
+  def self.import_from_csv(csv_data, current_user)
+    require 'csv'
+    
+    result = {
+      success: false,
+      imported_count: 0,
+      errors: [],
+      skipped_rows: [],
+      message: ''
+    }
+    
+    begin
+      # Parse CSV data
+      csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
+      
+      if csv.empty?
+        result[:message] = "CSV file is empty"
+        return result
+      end
+      
+      # Validate required headers
+      required_headers = [:name, :phone_number, :address]
+      missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
+      
+      if missing_headers.any?
+        result[:message] = "Missing required columns: #{missing_headers.join(', ')}"
+        return result
+      end
+      
+      imported_count = 0
+      csv.each_with_index do |row, index|
+        row_number = index + 2 # +2 because index starts at 0 and we have headers
+        
+        # Skip empty rows
+        if row[:name].blank? && row[:phone_number].blank? && row[:address].blank?
+          result[:skipped_rows] << "Row #{row_number}: Empty row"
+          next
+        end
+        
+        # Validate required fields
+        if row[:name].blank?
+          result[:errors] << "Row #{row_number}: Name is required"
+          next
+        end
+        
+        if row[:phone_number].blank?
+          result[:errors] << "Row #{row_number}: Phone number is required"
+          next
+        end
+        
+        if row[:address].blank?
+          result[:errors] << "Row #{row_number}: Address is required"
+          next
+        end
+        
+        # Check if customer already exists
+        existing_customer = Customer.find_by(
+          name: row[:name].to_s.strip,
+          phone_number: row[:phone_number].to_s.strip
+        )
+        
+        if existing_customer
+          result[:errors] << "Row #{row_number}: Customer '#{row[:name]}' with phone '#{row[:phone_number]}' already exists"
+          next
+        end
+        
+        # Create customer
+        customer = Customer.new(
+          name: row[:name].to_s.strip,
+          phone_number: row[:phone_number].to_s.strip,
+          address: row[:address].to_s.strip,
+          email: row[:email].to_s.strip.presence,
+          gst_number: row[:gst_number].to_s.strip.presence,
+          pan_number: row[:pan_number].to_s.strip.presence,
+          member_id: row[:member_id].to_s.strip.presence,
+          user: current_user
+        )
+        
+        # Handle coordinates if provided
+        if row[:latitude].present? && row[:longitude].present?
+          customer.latitude = row[:latitude].to_f
+          customer.longitude = row[:longitude].to_f
+        end
+        
+        if customer.save
+          imported_count += 1
+        else
+          error_messages = customer.errors.full_messages.join(', ')
+          result[:errors] << "Row #{row_number}: #{error_messages}"
+        end
+      end
+      
+      result[:success] = true
+      result[:imported_count] = imported_count
+      result[:message] = "Import completed successfully"
+      
+    rescue CSV::MalformedCSVError => e
+      result[:message] = "Invalid CSV format: #{e.message}"
+    rescue => e
+      result[:message] = "Error processing CSV: #{e.message}"
+    end
+    
+    result
+  end
+  
+  # Method to get CSV template
+  def self.csv_template
+    "name,phone_number,address,email,gst_number,pan_number,member_id,latitude,longitude\n" +
+    "John Doe,9999999999,123 Main St,john@example.com,GST123,PAN123,MEM123,12.9716,77.5946\n" +
+    "Jane Smith,8888888888,456 Oak Ave,jane@example.com,,,,,\n"
+  end
+  
   # Instance methods
   def assigned?
     delivery_person.present?

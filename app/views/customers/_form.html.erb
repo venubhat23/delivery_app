@@ -13,25 +13,70 @@
   <div class="row">
     <div class="col-md-6">
       <div class="mb-3">
-        <%= form.label :name, class: "form-label fw-bold" do %>
+        <%= form.label :customer_name, class: "form-label fw-bold" do %>
           <i class="fas fa-user me-1"></i>Customer Name *
         <% end %>
         <%= form.text_field :name, class: "form-control", required: true, placeholder: "Enter customer name" %>
-        <div class="invalid-feedback">
-          Please provide a customer name.
-        </div>
+        <div class="invalid-feedback">Please provide a customer name.</div>
       </div>
     </div>
-    
     <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :phone_number, class: "form-label fw-bold" do %>
+          <i class="fas fa-phone me-1"></i>Phone Number *
+        <% end %>
+        <%= form.text_field :phone_number, class: "form-control", required: true, placeholder: "Enter phone number" %>
+        <div class="invalid-feedback">Please provide a phone number.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :email, class: "form-label fw-bold" do %>
+          <i class="fas fa-envelope me-1"></i>Email
+        <% end %>
+        <%= form.email_field :email, class: "form-control", placeholder: "Enter email address" %>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :gst_number, class: "form-label fw-bold" do %>
+          <i class="fas fa-file-invoice me-1"></i>GST Number
+        <% end %>
+        <%= form.text_field :gst_number, class: "form-control", placeholder: "Enter GST number" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :pan_number, class: "form-label fw-bold" do %>
+          <i class="fas fa-id-card me-1"></i>PAN Number
+        <% end %>
+        <%= form.text_field :pan_number, class: "form-control", placeholder: "Enter PAN number" %>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :member_id, class: "form-label fw-bold" do %>
+          <i class="fas fa-users me-1"></i>Member ID
+        <% end %>
+        <%= form.text_field :member_id, class: "form-control", placeholder: "Enter member ID (if any)" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
       <div class="mb-3">
         <%= form.label :address, class: "form-label fw-bold" do %>
           <i class="fas fa-map-marker-alt me-1"></i>Address *
         <% end %>
-        <%= form.text_field :address, class: "form-control", required: true, placeholder: "Enter customer address" %>
-        <div class="invalid-feedback">
-          Please provide an address.
-        </div>
+        <%= form.text_field :address, class: "form-control", required: true, placeholder: "Enter address" %>
+        <div class="invalid-feedback">Please provide an address.</div>
       </div>
     </div>
   </div>
@@ -51,7 +96,6 @@
         </div>
       </div>
     </div>
-    
     <div class="col-md-6">
       <div class="mb-3">
         <%= form.label :longitude, class: "form-label fw-bold" do %>
@@ -82,7 +126,6 @@
         <i class="fas fa-times me-2"></i>Cancel
       <% end %>
     </div>
-    
     <small class="text-muted">
       <i class="fas fa-info-circle me-1"></i>
       Fields marked with * are required
@@ -91,7 +134,6 @@
 <% end %>
 
 <script>
-// Bootstrap form validation
 (function() {
   'use strict';
   window.addEventListener('load', function() {
@@ -108,15 +150,13 @@
   }, false);
 })();
 
-// Auto-fill coordinates when address is entered (optional enhancement)
 document.addEventListener('DOMContentLoaded', function() {
   const addressField = document.getElementById('customer_address');
   const latField = document.getElementById('customer_latitude');
   const lngField = document.getElementById('customer_longitude');
-  
   if (addressField && latField && lngField) {
     addressField.addEventListener('blur', function() {
-      // This is a placeholder for geocoding functionality
+      // Placeholder for geocoding functionality
       // You can integrate with Google Maps Geocoding API here
       console.log('Address changed:', this.value);
     });
@@ -129,30 +169,24 @@ document.addEventListener('DOMContentLoaded', function() {
   color: #5a5c69;
   margin-bottom: 0.5rem;
 }
-
 .form-control:focus, .form-select:focus {
   border-color: #4e73df;
   box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
 }
-
 .btn {
   border-radius: 0.35rem;
   font-weight: 500;
 }
-
 .was-validated .form-control:invalid {
   border-color: #e74a3b;
 }
-
 .was-validated .form-control:valid {
   border-color: #1cc88a;
 }
-
 .form-text {
   font-size: 0.875em;
   color: #6c757d;
 }
-
 .alert-info {
   background-color: #d1ecf1;
   border-color: #bee5eb;

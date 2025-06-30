@@ -1,0 +1,15 @@
+<!-- app/views/customers/_import_success.html.erb -->
+<div class="alert alert-success">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-check-circle fa-2x me-3"></i>
+    <div>
+      <h5 class="mb-1">Import Completed Successfully!</h5>
+      <p class="mb-0">
+        <%= pluralize(count, 'customer') %> imported successfully.
+        <% if errors.any? %>
+          <br><small class="text-muted"><%= errors.count %> rows had issues and were skipped.</small>
+        <% end %>
+      </p>
+    </div>
+  </div>
+</div>

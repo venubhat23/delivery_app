@@ -11,7 +11,13 @@ Rails.application.routes.draw do
   
   # Main application routes with full CRUD
   resources :products
-  resources :customers
+  resources :customers do
+    collection do
+      get :bulk_import
+      post :process_bulk_import
+      post :validate_csv
+    end
+  end
   
   # Purchase Products System
   resources :purchase_products do
@@ -72,11 +78,16 @@ Rails.application.routes.draw do
     end
   end
   
-  # Delivery Assignments (single resource, correct helpers)
+  # Delivery Assignments (consolidated - removed duplicate)
   resources :delivery_assignments, path: 'assign_deliveries' do
     member do
       patch :complete
       patch :cancel
+    end
+    
+    collection do
+      get :bulk, path: 'bulk-automate'
+      post :process_bulk_assignments, path: 'bulk-process', as: 'process_bulk_assignments'
     end
   end
   
