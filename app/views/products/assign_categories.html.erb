@@ -1,0 +1,265 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-tags me-2"></i>Assign Products to Categories
+  </h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <%= link_to products_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Products
+    <% end %>
+  </div>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header bg-primary text-white">
+    <h6 class="m-0 font-weight-bold">
+      <i class="fas fa-filter me-2"></i>Filter & Assign
+    </h6>
+  </div>
+  <div class="card-body">
+    <%= form_with url: assign_categories_products_path, method: :get, local: true, class: "row g-3" do |form| %>
+      <div class="col-md-6">
+        <%= form.label :category_id, "Filter by Current Category:", class: "form-label" %>
+        <%= form.select :category_id, 
+            options_for_select([['All Products', '']] + @categories.map { |c| [c.name, c.id] }, params[:category_id]), 
+            { }, 
+            { class: "form-select", onchange: "this.form.submit();" } %>
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <%= form.submit "Filter", class: "btn btn-outline-primary" %>
+        <% if params[:category_id].present? %>
+          <%= link_to assign_categories_products_path, class: "btn btn-outline-secondary ms-2" do %>
+            <i class="fas fa-times me-1"></i>Clear
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="card shadow">
+  <div class="card-header bg-white py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-list me-2"></i>Product Assignment
+      <span class="badge bg-info ms-2"><%= @products.count %> Products</span>
+    </h6>
+  </div>
+  <div class="card-body">
+    <% if @products.any? %>
+      <%= form_with url: update_categories_products_path, method: :patch, local: true, id: "category-assignment-form" do |form| %>
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <%= form.label :category_id, "Assign to Category:", class: "form-label fw-bold" %>
+            <%= form.select :category_id, 
+                options_for_select([['Remove Category', '']] + @categories.map { |c| [c.name, c.id] }), 
+                { }, 
+                { class: "form-select", id: "category-select" } %>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <%= form.submit "Assign Selected", class: "btn btn-success me-2", id: "assign-btn" %>
+            <button type="button" class="btn btn-outline-secondary" id="select-all-btn">
+              <i class="fas fa-check-square me-1"></i>Select All
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th width="5%">
+                  <input type="checkbox" class="form-check-input" id="master-checkbox">
+                </th>
+                <th><i class="fas fa-tag me-1"></i>Product Name</th>
+                <th><i class="fas fa-tags me-1"></i>Current Category</th>
+                <th><i class="fas fa-balance-scale me-1"></i>Unit Type</th>
+                <th><i class="fas fa-warehouse me-1"></i>Quantity</th>
+                <th><i class="fas fa-rupee-sign me-1"></i>Price</th>
+                <th><i class="fas fa-info-circle me-1"></i>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @products.each do |product| %>
+                <tr>
+                  <td>
+                    <input type="checkbox" 
+                           class="form-check-input product-checkbox" 
+                           name="product_ids[]" 
+                           value="<%= product.id %>" 
+                           id="product_<%= product.id %>">
+                  </td>
+                  <td>
+                    <label for="product_<%= product.id %>" class="form-check-label">
+                      <strong class="text-primary"><%= product.name %></strong>
+                      <% if product.description.present? %>
+                        <br><small class="text-muted"><%= truncate(product.description, length: 50) %></small>
+                      <% end %>
+                    </label>
+                  </td>
+                  <td>
+                    <% if product.category %>
+                      <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 15px; height: 15px; border-radius: 50%; background-color: <%= product.category.color %>"></div>
+                        <span class="badge" style="background-color: <%= product.category.color %>"><%= product.category.name %></span>
+                      </div>
+                    <% else %>
+                      <span class="badge bg-secondary">Uncategorized</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <span class="badge bg-info"><%= product.unit_type %></span>
+                  </td>
+                  <td>
+                    <span class="fw-bold <%= product.available_quantity.to_f < 10 ? 'text-danger' : 'text-success' %>">
+                      <%= product.available_quantity %> <%= product.unit_type %>
+                    </span>
+                  </td>
+                  <td>
+                    <span class="fw-bold text-success">
+                      <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.price, precision: 2) %>
+                    </span>
+                  </td>
+                  <td>
+                    <% if product.available_quantity.to_f <= 0 %>
+                      <span class="badge bg-danger">Out of Stock</span>
+                    <% elsif product.available_quantity.to_f < 10 %>
+                      <span class="badge bg-warning">Low Stock</span>
+                    <% else %>
+                      <span class="badge bg-success">In Stock</span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="fas fa-boxes fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No Products Found</h4>
+        <p class="text-muted">No products match your current filter criteria.</p>
+        <%= link_to assign_categories_products_path, class: "btn btn-primary mt-3" do %>
+          <i class="fas fa-refresh me-2"></i>Show All Products
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const masterCheckbox = document.getElementById('master-checkbox');
+  const productCheckboxes = document.querySelectorAll('.product-checkbox');
+  const selectAllBtn = document.getElementById('select-all-btn');
+  const assignBtn = document.getElementById('assign-btn');
+  const form = document.getElementById('category-assignment-form');
+
+  // Master checkbox functionality
+  masterCheckbox.addEventListener('change', function() {
+    productCheckboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+    });
+    updateSelectAllButton();
+    updateAssignButton();
+  });
+
+  // Individual checkbox functionality
+  productCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      updateMasterCheckbox();
+      updateSelectAllButton();
+      updateAssignButton();
+    });
+  });
+
+  // Select all button functionality
+  selectAllBtn.addEventListener('click', function() {
+    const allChecked = Array.from(productCheckboxes).every(cb => cb.checked);
+    productCheckboxes.forEach(checkbox => {
+      checkbox.checked = !allChecked;
+    });
+    updateMasterCheckbox();
+    updateSelectAllButton();
+    updateAssignButton();
+  });
+
+  function updateMasterCheckbox() {
+    const checkedCount = Array.from(productCheckboxes).filter(cb => cb.checked).length;
+    masterCheckbox.checked = checkedCount === productCheckboxes.length;
+    masterCheckbox.indeterminate = checkedCount > 0 && checkedCount < productCheckboxes.length;
+  }
+
+  function updateSelectAllButton() {
+    const allChecked = Array.from(productCheckboxes).every(cb => cb.checked);
+    selectAllBtn.innerHTML = allChecked ? 
+      '<i class="fas fa-square me-1"></i>Deselect All' : 
+      '<i class="fas fa-check-square me-1"></i>Select All';
+  }
+
+  function updateAssignButton() {
+    const checkedCount = Array.from(productCheckboxes).filter(cb => cb.checked).length;
+    assignBtn.disabled = checkedCount === 0;
+    assignBtn.innerHTML = checkedCount > 0 ? 
+      `Assign Selected (${checkedCount})` : 
+      'Assign Selected';
+  }
+
+  // Form submission validation
+  form.addEventListener('submit', function(e) {
+    const checkedCount = Array.from(productCheckboxes).filter(cb => cb.checked).length;
+    if (checkedCount === 0) {
+      e.preventDefault();
+      alert('Please select at least one product to assign.');
+      return false;
+    }
+    
+    const categorySelect = document.getElementById('category-select');
+    const confirmMessage = categorySelect.value === '' ? 
+      `Are you sure you want to remove category from ${checkedCount} selected products?` :
+      `Are you sure you want to assign ${checkedCount} selected products to the selected category?`;
+    
+    if (!confirm(confirmMessage)) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // Initial setup
+  updateMasterCheckbox();
+  updateSelectAllButton();
+  updateAssignButton();
+});
+</script>
+
+<style>
+.form-check-label {
+  cursor: pointer;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0,123,255,.075);
+}
+
+.form-check-input:indeterminate {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+#assign-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>

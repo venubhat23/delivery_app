@@ -3,9 +3,14 @@
     <i class="fas fa-boxes me-2"></i>Products
     <span class="badge bg-primary ms-2"><%= @total_products %></span>
   </h1>
-  <%= link_to new_product_path, class: "btn btn-primary" do %>
-    <i class="fas fa-plus me-2"></i>Add New Product
-  <% end %>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <%= link_to assign_categories_products_path, class: "btn btn-outline-success me-2" do %>
+      <i class="fas fa-tags me-2"></i>Assign Categories
+    <% end %>
+    <%= link_to new_product_path, class: "btn btn-primary" do %>
+      <i class="fas fa-plus me-2"></i>Add New Product
+    <% end %>
+  </div>
 </div>
 
 <div class="row mb-3">
