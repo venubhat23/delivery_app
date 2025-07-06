@@ -42,6 +42,35 @@ class ProductsController < ApplicationController
     redirect_to products_url, notice: 'Product was successfully deleted.'
   end
 
+  def assign_categories
+    @products = Product.includes(:category).all.order(:name)
+    @categories = Category.all.order(:name)
+    @selected_category = params[:category_id] if params[:category_id].present?
+    @filtered_products = @products.where(category_id: @selected_category) if @selected_category.present?
+  end
+
+  def update_categories
+    product_ids = params[:product_ids] || []
+    category_id = params[:category_id]
+    
+    if product_ids.any?
+      products = Product.where(id: product_ids)
+      
+      if category_id.present?
+        products.update_all(category_id: category_id)
+        category_name = Category.find(category_id).name
+        flash[:notice] = "Successfully assigned #{products.count} products to #{category_name} category."
+      else
+        products.update_all(category_id: nil)
+        flash[:notice] = "Successfully removed category from #{products.count} products."
+      end
+    else
+      flash[:alert] = "Please select at least one product to assign."
+    end
+    
+    redirect_to assign_categories_products_path
+  end
+
   private
 
   def set_product

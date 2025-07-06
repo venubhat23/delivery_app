@@ -10,7 +10,12 @@ Rails.application.routes.draw do
   post '/signup', to: 'users#create'
   
   # Main application routes with full CRUD
-  resources :products
+  resources :products do
+    collection do
+      get :assign_categories
+      patch :update_categories
+    end
+  end
   resources :categories
   resources :customers do
     collection do
