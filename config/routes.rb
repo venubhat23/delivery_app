@@ -11,7 +11,12 @@ Rails.application.routes.draw do
   
   # Main application routes with full CRUD
   resources :products
-  resources :categories
+  resources :categories do
+    member do
+      get :add_products
+      patch :assign_products
+    end
+  end
   resources :customers do
     collection do
       get :bulk_import

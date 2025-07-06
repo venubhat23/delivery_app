@@ -1,0 +1,221 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <div class="d-flex align-items-center">
+      <div class="me-3" style="width: 30px; height: 30px; border-radius: 50%; background-color: <%= @category.color %>"></div>
+      <div>
+        <i class="fas fa-plus me-2"></i>Add Products to <%= @category.name %>
+      </div>
+    </div>
+  </h1>
+  <div>
+    <%= link_to @category, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Category
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h6 class="m-0">
+          <i class="fas fa-box me-2"></i>Select Products to Add
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= form_with url: assign_products_category_path(@category), method: :patch, local: true do |form| %>
+          <% if @available_products.any? %>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="form-label fw-bold">Available Products</label>
+                <div>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">
+                    <i class="fas fa-check-square me-1"></i>Select All
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">
+                    <i class="fas fa-square me-1"></i>Deselect All
+                  </button>
+                </div>
+              </div>
+              
+              <div class="row">
+                <% @available_products.each do |product| %>
+                  <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card product-card h-100">
+                      <div class="card-body">
+                        <div class="form-check">
+                          <%= form.check_box :product_ids, 
+                              { 
+                                multiple: true, 
+                                class: "form-check-input product-checkbox", 
+                                id: "product_#{product.id}" 
+                              }, 
+                              product.id, 
+                              false %>
+                          <%= form.label "product_#{product.id}", class: "form-check-label w-100" do %>
+                            <div class="d-flex justify-content-between align-items-start">
+                              <div class="flex-grow-1">
+                                <strong class="text-primary"><%= product.name %></strong>
+                                <% if product.category %>
+                                  <div class="d-flex align-items-center mt-1">
+                                    <small class="text-muted me-2">Currently in:</small>
+                                    <div class="me-1" style="width: 10px; height: 10px; border-radius: 50%; background-color: <%= product.category.color %>"></div>
+                                    <small class="text-muted"><%= product.category.name %></small>
+                                  </div>
+                                <% else %>
+                                  <small class="text-muted">Uncategorized</small>
+                                <% end %>
+                                <div class="mt-2">
+                                  <small class="text-success fw-bold">
+                                    <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.price, precision: 2) %>
+                                  </small>
+                                  <small class="text-muted ms-2">
+                                    <%= product.available_quantity %> <%= product.unit_type %>
+                                  </small>
+                                </div>
+                              </div>
+                              <span class="badge bg-<%= product.stock_status_class %> ms-2">
+                                <%= product.stock_status %>
+                              </span>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-4">
+              <div>
+                <span class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Select products to add to this category
+                </span>
+              </div>
+              <div>
+                <%= form.submit "Add Selected Products", class: "btn btn-primary me-2" %>
+                <%= link_to @category, class: "btn btn-secondary" do %>
+                  <i class="fas fa-times me-2"></i>Cancel
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+              <h5 class="text-muted">All products are already assigned!</h5>
+              <p class="text-muted">All available products have been assigned to categories.</p>
+              <%= link_to @category, class: "btn btn-primary" do %>
+                <i class="fas fa-arrow-left me-2"></i>Back to Category
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header bg-info text-white">
+        <h6 class="m-0">
+          <i class="fas fa-info-circle me-2"></i>Category Info
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <small class="text-muted">Current products in category</small>
+          <p class="fw-bold text-primary mb-0">
+            <i class="fas fa-box me-1"></i><%= @category.products_count %>
+          </p>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted">Available products to add</small>
+          <p class="fw-bold text-success mb-0">
+            <i class="fas fa-plus me-1"></i><%= @available_products.count %>
+          </p>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted">Total category value</small>
+          <p class="fw-bold text-success mb-0">
+            <i class="fas fa-rupee-sign"></i><%= number_with_precision(@category.total_products_value, precision: 2) %>
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h6 class="m-0">
+          <i class="fas fa-plus me-2"></i>Quick Actions
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <%= link_to new_product_path(category: @category.id), class: "btn btn-primary" do %>
+            <i class="fas fa-plus me-2"></i>Create New Product
+          <% end %>
+          <%= link_to @category, class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-eye me-2"></i>View Category
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectAll() {
+  const checkboxes = document.querySelectorAll('.product-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = true;
+  });
+}
+
+function deselectAll() {
+  const checkboxes = document.querySelectorAll('.product-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = false;
+  });
+}
+
+// Add visual feedback when selecting products
+document.addEventListener('DOMContentLoaded', function() {
+  const checkboxes = document.querySelectorAll('.product-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const card = this.closest('.product-card');
+      if (this.checked) {
+        card.classList.add('border-primary', 'bg-light');
+      } else {
+        card.classList.remove('border-primary', 'bg-light');
+      }
+    });
+  });
+});
+</script>
+
+<style>
+.product-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.product-card.border-primary {
+  border-width: 2px !important;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-label {
+  cursor: pointer;
+}
+</style>
