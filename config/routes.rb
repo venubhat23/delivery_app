@@ -130,4 +130,7 @@ Rails.application.routes.draw do
       post :generate_monthly_for_all
     end
   end
+  
+  # Admin Settings
+  resources :admin_settings, path: 'admin-settings'
 end

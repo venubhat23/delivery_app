@@ -30,6 +30,9 @@ gem 'wicked_pdf'
 gem 'wkhtmltopdf-binary'
 
 
+# QR Code generation
+gem 'rqrcode'
+
 # Icons
 gem 'font-awesome-rails'
 
