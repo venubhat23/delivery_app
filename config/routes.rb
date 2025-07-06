@@ -1,127 +1,111 @@
 Rails.application.routes.draw do
-  root 'dashboard#index'
-  
-  # Authentication routes
-  get '/login', to: 'sessions#new'
-  post '/login', to: 'sessions#create'
-  delete '/logout', to: 'sessions#destroy'
-  
-  get '/signup', to: 'users#new'
-  post '/signup', to: 'users#create'
-  
-  # Main application routes with full CRUD
-  resources :products
-  resources :customers do
-    collection do
-      get :bulk_import
-      post :process_bulk_import
-      post :validate_csv
+  namespace :api do
+    namespace :v1 do
+      # Authentication routes
+      post 'auth/login', to: 'authentication#login'
+      post 'auth/register', to: 'authentication#register'
+      delete 'auth/logout', to: 'authentication#logout'
+      
+      # Dashboard
+      get 'dashboard', to: 'dashboard#index'
+      
+      # Users management
+      resources :users, only: [:index, :show, :create, :update, :destroy]
+      
+      # Customer management
+      resources :customers do
+        collection do
+          post :bulk_import
+          post :validate_csv
+          get :export_csv
+        end
+        member do
+          patch :assign_delivery_person
+          get :delivery_history
+        end
+      end
+      
+      # Product management
+      resources :products do
+        collection do
+          get :low_stock
+        end
+      end
+      
+      # Delivery People Management
+      resources :delivery_people, controller: 'users', constraints: { role: 'delivery_person' } do
+        member do
+          get :assigned_customers
+          patch :assign_customers
+          get :delivery_statistics
+        end
+      end
+      
+      # Delivery Assignments
+      resources :delivery_assignments do
+        collection do
+          get :by_delivery_person
+          get :by_date
+          post :bulk_create
+        end
+        member do
+          patch :update_status
+          patch :complete
+          patch :cancel
+        end
+      end
+      
+      # Delivery Schedules
+      resources :delivery_schedules do
+        member do
+          patch :activate
+          patch :deactivate
+          get :assignments
+        end
+      end
+      
+      # Invoices
+      resources :invoices do
+        collection do
+          get :generate_monthly
+          post :generate_for_customer
+          get :analytics
+        end
+        member do
+          patch :mark_as_paid
+          get :download_pdf
+        end
+      end
+      
+      # Purchase Management
+      resources :purchase_products
+      resources :purchase_invoices do
+        member do
+          patch :mark_as_paid
+          get :download_pdf
+        end
+      end
+      
+      # Sales Management
+      resources :sales_products
+      resources :sales_invoices do
+        member do
+          patch :mark_as_paid
+          get :download_pdf
+        end
+      end
+      
+      # Analytics and Reports
+      namespace :analytics do
+        get :dashboard
+        get :delivery_performance
+        get :customer_analytics
+        get :revenue_analytics
+        get :product_analytics
+      end
     end
   end
   
-  # Purchase Products System
-  resources :purchase_products do
-    collection do
-      get :search
-    end
-    member do
-      patch :mark_as_paid
-    end
-  end
-  
-  # Sales Products System (NEW)
-  resources :sales_products do
-    collection do
-      get :search
-    end
-  end
-  
-  # Purchase Invoices
-  resources :purchase_invoices do
-    member do
-      patch :mark_as_paid
-      get :download_pdf
-    end
-    
-    collection do
-      get :profit_analysis
-      get :sales_analysis
-    end
-  end
-  
-  # Sales Invoices (NEW)
-  resources :sales_invoices do
-    member do
-      patch :mark_as_paid
-      get :download_pdf
-    end
-    
-    collection do
-      get :profit_analysis
-      get :sales_analysis
-    end
-  end
-  
-  # Delivery People Management
-  resources :delivery_people, path: 'delivery-person' do
-    member do
-      get :assign_customers
-      patch :update_assignments
-      get :manage_customers
-      patch :update_customer_assignments
-      delete :unassign_customer
-    end
-    
-    collection do
-      post :bulk_assign
-      get :statistics
-    end
-  end
-  
-  # Delivery Assignments (consolidated - removed duplicate)
-  resources :delivery_assignments, path: 'assign_deliveries' do
-    member do
-      patch :complete
-      patch :cancel
-    end
-    
-    collection do
-      get :bulk, path: 'bulk-automate'
-      post :process_bulk_assignments, path: 'bulk-process', as: 'process_bulk_assignments'
-    end
-  end
-  
-  # Delivery Schedules
-  resources :delivery_schedules, path: 'schedules' do
-    member do
-      patch :generate_assignments
-      patch :cancel_schedule
-    end
-    
-    collection do
-      post :create_bulk
-    end
-  end
-  
-  # Deliveries (for delivery person records)
-  resources :deliveries do
-    member do
-      patch :update_status
-    end
-  end
-  
-  # Invoices with comprehensive functionality
-  resources :invoices do
-    member do
-      patch :mark_as_paid
-    end
-    
-    collection do
-      get :generate
-      post :generate
-      get :monthly_preview
-      get :generate_monthly_for_all
-      post :generate_monthly_for_all
-    end
-  end
+  # Health check
+  get '/health', to: 'health#check'
 end

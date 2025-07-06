@@ -1,31 +1,38 @@
-class ApplicationController < ActionController::Base
-  protect_from_forgery with: :exception
+class ApplicationController < ActionController::API
+  before_action :authenticate_user!
+  before_action :configure_permitted_parameters, if: :devise_controller?
   
-  before_action :require_login
-  
-  helper_method :current_user, :logged_in?
+  # JWT token authentication
+  include JsonWebToken
   
   private
   
+  def authenticate_user!
+    token = request.headers['Authorization']&.split(' ')&.last
+    return render json: { error: 'Access denied' }, status: 401 unless token
+    
+    begin
+      decoded_token = jwt_decode(token)
+      @current_user = User.find(decoded_token[:user_id])
+    rescue JWT::DecodeError, ActiveRecord::RecordNotFound
+      render json: { error: 'Invalid token' }, status: 401
+    end
+  end
+  
   def current_user
-    @current_user ||= User.find(session[:user_id]) if session[:user_id]
+    @current_user
   end
   
-  def logged_in?
-    !!current_user
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :phone, :role])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:name, :phone, :role])
   end
   
-  def require_login
-    unless logged_in?
-      flash[:alert] = "Please log in to access this page"
-      redirect_to login_path
-    end
+  def render_error(message, status = 422)
+    render json: { error: message }, status: status
   end
   
-  def require_admin
-    unless current_user&.admin?
-      flash[:alert] = "Access denied. Admin privileges required."
-      redirect_to root_path
-    end
+  def render_success(data = {}, message = 'Success')
+    render json: { message: message, data: data }, status: 200
   end
 end

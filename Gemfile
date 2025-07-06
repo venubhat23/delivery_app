@@ -2,39 +2,46 @@ source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.0.2"
-# The modern asset pipeline for Rails [https://github.com/rails/propshaft]
-gem "propshaft"
+
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
+
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
-# Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
-gem "importmap-rails"
-# Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]
-gem "turbo-rails"
-# Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
-gem "stimulus-rails"
+
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
+
+# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem 'bcrypt', '~> 3.1.7'
+
+# API specific gems
+gem 'jwt'
+gem 'rack-cors'
+
+# SMS notifications
 gem 'twilio-ruby'
-# UI and Styling
-gem 'bootstrap', '~> 5.2'
-gem 'jquery-rails'
-gem 'sassc-rails'
+
+# PDF generation
+gem 'wicked_pdf'
+gem 'wkhtmltopdf-binary'
+
+# Serializers for API responses
+gem 'active_model_serializers'
+
+# Authentication
+gem 'devise'
+gem 'devise-jwt'
+
 group :development do
   gem 'pry'
   gem 'pry-rails'
 end
-gem 'wicked_pdf'
-gem 'wkhtmltopdf-binary'
-
-
-# Icons
-gem 'font-awesome-rails'
 
 group :development, :test do
   gem 'byebug'
+  gem 'rspec-rails'
+  gem 'factory_bot_rails'
 end
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
@@ -58,7 +65,7 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-# gem "image_processing", "~> 1.2"
+gem 'image_processing', '~> 1.2'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -81,3 +88,14 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+# API specific gems
+gem 'jwt'
+gem 'rack-cors'
+
+# Serializers for API responses
+gem 'active_model_serializers'
+
+# Authentication
+gem 'devise'
+gem 'devise-jwt'
