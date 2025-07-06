@@ -4,8 +4,21 @@ class CustomersController < ApplicationController
   before_action :set_customer, only: [:show, :edit, :update, :destroy]
   
   def index
-    @customers = Customer.includes(:user).order(:name)
+    @customers = Customer.includes(:user, :delivery_person)
+    
+    # Filter by delivery person if selected
+    if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all'
+      @customers = @customers.where(delivery_person_id: params[:delivery_person_id])
+      @selected_delivery_person_id = params[:delivery_person_id]
+    else
+      @selected_delivery_person_id = 'all'
+    end
+    
+    @customers = @customers.order(:name)
     @total_customers = @customers.count
+    
+    # Get all delivery people for the dropdown
+    @delivery_people = User.delivery_people.order(:name)
   end
   
   def show

@@ -16,9 +16,30 @@
 
 <div class="card shadow">
   <div class="card-header bg-white py-3">
-    <h6 class="m-0 font-weight-bold text-primary">
-      <i class="fas fa-list me-2"></i>Customer List
-    </h6>
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="fas fa-list me-2"></i>Customer List
+      </h6>
+      <!-- Delivery Person Filter -->
+      <div class="d-flex align-items-center">
+        <label for="delivery_person_filter" class="form-label me-2 mb-0">
+          <i class="fas fa-filter me-1"></i>Filter by Delivery Person:
+        </label>
+        <%= form_with url: customers_path, method: :get, local: true, class: "d-flex", id: "delivery_person_filter_form" do |form| %>
+          <%= form.select :delivery_person_id, 
+                options_for_select([['All', 'all']] + 
+                @delivery_people.map { |dp| [dp.name, dp.id] }, 
+                @selected_delivery_person_id),
+                {}, 
+                { 
+                  class: "form-select form-select-sm", 
+                  style: "width: 200px;",
+                  onchange: "this.form.submit()",
+                  id: "delivery_person_filter"
+                } %>
+        <% end %>
+      </div>
+    </div>
   </div>
   <div class="card-body">
     <% if @customers.any? %>
@@ -29,6 +50,7 @@
               <th><i class="fas fa-user me-1"></i>Name</th>
               <th><i class="fas fa-map-marker-alt me-1"></i>Address</th>
               <th><i class="fas fa-globe me-1"></i>Location</th>
+              <th><i class="fas fa-truck me-1"></i>Delivery Person</th>
               <th><i class="fas fa-user-tie me-1"></i>Added By</th>
               <th><i class="fas fa-calendar me-1"></i>Added Date</th>
               <th><i class="fas fa-cogs me-1"></i>Actions</th>
@@ -59,6 +81,19 @@
                     </span>
                   <% else %>
                     <span class="badge bg-secondary">No coordinates</span>
+                  <% end %>
+                </td>
+                <td>
+                  <% if customer.delivery_person.present? %>
+                    <span class="badge bg-primary">
+                      <i class="fas fa-truck me-1"></i>
+                      <%= customer.delivery_person.name %>
+                    </span>
+                  <% else %>
+                    <span class="badge bg-warning text-dark">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      Not Assigned
+                    </span>
                   <% end %>
                 </td>
                 <td>
@@ -98,13 +133,20 @@
       <div class="text-center py-5">
         <i class="fas fa-users fa-4x text-muted mb-3"></i>
         <h4 class="text-muted">No Customers Found</h4>
-        <p class="text-muted">Start by adding your first customer to the system.</p>
+        <% if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all' %>
+          <p class="text-muted">No customers found for the selected delivery person.</p>
+          <%= link_to customers_path, class: "btn btn-outline-primary me-2" do %>
+            <i class="fas fa-times me-2"></i>Clear Filter
+          <% end %>
+        <% else %>
+          <p class="text-muted">Start by adding your first customer to the system.</p>
+        <% end %>
         <div class="mt-3">
           <%= link_to bulk_import_customers_path, class: "btn btn-success me-2" do %>
             <i class="fas fa-upload me-2"></i>Bulk Import
           <% end %>
           <%= link_to new_customer_path, class: "btn btn-primary" do %>
-            <i class="fas fa-user-plus me-2"></i>Add First Customer
+            <i class="fas fa-user-plus me-2"></i><%= params[:delivery_person_id].present? && params[:delivery_person_id] != 'all' ? 'Add Customer' : 'Add First Customer' %>
           <% end %>
         </div>
       </div>
