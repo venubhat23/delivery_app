@@ -14,6 +14,7 @@ class ProductsController < ApplicationController
 
   def new
     @product = Product.new
+    @product.category_id = params[:category] if params[:category].present?
   end
 
   def create

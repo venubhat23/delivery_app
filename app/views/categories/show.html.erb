@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
   <h1 class="h2">
     <div class="d-flex align-items-center">
       <div class="me-3" style="width: 35px; height: 35px; border-radius: 50%; background-color: <%= @category.color %>"></div>
@@ -64,11 +64,19 @@ THIS SHOULD BE A LINTER ERROR<div class="d-flex justify-content-between flex-wra
           <i class="fas fa-box me-2"></i>Products in this Category
           <span class="badge bg-secondary ms-2"><%= @products.count %></span>
         </h6>
-        <% if @products.any? %>
-          <%= link_to products_path(category: @category.id), class: "btn btn-sm btn-outline-primary" do %>
-            <i class="fas fa-eye me-1"></i>View All
+        <div class="btn-group" role="group">
+          <%= link_to add_products_category_path(@category), class: "btn btn-sm btn-success" do %>
+            <i class="fas fa-plus me-1"></i>Add Products
           <% end %>
-        <% end %>
+          <%= link_to new_product_path(category: @category.id), class: "btn btn-sm btn-primary" do %>
+            <i class="fas fa-plus me-1"></i>Create New
+          <% end %>
+          <% if @products.any? %>
+            <%= link_to products_path(category: @category.id), class: "btn btn-sm btn-outline-primary" do %>
+              <i class="fas fa-eye me-1"></i>View All
+            <% end %>
+          <% end %>
+        </div>
       </div>
       <div class="card-body">
         <% if @products.any? %>
@@ -120,9 +128,14 @@ THIS SHOULD BE A LINTER ERROR<div class="d-flex justify-content-between flex-wra
             <i class="fas fa-box fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">No products in this category yet</h5>
             <p class="text-muted">Add products to this category to see them here.</p>
-            <%= link_to new_product_path, class: "btn btn-primary" do %>
-              <i class="fas fa-plus me-2"></i>Add Product
-            <% end %>
+            <div class="d-flex justify-content-center gap-2">
+              <%= link_to add_products_category_path(@category), class: "btn btn-success" do %>
+                <i class="fas fa-plus me-2"></i>Add Existing Products
+              <% end %>
+              <%= link_to new_product_path(category: @category.id), class: "btn btn-primary" do %>
+                <i class="fas fa-plus me-2"></i>Create New Product
+              <% end %>
+            </div>
           </div>
         <% end %>
       </div>
@@ -153,9 +166,15 @@ THIS SHOULD BE A LINTER ERROR<div class="d-flex justify-content-between flex-wra
           <small class="text-muted">Created Date</small>
           <p class="mb-0"><%= @category.created_at.strftime("%B %d, %Y") %></p>
         </div>
-        <div>
+        <div class="mb-3">
           <small class="text-muted">Last Updated</small>
           <p class="mb-0"><%= @category.updated_at.strftime("%B %d, %Y") %></p>
+        </div>
+        <div>
+          <small class="text-muted">Available to assign</small>
+          <p class="fw-bold text-info mb-0">
+            <i class="fas fa-plus me-1"></i><%= @available_products.count %>
+          </p>
         </div>
       </div>
     </div>
