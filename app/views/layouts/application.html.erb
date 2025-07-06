@@ -84,6 +84,11 @@
   <% end %>
 </li>
 
+                <li class="nav-item">
+                  <%= link_to admin_settings_path, class: "nav-link #{'active' if controller_name == 'admin_settings'}" do %>
+                    <i class="fas fa-cog me-2"></i>Admin Settings
+                  <% end %>
+                </li>
                 
                 </ul>
             </div>

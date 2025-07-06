@@ -1,0 +1,173 @@
+<% content_for :title, "Admin Settings" %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-cog me-2"></i>Admin Settings</h2>
+        <div>
+          <%= link_to "Edit Settings", edit_admin_setting_path(@admin_setting), class: "btn btn-primary" %>
+          <%= link_to "Back to Dashboard", root_path, class: "btn btn-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Business Details -->
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h4><i class="fas fa-building me-2"></i>Business Details</h4>
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless">
+            <tr>
+              <td><strong>Business Name:</strong></td>
+              <td><%= @admin_setting.business_name %></td>
+            </tr>
+            <tr>
+              <td><strong>Address:</strong></td>
+              <td><%= simple_format(@admin_setting.address) %></td>
+            </tr>
+            <tr>
+              <td><strong>Mobile:</strong></td>
+              <td><%= @admin_setting.mobile %></td>
+            </tr>
+            <tr>
+              <td><strong>Email:</strong></td>
+              <td><%= @admin_setting.email %></td>
+            </tr>
+            <tr>
+              <td><strong>GSTIN:</strong></td>
+              <td><%= @admin_setting.gstin %></td>
+            </tr>
+            <tr>
+              <td><strong>PAN Number:</strong></td>
+              <td><%= @admin_setting.pan_number %></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank Details -->
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h4><i class="fas fa-university me-2"></i>Bank Details</h4>
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless">
+            <tr>
+              <td><strong>Account Holder:</strong></td>
+              <td><%= @admin_setting.account_holder_name %></td>
+            </tr>
+            <tr>
+              <td><strong>Bank Name:</strong></td>
+              <td><%= @admin_setting.bank_name %></td>
+            </tr>
+            <tr>
+              <td><strong>Account Number:</strong></td>
+              <td><%= @admin_setting.account_number %></td>
+            </tr>
+            <tr>
+              <td><strong>IFSC Code:</strong></td>
+              <td><%= @admin_setting.ifsc_code %></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPI Payment Section -->
+  <% if @admin_setting.upi_id.present? %>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h4><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h4>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <strong>UPI ID:</strong> 
+              <span id="upi-id"><%= @admin_setting.upi_id %></span>
+              <button class="btn btn-sm btn-outline-primary ms-2" onclick="copyUpiId()">
+                <i class="fas fa-copy"></i> Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h4><i class="fas fa-qrcode me-2"></i>QR Code</h4>
+          </div>
+          <div class="card-body text-center">
+            <% if @admin_setting.qr_code_path.present? %>
+              <div class="mb-3">
+                <%= image_tag @admin_setting.qr_code_path, alt: "UPI QR Code", class: "img-fluid", style: "max-width: 200px;" %>
+              </div>
+              <div class="btn-group" role="group">
+                <a href="<%= @admin_setting.qr_code_path %>" download class="btn btn-sm btn-success">
+                  <i class="fas fa-download"></i> Download
+                </a>
+                <button class="btn btn-sm btn-info" onclick="shareQRCode()">
+                  <i class="fas fa-share"></i> Share
+                </button>
+              </div>
+            <% else %>
+              <p class="text-muted">QR Code not available</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Terms and Conditions -->
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h4><i class="fas fa-file-contract me-2"></i>Terms and Conditions</h4>
+        </div>
+        <div class="card-body">
+          <% if @admin_setting.terms_and_conditions.present? %>
+            <% @admin_setting.formatted_terms_and_conditions.each do |term| %>
+              <p><%= term %></p>
+            <% end %>
+          <% else %>
+            <p class="text-muted">No terms and conditions specified.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyUpiId() {
+  const upiId = document.getElementById('upi-id').textContent;
+  navigator.clipboard.writeText(upiId).then(function() {
+    alert('UPI ID copied to clipboard!');
+  }, function() {
+    alert('Failed to copy UPI ID');
+  });
+}
+
+function shareQRCode() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'UPI QR Code',
+      text: 'Pay using this UPI QR Code',
+      url: '<%= @admin_setting.qr_code_path %>'
+    });
+  } else {
+    alert('Sharing not supported on this device');
+  }
+}
+</script>

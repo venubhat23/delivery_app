@@ -26,3 +26,24 @@ categories.each do |category_attrs|
 end
 
 puts "✅ Created #{Category.count} categories"
+
+# Create default admin settings if not already present
+unless AdminSetting.exists?
+  AdminSetting.create!(
+    business_name: "Atma Nirbhar Farm",
+    address: "123 Farm Street\nVillage Center\nDistrict, State - 123456",
+    mobile: "9876543210",
+    email: "info@atmanirbharfarm.com",
+    gstin: "29ABCDE1234F1Z5",
+    pan_number: "ABCDE1234F",
+    account_holder_name: "Atma Nirbhar Farm",
+    bank_name: "Canara Bank",
+    account_number: "3194201000718",
+    ifsc_code: "CNRB0003194",
+    upi_id: "atmanirbharfarm@paytm",
+    terms_and_conditions: "Kindly make your monthly payment on or before the 10th of every month.\nPlease share the payment screenshot immediately after completing the transaction to confirm your payment."
+  )
+  puts "Created default admin settings"
+end
+
+puts "Seeds completed successfully!"
