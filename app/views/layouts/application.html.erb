@@ -45,6 +45,11 @@
                   <% end %>
                 </li>
                 <li class="nav-item">
+                  <%= link_to categories_path, class: "nav-link #{'active' if current_page?(categories_path) || controller_name == 'categories'}" do %>
+                    <i class="fas fa-tags me-2"></i>Categories
+                  <% end %>
+                </li>
+                <li class="nav-item">
                   <%= link_to customers_path, class: "nav-link #{'active' if current_page?(customers_path)}" do %>
                     <i class="fas fa-users me-2"></i>Customers
                   <% end %>

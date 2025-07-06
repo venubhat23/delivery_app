@@ -1,0 +1,63 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-edit me-2"></i>Edit Category
+    <div class="d-flex align-items-center mt-2">
+      <div class="me-2" style="width: 25px; height: 25px; border-radius: 50%; background-color: <%= @category.color %>"></div>
+      <span class="text-muted"><%= @category.name %></span>
+    </div>
+  </h1>
+  <div>
+    <%= link_to @category, class: "btn btn-outline-primary me-2" do %>
+      <i class="fas fa-eye me-2"></i>View Category
+    <% end %>
+    <%= link_to categories_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Categories
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-warning text-white">
+        <h6 class="m-0">
+          <i class="fas fa-edit me-2"></i>Edit Category Details
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= render 'form', category: @category %>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow">
+      <div class="card-header bg-info text-white">
+        <h6 class="m-0">
+          <i class="fas fa-info-circle me-2"></i>Category Info
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <small class="text-muted">Products in this category</small>
+          <p class="fw-bold mb-0">
+            <i class="fas fa-box me-1"></i><%= @category.products_count %>
+          </p>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted">Total value</small>
+          <p class="fw-bold text-success mb-0">
+            <i class="fas fa-rupee-sign"></i><%= number_with_precision(@category.total_products_value, precision: 2) %>
+          </p>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted">Created</small>
+          <p class="mb-0"><%= @category.created_at.strftime("%B %d, %Y") %></p>
+        </div>
+        <div>
+          <small class="text-muted">Last updated</small>
+          <p class="mb-0"><%= @category.updated_at.strftime("%B %d, %Y") %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

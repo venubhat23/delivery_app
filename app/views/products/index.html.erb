@@ -8,6 +8,25 @@
   <% end %>
 </div>
 
+<div class="row mb-3">
+  <div class="col-md-6">
+    <%= form_with url: products_path, method: :get, local: true, class: "d-flex align-items-center" do |form| %>
+      <%= form.select :category, 
+          options_for_select([['All Categories', '']] + @categories.map { |c| [c.name, c.id] }, params[:category]), 
+          { }, 
+          { class: "form-select me-2", onchange: "this.form.submit();" } %>
+      <%= form.submit "Filter", class: "btn btn-outline-primary" %>
+    <% end %>
+  </div>
+  <div class="col-md-6 text-end">
+    <% if params[:category].present? %>
+      <%= link_to products_path, class: "btn btn-outline-secondary" do %>
+        <i class="fas fa-times me-1"></i>Clear Filter
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
 <div class="card shadow">
   <div class="card-header bg-white py-3">
     <h6 class="m-0 font-weight-bold text-primary">
@@ -21,6 +40,7 @@
           <thead class="table-light">
             <tr>
               <th><i class="fas fa-tag me-1"></i>Name</th>
+              <th><i class="fas fa-tags me-1"></i>Category</th>
               <th><i class="fas fa-balance-scale me-1"></i>Unit Type</th>
               <th><i class="fas fa-warehouse me-1"></i>Available Quantity</th>
               <th><i class="fas fa-rupee-sign me-1"></i>Price</th>
@@ -36,6 +56,16 @@
                   <strong class="text-primary"><%= product.name %></strong>
                   <% if product.available_quantity.to_f < 10 %>
                     <span class="badge bg-danger ms-2">Low Stock</span>
+                  <% end %>
+                </td>
+                <td>
+                  <% if product.category %>
+                    <div class="d-flex align-items-center">
+                      <div class="me-2" style="width: 15px; height: 15px; border-radius: 50%; background-color: <%= product.category.color %>"></div>
+                      <%= link_to product.category.name, category_path(product.category), class: "text-decoration-none" %>
+                    </div>
+                  <% else %>
+                    <span class="text-muted">Uncategorized</span>
                   <% end %>
                 </td>
                 <td>

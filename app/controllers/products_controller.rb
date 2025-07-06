@@ -3,8 +3,10 @@ class ProductsController < ApplicationController
   before_action :set_product, only: [:show, :edit, :update, :destroy]
 
   def index
-    @products = Product.all.order(:name)
+    @products = Product.includes(:category).all.order(:name)
+    @products = @products.by_category(params[:category]) if params[:category].present?
     @total_products = @products.count
+    @categories = Category.all.order(:name)
   end
 
   def show
@@ -50,7 +52,7 @@ class ProductsController < ApplicationController
     params.require(:product).permit(
       :name, :description, :unit_type, :available_quantity, :price,
       :is_gst_applicable, :total_gst_percentage, :total_cgst_percentage,
-      :total_sgst_percentage, :total_igst_percentage
+      :total_sgst_percentage, :total_igst_percentage, :category_id
     )
   end
 end

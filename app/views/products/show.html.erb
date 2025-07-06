@@ -6,6 +6,11 @@
     <% end %>
   </h1>
   <div>
+    <% if @product.category %>
+      <%= link_to category_path(@product.category), class: "btn btn-info me-2" do %>
+        <i class="fas fa-tag me-2"></i>View Category
+      <% end %>
+    <% end %>
     <%= link_to edit_product_path(@product), class: "btn btn-warning me-2" do %>
       <i class="fas fa-edit me-2"></i>Edit
     <% end %>
@@ -36,6 +41,19 @@
               <i class="fas fa-balance-scale me-1"></i>Unit Type
             </label>
             <p><span class="badge bg-info fs-6"><%= @product.unit_type %></span></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold text-muted">
+              <i class="fas fa-tags me-1"></i>Category
+            </label>
+            <% if @product.category %>
+              <div class="d-flex align-items-center">
+                <div class="me-2" style="width: 20px; height: 20px; border-radius: 50%; background-color: <%= @product.category.color %>"></div>
+                <%= link_to @product.category.name, category_path(@product.category), class: "text-decoration-none fw-bold" %>
+              </div>
+            <% else %>
+              <p class="text-muted">Uncategorized</p>
+            <% end %>
           </div>
           <div class="col-md-6 mb-3">
             <label class="form-label fw-bold text-muted">

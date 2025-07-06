@@ -1,0 +1,192 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <div class="d-flex align-items-center">
+      <div class="me-3" style="width: 35px; height: 35px; border-radius: 50%; background-color: <%= @category.color %>"></div>
+      <div>
+        <i class="fas fa-tag me-2"></i><%= @category.name %>
+        <div class="text-muted fs-6 fw-normal">
+          <%= @category.products_count %> products
+        </div>
+      </div>
+    </div>
+  </h1>
+  <div>
+    <%= link_to edit_category_path(@category), class: "btn btn-warning me-2" do %>
+      <i class="fas fa-edit me-2"></i>Edit
+    <% end %>
+    <%= link_to categories_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Categories
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header bg-primary text-white">
+        <h6 class="m-0">
+          <i class="fas fa-info-circle me-2"></i>Category Details
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold text-muted">
+              <i class="fas fa-tag me-1"></i>Category Name
+            </label>
+            <p class="fs-5 fw-bold text-primary"><%= @category.name %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold text-muted">
+              <i class="fas fa-palette me-1"></i>Color
+            </label>
+            <div class="d-flex align-items-center">
+              <div class="me-2" style="width: 25px; height: 25px; border-radius: 50%; background-color: <%= @category.color %>; border: 2px solid #dee2e6;"></div>
+              <code><%= @category.color %></code>
+            </div>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label fw-bold text-muted">
+              <i class="fas fa-info-circle me-1"></i>Description
+            </label>
+            <p class="text-muted">
+              <%= @category.description.present? ? @category.description : "No description provided" %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products in Category -->
+    <div class="card shadow">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 text-primary">
+          <i class="fas fa-box me-2"></i>Products in this Category
+          <span class="badge bg-secondary ms-2"><%= @products.count %></span>
+        </h6>
+        <% if @products.any? %>
+          <%= link_to products_path(category: @category.id), class: "btn btn-sm btn-outline-primary" do %>
+            <i class="fas fa-eye me-1"></i>View All
+          <% end %>
+        <% end %>
+      </div>
+      <div class="card-body">
+        <% if @products.any? %>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Stock</th>
+                  <th>Price</th>
+                  <th>Total Value</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @products.each do |product| %>
+                  <tr>
+                    <td>
+                      <%= link_to product.name, product_path(product), class: "text-decoration-none fw-bold" %>
+                      <small class="text-muted d-block"><%= product.description.present? ? truncate(product.description, length: 50) : "No description" %></small>
+                    </td>
+                    <td>
+                      <span class="badge bg-<%= product.stock_status_class %> fs-6">
+                        <%= product.available_quantity %> <%= product.unit_type %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="fw-bold text-success">
+                        <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.price, precision: 2) %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="fw-bold text-primary">
+                        <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.total_value, precision: 2) %>
+                      </span>
+                    </td>
+                    <td>
+                      <%= link_to product_path(product), class: "btn btn-sm btn-outline-primary" do %>
+                        <i class="fas fa-eye"></i>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="text-center py-4">
+            <i class="fas fa-box fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No products in this category yet</h5>
+            <p class="text-muted">Add products to this category to see them here.</p>
+            <%= link_to new_product_path, class: "btn btn-primary" do %>
+              <i class="fas fa-plus me-2"></i>Add Product
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header bg-success text-white">
+        <h6 class="m-0">
+          <i class="fas fa-chart-bar me-2"></i>Category Stats
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <small class="text-muted">Total Products</small>
+          <p class="fw-bold text-primary mb-0">
+            <i class="fas fa-box me-1"></i><%= @category.products_count %>
+          </p>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted">Total Value</small>
+          <p class="fw-bold text-success mb-0">
+            <i class="fas fa-rupee-sign"></i><%= number_with_precision(@category.total_products_value, precision: 2) %>
+          </p>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted">Created Date</small>
+          <p class="mb-0"><%= @category.created_at.strftime("%B %d, %Y") %></p>
+        </div>
+        <div>
+          <small class="text-muted">Last Updated</small>
+          <p class="mb-0"><%= @category.updated_at.strftime("%B %d, %Y") %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #5a5c69;
+}
+
+.btn-group .btn,
+.btn-danger,
+.btn-warning,
+.btn-outline-secondary {
+  border-radius: 0.35rem !important;
+  margin-right: 4px;
+}
+
+.badge {
+  font-size: 0.85em;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0,123,255,.075);
+}
+</style>

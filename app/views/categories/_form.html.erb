@@ -1,0 +1,155 @@
+<%= form_with(model: category, local: true, class: "needs-validation", novalidate: true) do |form| %>
+  <% if category.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h4>
+      <ul class="mb-0">
+        <% category.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :name, class: "form-label fw-bold" do %>
+          <i class="fas fa-tag me-1"></i>Category Name *
+        <% end %>
+        <%= form.text_field :name, class: "form-control", required: true, placeholder: "Enter category name" %>
+        <div class="invalid-feedback">
+          Please provide a category name.
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :color, class: "form-label fw-bold" do %>
+          <i class="fas fa-palette me-1"></i>Category Color *
+        <% end %>
+        <%= form.select :color, 
+            options_for_select(Category.colors_for_select, category.color), 
+            { prompt: 'Select a color' }, 
+            { class: "form-select", required: true, id: "category_color_select" } %>
+        <div class="invalid-feedback">
+          Please select a color.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :description, class: "form-label fw-bold" do %>
+      <i class="fas fa-info-circle me-1"></i>Description
+    <% end %>
+    <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Enter category description (optional)" %>
+  </div>
+
+  <div class="mb-3">
+    <div class="color-preview p-3 border rounded" id="color-preview">
+      <strong>Color Preview:</strong>
+      <div class="d-flex align-items-center mt-2">
+        <div class="me-2" style="width: 30px; height: 30px; border-radius: 50%; background-color: <%= category.color.presence || '#6c757d' %>; border: 2px solid #dee2e6;" id="color-circle"></div>
+        <span id="color-text"><%= category.name.presence || 'Category Name' %></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <div class="form-actions">
+      <%= form.submit class: "btn btn-primary me-2" do %>
+        <i class="fas fa-save me-2"></i><%= category.new_record? ? 'Create Category' : 'Update Category' %>
+      <% end %>
+      <%= link_to categories_path, class: "btn btn-secondary" do %>
+        <i class="fas fa-times me-2"></i>Cancel
+      <% end %>
+    </div>
+    <small class="text-muted">
+      <i class="fas fa-info-circle me-1"></i>
+      Fields marked with * are required
+    </small>
+  </div>
+<% end %>
+
+<script>
+// Bootstrap form validation
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+    
+    // Color preview functionality
+    var colorSelect = document.getElementById('category_color_select');
+    var colorCircle = document.getElementById('color-circle');
+    var nameInput = document.getElementById('category_name');
+    var colorText = document.getElementById('color-text');
+    
+    function updateColorPreview() {
+      if (colorSelect && colorCircle) {
+        var selectedColor = colorSelect.value || '#6c757d';
+        colorCircle.style.backgroundColor = selectedColor;
+      }
+    }
+    
+    function updateTextPreview() {
+      if (nameInput && colorText) {
+        var nameValue = nameInput.value || 'Category Name';
+        colorText.textContent = nameValue;
+      }
+    }
+    
+    if (colorSelect) {
+      colorSelect.addEventListener('change', updateColorPreview);
+    }
+    
+    if (nameInput) {
+      nameInput.addEventListener('input', updateTextPreview);
+    }
+    
+    // Initialize preview
+    updateColorPreview();
+    updateTextPreview();
+  }, false);
+})();
+</script>
+
+<style>
+.form-label {
+  color: #5a5c69;
+  margin-bottom: 0.5rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.btn {
+  border-radius: 0.35rem;
+  font-weight: 500;
+}
+
+.color-preview {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+  border-color: #e74a3b;
+}
+
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+  border-color: #1cc88a;
+}
+</style>
