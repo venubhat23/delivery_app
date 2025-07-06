@@ -1,0 +1,54 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-plus me-2"></i>New Category
+  </h1>
+  <div>
+    <%= link_to categories_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Categories
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h6 class="m-0">
+          <i class="fas fa-tag me-2"></i>Create New Category
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= render 'form', category: @category %>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow">
+      <div class="card-header bg-info text-white">
+        <h6 class="m-0">
+          <i class="fas fa-lightbulb me-2"></i>Tips
+        </h6>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Choose a descriptive name for your category
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Select a color that represents your category
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Add a description to help identify the category
+          </li>
+          <li>
+            <i class="fas fa-check text-success me-2"></i>
+            Categories help organize your products better
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

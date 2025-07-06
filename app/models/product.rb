@@ -1,5 +1,3 @@
-
-
 class Product < ApplicationRecord
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
@@ -14,6 +12,7 @@ class Product < ApplicationRecord
   validates :description, length: { maximum: 500 }
 
   # Associations
+  belongs_to :category, optional: true
   has_many :delivery_items, dependent: :destroy
   has_many :deliveries, through: :delivery_items
   has_many :delivery_assignments, dependent: :destroy
@@ -24,6 +23,7 @@ class Product < ApplicationRecord
   scope :low_stock, -> { where('available_quantity < ?', 10) }
   scope :in_stock, -> { where('available_quantity > ?', 0) }
   scope :by_unit_type, ->(unit) { where(unit_type: unit) }
+  scope :by_category, ->(category_id) { where(category_id: category_id) }
   scope :search, ->(term) { where("name ILIKE ? OR description ILIKE ?", "%#{term}%", "%#{term}%") }
 
   # Instance methods
@@ -65,6 +65,14 @@ class Product < ApplicationRecord
 
   def display_name
     "#{name} (#{available_quantity} #{unit_type})"
+  end
+
+  def category_name
+    category&.name || 'Uncategorized'
+  end
+
+  def category_color
+    category&.color || '#6c757d'
   end
 
   # Class methods
