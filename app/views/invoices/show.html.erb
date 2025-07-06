@@ -1,772 +1,540 @@
-<!-- app/views/invoices/show.html.erb -->
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Invoice PDF</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 11px;
-      line-height: 1.3;
-      color: #333;
-      background: white;
-    }
-    
-    .invoice-container {
-      width: 100%;
-      max-width: 750px;
-      margin: 0 auto;
-      background: white;
-      border: 1px solid #ddd;
-    }
-    
-    /* Header */
-    .bill-header {
-      background: #f8f9fa;
-      padding: 8px 15px;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .bill-type {
-      font-weight: bold;
-      font-size: 12px;
-    }
-    
-    .bill-original {
-      font-size: 10px;
-      color: #666;
-      border: 1px solid #999;
-      padding: 2px 8px;
-    }
-    
-    /* Company Header */
-    .company-header {
-      padding: 20px;
-      display: flex;
-      align-items: flex-start;
-      gap: 20px;
-    }
-    
-    .company-logo {
-      flex-shrink: 0;
-    }
-    
-    .company-logo img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    
-    .company-info {
-      flex: 1;
-    }
-    
-    .company-name {
-      font-size: 24px;
-      font-weight: bold;
-      color: #7B68EE;
-      margin-bottom: 8px;
-    }
-    
-    .company-address {
-      font-size: 10px;
-      margin-bottom: 8px;
-      line-height: 1.4;
-      color: #333;
-    }
-    
-    .company-details {
-      margin-bottom: 6px;
-      font-size: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    
-    .company-email {
-      font-size: 10px;
-    }
-    
-    /* Invoice Details Bar */
-    .invoice-details-bar {
-      background: #7B68EE;
-      color: white;
-      padding: 8px 20px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: bold;
-    }
-    
-    /* Customer Section */
-    .customer-section {
-      padding: 15px 20px;
-      display: flex;
-      gap: 40px;
-    }
-    
-    .bill-to, .ship-to {
-      flex: 1;
-    }
-    
-    .section-header {
-      font-weight: bold;
-      font-size: 11px;
-      margin-bottom: 8px;
-      color: #333;
-    }
-    
-    .customer-details {
-      font-size: 10px;
-      line-height: 1.4;
-    }
-    
-    /* Items Section */
-    .items-section {
-      padding: 0 20px;
-    }
-    
-    .items-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 0;
-    }
-    
-    .items-table thead th {
-      background: #333;
-      color: white;
-      padding: 8px;
-      text-align: left;
-      font-weight: bold;
-      font-size: 10px;
-      border: 1px solid #333;
-    }
-    
-    /* GST Table Headers */
-    .items-table.gst-table .item-col {
-      width: 35%;
-    }
-    
-    .items-table.gst-table .hsn-col {
-      width: 10%;
-      text-align: center;
-    }
-    
-    .items-table.gst-table .qty-col {
-      width: 10%;
-      text-align: center;
-    }
-    
-    .items-table.gst-table .rate-col {
-      width: 12%;
-      text-align: right;
-    }
-    
-    .items-table.gst-table .tax-col {
-      width: 13%;
-      text-align: center;
-    }
-    
-    .items-table.gst-table .amount-col {
-      width: 12%;
-      text-align: right;
-    }
-    
-    /* Non-GST Table Headers */
-    .items-table.non-gst-table .item-col {
-      width: 50%;
-    }
-    
-    .items-table.non-gst-table .qty-col {
-      width: 20%;
-      text-align: center;
-    }
-    
-    .items-table.non-gst-table .rate-col {
-      width: 15%;
-      text-align: right;
-    }
-    
-    .items-table.non-gst-table .amount-col {
-      width: 15%;
-      text-align: right;
-    }
-    
-    .items-table tbody td {
-      padding: 10px 8px;
-      border: 1px solid #ddd;
-      font-size: 10px;
-      vertical-align: top;
-    }
-    
-    .items-table tbody .hsn-cell {
-      text-align: center;
-    }
-    
-    .items-table tbody .qty-cell {
-      text-align: center;
-    }
-    
-    .items-table tbody .rate-cell,
-    .items-table tbody .amount-cell {
-      text-align: right;
-    }
-    
-    .items-table tbody .tax-cell {
-      text-align: center;
-      font-size: 9px;
-    }
-    
-    .product-description {
-      color: #666;
-      font-size: 9px;
-      margin-top: 2px;
-    }
-    
-    /* Subtotal Row */
-    .subtotal-row {
-      border-top: 2px solid #333;
-      padding: 0;
-    }
-    
-    .subtotal-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    .subtotal-table.gst-subtotal td:nth-child(1) {
-      width: 35%;
-    }
-    
-    .subtotal-table.gst-subtotal td:nth-child(2) {
-      width: 10%;
-      text-align: center;
-    }
-    
-    .subtotal-table.gst-subtotal td:nth-child(3) {
-      width: 10%;
-      text-align: center;
-    }
-    
-    .subtotal-table.gst-subtotal td:nth-child(4) {
-      width: 12%;
-      text-align: right;
-    }
-    
-    .subtotal-table.gst-subtotal td:nth-child(5) {
-      width: 13%;
-      text-align: center;
-    }
-    
-    .subtotal-table.gst-subtotal td:nth-child(6) {
-      width: 12%;
-      text-align: right;
-    }
-    
-    .subtotal-table.non-gst-subtotal td:nth-child(1) {
-      width: 50%;
-    }
-    
-    .subtotal-table.non-gst-subtotal td:nth-child(2) {
-      width: 20%;
-      text-align: center;
-    }
-    
-    .subtotal-table.non-gst-subtotal td:nth-child(3) {
-      width: 15%;
-      text-align: right;
-    }
-    
-    .subtotal-table.non-gst-subtotal td:nth-child(4) {
-      width: 15%;
-      text-align: right;
-    }
-    
-    .subtotal-table td {
-      padding: 8px;
-      font-size: 11px;
-      font-weight: bold;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-    }
-    
-    /* Bottom Section - Side by Side Layout */
-    .bottom-section {
-      padding: 20px;
-      display: flex;
-      gap: 40px;
-      align-items: flex-start;
-    }
-    
-    .left-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    
-    .right-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .section-title {
-      font-weight: bold;
-      font-size: 11px;
-      margin-bottom: 8px;
-      color: #333;
-    }
-    
-    .bank-details p {
-      margin-bottom: 3px;
-      font-size: 10px;
-    }
-    
-    .payment-section {
-      margin-top: 20px;
-    }
-    
-    .qr-code {
-      display: flex;
-      align-items: flex-start;
-      gap: 15px;
-      margin-top: 10px;
-    }
-    
-    .qr-placeholder {
-      width: 80px;
-      height: 80px;
-      border: 2px solid #333;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      line-height: 1.2;
-      font-size: 8px;
-      font-family: monospace;
-      background: white;
-      flex-shrink: 0;
-    }
-    
-    .payment-info {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .upi-id {
-      font-size: 10px;
-      font-weight: bold;
-    }
-    
-    .payment-logos {
-      font-size: 9px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    
-    .payment-logos span {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-    }
-    
-    /* Amount Summary Table */
-    .amount-summary {
-      border: 1px solid #ddd;
-      margin-bottom: 15px;
-    }
-    
-    .amount-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    .amount-table td {
-      padding: 8px 12px;
-      font-size: 11px;
-      border-bottom: 1px solid #eee;
-    }
-    
-    .amount-table td:first-child {
-      text-align: left;
-      font-weight: bold;
-      background: #f8f9fa;
-    }
-    
-    .amount-table td:last-child {
-      text-align: right;
-      font-weight: bold;
-      min-width: 100px;
-    }
-    
-    .total-row td {
-      border-top: 2px solid #333;
-      border-bottom: none;
-      padding: 10px 12px;
-      font-weight: bold;
-      font-size: 12px;
-      background: #f0f0f0;
-    }
-    
-    .amount-words {
-      font-size: 10px;
-      margin-top: 15px;
-      padding: 10px;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      text-align: center;
-    }
-    
-    /* Terms and Signature - Bottom Layout */
-    .terms-signature-section {
-      padding: 20px;
-      border-top: 2px solid #ddd;
-      display: flex;
-      gap: 40px;
-    }
-    
-    .terms-section {
-      flex: 2;
-    }
-    
-    .signature-section {
-      flex: 1;
-      text-align: center;
-    }
-    
-    .terms-section ol {
-      padding-left: 15px;
-      font-size: 10px;
-      line-height: 1.4;
-    }
-    
-    .terms-section li {
-      margin-bottom: 5px;
-    }
-    
-    .signature-box {
-      width: 150px;
-      height: 60px;
-      border: 2px solid #333;
-      margin: 0 auto 15px;
-      background: #fff;
-    }
-    
-    .signature-text {
-      font-size: 10px;
-      font-weight: bold;
-      line-height: 1.3;
-    }
-  </style>
-</head>
-<body>
-  <%
-    # Calculate if any product has GST
-    has_gst = @invoice_items.any? { |item| item.product&.is_gst_applicable }
-    
-    # Calculate totals
-    subtotal = @invoice_items.sum { |item| item.total_price || (item.quantity * (item.unit_price || 0)) }
-    total_tax = 0
-    
-    if has_gst
-      total_tax = @invoice_items.sum do |item|
-        if item.product&.is_gst_applicable
-          base_amount = item.total_price || (item.quantity * (item.unit_price || 0))
-          tax_rate = item.product.total_gst_percentage || 0
-          (base_amount * tax_rate / 100).round(2)
-        else
-          0
-        end
-      end
-    end
-    
-    final_total = subtotal + total_tax
-  %>
+  <head>
+    <meta charset="utf-8" />
+    <title>Invoice #2928</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
 
-  <div class="invoice-container">
-    <!-- Header with bill type -->
-    <div class="bill-header">
-      <span class="bill-type"><%= has_gst ? 'TAX INVOICE' : 'BILL OF SUPPLY' %></span>
-      <span class="bill-original">ORIGINAL FOR RECIPIENT</span>
-    </div>
+      .invoice-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
 
-    <!-- Company Header with Logo -->
-    <div class="company-header">
-      <div class="company-logo">
-        <img src="<%= 'https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg' %>" alt="Company Logo" />
+      .invoice-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .left-section {
+        display: flex;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .logo {
+        width: 150px;
+        height: auto;
+        margin-right: 20px;
+      }
+
+      .right-section {
+        flex: 1;
+      }
+
+      .tax-label {
+        font-weight: bold;
+        font-size: 18px;
+      }
+
+      .original-recipient {
+        display: inline-block;
+        font-size: 18px;
+        color: #666;
+        border: 2px solid #999;
+        padding: 2px 10px;
+        border-radius: 6px;
+        margin-left: 10px;
+      }
+
+      .company-name {
+        color: #5a4ec9;
+        font-size: 36px;
+        font-weight: bold;
+        margin: 20px 0 10px 0;
+      }
+
+      .address,
+      .contact {
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .highlight {
+        font-weight: bold;
+      }
+
+      .top-bar {
+        height: 12px;
+        background-color: #5a4ec9; /* purple top bar */
+        margin-bottom: 0;
+      }
+
+      .invoice-meta {
+        background-color: #e7e7e7;
+        display: flex;
+        justify-content: space-around;
+        padding: 15px 0;
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .invoice-meta span {
+        font-weight: normal;
+        margin-left: 5px;
+      }
+
+      .bill-ship-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+      }
+
+      .bill,
+      .ship {
+        width: 48%;
+      }
+
+      .bill-title,
+      .ship-title {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+
+      .client-name {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .mobile {
+        font-size: 16px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      thead {
+        border-top: 4px solid #5a4ec9;
+        border-bottom: 4px solid #5a4ec9;
+      }
+
+      th {
+        text-align: left;
+        padding: 10px 8px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      td {
+        padding: 10px 8px;
+        font-size: 17px;
+        vertical-align: top;
+      }
+
+      #item-table tbody tr:not(:last-child) {
+        border-bottom: 1px solid #ddd;
+      }
+
+      .description {
+        color: #555;
+        font-size: 15px;
+      }
+
+      .tax-rate {
+        font-size: 14px;
+        color: #666;
+      }
+
+      td.amount {
+        text-align: right;
+        font-weight: bold;
+      }
+
+      .section-border {
+        border-top: 4px solid #5a4ec9;
+        border-bottom: 4px solid #5a4ec9;
+        margin: 30px 0 20px;
+        font-weight: bold;
+      }
+
+      .subtotal-values {
+        display: flex;
+        justify-content: flex-end;
+        gap: 40px;
+      }
+
+      .subtotal-values span {
+        text-align: right;
+        min-width: 80px;
+      }
+
+      .summary-table {
+        width: 100%;
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+
+      .summary-table td {
+        padding: 10px;
+        vertical-align: top;
+      }
+
+      .summary-table td:last-child {
+        text-align: right;
+        font-weight: bold;
+      }
+
+      .details-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      .bank-details,
+      .tax-summary {
+        width: 40%;
+      }
+
+      .bank-details h3,
+      .payment-qr h3 {
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
+
+      .bank-details table {
+        font-size: 16px;
+      }
+
+      .bank-details td {
+        padding: 4px 8px;
+      }
+
+      .tax-summary {
+        font-size: 16px;
+        line-height: 1.7;
+      }
+
+      .tax-summary .total {
+        font-weight: bold;
+        border-top: 1px solid #aaa;
+        padding-top: 8px;
+        margin-top: 8px;
+      }
+
+      .payment-qr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 30px;
+        margin-top: 20px;
+      }
+
+      .payment-qr > div {
+        flex: 1;
+      }
+
+      .qr-image {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+      }
+
+      .qr-section img {
+        width: 100px;
+        height: 100px;
+      }
+
+      .upi-icons img {
+        height: 22px;
+        margin-right: 10px;
+      }
+
+      .amount-words {
+        text-align: right;
+        margin-top: 30px;
+      }
+
+      .amount-words h3 {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 0;
+      }
+
+      .amount-words div {
+        font-size: 18px;
+      }
+
+      .terms-signature {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-top: 40px;
+        font-family: Arial, sans-serif;
+      }
+
+      .terms {
+        width: 55%;
+      }
+
+      .terms h3 {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .terms ol {
+        font-size: 16px;
+      }
+
+      .signature-block {
+        width: 40%;
+        text-align: center;
+      }
+
+      .signature-box {
+        height: 120px;
+        border: 2px solid #000;
+        margin-bottom: 10px;
+      }
+
+      .signature-label {
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .signature-name {
+        font-size: 15px;
+        margin-top: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invoice-container">
+      <div>
+        <span class="tax-label">TAX INVOICE</span>
+        <span class="original-recipient">ORIGINAL FOR RECIPIENT</span>
       </div>
-      <div class="company-info">
-        <h1 class="company-name">Atma Nirbhar Farm</h1>
-        <p class="company-address">
-          # 827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi, Bangalore, Karnataka, 560072
-        </p>
-        <div class="company-details">
-          <span><strong>Mobile:</strong> 9972808044</span>
-          <span><strong>GSTIN:</strong> 29AOIPT8113K1ZC</span>
-          <span><strong>PAN Number:</strong> AOIPT8113K</span>
+      <div class="invoice-header">
+        <div class="left-section">
+          <img class="logo" src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhir Farm Logo" />
         </div>
-        <p class="company-email"><strong>Email:</strong> atmanirbharfarm@gmail.com</p>
-      </div>
-    </div>
-
-    <!-- Invoice Details Bar -->
-    <div class="invoice-details-bar">
-      <div class="invoice-detail">
-        <strong>Invoice No.:</strong> <%= @invoice.invoice_number || @invoice.id %>
-      </div>
-      <div class="invoice-detail">
-        <strong>Invoice Date:</strong> <%= @invoice.invoice_date&.strftime('%d/%m/%Y') || @invoice.created_at&.strftime('%d/%m/%Y') || Date.current.strftime('%d/%m/%Y') %>
-      </div>
-      <div class="invoice-detail">
-        <strong>Due Date:</strong> <%= @invoice.due_date&.strftime('%d/%m/%Y') || 1.month.from_now.strftime('%d/%m/%Y') %>
-      </div>
-    </div>
-
-    <!-- Customer Section -->
-    <div class="customer-section">
-      <div class="bill-to">
-        <div class="section-header">BILL TO</div>
-        <div class="customer-details">
-          <strong><%= @invoice.customer&.name || @customer&.name || 'Customer Name' %></strong><br>
-          <%= @invoice.customer&.address || @customer&.address || 'Address' %><br>
-          <% phone = @invoice.phone_number || @invoice.customer&.phone_number || @customer&.phone_number %>
-          <% if phone.present? %>
-            Mobile: <%= phone %>
-          <% end %>
-        </div>
-      </div>
-      <div class="ship-to">
-        <div class="section-header">SHIP TO</div>
-        <div class="customer-details">
-          <strong><%= @invoice.customer&.name || @customer&.name || 'Customer Name' %></strong><br>
-          <%= @invoice.customer&.address || @customer&.address || 'Address' %>
-        </div>
-      </div>
-    </div>
-
-    <!-- Items Table -->
-    <div class="items-section">
-      <table class="items-table <%= has_gst ? 'gst-table' : 'non-gst-table' %>">
-        <thead>
-          <tr>
-            <th class="item-col">ITEMS</th>
-            <% if has_gst %>
-              <th class="hsn-col">HSN</th>
-            <% end %>
-            <th class="qty-col">QTY.</th>
-            <th class="rate-col">RATE</th>
-            <% if has_gst %>
-              <th class="tax-col">TAX</th>
-            <% end %>
-            <th class="amount-col">AMOUNT</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @invoice_items.each do |item| %>
-            <tr>
-              <td>
-                <%= item.product&.name || 'Product' %>
-                <% if item.product&.description.present? %>
-                  <div class="product-description"><%= item.product.description %></div>
-                <% end %>
-              </td>
-              <% if has_gst %>
-                <td class="hsn-cell">
-                  <%= item.product&.hsn_code || '' %>
-                </td>
-              <% end %>
-              <td class="qty-cell">
-                <%= item.quantity %> <%= item.product&.unit_type || 'PCS' %>
-              </td>
-              <td class="rate-cell">
-                <%= number_with_delimiter(item.unit_price || 0) %>
-              </td>
-              <% if has_gst %>
-                <td class="tax-cell">
-                  <% if item.product&.is_gst_applicable %>
-                    <% gst_rate = item.product.total_gst_percentage || 0 %>
-                    <%= number_with_delimiter((item.total_price || (item.quantity * (item.unit_price || 0))) * gst_rate / 100) %><br>
-                    (<%= gst_rate %>%)
-                  <% else %>
-                    0<br>(0%)
-                  <% end %>
-                </td>
-              <% end %>
-              <td class="amount-cell">
-                <% base_amount = item.total_price || (item.quantity * (item.unit_price || 0)) %>
-                <%= number_with_delimiter(base_amount) %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-      
-      <!-- Subtotal -->
-      <div class="subtotal-row">
-        <table class="subtotal-table <%= has_gst ? 'gst-subtotal' : 'non-gst-subtotal' %>">
-          <tr>
-            <td><strong>SUBTOTAL</strong></td>
-            <% if has_gst %>
-              <td><strong></strong></td>
-            <% end %>
-            <td><strong><%= @invoice_items.sum(&:quantity) %></strong></td>
-            <td><strong></strong></td>
-            <% if has_gst %>
-              <td><strong></strong></td>
-            <% end %>
-            <td><strong>₹ <%= number_with_delimiter(subtotal) %></strong></td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- Bottom Section -->
-    <div class="bottom-section">
-      <div class="left-section">
-        <!-- Bank Details -->
-        <div class="bank-details">
-          <div class="section-title">BANK DETAILS</div>
-          <p><strong>Name:</strong> Atma Nirbhar Farm</p>
-          <p><strong>IFSC Code:</strong> CNRB0003194</p>
-          <p><strong>Account No:</strong> 3194201000718</p>
-          <p><strong>Bank:</strong> Canara Bank</p>
-        </div>
-        
-        <!-- Payment QR Code -->
-        <div class="payment-section">
-          <div class="section-title">PAYMENT OR CODE</div>
-          <div class="qr-code">
-            <div class="qr-placeholder">
-              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                <div style="margin-bottom: 4px;">█ █ █</div>
-                <div style="margin-bottom: 4px;">█ ▄ █</div>
-                <div>█ █ █</div>
-              </div>
-            </div>
-            <div class="payment-info">
-              <div class="upi-id">
-                <strong>UPI ID:</strong><br>
-                9972808044@ybl
-              </div>
-              <div class="payment-logos">
-                <span style="color: #6739b7;">⬥ PhonePe</span>
-                <span style="color: #4285f4;">🔵 GPay</span>
-                <span style="color: #00c6f7;">Paytm</span>
-                <span>UPI</span>
-              </div>
-            </div>
+        <div class="right-section">
+          <div class="company-name">Atma Nirbhir Farm</div>
+          <div class="address">
+            #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi,
+            Bangalore, Karnataka, 560072
+          </div>
+          <div class="contact">
+            <span class="highlight">Mobile:</span> 9972808044 &nbsp;&nbsp;
+            <span class="highlight">GSTIN:</span> 29AOIPT8113K1ZC &nbsp;&nbsp;
+            <span class="highlight">PAN Number:</span> AOIPT8113K <br />
+            <span class="highlight">Email:</span> atmanirbharfarm@gmail.com
           </div>
         </div>
       </div>
-      
-      <!-- Right Section - Amount Summary -->
-      <div class="right-section">
-        <div class="amount-summary">
-          <table class="amount-table">
+
+      <div class="top-bar"></div>
+      <div class="invoice-meta">
+        <div>Invoice No.: <span>2928</span></div>
+        <div>Invoice Date: <span>08/06/2025</span></div>
+        <div>Due Date: <span>15/06/2025</span></div>
+      </div>
+
+      <div class="bill-ship-section">
+        <div class="bill">
+          <div class="bill-title">BILL TO</div>
+          <div class="client-name">Nagaraj D Group Milk C</div>
+          <div class="mobile">Mobile: 9620194177</div>
+        </div>
+        <div class="ship">
+          <div class="ship-title">SHIP TO</div>
+          <div class="client-name">Nagaraj D Group Milk C</div>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <table id="item-table">
+        <thead>
+          <tr>
+            <th>ITEMS</th>
+            <th>HSN</th>
+            <th>QTY.</th>
+            <th>RATE</th>
+            <th>TAX</th>
+            <th>AMOUNT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div>A2 GHEE 500ML</div>
+              <div class="description">Bottele</div>
+            </td>
+            <td>04059020</td>
+            <td>0.5 LTR</td>
+            <td>2,232.14</td>
+            <td>
+              133.93<br />
+              <span class="tax-rate">(12%)</span>
+            </td>
+            <td class="amount">1,250</td>
+          </tr>
+          <tr>
+            <td>
+              <div>GROUNDNOT OIL 1LITER</div>
+              <div class="description">Bottele</div>
+            </td>
+            <td>1508</td>
+            <td>1 BTL</td>
+            <td>333.33</td>
+            <td>
+              16.67<br />
+              <span class="tax-rate">(5%)</span>
+            </td>
+            <td class="amount">350</td>
+          </tr>
+          <tr>
+            <td>
+              <div>COCONUT OIL 1 LITER</div>
+              <div class="description">Bottele</div>
+            </td>
+            <td>151319</td>
+            <td>1 BTL</td>
+            <td>409.52</td>
+            <td>
+              20.48<br />
+              <span class="tax-rate">(5%)</span>
+            </td>
+            <td class="amount">430</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="summary-table">
+        <tr class="section-border">
+          <td>SUBTOTAL</td>
+          <td>-</td>
+          <td colspan="2">
+            <div class="subtotal-values">
+              <span>₹ 171.07</span>
+              <span>₹ 2,030</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <div class="details-container">
+        <div class="bank-details">
+          <h3>BANK DETAILS</h3>
+          <table>
             <tr>
-              <td>TAXABLE AMOUNT</td>
-              <td>₹ <%= number_with_delimiter(subtotal) %></td>
-            </tr>
-            <% if has_gst %>
-              <!-- Show detailed GST breakdown -->
-              <% 
-                cgst_total = 0
-                sgst_total = 0
-                igst_total = 0
-                
-                @invoice_items.each do |item|
-                  if item.product&.is_gst_applicable
-                    base_amount = item.total_price || (item.quantity * (item.unit_price || 0))
-                    cgst_total += (base_amount * (item.product.total_cgst_percentage || 0) / 100).round(2)
-                    sgst_total += (base_amount * (item.product.total_sgst_percentage || 0) / 100).round(2)
-                    igst_total += (base_amount * (item.product.total_igst_percentage || 0) / 100).round(2)
-                  end
-                end
-              %>
-              <% if cgst_total > 0 %>
-                <tr>
-                  <td>CGST @2.5%</td>
-                  <td>₹ <%= number_with_delimiter(cgst_total) %></td>
-                </tr>
-              <% end %>
-              <% if sgst_total > 0 %>
-                <tr>
-                  <td>SGST @2.5%</td>
-                  <td>₹ <%= number_with_delimiter(sgst_total) %></td>
-                </tr>
-              <% end %>
-              <% if igst_total > 0 %>
-                <tr>
-                  <td>IGST @6%</td>
-                  <td>₹ <%= number_with_delimiter(igst_total) %></td>
-                </tr>
-              <% end %>
-            <% end %>
-            <tr class="total-row">
-              <td><strong>TOTAL AMOUNT</strong></td>
-              <td><strong>₹ <%= number_with_delimiter(@invoice.total_amount || final_total) %></strong></td>
+              <td>Name:</td>
+              <td>Atma Nirbhar Farm</td>
             </tr>
             <tr>
-              <td>Received Amount</td>
-              <td>₹ 0</td>
+              <td>IFSC Code:</td>
+              <td>CNRB0003194</td>
+            </tr>
+            <tr>
+              <td>Account No:</td>
+              <td>3194201000718</td>
+            </tr>
+            <tr>
+              <td>Bank:</td>
+              <td>Canara Bank</td>
             </tr>
           </table>
-        </div>
-        
-        <div class="amount-words">
-          <strong>Total Amount (in words)</strong><br>
-          <% 
-            # Convert number to words - you may need to implement this or use a gem
-            total_amount = @invoice.total_amount || final_total
-            words = case total_amount.to_i
-            when 0..20
-              %w[Zero One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen Twenty][total_amount.to_i]
-            else
-              "Rupees #{total_amount.to_i} only"
-            end
-          %>
-          <%= words %>
-        </div>
-      </div>
-    </div>
 
-    <!-- Terms and Signature Section -->
-    <div class="terms-signature-section">
-      <div class="terms-section">
-        <div class="section-title">TERMS AND CONDITIONS</div>
-        <% if @invoice.notes.present? %>
-          <%= simple_format(@invoice.notes) %>
-        <% else %>
-          <ol>
-            <li>Kindly Do Make Every Month Payment on or Before the 10th of The Month</li>
-            <li>Kindly Share the Screenshot Immediately Once the Payment is Done to Confirm Your Payment</li>
-          </ol>
-        <% end %>
+          <div class="payment-qr">
+            <div>
+              <h4>PAYMENT QR CODE</h4>
+              <p>UPI ID:<br />9972808044@ybl</p>
+              <div class="qr-section">
+                <div class="upi-icons">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/PhonePe_Logo.svg/1280px-PhonePe_Logo.svg.png"
+                    alt="PhonePe"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png"
+                    alt="GPay"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Paytm_logo.png"
+                    alt="Paytm"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Unified_Payments_Interface_logo.svg/1920px-Unified_Payments_Interface_logo.svg.png"
+                    alt="UPI"
+                  />
+                </div>
+              </div>
+            </div>
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=9972808044@ybl"
+              alt="QR Code"
+              class="qr-image"
+            />
+          </div>
+        </div>
+
+        <div class="tax-summary">
+          <div>
+            TAXABLE AMOUNT <span style="float: right">₹ 1,858.93</span><br />
+            CGST @2.5% <span style="float: right">₹ 18.57</span><br />
+            SGST @2.5% <span style="float: right">₹ 18.57</span><br />
+            CGST @6% <span style="float: right">₹ 66.96</span><br />
+            SGST @6% <span style="float: right">₹ 66.96</span>
+          </div>
+          <div class="total">
+            TOTAL AMOUNT <span style="float: right">₹ 2,030</span><br />
+            <span style="font-weight: normal">Received Amount</span>
+            <span style="float: right">₹ 0</span>
+          </div>
+          <div class="amount-words">
+            <h3>Total Amount (in words)</h3>
+            <div>Two Thousand Thirty Rupees</div>
+          </div>
+        </div>
       </div>
-      
-      <div class="signature-section">
-        <div class="signature-box"></div>
-        <div class="signature-text">
-          <strong>AUTHORISED SIGNATORY FOR<br>Atma Nirbhar Farm</strong>
+
+      <div class="terms-signature">
+        <div class="terms">
+          <h3>TERMS AND CONDITIONS</h3>
+          <ol style="padding-left: 20px;">
+            <li>
+              Kindly Do Make Every Month Payment on or Before the 10th of The
+              Month
+            </li>
+            <li>
+              Kindly Share the Screenshot Immediately Once the Payment is Done
+              to Confirm Your Payment
+            </li>
+          </ol>
+        </div>
+
+        <div class="signature-block">
+          <div class="signature-box"></div>
+          <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
+          <div class="signature-name">Atma Nirbhar Farm</div>
         </div>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 </html>
