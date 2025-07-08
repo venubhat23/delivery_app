@@ -1,38 +1,253 @@
-<div class="container">
-  <div class="row justify-content-center align-items-center min-vh-100">
-    <div class="col-md-6 col-lg-4">
-      <div class="card shadow">
-        <div class="card-body p-5">
-          <div class="text-center mb-4">
-            <h2 class="text-primary">
-              <i class="fas fa-truck me-2"></i>
-              Delivery Management
-            </h2>
-            <p class="text-muted">Sign in to your account</p>
+<div class="auth-wrapper">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="card auth-card">
+          <div class="card-body p-5">
+            <div class="text-center mb-5">
+              <div class="auth-logo mb-4">
+                <div class="brand-icon mx-auto mb-3">
+                  <i class="fas fa-truck-fast"></i>
+                </div>
+                <h2 class="brand-text mb-2">DeliveryPro</h2>
+                <p class="text-muted">Professional Delivery Management System</p>
+              </div>
+            </div>
+            
+            <%= form_with url: login_path, local: true, class: "auth-form" do |form| %>
+              <div class="form-group mb-4">
+                <%= form.label :email, class: "form-label" do %>
+                  <i class="fas fa-envelope me-2"></i>Email Address
+                <% end %>
+                <%= form.email_field :email, class: "form-control form-control-lg", placeholder: "Enter your email", required: true %>
+              </div>
+              
+              <div class="form-group mb-4">
+                <%= form.label :password, class: "form-label" do %>
+                  <i class="fas fa-lock me-2"></i>Password
+                <% end %>
+                <%= form.password_field :password, class: "form-control form-control-lg", placeholder: "Enter your password", required: true %>
+              </div>
+              
+              <div class="d-grid mb-4">
+                <%= form.submit "Sign In", class: "btn btn-primary btn-lg auth-btn" %>
+              </div>
+            <% end %>
+            
+            <div class="text-center">
+              <p class="mb-0 text-muted">
+                Don't have an account? 
+                <%= link_to "Create Account", signup_path, class: "text-primary fw-medium text-decoration-none" %>
+              </p>
+            </div>
           </div>
-          
-          <%= form_with url: login_path, local: true, class: "needs-validation", novalidate: true do |form| %>
-            <div class="mb-3">
-              <%= form.label :email, class: "form-label" %>
-              <%= form.email_field :email, class: "form-control", required: true %>
+        </div>
+        
+        <div class="text-center mt-4">
+          <div class="auth-features">
+            <div class="row text-white">
+              <div class="col-4">
+                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                <p class="small mb-0">Secure</p>
+              </div>
+              <div class="col-4">
+                <i class="fas fa-bolt fa-2x mb-2"></i>
+                <p class="small mb-0">Fast</p>
+              </div>
+              <div class="col-4">
+                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                <p class="small mb-0">Analytics</p>
+              </div>
             </div>
-            
-            <div class="mb-4">
-              <%= form.label :password, class: "form-label" %>
-              <%= form.password_field :password, class: "form-control", required: true %>
-            </div>
-            
-            <%= form.submit "Login", class: "btn btn-primary w-100 mb-3" %>
-          <% end %>
-          
-          <div class="text-center">
-            <p class="mb-0">
-              Don't have an account? 
-              <%= link_to "Sign up", signup_path, class: "text-primary text-decoration-none" %>
-            </p>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+.auth-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  z-index: -1;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.auth-card {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.auth-logo {
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.brand-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--primary-gradient);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.brand-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.auth-form {
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+.form-control-lg {
+  padding: 1rem 1.25rem;
+  font-size: 1.1rem;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+}
+
+.form-control-lg:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.auth-btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background: var(--primary-gradient);
+  border: none;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.auth-btn:hover::before {
+  left: 100%;
+}
+
+.auth-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+}
+
+.auth-btn:active {
+  transform: translateY(-1px);
+}
+
+.auth-features {
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.auth-features i {
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.auth-features .col-4:hover i {
+  opacity: 1;
+  transform: translateY(-5px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .auth-wrapper {
+    padding: 1rem;
+  }
+  
+  .card-body {
+    padding: 2rem !important;
+  }
+  
+  .brand-text {
+    font-size: 2rem;
+  }
+  
+  .brand-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+}
+</style>

@@ -11,161 +11,162 @@
 <body class="bg-light">
 <div class="container-fluid p-4">
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h1 class="h2">
-    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-  </h1>
+<!-- Enhanced Dashboard -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-chart-line me-3"></i>Dashboard Overview
+      </h1>
+      <p class="text-muted mb-0">Welcome back! Here's what's happening with your delivery business today.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to products_path, class: "btn btn-primary" do %>
+        <i class="fas fa-cube me-2"></i>Manage Products
+      <% end %>
+      <%= link_to customers_path, class: "btn btn-success" do %>
+        <i class="fas fa-users me-2"></i>View Customers
+      <% end %>
+    </div>
+  </div>
 </div>
 
-<div class="row">
+<!-- Enhanced Stats Cards -->
+<div class="row mb-4">
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-primary shadow h-100 py-2 hover-card">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-              Total Customers
-            </div>
-            <div class="d-flex align-items-center">
-              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="totalCustomers">
-                <%= @total_customers || 0 %>
-              </div>
-              <div class="trending-indicator positive">
-                <i class="fas fa-arrow-up me-1"></i>
-                <span class="percentage">+5.2%</span>
-              </div>
-            </div>
-            <div class="trend-text">vs last month</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-users fa-2x text-gray-300 hover-icon"></i>
-          </div>
+    <div class="stats-card stats-card-primary">
+      <div class="stats-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          <%= @total_customers || 0 %>
+        </div>
+        <div class="stats-label">Total Customers</div>
+        <div class="stats-trend positive">
+          <i class="fas fa-arrow-up"></i>
+          <span>+5.2%</span>
+          <small>vs last month</small>
         </div>
       </div>
     </div>
   </div>
 
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-success shadow h-100 py-2 hover-card">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-              Total Products
-            </div>
-            <div class="d-flex align-items-center">
-              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="totalProducts">
-                <%= @total_products || 0 %>
-              </div>
-              <div class="trending-indicator positive">
-                <i class="fas fa-arrow-up me-1"></i>
-                <span class="percentage">+8.1%</span>
-              </div>
-            </div>
-            <div class="trend-text">vs last month</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-box fa-2x text-gray-300 hover-icon"></i>
-          </div>
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-cube"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          <%= @total_products || 0 %>
+        </div>
+        <div class="stats-label">Total Products</div>
+        <div class="stats-trend positive">
+          <i class="fas fa-arrow-up"></i>
+          <span>+8.1%</span>
+          <small>vs last month</small>
         </div>
       </div>
     </div>
   </div>
 
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-info shadow h-100 py-2 hover-card">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-              Pending Deliveries
-            </div>
-            <div class="d-flex align-items-center">
-              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="pendingDeliveries">
-                <%= @pending_deliveries || 0 %>
-              </div>
-              <div class="trending-indicator negative">
-                <i class="fas fa-arrow-down me-1"></i>
-                <span class="percentage">-3.4%</span>
-              </div>
-            </div>
-            <div class="trend-text">vs last month</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-truck fa-2x text-gray-300 hover-icon"></i>
-          </div>
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-truck"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          <%= @pending_deliveries || 0 %>
+        </div>
+        <div class="stats-label">Pending Deliveries</div>
+        <div class="stats-trend negative">
+          <i class="fas fa-arrow-down"></i>
+          <span>-3.4%</span>
+          <small>vs last month</small>
         </div>
       </div>
     </div>
   </div>
 
   <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-warning shadow h-100 py-2 hover-card">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-              Total Invoices
-            </div>
-            <div class="d-flex align-items-center">
-              <div class="h5 mb-0 font-weight-bold text-gray-800 counter-number me-2" id="totalInvoices">
-                <%= @total_invoices || 0 %>
-              </div>
-              <div class="trending-indicator positive">
-                <i class="fas fa-arrow-up me-1"></i>
-                <span class="percentage">+12.7%</span>
-              </div>
-            </div>
-            <div class="trend-text">vs last month</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-file-invoice fa-2x text-gray-300 hover-icon"></i>
-          </div>
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-receipt"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          <%= @total_invoices || 0 %>
+        </div>
+        <div class="stats-label">Total Invoices</div>
+        <div class="stats-trend positive">
+          <i class="fas fa-arrow-up"></i>
+          <span>+12.7%</span>
+          <small>vs last month</small>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Sales Analytics Row -->
-<div class="row">
-  <div class="col-lg-6">
-    <div class="card shadow mb-4">
-      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">
-          <i class="fas fa-chart-line me-2"></i>Sales Analytics (Last 7 Days)
-        </h6>
+<!-- Charts and Analytics Row -->
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <div class="card chart-card">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">
+            <i class="fas fa-chart-line me-2"></i>Sales Analytics
+          </h6>
+          <div class="chart-controls">
+            <select class="form-select form-select-sm">
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+              <option>Last 3 Months</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div class="card-body">
-        <canvas id="salesChart" width="400" height="200"></canvas>
+        <canvas id="salesChart" height="300"></canvas>
       </div>
     </div>
   </div>
-  <div class="col-lg-6">
-    <div class="card shadow mb-4">
-      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-success">
+  
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">
           <i class="fas fa-medal me-2"></i>Top Products
         </h6>
       </div>
       <div class="card-body">
         <% if @top_products&.any? %>
           <% @top_products.each_with_index do |product, index| %>
-            <div class="product-item <%= 'border-0' if index == @top_products.length - 1 %>">
-              <div class="product-rank"><%= index + 1 %></div>
-              <div class="product-info">
-                <h6 class="mb-0"><%= product.name %></h6>
-                <small class="text-muted"><%= product.unit_type || 'General' %></small>
+            <div class="top-product-item">
+              <div class="product-rank">
+                <span class="rank-number"><%= index + 1 %></span>
               </div>
-              <div class="product-stats">
-                <div class="sales-count">Available: <%= product.available_quantity || 0 %></div>
-                <div class="revenue">$<%= number_with_delimiter(product.price || 0) %></div>
+              <div class="product-details">
+                <h6 class="product-name"><%= product.name %></h6>
+                <small class="product-category"><%= product.unit_type || 'General' %></small>
+              </div>
+              <div class="product-metrics">
+                <div class="metric">
+                  <span class="metric-value"><%= product.available_quantity || 0 %></span>
+                  <span class="metric-label">Available</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-value">₹<%= number_with_delimiter(product.price || 0) %></span>
+                  <span class="metric-label">Price</span>
+                </div>
               </div>
             </div>
           <% end %>
         <% else %>
-          <div class="text-center text-muted py-4">
-            <i class="fas fa-box-open fa-3x mb-3"></i>
+          <div class="empty-state-sm">
+            <i class="fas fa-cube"></i>
             <p>No products available</p>
           </div>
         <% end %>
@@ -174,44 +175,82 @@
   </div>
 </div>
 
+<!-- Welcome Section and Recent Activity -->
 <div class="row">
   <div class="col-lg-8">
-    <div class="card shadow mb-4">
-      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Welcome to Delivery Management System</h6>
+    <div class="card welcome-card">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-rocket me-2"></i>Welcome to DeliveryPro
+        </h6>
       </div>
       <div class="card-body">
-        <p>Welcome to your delivery management dashboard! Here you can:</p>
-        <ul class="feature-list">
-          <li><i class="fas fa-box text-primary me-2"></i>Manage products and inventory</li>
-          <li><i class="fas fa-users text-success me-2"></i>Track customer information</li>
-          <li><i class="fas fa-truck text-info me-2"></i>Assign deliveries to delivery personnel</li>
-          <li><i class="fas fa-file-invoice text-warning me-2"></i>Generate and manage invoices</li>
-          <li><i class="fas fa-chart-line text-secondary me-2"></i>Monitor delivery schedules</li>
-        </ul>
-        <div class="mt-4 p-3 bg-light rounded">
-          <h6 class="text-primary">Quick Stats:</h6>
+        <p class="welcome-text">
+          Welcome to your professional delivery management dashboard! 
+          Here you can efficiently manage all aspects of your delivery business.
+        </p>
+        
+        <div class="feature-grid">
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-cube"></i>
+            </div>
+            <div class="feature-content">
+              <h6>Product Management</h6>
+              <p>Manage your inventory with advanced categorization and tracking</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="feature-content">
+              <h6>Customer Database</h6>
+              <p>Maintain detailed customer records with location tracking</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-route"></i>
+            </div>
+            <div class="feature-content">
+              <h6>Smart Routing</h6>
+              <p>Optimize delivery routes and assign delivery personnel</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="feature-content">
+              <h6>Analytics & Reports</h6>
+              <p>Track performance with detailed analytics and reporting</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="quick-stats">
           <div class="row">
             <div class="col-md-3">
-              <div class="stat-item">
+              <div class="quick-stat">
                 <div class="stat-number"><%= @total_customers || 0 %></div>
                 <div class="stat-label">Customers</div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="stat-item">
+              <div class="quick-stat">
                 <div class="stat-number"><%= @total_products || 0 %></div>
                 <div class="stat-label">Products</div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="stat-item">
+              <div class="quick-stat">
                 <div class="stat-number"><%= @pending_deliveries || 0 %></div>
                 <div class="stat-label">Pending</div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="stat-item">
+              <div class="quick-stat">
                 <div class="stat-number"><%= @total_invoices || 0 %></div>
                 <div class="stat-label">Invoices</div>
               </div>
@@ -221,38 +260,44 @@
       </div>
     </div>
   </div>
+  
   <div class="col-lg-4">
-    <div class="card shadow mb-4">
-      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">
-          <i class="fas fa-crown me-2"></i>Recent Customers
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-user-friends me-2"></i>Recent Customers
         </h6>
       </div>
       <div class="card-body">
         <% if @recent_customers&.any? %>
-          <% @recent_customers.each_with_index do |customer, index| %>
-            <div class="customer-item <%= 'border-0' if index == @recent_customers.length - 1 %>">
-              <div class="customer-avatar bg-<%= ['primary', 'success', 'info', 'warning', 'secondary'][index % 5] %>">
+          <% @recent_customers.each do |customer| %>
+            <div class="recent-customer-item">
+              <div class="customer-avatar">
                 <%= customer.name.split.map(&:first).join.upcase %>
               </div>
               <div class="customer-info">
-                <h6 class="mb-0"><%= customer.name %></h6>
-                <small class="text-muted">
-                  <% if customer.phone_number %>
-                    <%= customer.phone_number %>
+                <h6 class="customer-name"><%= customer.name %></h6>
+                <small class="customer-details">
+                  <% if customer.phone_number.present? %>
+                    <i class="fas fa-phone me-1"></i><%= customer.phone_number %>
                   <% else %>
-                    Customer
+                    <i class="fas fa-map-marker-alt me-1"></i>
+                    <%= truncate(customer.address, length: 30) || 'No address' %>
                   <% end %>
                 </small>
               </div>
-              <div class="customer-orders">
-                <i class="fas fa-map-marker-alt" title="<%= customer.address || 'No address' %>"></i>
+              <div class="customer-status">
+                <% if customer.delivery_person.present? %>
+                  <i class="fas fa-check-circle text-success" title="Assigned to <%= customer.delivery_person.name %>"></i>
+                <% else %>
+                  <i class="fas fa-clock text-warning" title="Not assigned"></i>
+                <% end %>
               </div>
             </div>
           <% end %>
         <% else %>
-          <div class="text-center text-muted py-4">
-            <i class="fas fa-users fa-3x mb-3"></i>
+          <div class="empty-state-sm">
+            <i class="fas fa-users"></i>
             <p>No customers yet</p>
           </div>
         <% end %>
@@ -264,418 +309,442 @@
 </div>
 
 <style>
-.border-left-primary {
-  border-left: 0.25rem solid #4e73df !important;
-}
-
-.border-left-success {
-  border-left: 0.25rem solid #1cc88a !important;
-}
-
-.border-left-info {
-  border-left: 0.25rem solid #36b9cc !important;
-}
-
-.border-left-warning {
-  border-left: 0.25rem solid #f6c23e !important;
-}
-
-.text-gray-300 {
-  color: #dddfeb !important;
-}
-
-.text-gray-800 {
-  color: #5a5c69 !important;
-}
-
-/* Enhanced Styles */
-.hover-card {
-  transition: all 0.3s ease;
+/* Enhanced Stats Cards */
+.stats-card {
+  background: var(--bg-white);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-.hover-card:hover {
+.stats-card:hover {
+  box-shadow: var(--box-shadow-hover);
   transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
-.hover-card::before {
+.stats-card::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -100%;
+  left: 0;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s;
+  height: 4px;
+  background: var(--primary-gradient);
 }
 
-.hover-card:hover::before {
-  left: 100%;
+.stats-card-primary::before {
+  background: var(--primary-gradient);
 }
 
-.hover-icon {
-  transition: all 0.3s ease;
+.stats-card-success::before {
+  background: var(--success-gradient);
 }
 
-.hover-card:hover .hover-icon {
-  transform: scale(1.1) rotate(5deg);
-  color: #4e73df !important;
+.stats-card-warning::before {
+  background: var(--warning-gradient);
 }
 
-.counter-number {
-  font-size: 2rem !important;
-  font-weight: 700 !important;
-  animation: fadeInUp 0.8s ease-out;
+.stats-card-info::before {
+  background: var(--dark-gradient);
 }
 
-/* Trending Indicators */
-.trending-indicator {
-  display: flex;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 12px;
-  animation: slideIn 0.6s ease-out 0.5s both;
-}
-
-.trending-indicator.positive {
-  background-color: rgba(28, 200, 138, 0.1);
-  color: #1cc88a;
-  border: 1px solid rgba(28, 200, 138, 0.2);
-}
-
-.trending-indicator.negative {
-  background-color: rgba(231, 74, 59, 0.1);
-  color: #e74a3b;
-  border: 1px solid rgba(231, 74, 59, 0.2);
-}
-
-.trending-indicator i {
-  font-size: 0.7rem;
-  animation: bounce 2s infinite;
-}
-
-.trend-text {
-  font-size: 0.7rem;
-  color: #858796;
-  margin-top: 2px;
-  opacity: 0;
-  animation: fadeIn 0.8s ease-out 1s both;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-3px);
-  }
-  60% {
-    transform: translateY(-2px);
-  }
-}
-
-.feature-list {
-  list-style: none;
-  padding: 0;
-}
-
-.feature-list li {
-  padding: 8px 0;
-  border-bottom: 1px solid #f1f3f4;
-  transition: all 0.3s ease;
-}
-
-.feature-list li:hover {
-  background-color: #f8f9fa;
-  padding-left: 10px;
-  border-radius: 5px;
-}
-
-.feature-list li:last-child {
-  border-bottom: none;
-}
-
-.customer-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f1f3f4;
-  transition: all 0.3s ease;
-}
-
-.customer-item:hover {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding-left: 10px;
-}
-
-.customer-avatar {
-  width: 40px;
-  height: 40px;
+.stats-card .stats-icon {
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
+  background: var(--primary-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
-  margin-right: 15px;
-  font-size: 0.9rem;
+  font-size: 28px;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.stats-card-success .stats-icon {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning .stats-icon {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info .stats-icon {
+  background: var(--dark-gradient);
+}
+
+.stats-content {
+  flex: 1;
+}
+
+.stats-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stats-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.stats-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.stats-trend.positive {
+  color: #10b981;
+}
+
+.stats-trend.negative {
+  color: #ef4444;
+}
+
+.stats-trend i {
+  font-size: 0.75rem;
+}
+
+.stats-trend small {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+/* Chart Card */
+.chart-card {
+  background: var(--bg-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Top Products */
+.top-product-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.top-product-item:last-child {
+  border-bottom: none;
+}
+
+.top-product-item:hover {
+  background: var(--bg-light);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 -1rem;
+}
+
+.product-rank {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rank-number {
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.product-details {
+  flex: 1;
+}
+
+.product-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.product-category {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.product-metrics {
+  display: flex;
+  gap: 1rem;
+}
+
+.metric {
+  text-align: center;
+}
+
+.metric-value {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.metric-label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Welcome Card */
+.welcome-card {
+  background: linear-gradient(135deg, var(--bg-white) 0%, #f8fafc 100%);
+}
+
+.welcome-text {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-white);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.feature-item:hover {
+  box-shadow: var(--box-shadow);
+  transform: translateY(-2px);
+}
+
+.feature-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.feature-content h6 {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.feature-content p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.quick-stats {
+  background: var(--bg-white);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.quick-stat {
+  text-align: center;
+}
+
+.quick-stat .stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.quick-stat .stat-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Recent Customers */
+.recent-customer-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.recent-customer-item:last-child {
+  border-bottom: none;
+}
+
+.recent-customer-item:hover {
+  background: var(--bg-light);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 -1rem;
+}
+
+.recent-customer-item .customer-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: var(--success-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .customer-info {
   flex: 1;
 }
 
-.customer-info h6 {
-  font-size: 0.9rem;
+.customer-name {
+  font-size: 1rem;
   font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
 }
 
-.customer-orders {
-  background: linear-gradient(45deg, #4e73df, #36b9cc);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  min-width: 35px;
+.customer-details {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.customer-status {
+  font-size: 1.2rem;
+}
+
+/* Empty States */
+.empty-state-sm {
   text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
 }
 
-/* Product Item Styles */
-.product-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f1f3f4;
-  transition: all 0.3s ease;
+.empty-state-sm i {
+  font-size: 3rem;
+  opacity: 0.3;
+  margin-bottom: 1rem;
 }
 
-.product-item:hover {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding-left: 10px;
+.empty-state-sm p {
+  margin: 0;
 }
 
-.product-rank {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #1cc88a, #36b9cc);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  margin-right: 15px;
-  font-size: 0.8rem;
-}
-
-.product-info {
-  flex: 1;
-}
-
-.product-info h6 {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.product-stats {
-  text-align: right;
-}
-
-.sales-count {
-  font-size: 0.75rem;
-  color: #858796;
-  margin-bottom: 2px;
-}
-
-.revenue {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1cc88a;
-}
-
-.pulse-animation {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-/* Counter Animation */
-.counting {
-  color: #4e73df !important;
-  animation: pulse 0.1s ease-in-out;
-}
-
-/* Quick Stats Styles */
-.stat-item {
-  text-align: center;
-  padding: 10px;
-}
-
-.stat-number {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #4e73df;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #858796;
-  text-transform: uppercase;
-}
-
-/* Responsive adjustments */
+/* Responsive Design */
 @media (max-width: 768px) {
-  .trending-indicator {
-    font-size: 0.65rem;
-    padding: 1px 4px;
+  .stats-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
   }
   
-  .counter-number {
-    font-size: 1.5rem !important;
+  .stats-card .stats-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
   }
   
-  .trend-text {
-    font-size: 0.65rem;
+  .stats-number {
+    font-size: 2rem;
   }
   
-  .stat-number {
-    font-size: 1.2rem;
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .product-metrics {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Get actual values from Rails
-  const totalCustomers = parseInt(<%= @total_customers || 0 %>);
-  const totalProducts = parseInt(<%= @total_products || 0 %>);
-  const pendingDeliveries = parseInt(<%= @pending_deliveries || 0 %>);
-  const totalInvoices = parseInt(<%= @total_invoices || 0 %>);
-
-  // Animated counter function
-  function animateCounter(elementId, targetValue, duration = 2000) {
-    const element = document.getElementById(elementId);
-    if (!element || targetValue === 0) {
-      if (element) element.textContent = '0';
-      return;
-    }
-    
-    const start = 0;
-    const increment = targetValue / (duration / 16);
-    let current = start;
-
-    element.classList.add('counting');
-    
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= targetValue) {
-        current = targetValue;
-        clearInterval(timer);
-        element.classList.remove('counting');
-      }
-      element.textContent = Math.floor(current).toLocaleString();
-    }, 16);
-  }
-
-  // Start animations after a short delay
-  setTimeout(() => {
-    animateCounter('totalCustomers', totalCustomers, 2000);
-    animateCounter('totalProducts', totalProducts, 2200);
-    animateCounter('pendingDeliveries', pendingDeliveries, 1800);
-    animateCounter('totalInvoices', totalInvoices, 2400);
-  }, 500);
-
   // Sales Chart
-  const ctx = document.getElementById('salesChart').getContext('2d');
-  const salesChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      datasets: [{
-        label: 'Sales ($)',
-        data: [12000, 15000, 8000, 18000, 22000, 25000, 19000],
-        borderColor: '#4e73df',
-        backgroundColor: 'rgba(78, 115, 223, 0.1)',
-        borderWidth: 3,
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#4e73df',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        pointRadius: 6,
-        pointHoverRadius: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        }
+  const ctx = document.getElementById('salesChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+          label: 'Sales',
+          data: [12, 19, 3, 5, 2, 3, 20],
+          borderColor: '#667eea',
+          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
       },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: 'rgba(0,0,0,0.1)'
-          },
-          ticks: {
-            callback: function(value) {
-              return '$' + value.toLocaleString();
-            }
-          }
-        },
-        x: {
-          grid: {
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
             display: false
           }
-        }
-      },
-      elements: {
-        point: {
-          hoverRadius: 8
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
         }
       }
-    }
-  });
+    });
+  }
 });
 </script>
 

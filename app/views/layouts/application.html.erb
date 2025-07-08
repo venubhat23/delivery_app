@@ -1,121 +1,264 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Delivery Management</title>
+    <title>DeliveryPro - Professional Delivery Management</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Enhanced Bootstrap & Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Modern Design System -->
+    <style>
+      :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        
+        --sidebar-width: 280px;
+        --header-height: 70px;
+        --border-radius: 12px;
+        --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --bg-light: #f8fafc;
+        --bg-white: #ffffff;
+        --border-color: #e2e8f0;
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg-light);
+        color: var(--text-primary);
+        line-height: 1.6;
+      }
+      
+      .main-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--header-height);
+        background: var(--bg-white);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 1000;
+        box-shadow: var(--box-shadow);
+      }
+      
+      .sidebar {
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        width: var(--sidebar-width);
+        height: calc(100vh - var(--header-height));
+        background: var(--bg-white);
+        border-right: 1px solid var(--border-color);
+        z-index: 999;
+        overflow-y: auto;
+        transition: all 0.3s ease;
+      }
+      
+      .main-content {
+        margin-left: var(--sidebar-width);
+        margin-top: var(--header-height);
+        padding: 2rem;
+        min-height: calc(100vh - var(--header-height));
+      }
+      
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        
+        .sidebar.show {
+          transform: translateX(0);
+        }
+        
+        .main-content {
+          margin-left: 0;
+        }
+      }
+    </style>
   </head>
 
-  <body class="bg-light">
+  <body>
     <% if logged_in? %>
-      <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-          <%= link_to "Delivery Management", root_path, class: "navbar-brand" %>
-          
-          <div class="navbar-nav ms-auto">
-            <span class="navbar-text me-3">Welcome, <%= current_user.name %></span>
-
-<%= button_to "Logout", logout_path, method: :delete, class: "btn btn-outline-light btn-sm" %>
-          </div>
-        </div>
-      </nav>
-      
-      <div class="container-fluid">
-        <div class="row">
-          <!-- Sidebar -->
-          <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-            <div class="position-sticky pt-3">
-              <ul class="nav flex-column">
-                <li class="nav-item">
-                  <%= link_to root_path, class: "nav-link #{'active' if current_page?(root_path)}" do %>
-                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+      <div class="main-wrapper">
+        <!-- Modern Header -->
+        <header class="header">
+          <div class="container-fluid h-100">
+            <div class="row h-100 align-items-center">
+              <div class="col-6">
+                <div class="d-flex align-items-center">
+                  <button class="btn btn-link d-md-none me-3" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                  </button>
+                  <%= link_to root_path, class: "navbar-brand d-flex align-items-center text-decoration-none" do %>
+                    <div class="brand-icon me-2">
+                      <i class="fas fa-truck-fast"></i>
+                    </div>
+                    <span class="brand-text">DeliveryPro</span>
                   <% end %>
-                </li>
-                <li class="nav-item">
-                  <%= link_to products_path, class: "nav-link #{'active' if current_page?(products_path)}" do %>
-                    <i class="fas fa-box me-2"></i>Products
-                  <% end %>
-                </li>
-                <li class="nav-item">
-                  <%= link_to categories_path, class: "nav-link #{'active' if current_page?(categories_path) || controller_name == 'categories'}" do %>
-                    <i class="fas fa-tags me-2"></i>Categories
-                  <% end %>
-                </li>
-                <li class="nav-item">
-                  <%= link_to customers_path, class: "nav-link #{'active' if current_page?(customers_path)}" do %>
-                    <i class="fas fa-users me-2"></i>Customers
-                  <% end %>
-                </li>
-                <!-- Fixed: Changed from deliveries_path to delivery_people_path -->
-                <li class="nav-item">
-                  <%= link_to delivery_people_path, class: "nav-link #{'active' if current_page?(delivery_people_path) || current_page?(new_delivery_person_path) || controller_name == 'delivery_people'}" do %>
-                    <i class="fas fa-truck me-2"></i>Delivery Person
-                  <% end %>
-                </li>
-                <!-- Fixed: This now correctly points to delivery_assignments_path -->
-                <li class="nav-item">
-                  <%= link_to delivery_assignments_path, class: "nav-link #{'active' if current_page?(delivery_assignments_path) || current_page?(new_delivery_assignment_path) || controller_name == 'delivery_assignments'}" do %>
-                    <i class="fas fa-clipboard-list me-2"></i>Assign Delivery
-                  <% end %>
-                </li>
-                <li class="nav-item">
-                  <%= link_to invoices_path, class: "nav-link #{'active' if current_page?(invoices_path)}" do %>
-                    <i class="fas fa-file-invoice me-2"></i>Invoice
-                  <% end %>
-                </li>
-
-                <li class="nav-item">
-                  <%= link_to purchase_products_path, class: "nav-link #{'active' if current_page?(purchase_products_path)}" do %>
-                    <i class="fas fa-boxes me-2"></i>Purchase Products
-                  <% end %>
-                </li>
-
-<li class="nav-item">
-  <%= link_to sales_products_path, class: "nav-link #{'active' if current_page?(sales_products_path)}" do %>
-    <i class="fas fa-boxes me-2"></i>Sales Products
-  <% end %>
-</li>
-
-                <li class="nav-item">
-                  <%= link_to admin_settings_path, class: "nav-link #{'active' if controller_name == 'admin_settings'}" do %>
-                    <i class="fas fa-cog me-2"></i>Admin Settings
-                  <% end %>
-                </li>
-                
-                </ul>
-            </div>
-          </nav>
-          
-          <!-- Main content -->
-          <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <% flash.each do |type, message| %>
-              <div class="alert alert-<%= type == 'notice' ? 'success' : type == 'alert' ? 'danger' : type %> alert-dismissible fade show mt-3" role="alert">
-                <%= message %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
               </div>
-            <% end %>
-            
-            <%= yield %>
-          </main>
-        </div>
+              <div class="col-6 text-end">
+                <div class="d-flex align-items-center justify-content-end">
+                  <div class="user-menu dropdown">
+                    <a href="#" class="dropdown-toggle text-decoration-none" id="userDropdown" data-bs-toggle="dropdown">
+                      <div class="user-avatar">
+                        <%= current_user.name.first.upcase %>
+                      </div>
+                      <span class="user-name ms-2 d-none d-md-inline">
+                        <%= current_user.name %>
+                      </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li><h6 class="dropdown-header">Welcome, <%= current_user.name %></h6></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <%= button_to logout_path, method: :delete, class: "dropdown-item" do %>
+                          <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        <% end %>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        <!-- Enhanced Sidebar -->
+        <nav class="sidebar" id="sidebar">
+          <div class="sidebar-content p-3">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <%= link_to root_path, class: "nav-link #{'active' if current_page?(root_path)}" do %>
+                  <i class="fas fa-chart-line nav-icon"></i>
+                  <span>Dashboard</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to products_path, class: "nav-link #{'active' if current_page?(products_path)}" do %>
+                  <i class="fas fa-cube nav-icon"></i>
+                  <span>Products</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to categories_path, class: "nav-link #{'active' if current_page?(categories_path) || controller_name == 'categories'}" do %>
+                  <i class="fas fa-tags nav-icon"></i>
+                  <span>Categories</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to customers_path, class: "nav-link #{'active' if current_page?(customers_path)}" do %>
+                  <i class="fas fa-users nav-icon"></i>
+                  <span>Customers</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to delivery_people_path, class: "nav-link #{'active' if current_page?(delivery_people_path) || current_page?(new_delivery_person_path) || controller_name == 'delivery_people'}" do %>
+                  <i class="fas fa-user-tie nav-icon"></i>
+                  <span>Delivery Team</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to delivery_assignments_path, class: "nav-link #{'active' if current_page?(delivery_assignments_path) || current_page?(new_delivery_assignment_path) || controller_name == 'delivery_assignments'}" do %>
+                  <i class="fas fa-route nav-icon"></i>
+                  <span>Assignments</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to invoices_path, class: "nav-link #{'active' if current_page?(invoices_path)}" do %>
+                  <i class="fas fa-receipt nav-icon"></i>
+                  <span>Invoices</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to purchase_products_path, class: "nav-link #{'active' if current_page?(purchase_products_path)}" do %>
+                  <i class="fas fa-shopping-cart nav-icon"></i>
+                  <span>Purchases</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to sales_products_path, class: "nav-link #{'active' if current_page?(sales_products_path)}" do %>
+                  <i class="fas fa-chart-bar nav-icon"></i>
+                  <span>Sales</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_settings_path, class: "nav-link #{'active' if controller_name == 'admin_settings'}" do %>
+                  <i class="fas fa-cog nav-icon"></i>
+                  <span>Settings</span>
+                <% end %>
+              </li>
+            </ul>
+          </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+          <% flash.each do |type, message| %>
+            <div class="alert alert-<%= type == 'notice' ? 'success' : type == 'alert' ? 'danger' : type %> alert-dismissible fade show modern-alert" role="alert">
+              <i class="fas fa-<%= type == 'notice' ? 'check-circle' : 'exclamation-triangle' %> me-2"></i>
+              <%= message %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% end %>
+          
+          <%= yield %>
+        </main>
       </div>
-    <% else %>
-      <% flash.each do |type, message| %>
-        <div class="alert alert-<%= type == 'notice' ? 'success' : type == 'alert' ? 'danger' : type %> alert-dismissible fade show" role="alert">
-          <%= message %>
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      <% end %>
       
-      <%= yield %>
+      <!-- Mobile Sidebar Overlay -->
+      <div class="sidebar-overlay d-md-none" id="sidebarOverlay"></div>
+      
+      <script>
+        // Mobile sidebar toggle
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+          document.getElementById('sidebar').classList.toggle('show');
+          document.getElementById('sidebarOverlay').classList.toggle('show');
+        });
+        
+        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+          document.getElementById('sidebar').classList.remove('show');
+          this.classList.remove('show');
+        });
+      </script>
+    <% else %>
+      <!-- Login/Auth Layout -->
+      <div class="auth-wrapper">
+        <% flash.each do |type, message| %>
+          <div class="alert alert-<%= type == 'notice' ? 'success' : type == 'alert' ? 'danger' : type %> alert-dismissible fade show modern-alert" role="alert">
+            <i class="fas fa-<%= type == 'notice' ? 'check-circle' : 'exclamation-triangle' %> me-2"></i>
+            <%= message %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% end %>
+        
+        <%= yield %>
+      </div>
     <% end %>
   </body>
-</html>F
+</html>
