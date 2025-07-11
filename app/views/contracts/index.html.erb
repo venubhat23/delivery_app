@@ -1,0 +1,81 @@
+<% content_for :title, 'Contracts' %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-file-contract me-2"></i>Contracts</h1>
+        <%= link_to new_contract_path, class: 'btn btn-primary' do %>
+          <i class="fas fa-plus me-2"></i>New Contract
+        <% end %>
+      </div>
+      
+      <% if @contracts.any? %>
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @contracts.each do |contract| %>
+                    <tr>
+                      <td><%= contract.id %></td>
+                      <td>
+                        <div class="text-truncate" style="max-width: 300px;">
+                          <%= contract.description %>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge <%= contract.status == 'completed' ? 'bg-success' : 
+                                               contract.status == 'processing' ? 'bg-warning' : 
+                                               contract.status == 'failed' ? 'bg-danger' : 'bg-secondary' %>">
+                          <%= contract.status.capitalize %>
+                        </span>
+                      </td>
+                      <td><%= contract.created_at.strftime('%Y-%m-%d %H:%M') %></td>
+                      <td>
+                        <%= link_to contract_path(contract), class: 'btn btn-sm btn-outline-info' do %>
+                          <i class="fas fa-eye"></i>
+                        <% end %>
+                        <%= link_to edit_contract_path(contract), class: 'btn btn-sm btn-outline-primary' do %>
+                          <i class="fas fa-edit"></i>
+                        <% end %>
+                        <% if contract.status == 'pending' %>
+                          <%= link_to process_with_ai_contract_path(contract), method: :patch, class: 'btn btn-sm btn-outline-success', 
+                                      data: { confirm: 'Process this contract with AI?' } do %>
+                            <i class="fas fa-robot"></i>
+                          <% end %>
+                        <% end %>
+                        <%= link_to contract_path(contract), method: :delete, class: 'btn btn-sm btn-outline-danger',
+                                    data: { confirm: 'Are you sure?' } do %>
+                          <i class="fas fa-trash"></i>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="text-center py-5">
+          <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+          <h3>No contracts yet</h3>
+          <p class="text-muted">Create your first contract to get started with AI processing.</p>
+          <%= link_to new_contract_path, class: 'btn btn-primary' do %>
+            <i class="fas fa-plus me-2"></i>Create Contract
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

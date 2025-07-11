@@ -1,0 +1,137 @@
+<% content_for :title, "Contract ##{@contract.id}" %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-file-contract me-2"></i>Contract #<%= @contract.id %></h1>
+        <div>
+          <%= link_to 'Edit', edit_contract_path(@contract), class: 'btn btn-primary' %>
+          <%= link_to 'Back to Contracts', contracts_path, class: 'btn btn-secondary' %>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5><i class="fas fa-info-circle me-2"></i>Contract Details</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong>Status:</strong>
+                <span class="badge <%= @contract.status == 'completed' ? 'bg-success' : 
+                                       @contract.status == 'processing' ? 'bg-warning' : 
+                                       @contract.status == 'failed' ? 'bg-danger' : 'bg-secondary' %>">
+                  <%= @contract.status.capitalize %>
+                </span>
+              </div>
+              
+              <div class="mb-3">
+                <strong>Created:</strong>
+                <%= @contract.created_at.strftime('%Y-%m-%d %H:%M:%S') %>
+              </div>
+              
+              <div class="mb-3">
+                <strong>Last Updated:</strong>
+                <%= @contract.updated_at.strftime('%Y-%m-%d %H:%M:%S') %>
+              </div>
+              
+              <% if @contract.status == 'pending' %>
+                <div class="d-grid">
+                  <%= link_to process_with_ai_contract_path(@contract), method: :patch, 
+                              class: 'btn btn-success', 
+                              data: { confirm: 'Process this contract with AI?' } do %>
+                    <i class="fas fa-robot me-2"></i>Process with AI
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5><i class="fas fa-cog me-2"></i>Processing Info</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong>AI Processing:</strong>
+                <% if @contract.status == 'completed' %>
+                  <span class="text-success"><i class="fas fa-check-circle me-1"></i>Completed</span>
+                <% elsif @contract.status == 'processing' %>
+                  <span class="text-warning"><i class="fas fa-spinner fa-spin me-1"></i>In Progress</span>
+                <% elsif @contract.status == 'failed' %>
+                  <span class="text-danger"><i class="fas fa-times-circle me-1"></i>Failed</span>
+                <% else %>
+                  <span class="text-secondary"><i class="fas fa-clock me-1"></i>Pending</span>
+                <% end %>
+              </div>
+              
+              <div class="mb-3">
+                <strong>API Integration:</strong>
+                <% if @contract.status == 'completed' %>
+                  <span class="text-success"><i class="fas fa-check-circle me-1"></i>Sent to Marketincer API</span>
+                <% else %>
+                  <span class="text-secondary"><i class="fas fa-clock me-1"></i>Waiting for AI processing</span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <h5><i class="fas fa-file-text me-2"></i>Contract Description</h5>
+            </div>
+            <div class="card-body">
+              <div style="white-space: pre-wrap; background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem;">
+                <%= @contract.description %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <% if @contract.ai_response.present? %>
+        <div class="row mt-4">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="fas fa-robot me-2"></i>AI Response</h5>
+              </div>
+              <div class="card-body">
+                <div style="white-space: pre-wrap; background-color: #e8f5e9; padding: 1rem; border-radius: 0.375rem;">
+                  <%= @contract.ai_response %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      
+      <% if @contract.status == 'failed' %>
+        <div class="row mt-4">
+          <div class="col-md-12">
+            <div class="alert alert-danger">
+              <h5><i class="fas fa-exclamation-triangle me-2"></i>Processing Failed</h5>
+              <p>There was an error processing this contract. Please try again or contact support if the issue persists.</p>
+              <div class="d-grid d-md-flex justify-content-md-start">
+                <%= link_to process_with_ai_contract_path(@contract), method: :patch, 
+                            class: 'btn btn-outline-danger', 
+                            data: { confirm: 'Retry processing this contract with AI?' } do %>
+                  <i class="fas fa-redo me-2"></i>Retry Processing
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      
+    </div>
+  </div>
+</div>

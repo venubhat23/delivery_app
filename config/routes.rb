@@ -133,4 +133,15 @@ Rails.application.routes.draw do
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
+  
+  # Contracts with AI integration
+  resources :contracts do
+    member do
+      patch :process_with_ai
+    end
+    
+    collection do
+      post :api_create
+    end
+  end
 end

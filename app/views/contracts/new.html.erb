@@ -1,0 +1,58 @@
+<% content_for :title, 'New Contract' %>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-file-contract me-2"></i>Create New Contract</h3>
+        </div>
+        <div class="card-body">
+          <%= form_with(model: @contract, local: true) do |form| %>
+            <% if @contract.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@contract.errors.count, "error") %> prohibited this contract from being saved:</h4>
+                <ul>
+                  <% @contract.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+            
+            <div class="mb-3">
+              <%= form.label :description, class: 'form-label' %>
+              <%= form.text_area :description, class: 'form-control', rows: 10, 
+                                placeholder: 'Enter your contract description here. This will be sent to ChatGPT for processing and then forwarded to the marketincer API.' %>
+              <div class="form-text">
+                <i class="fas fa-info-circle me-1"></i>
+                Your description will be automatically processed by AI and sent to the marketincer API upon creation.
+              </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <%= link_to 'Cancel', contracts_path, class: 'btn btn-secondary' %>
+              <%= form.submit 'Create Contract', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5><i class="fas fa-info-circle me-2"></i>How it works</h5>
+        </div>
+        <div class="card-body">
+          <ol>
+            <li>Enter your contract description in the text area above</li>
+            <li>Click "Create Contract" to save it</li>
+            <li>The system will automatically send your description to ChatGPT</li>
+            <li>ChatGPT will analyze and respond to your contract description</li>
+            <li>The AI response will be automatically sent to the marketincer API</li>
+            <li>You can view the results in the contract details page</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
