@@ -1,0 +1,284 @@
+<div class="container-fluid">
+  <div class="row min-vh-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex align-items-center mb-4 pt-4">
+        <button class="btn btn-link p-0 me-3" onclick="history.back()">
+          <i class="fas fa-arrow-left text-white fs-4"></i>
+        </button>
+        <h2 class="mb-0 fw-bold text-white">AI Contract Generator</h2>
+      </div>
+      
+      <!-- Main Content -->
+      <div class="row justify-content-center">
+        <div class="col-lg-10">
+          <div class="row">
+            <!-- Left Column - Input Section -->
+            <div class="col-md-6">
+              <div class="card shadow-lg border-0 h-100" style="border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+                <div class="card-body p-4">
+                  <h4 class="fw-bold mb-3 text-dark">Contract Description</h4>
+                  
+                  <%= form_with url: generate_ai_contract_contracts_path, method: :post, local: false, id: 'ai-contract-form' do |f| %>
+                    <div class="mb-4">
+                      <textarea name="description" class="form-control" 
+                                placeholder="Enter a description..." 
+                                rows="8" 
+                                style="border-radius: 16px; border: 1px solid #E5E7EB; padding: 16px; font-size: 14px; line-height: 1.5; resize: none;"
+                                required></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                      <!-- Generate Contract Button -->
+                      <button type="submit" class="btn btn-generate-contract py-3 fw-semibold" 
+                              style="background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%); color: white; border: none; border-radius: 16px; transition: all 0.3s ease;">
+                        <i class="fas fa-magic me-2"></i>Generate Contract
+                      </button>
+                      
+                      <!-- Load Preset Button -->
+                      <button type="button" class="btn btn-load-preset py-3 fw-semibold" 
+                              style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); color: white; border: none; border-radius: 16px; transition: all 0.3s ease;">
+                        <i class="fas fa-file-import me-2"></i>Load Preset
+                      </button>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right Column - Generated Contract -->
+            <div class="col-md-6">
+              <div class="card shadow-lg border-0 h-100" style="border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+                <div class="card-body p-4">
+                  <h4 class="fw-bold mb-3 text-dark">Generated Contract</h4>
+                  
+                  <div id="generated-contract-content" class="border rounded-3 p-4 h-100" 
+                       style="background: #F9FAFB; border: 1px solid #E5E7EB; min-height: 300px; font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #666;">
+                    <div class="text-center text-muted mt-5">
+                      <i class="fas fa-file-contract fa-3x mb-3"></i>
+                      <p>Your generated contract will appear here</p>
+                    </div>
+                  </div>
+                  
+                  <!-- Navigation and Action Buttons -->
+                  <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div class="d-flex">
+                      <button class="btn btn-outline-secondary btn-sm me-2" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                      </button>
+                      <button class="btn btn-outline-secondary btn-sm" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                      </button>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-outline-secondary" disabled id="edit-contract-btn">
+                        Edit Contract
+                      </button>
+                      <button class="btn btn-save-draft" disabled id="save-draft-btn" 
+                              style="background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px;">
+                        Save Draft
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Download PDF Button -->
+                  <div class="mt-3">
+                    <button class="btn btn-download-pdf w-100 py-3 fw-semibold" disabled id="download-pdf-btn" 
+                            style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border: none; border-radius: 16px; transition: all 0.3s ease;">
+                      <i class="fas fa-download me-2"></i>Download PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.btn-generate-contract:hover {
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+}
+
+.btn-generate-contract:active {
+  background: linear-gradient(135deg, #6D28D9 0%, #7E22CE 100%);
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+}
+
+.btn-load-preset:hover {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+}
+
+.btn-load-preset:active {
+  background: linear-gradient(135deg, #3730A3 0%, #6D28D9 100%);
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.btn-download-pdf:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
+}
+
+.btn-download-pdf:active:not(:disabled) {
+  background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
+}
+
+.btn-save-draft:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.card {
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+#generated-contract-content {
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #8B5CF6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('ai-contract-form');
+  const contentDiv = document.getElementById('generated-contract-content');
+  const editBtn = document.getElementById('edit-contract-btn');
+  const saveBtn = document.getElementById('save-draft-btn');
+  const downloadBtn = document.getElementById('download-pdf-btn');
+  
+  let currentContract = null;
+  
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const description = form.querySelector('textarea[name="description"]').value;
+    
+    if (!description.trim()) {
+      alert('Please enter a description');
+      return;
+    }
+    
+    // Show loading state
+    contentDiv.innerHTML = `
+      <div class="text-center text-muted mt-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Generating your contract...</p>
+      </div>
+    `;
+    
+    // Submit form via AJAX
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        currentContract = data.contract;
+        displayContract(data.contract);
+        enableButtons();
+      } else {
+        contentDiv.innerHTML = `
+          <div class="text-center text-danger mt-5">
+            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+            <p>Error generating contract. Please try again.</p>
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      contentDiv.innerHTML = `
+        <div class="text-center text-danger mt-5">
+          <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+          <p>An error occurred. Please try again.</p>
+        </div>
+      `;
+    });
+  });
+  
+  function displayContract(contract) {
+    const formattedContent = contract.content.replace(/\n/g, '<br>');
+    contentDiv.innerHTML = `
+      <div class="contract-content">
+        <h5 class="fw-bold mb-3">${contract.name}</h5>
+        <div class="contract-text">${formattedContent}</div>
+      </div>
+    `;
+  }
+  
+  function enableButtons() {
+    editBtn.disabled = false;
+    saveBtn.disabled = false;
+    downloadBtn.disabled = false;
+  }
+  
+  saveBtn.addEventListener('click', function() {
+    if (currentContract) {
+      window.location.href = `/contracts/${currentContract.id}`;
+    }
+  });
+  
+  downloadBtn.addEventListener('click', function() {
+    if (currentContract) {
+      window.open(`/contracts/${currentContract.id}/download_pdf`, '_blank');
+    }
+  });
+  
+  editBtn.addEventListener('click', function() {
+    if (currentContract) {
+      window.location.href = `/contracts/${currentContract.id}/edit`;
+    }
+  });
+});
+</script>
