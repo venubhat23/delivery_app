@@ -1,0 +1,222 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header Section -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+          <button class="btn btn-link p-0 me-3" onclick="history.back()">
+            <i class="fas fa-arrow-left text-dark fs-4"></i>
+          </button>
+          <h2 class="mb-0 fw-bold text-dark">Contract</h2>
+        </div>
+        
+        <!-- Create Contract Button - Updated with Figma colors -->
+        <%= link_to new_contract_path, class: "btn btn-create-contract px-4 py-2 rounded-3 fw-semibold", 
+            style: "background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%); color: white; border: none; transition: all 0.3s ease;" do %>
+          <i class="fas fa-plus me-2"></i>Create Contract
+        <% end %>
+      </div>
+      
+      <!-- Search and Filter Section -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" class="form-control" placeholder="Search" 
+                   style="border-radius: 12px; border: 1px solid #E5E7EB; padding: 12px 16px 12px 45px;">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" style="border-radius: 12px; border: 1px solid #E5E7EB; padding: 12px 16px;">
+            <option>Filter: All</option>
+            <option>Draft</option>
+            <option>Sent</option>
+            <option>Active</option>
+            <option>Completed</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" style="border-radius: 12px; border: 1px solid #E5E7EB; padding: 12px 16px;">
+            <option>Sort by</option>
+            <option>Date Created</option>
+            <option>Name</option>
+            <option>Status</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <div class="btn-group" role="group">
+            <button class="btn btn-outline-secondary" style="border-radius: 8px 0 0 8px;">
+              <i class="fas fa-list"></i>
+            </button>
+            <button class="btn btn-outline-secondary" style="border-radius: 0 8px 8px 0;">
+              <i class="fas fa-th-large"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Contracts Table -->
+      <div class="card shadow-sm border-0" style="border-radius: 16px;">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead style="background-color: #F9FAFB; border-bottom: 1px solid #E5E7EB;">
+                <tr>
+                  <th class="px-4 py-3 border-0">
+                    <input type="checkbox" class="form-check-input">
+                  </th>
+                  <th class="px-4 py-3 border-0 fw-semibold text-muted">Contract Name</th>
+                  <th class="px-4 py-3 border-0 fw-semibold text-muted">Type</th>
+                  <th class="px-4 py-3 border-0 fw-semibold text-muted">Status</th>
+                  <th class="px-4 py-3 border-0 fw-semibold text-muted">Date Created</th>
+                  <th class="px-4 py-3 border-0 fw-semibold text-muted">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if @contracts.any? %>
+                  <% @contracts.each do |contract| %>
+                    <tr>
+                      <td class="px-4 py-3 border-0">
+                        <input type="checkbox" class="form-check-input">
+                      </td>
+                      <td class="px-4 py-3 border-0">
+                        <%= link_to contract.name, contract_path(contract), class: "text-decoration-none fw-medium" %>
+                      </td>
+                      <td class="px-4 py-3 border-0">Service Agreement</td>
+                      <td class="px-4 py-3 border-0">
+                        <span class="badge bg-<%= contract.status_color %> px-3 py-2 rounded-pill">
+                          <%= contract.status.capitalize %>
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 border-0 text-muted">
+                        <%= contract.created_at.strftime("%b %d, %Y") %>
+                      </td>
+                      <td class="px-4 py-3 border-0">
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <% if contract.status == 'sent' %>
+                              Viewed
+                            <% else %>
+                              Actions
+                            <% end %>
+                          </button>
+                          <ul class="dropdown-menu">
+                            <li><%= link_to "View", contract_path(contract), class: "dropdown-item" %></li>
+                            <li><%= link_to "Edit", edit_contract_path(contract), class: "dropdown-item" %></li>
+                            <li><%= link_to "Download PDF", download_pdf_contract_path(contract), class: "dropdown-item" %></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><%= link_to "Delete", contract_path(contract), method: :delete, 
+                                     class: "dropdown-item text-danger", 
+                                     data: { confirm: "Are you sure?" } %></li>
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                <% else %>
+                  <tr>
+                    <td colspan="6" class="text-center py-5">
+                      <div class="text-muted">
+                        <i class="fas fa-file-contract fa-3x mb-3"></i>
+                        <h5>No contracts found</h5>
+                        <p>Create your first contract to get started.</p>
+                        <%= link_to "Create Contract", new_contract_path, class: "btn btn-create-contract" %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sample Data (as shown in Figma) -->
+      <% if @contracts.empty? %>
+        <div class="mt-4">
+          <div class="card shadow-sm border-0" style="border-radius: 16px;">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <tbody>
+                    <tr>
+                      <td class="px-4 py-3 border-0">
+                        <input type="checkbox" class="form-check-input">
+                      </td>
+                      <td class="px-4 py-3 border-0">
+                        <span class="fw-medium text-primary">Spring Collab</span>
+                      </td>
+                      <td class="px-4 py-3 border-0">Gifting</td>
+                      <td class="px-4 py-3 border-0">
+                        <span class="badge bg-info px-3 py-2 rounded-pill">Sent</span>
+                      </td>
+                      <td class="px-4 py-3 border-0 text-muted">Jan 4, 2025</td>
+                      <td class="px-4 py-3 border-0">
+                        <button class="btn btn-sm btn-outline-secondary">Viewed</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<style>
+.btn-create-contract {
+  background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-create-contract:hover {
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+}
+
+.btn-create-contract:active {
+  background: linear-gradient(135deg, #6D28D9 0%, #7E22CE 100%);
+  color: white;
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-box i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9CA3AF;
+}
+
+.card {
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+.table th {
+  font-weight: 600;
+  color: #6B7280;
+  font-size: 0.875rem;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+</style>

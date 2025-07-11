@@ -133,4 +133,16 @@ Rails.application.routes.draw do
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
+  
+  # Contracts System
+  resources :contracts do
+    member do
+      get :download_pdf
+    end
+    
+    collection do
+      get :ai_generator
+      post :generate_ai_contract
+    end
+  end
 end
