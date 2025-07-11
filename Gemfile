@@ -29,6 +29,11 @@ end
 gem 'wicked_pdf'
 gem 'wkhtmltopdf-binary'
 
+# OpenAI Integration
+gem 'ruby-openai'
+
+# HTTP client
+gem 'httparty'
 
 # QR Code generation
 gem 'rqrcode'

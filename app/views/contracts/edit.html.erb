@@ -1,0 +1,70 @@
+<% content_for :title, "Edit Contract ##{@contract.id}" %>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-edit me-2"></i>Edit Contract #<%= @contract.id %></h3>
+        </div>
+        <div class="card-body">
+          <%= form_with(model: @contract, local: true) do |form| %>
+            <% if @contract.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@contract.errors.count, "error") %> prohibited this contract from being saved:</h4>
+                <ul>
+                  <% @contract.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+            
+            <div class="mb-3">
+              <strong>Current Status:</strong>
+              <span class="badge <%= @contract.status == 'completed' ? 'bg-success' : 
+                                     @contract.status == 'processing' ? 'bg-warning' : 
+                                     @contract.status == 'failed' ? 'bg-danger' : 'bg-secondary' %>">
+                <%= @contract.status.capitalize %>
+              </span>
+            </div>
+            
+            <div class="mb-3">
+              <%= form.label :description, class: 'form-label' %>
+              <%= form.text_area :description, class: 'form-control', rows: 10 %>
+              <div class="form-text">
+                <i class="fas fa-info-circle me-1"></i>
+                Note: Editing the description will not automatically reprocess the contract with AI.
+              </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <%= link_to 'Cancel', contract_path(@contract), class: 'btn btn-secondary' %>
+              <%= form.submit 'Update Contract', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <% if @contract.status == 'completed' && @contract.ai_response.present? %>
+        <div class="card mt-4">
+          <div class="card-header">
+            <h5><i class="fas fa-robot me-2"></i>Current AI Response</h5>
+          </div>
+          <div class="card-body">
+            <div style="white-space: pre-wrap; background-color: #e8f5e9; padding: 1rem; border-radius: 0.375rem; max-height: 300px; overflow-y: auto;">
+              <%= @contract.ai_response %>
+            </div>
+            <div class="mt-3">
+              <%= link_to process_with_ai_contract_path(@contract), method: :patch, 
+                          class: 'btn btn-outline-success', 
+                          data: { confirm: 'Reprocess this contract with AI using the current description?' } do %>
+                <i class="fas fa-redo me-2"></i>Reprocess with AI
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
