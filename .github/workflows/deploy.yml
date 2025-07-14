@@ -1,0 +1,39 @@
+name: Deploy to EC2 on Merge to Main
+
+on:
+  push:
+    branches:
+      - main # Trigger when code is pushed to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git ssh
+
+      - name: Deploy to EC2
+        run: |
+          EC2_USER="${{ secrets.EC2_USER }}"
+          EC2_HOST="${{ secrets.EC2_HOST }}"
+          APP_DIR="/home/${{ secrets.EC2_USER }}/${{ secrets.APP_DIR }}"
+
+          ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
+            cd ${APP_DIR} || exit
+            git pull origin main
+            bundle install --deployment --without development test
+            RAILS_ENV=production bundle exec rake db:migrate
+            sudo systemctl restart nginx
+            sudo systemctl restart your-rails-app.service # If using systemd service for Rails
+          EOF
