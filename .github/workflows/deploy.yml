@@ -35,5 +35,5 @@ jobs:
             bundle install --deployment --without development test
             RAILS_ENV=production bundle exec rake db:migrate
             sudo systemctl restart nginx
-            sudo systemctl restart your-rails-app.service # If using systemd service for Rails
+            sudo systemctl restart atmanirbharfarm-rails-app.service
           EOF
