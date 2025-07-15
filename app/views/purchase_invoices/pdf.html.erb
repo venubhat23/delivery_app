@@ -1,0 +1,278 @@
+<% content_for :title, "Purchase Invoice ##{@purchase_invoice.invoice_number}" %>
+
+<div class="header">
+  <div class="company-name">Atma Nirbhar Farm</div>
+  <div class="contact-info">
+    #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi<br>
+    Bangalore, Karnataka, 560072<br>
+    Mobile: 9972808044 | Email: atmanirbharfarm@gmail.com<br>
+    GSTIN: 29AOIPT8113K1ZC | PAN: AOIPT8113K
+  </div>
+</div>
+
+<div class="document-type">Purchase Invoice</div>
+
+<div class="invoice-info">
+  <div class="left-info">
+    <strong>Invoice No:</strong> <%= @purchase_invoice.invoice_number %><br>
+    <strong>Invoice Date:</strong> <%= @purchase_invoice.invoice_date.strftime('%d/%m/%Y') %><br>
+    <strong>Due Date:</strong> <%= @purchase_invoice.due_date.strftime('%d/%m/%Y') %>
+  </div>
+  <div class="right-info">
+    <strong>Status:</strong> <%= @purchase_invoice.status.capitalize %><br>
+    <strong>Total Amount:</strong> ₹ <%= number_with_delimiter(@purchase_invoice.total_amount) %>
+  </div>
+</div>
+
+<div class="supplier-info">
+  <div class="section-title">Supplier Information</div>
+  <strong><%= @purchase_invoice.supplier_name %></strong><br>
+  <% if @purchase_invoice.supplier_address.present? %>
+    <%= @purchase_invoice.supplier_address %><br>
+  <% end %>
+  <% if @purchase_invoice.supplier_phone.present? %>
+    Mobile: <%= @purchase_invoice.supplier_phone %><br>
+  <% end %>
+  <% if @purchase_invoice.supplier_email.present? %>
+    Email: <%= @purchase_invoice.supplier_email %>
+  <% end %>
+</div>
+
+<div class="footer-spacing"></div>
+
+<!-- Page 2 -->
+<div class="page-break">
+  <div class="section-title">Items Details</div>
+  
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>S.No</th>
+        <th>Item Description</th>
+        <th>Quantity</th>
+        <th>Rate</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @purchase_invoice.purchase_invoice_items.each_with_index do |item, index| %>
+        <tr>
+          <td style="text-align: center;"><%= index + 1 %></td>
+          <td>
+            <strong><%= item.purchase_product.name %></strong><br>
+            <% if item.purchase_product.description.present? %>
+              <em><%= item.purchase_product.description %></em>
+            <% end %>
+          </td>
+          <td style="text-align: center;"><%= item.quantity %></td>
+          <td class="amount">₹ <%= number_with_delimiter(item.unit_price) %></td>
+          <td class="amount">₹ <%= number_with_delimiter(item.total_price) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <div class="total-section">
+    <table class="total-table">
+      <tr>
+        <td>Subtotal:</td>
+        <td>₹ <%= number_with_delimiter(@purchase_invoice.subtotal) %></td>
+      </tr>
+      <% if @purchase_invoice.tax_amount.present? && @purchase_invoice.tax_amount > 0 %>
+        <tr>
+          <td>Tax:</td>
+          <td>₹ <%= number_with_delimiter(@purchase_invoice.tax_amount) %></td>
+        </tr>
+      <% end %>
+      <tr class="total-row">
+        <td><strong>Total Amount:</strong></td>
+        <td><strong>₹ <%= number_with_delimiter(@purchase_invoice.total_amount) %></strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="clearfix"></div>
+  <div class="footer-spacing"></div>
+</div>
+
+<!-- Page 3 -->
+<div class="page-break">
+  <div class="section-title">Payment Information</div>
+  
+  <div style="margin-bottom: 30px;">
+    <strong>Bank Details:</strong><br>
+    Account Name: Atma Nirbhar Farm<br>
+    Account Number: 3194201000718<br>
+    IFSC Code: CNRB0003194<br>
+    Bank: Canara Bank<br><br>
+    
+    <strong>UPI Payment:</strong><br>
+    UPI ID: 9972808044@ybl<br>
+    Mobile: 9972808044
+  </div>
+
+  <div class="terms-conditions">
+    <div class="section-title">Terms and Conditions</div>
+    <ol>
+      <li>Payment terms as per agreement</li>
+      <li>All payments are subject to realization</li>
+      <li>Any disputes should be resolved within 7 days of invoice date</li>
+      <li>Goods once purchased cannot be returned without prior approval</li>
+      <li>Late payment may attract interest charges</li>
+    </ol>
+  </div>
+
+  <div class="footer-spacing"></div>
+</div>
+
+<!-- Page 4 -->
+<div class="page-break">
+  <div class="signature-section">
+    <div>
+      <strong>Received By:</strong><br>
+      <div class="signature-box">
+        Signature & Date
+      </div>
+    </div>
+    
+    <div>
+      <strong>Authorized Signatory:</strong><br>
+      <div class="signature-box">
+        For Atma Nirbhar Farm
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 50px; text-align: center; font-size: 10pt;">
+    <em>This is a system generated purchase invoice and does not require physical signature unless specifically requested.</em>
+  </div>
+
+  <div class="footer-spacing"></div>
+</div>
+
+<style>
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+  }
+
+  .company-name {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  .document-type {
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .invoice-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    font-size: 11pt;
+  }
+
+  .invoice-info .left-info, .invoice-info .right-info {
+    width: 45%;
+  }
+
+  .section-title {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+  }
+
+  .supplier-info {
+    margin-bottom: 30px;
+  }
+
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    font-size: 11pt;
+  }
+
+  .items-table th,
+  .items-table td {
+    border: 1px solid #333;
+    padding: 8px;
+    text-align: left;
+  }
+
+  .items-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .items-table td.amount {
+    text-align: right;
+  }
+
+  .total-section {
+    float: right;
+    width: 40%;
+    margin-bottom: 30px;
+  }
+
+  .total-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11pt;
+  }
+
+  .total-table td {
+    border: 1px solid #333;
+    padding: 8px;
+    text-align: right;
+  }
+
+  .total-table .total-row {
+    font-weight: bold;
+    background-color: #f5f5f5;
+  }
+
+  .terms-conditions {
+    clear: both;
+    margin-top: 50px;
+    font-size: 10pt;
+  }
+
+  .signature-section {
+    margin-top: 80px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .signature-box {
+    width: 200px;
+    height: 60px;
+    border: 1px solid #333;
+    text-align: center;
+    padding-top: 40px;
+    font-size: 10pt;
+  }
+
+  .contact-info {
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  .clearfix::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+</style>
