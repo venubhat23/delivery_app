@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_17_120002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "categories", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.string "color", null: false
+    t.boolean "is_active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_active"], name: "index_categories_on_is_active"
+    t.index ["name"], name: "index_categories_on_name", unique: true
+  end
 
   create_table "customers", force: :cascade do |t|
     t.string "name"
@@ -25,7 +36,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
     t.bigint "delivery_person_id"
     t.string "image_url"
     t.string "phone_number"
+    t.string "email"
+    t.string "gst_number"
+    t.string "pan_number"
+    t.string "member_id"
+    t.string "shipping_address"
+    t.string "preferred_language"
+    t.string "delivery_time_preference"
+    t.string "notification_method"
+    t.string "alt_phone_number"
+    t.string "profile_image_url"
+    t.string "address_landmark"
+    t.string "address_type"
+    t.boolean "is_active", default: true
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
+    t.index ["is_active"], name: "index_customers_on_is_active"
+    t.index ["member_id"], name: "index_customers_on_member_id", unique: true
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -53,6 +79,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
     t.datetime "updated_at", null: false
     t.boolean "invoice_generated", default: false
     t.bigint "invoice_id"
+    t.integer "delivery_person_id"
     t.index ["customer_id"], name: "index_delivery_assignments_on_customer_id"
     t.index ["delivery_schedule_id"], name: "index_delivery_assignments_on_delivery_schedule_id"
     t.index ["invoice_generated"], name: "index_delivery_assignments_on_invoice_generated"
@@ -83,7 +110,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
     t.decimal "default_quantity", precision: 8, scale: 2, default: "1.0"
     t.string "default_unit", default: "pieces"
     t.bigint "product_id"
+    t.integer "delivery_person_id"
     t.index ["customer_id"], name: "index_delivery_schedules_on_customer_id"
+    t.index ["delivery_person_id"], name: "index_delivery_schedules_on_delivery_person_id"
     t.index ["product_id"], name: "index_delivery_schedules_on_product_id"
     t.index ["user_id"], name: "index_delivery_schedules_on_user_id"
   end
@@ -142,6 +171,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
     t.decimal "total_cgst_percentage", precision: 5, scale: 2
     t.decimal "total_sgst_percentage", precision: 5, scale: 2
     t.decimal "total_igst_percentage", precision: 5, scale: 2
+    t.bigint "category_id"
+    t.string "image_url"
+    t.string "sku"
+    t.integer "stock_alert_threshold"
+    t.boolean "is_subscription_eligible", default: false
+    t.boolean "is_active", default: true
+    t.index ["category_id"], name: "index_products_on_category_id"
+    t.index ["is_active"], name: "index_products_on_is_active"
+    t.index ["is_subscription_eligible"], name: "index_products_on_is_subscription_eligible"
+    t.index ["sku"], name: "index_products_on_sku", unique: true
   end
 
   create_table "purchase_invoice_items", force: :cascade do |t|
@@ -209,6 +248,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
     t.decimal "amount", precision: 10, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "hsn_sac"
     t.index ["sales_invoice_id", "sales_product_id"], name: "index_sales_items_on_invoice_and_product"
     t.index ["sales_invoice_id"], name: "index_sales_invoice_items_on_sales_invoice_id"
     t.index ["sales_product_id"], name: "index_sales_invoice_items_on_sales_product_id"
@@ -231,6 +271,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "customer_id"
+    t.text "bill_to"
+    t.text "ship_to"
+    t.decimal "additional_charges", precision: 10, scale: 2, default: "0.0"
+    t.decimal "additional_discount", precision: 10, scale: 2, default: "0.0"
+    t.boolean "apply_tcs", default: false
+    t.decimal "tcs_rate", precision: 5, scale: 2, default: "0.0"
+    t.boolean "auto_round_off", default: false
+    t.decimal "round_off_amount", precision: 10, scale: 2, default: "0.0"
+    t.string "payment_type", default: "cash"
+    t.text "terms_and_conditions"
+    t.text "authorized_signature"
+    t.index ["customer_id"], name: "index_sales_invoices_on_customer_id"
     t.index ["customer_name"], name: "index_sales_invoices_on_customer_name"
     t.index ["invoice_number"], name: "index_sales_invoices_on_invoice_number"
     t.index ["invoice_type"], name: "index_sales_invoices_on_invoice_type"
@@ -249,6 +302,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "hsn_sac"
+    t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0"
     t.index ["category"], name: "index_sales_products_on_category"
     t.index ["name"], name: "index_sales_products_on_name"
   end
@@ -280,6 +335,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_27_034435) do
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoice_items", "products"
   add_foreign_key "invoices", "customers"
+  add_foreign_key "products", "categories"
   add_foreign_key "purchase_invoice_items", "purchase_invoices"
   add_foreign_key "purchase_invoice_items", "purchase_products"
+  add_foreign_key "sales_invoices", "customers"
 end

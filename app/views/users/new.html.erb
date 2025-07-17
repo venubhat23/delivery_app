@@ -1,81 +1,500 @@
-<div class="container">
-  <div class="row justify-content-center align-items-center min-vh-100">
-    <div class="col-md-8 col-lg-6">
-      <div class="card shadow">
-        <div class="card-body p-5">
-          <div class="text-center mb-4">
-            <h2 class="text-primary">
-              <i class="fas fa-user-plus me-2"></i>
-              Create Account
-            </h2>
-            <p class="text-muted">Join our delivery management system</p>
-          </div>
-          
-          <%= form_with model: @user, url: signup_path, local: true, class: "needs-validation", novalidate: true do |form| %>
-            <% if @user.errors.any? %>
-              <div class="alert alert-danger">
-                <ul class="mb-0">
-                  <% @user.errors.full_messages.each do |message| %>
-                    <li><%= message %></li>
-                  <% end %>
-                </ul>
-              </div>
-            <% end %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Delivery Management</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .signup-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px 40px 30px 40px;
+            width: 100%;
+            max-width: 500px;
+            animation: slideUp 0.6s ease-out;
+            position: relative;
+            z-index: 2;
+            /* Add margin-top for extra safety in case of overflow */
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .header .icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 6px;
+            /* Extra margin to separate subtitle from title */
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-label {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            color: #999;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            background: white;
+            padding: 0 5px;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .form-label.active {
+            top: -10px;
+            left: 15px;
+            color: #667eea;
+            font-size: 12px;
+            font-weight: 500;
+            transform: translateY(0);
+        }
+
+        .form-control:focus + .form-label {
+            top: -10px;
+            left: 15px;
+            color: #667eea;
+            font-size: 12px;
+            font-weight: 500;
+            transform: translateY(0);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: #667eea;
+        }
+
+        .role-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 20px;
+            padding-right: 45px;
+            cursor: pointer;
+        }
+
+        .role-select option {
+            padding: 10px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .signin-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .signin-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .signin-link a:hover {
+            color: #764ba2;
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .floating-shapes {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+            left: 0;
+            top: 0;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
             
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <%= form.label :name, class: "form-label" %>
-                <%= form.text_field :name, class: "form-control", required: true %>
-              </div>
-              
-              <div class="col-md-6 mb-3">
-                <%= form.label :email, class: "form-label" %>
-                <%= form.email_field :email, class: "form-control", required: true %>
-              </div>
-            </div>
+            .signup-container {
+                padding: 30px 10px 20px 10px;
+            }
             
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <%= form.label :phone, class: "form-label" %>
-                <%= form.telephone_field :phone, class: "form-control" %>
-              </div>
-              
-              <div class="col-md-6 mb-3">
-                <%= form.label :role, class: "form-label" %>
-                <%= form.select :role, 
-                    options_for_select([
-                      ['Admin', 'admin'],
-                      ['Delivery Person', 'delivery_person'],
-                      ['Customer', 'customer']
-                    ]), 
-                    { prompt: 'Select Role' }, 
-                    { class: "form-select", required: true } %>
-              </div>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <%= form.label :password, class: "form-label" %>
-                <%= form.password_field :password, class: "form-control", required: true %>
-              </div>
-              
-              <div class="col-md-6 mb-4">
-                <%= form.label :password_confirmation, "Confirm Password", class: "form-label" %>
-                <%= form.password_field :password_confirmation, class: "form-control", required: true %>
-              </div>
-            </div>
-            
-            <%= form.submit "Create Account", class: "btn btn-primary w-100 mb-3" %>
-          <% end %>
-          
-          <div class="text-center">
-            <p class="mb-0">
-              Already have an account? 
-              <%= link_to "Sign in", login_path, class: "text-primary text-decoration-none" %>
-            </p>
-          </div>
-        </div>
-      </div>
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
     </div>
-  </div>
-</div>
+
+    <div class="signup-container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-user-plus icon"></i>
+                Create Account
+            </h1>
+            <p>Join our delivery management system</p>
+        </div>
+
+        <form id="signupForm" class="needs-validation" novalidate>
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="text" id="name" name="name" class="form-control" required>
+                    <label for="name" class="form-label">Name</label>
+                </div>
+                
+                <div class="form-group">
+                    <input type="email" id="email" name="email" class="form-control" required>
+                    <label for="email" class="form-label">Email</label>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="tel" id="phone" name="phone" class="form-control">
+                    <label for="phone" class="form-label">Phone</label>
+                </div>
+                
+                <div class="form-group">
+                    <select id="role" name="role" class="form-control role-select" required>
+                        <option value="" disabled selected></option>
+                        <option value="admin">Admin</option>
+                        <option value="delivery_person">Delivery Person</option>
+                        <option value="customer">Customer</option>
+                    </select>
+                    <label for="role" class="form-label">Role</label>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="password" id="password" name="password" class="form-control" required>
+                    <label for="password" class="form-label">Password</label>
+                    <i class="fas fa-eye password-toggle" onclick="togglePassword('password')"></i>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" required>
+                    <label for="password_confirmation" class="form-label">Confirm Password</label>
+                    <i class="fas fa-eye password-toggle" onclick="togglePassword('password_confirmation')"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-user-plus"></i>
+                Create Account
+            </button>
+        </form>
+
+        <div class="signin-link">
+            <p>Already have an account? <a href="#" onclick="showSignIn()">Sign in</a></p>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const toggle = field.nextElementSibling.nextElementSibling;
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                toggle.classList.remove('fa-eye');
+                toggle.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                toggle.classList.remove('fa-eye-slash');
+                toggle.classList.add('fa-eye');
+            }
+        }
+
+        function showSignIn() {
+            alert('Redirecting to sign in page...');
+            // In Rails, this would be: window.location.href = '/login';
+        }
+
+        // Function to handle label animation
+        function updateLabels() {
+            const inputs = document.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                const label = input.nextElementSibling;
+                if (input.value.trim() !== '' || document.activeElement === input) {
+                    label.classList.add('active');
+                } else {
+                    label.classList.remove('active');
+                }
+            });
+        }
+
+        // Function to handle individual input
+        function handleInput(input) {
+            const label = input.nextElementSibling;
+            if (input.value.trim() !== '' || document.activeElement === input) {
+                label.classList.add('active');
+            } else {
+                label.classList.remove('active');
+            }
+        }
+
+        // Form validation and submission
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Basic validation
+            if (!data.name || !data.email || !data.role || !data.password || !data.password_confirmation) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            if (data.password !== data.password_confirmation) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            // Simulate form submission
+            const submitBtn = document.querySelector('.submit-btn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('Account created successfully!');
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+                submitBtn.disabled = false;
+                this.reset();
+                updateLabels(); // Reset labels after form reset
+            }, 2000);
+        });
+
+        function showError(message) {
+            // Remove existing error message
+            const existingError = document.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Create new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            // Insert error message at the top of the form
+            const form = document.getElementById('signupForm');
+            form.insertBefore(errorDiv, form.firstChild);
+            
+            // Remove error message after 5 seconds
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // Event listeners for input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.form-control');
+            
+            inputs.forEach(input => {
+                // Handle input events
+                input.addEventListener('input', () => handleInput(input));
+                input.addEventListener('focus', () => handleInput(input));
+                input.addEventListener('blur', () => handleInput(input));
+                
+                // Handle select change
+                if (input.tagName === 'SELECT') {
+                    input.addEventListener('change', () => handleInput(input));
+                }
+            });
+
+            // Initial label check
+            updateLabels();
+
+            // Animate form elements on page load
+            const formGroups = document.querySelectorAll('.form-group');
+            formGroups.forEach((group, index) => {
+                setTimeout(() => {
+                    group.style.animation = `slideUp 0.6s ease-out ${index * 0.1}s both`;
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
