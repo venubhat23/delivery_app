@@ -1,0 +1,246 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+          Sales Invoices
+        </h2>
+        <%= link_to new_sales_invoice_path, class: 'btn btn-primary' do %>
+          <i class="fas fa-plus me-2"></i>Create Sales Invoice
+        <% end %>
+      </div>
+      
+      <!-- Summary Cards -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-1">Total Sales</h6>
+                  <h4 class="mb-0 text-primary">₹<%= number_with_precision(@total_sales, precision: 2) %></h4>
+                </div>
+                <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                  <i class="fas fa-chart-line text-primary"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-1">Paid</h6>
+                  <h4 class="mb-0 text-success">₹<%= number_with_precision(@total_paid, precision: 2) %></h4>
+                </div>
+                <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                  <i class="fas fa-check-circle text-success"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-1">Unpaid</h6>
+                  <h4 class="mb-0 text-warning">₹<%= number_with_precision(@total_unpaid, precision: 2) %></h4>
+                </div>
+                <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                  <i class="fas fa-exclamation-triangle text-warning"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-1">Overdue</h6>
+                  <h4 class="mb-0 text-danger"><%= @overdue_count %></h4>
+                </div>
+                <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                  <i class="fas fa-clock text-danger"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <%= form_with url: sales_invoices_path, method: :get, local: true, class: 'row g-3' do |form| %>
+            <div class="col-md-3">
+              <%= form.text_field :customer, placeholder: 'Search by customer...', 
+                                  value: params[:customer], class: 'form-control' %>
+            </div>
+            <div class="col-md-2">
+              <%= form.select :status, 
+                              options_for_select([
+                                ['All Status', ''],
+                                ['Paid', 'paid'],
+                                ['Unpaid', 'pending'],
+                                ['Partially Paid', 'partially_paid'],
+                                ['Overdue', 'overdue']
+                              ], params[:status]), 
+                              {}, { class: 'form-select' } %>
+            </div>
+            <div class="col-md-2">
+              <%= form.date_field :start_date, value: params[:start_date], 
+                                  class: 'form-control', placeholder: 'Start Date' %>
+            </div>
+            <div class="col-md-2">
+              <%= form.date_field :end_date, value: params[:end_date], 
+                                  class: 'form-control', placeholder: 'End Date' %>
+            </div>
+            <div class="col-md-3">
+              <%= form.submit 'Filter', class: 'btn btn-outline-primary me-2' %>
+              <%= link_to 'Clear', sales_invoices_path, class: 'btn btn-outline-secondary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Invoices Table -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Invoice List</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Invoice Number</th>
+                  <th>Party Name</th>
+                  <th>Due In</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @sales_invoices.each do |invoice| %>
+                  <tr>
+                    <td>
+                      <%= invoice.invoice_date.strftime('%d %b %Y') %>
+                    </td>
+                    <td>
+                      <%= link_to invoice.invoice_number, invoice, 
+                                  class: 'text-decoration-none fw-bold' %>
+                    </td>
+                    <td>
+                      <%= invoice.customer_name %>
+                    </td>
+                    <td>
+                      <% if invoice.overdue? %>
+                        <span class="text-danger">
+                          <i class="fas fa-exclamation-triangle me-1"></i>
+                          <%= pluralize((Date.current - invoice.due_date).to_i, 'day') %> overdue
+                        </span>
+                      <% elsif invoice.due_date %>
+                        <%= pluralize((invoice.due_date - Date.current).to_i, 'day') %>
+                      <% else %>
+                        -
+                      <% end %>
+                    </td>
+                    <td>
+                      <div>
+                        <strong>₹<%= number_with_precision(invoice.total_amount, precision: 2) %></strong>
+                      </div>
+                      <% if invoice.amount_paid > 0 %>
+                        <small class="text-muted">
+                          ₹<%= number_with_precision(invoice.amount_paid, precision: 2) %> paid
+                        </small>
+                      <% end %>
+                    </td>
+                    <td>
+                      <span class="badge <%= invoice.status_badge_class %>">
+                        <%= invoice.status.humanize %>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" data-bs-toggle="dropdown">
+                          Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li>
+                            <%= link_to invoice, class: 'dropdown-item' do %>
+                              <i class="fas fa-eye me-2"></i>View
+                            <% end %>
+                          </li>
+                          <li>
+                            <%= link_to edit_sales_invoice_path(invoice), class: 'dropdown-item' do %>
+                              <i class="fas fa-edit me-2"></i>Edit
+                            <% end %>
+                          </li>
+                          <% unless invoice.status == 'paid' %>
+                            <li>
+                              <%= link_to mark_as_paid_sales_invoice_path(invoice), 
+                                          method: :patch, 
+                                          class: 'dropdown-item text-success',
+                                          data: { confirm: 'Mark this invoice as paid?' } do %>
+                                <i class="fas fa-check me-2"></i>Mark as Paid
+                              <% end %>
+                            </li>
+                          <% end %>
+                          <li><hr class="dropdown-divider"></li>
+                          <li>
+                            <%= link_to download_pdf_sales_invoice_path(invoice), 
+                                        class: 'dropdown-item' do %>
+                              <i class="fas fa-download me-2"></i>Download PDF
+                            <% end %>
+                          </li>
+                          <li>
+                            <%= link_to invoice, method: :delete, 
+                                        class: 'dropdown-item text-danger',
+                                        data: { confirm: 'Are you sure?' } do %>
+                              <i class="fas fa-trash me-2"></i>Delete
+                            <% end %>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+          
+          <% if @sales_invoices.empty? %>
+            <div class="text-center py-5">
+              <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No invoices found</h5>
+              <p class="text-muted">Create your first sales invoice to get started.</p>
+              <%= link_to 'Create Sales Invoice', new_sales_invoice_path, 
+                          class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .badge-success { background-color: #28a745 !important; }
+  .badge-warning { background-color: #ffc107 !important; color: #212529 !important; }
+  .badge-danger { background-color: #dc3545 !important; }
+  .badge-primary { background-color: #007bff !important; }
+  .badge-secondary { background-color: #6c757d !important; }
+</style>

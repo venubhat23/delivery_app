@@ -60,11 +60,15 @@ Rails.application.routes.draw do
     member do
       patch :mark_as_paid
       get :download_pdf
+      get :get_product_details
+      get :get_customer_details
     end
     
     collection do
       get :profit_analysis
       get :sales_analysis
+      get 'products/:id/details', to: 'sales_invoices#get_product_details', as: 'product_details'
+      get 'customers/:id/details', to: 'sales_invoices#get_customer_details', as: 'customer_details'
     end
   end
   
