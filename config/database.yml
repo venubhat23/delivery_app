@@ -2,14 +2,15 @@ default: &default
   adapter: postgresql
   encoding: unicode
   pool: 5
-  host: localhost
+  host: atmanirbharfarm-db-master.c5yskc8umpd4.ap-south-1.rds.amazonaws.com
   port: 5432
-  username: mahadev
-  password: your_secure_password
+  username: atmanirbharfarm
+  password: atmanirbharfarm-db-master-password
+  # url: postgres://milk_delivery_app2_user:NLycabZcxnVsuRPHpEB1StBfJr4VomEV@dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com:5432/milk_delivery_app2
 
 development:
   <<: *default
-  database: mahadev_db3
+  database: atmanirbharfarm_db
 
 test:
   <<: *default
