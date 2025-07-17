@@ -1,8 +1,11 @@
 
 # app/models/sales_invoice.rb
 class SalesInvoice < ApplicationRecord
+  belongs_to :customer, optional: true
   has_many :sales_invoice_items, dependent: :destroy
   has_many :sales_products, through: :sales_invoice_items
+
+  accepts_nested_attributes_for :sales_invoice_items, allow_destroy: true, reject_if: :all_blank
 
   validates :invoice_number, presence: true, uniqueness: true
   validates :invoice_type, presence: true
@@ -25,12 +28,20 @@ class SalesInvoice < ApplicationRecord
     mixed: 'mixed'
   }.freeze
 
+  PAYMENT_TYPES = {
+    cash: 'cash',
+    bank: 'bank',
+    upi: 'upi',
+    card: 'card'
+  }.freeze
+
   scope :by_status, ->(status) { where(status: status) if status.present? }
   scope :by_customer, ->(customer) { where('customer_name ILIKE ?', "%#{customer}%") if customer.present? }
   scope :by_date_range, ->(start_date, end_date) { where(invoice_date: start_date..end_date) if start_date.present? && end_date.present? }
 
   before_validation :generate_invoice_number, on: :create
   before_save :calculate_totals
+  before_save :calculate_due_date
   after_update :update_stock, if: :saved_change_to_status?
 
   def self.revenue_for_period(start_date, end_date)
@@ -53,6 +64,18 @@ class SalesInvoice < ApplicationRecord
     total_profit
   end
 
+  def self.total_sales
+    sum(:total_amount)
+  end
+
+  def self.total_paid
+    sum(:amount_paid)
+  end
+
+  def self.total_unpaid
+    sum(:balance_amount)
+  end
+
   def outstanding_amount
     total_amount - amount_paid
   end
@@ -61,15 +84,16 @@ class SalesInvoice < ApplicationRecord
     due_date.present? && due_date < Date.current && status != 'paid'
   end
 
-  def mark_as_paid!
+  def mark_as_paid!(payment_type = 'cash')
     update!(
       status: 'paid',
       amount_paid: total_amount,
-      balance_amount: 0
+      balance_amount: 0,
+      payment_type: payment_type
     )
   end
 
-  def add_payment(amount)
+  def add_payment(amount, payment_type = 'cash')
     new_amount_paid = amount_paid + amount
     new_status = if new_amount_paid >= total_amount
                    'paid'
@@ -82,8 +106,40 @@ class SalesInvoice < ApplicationRecord
     update!(
       amount_paid: new_amount_paid,
       balance_amount: total_amount - new_amount_paid,
-      status: new_status
+      status: new_status,
+      payment_type: payment_type
     )
+  end
+
+  def customer_address
+    customer&.address || ''
+  end
+
+  def customer_phone
+    customer&.phone_number || ''
+  end
+
+  def customer_email
+    customer&.email || ''
+  end
+
+  def customer_gst
+    customer&.gst_number || ''
+  end
+
+  def status_badge_class
+    case status
+    when 'paid'
+      'badge-success'
+    when 'partially_paid'
+      'badge-warning'
+    when 'overdue'
+      'badge-danger'
+    when 'cancelled'
+      'badge-secondary'
+    else
+      'badge-primary'
+    end
   end
 
   private
@@ -107,9 +163,34 @@ class SalesInvoice < ApplicationRecord
   def calculate_totals
     self.subtotal = sales_invoice_items.sum { |item| item.quantity * item.price }
     self.tax_amount = sales_invoice_items.sum { |item| (item.quantity * item.price * item.tax_rate / 100) }
-    self.discount_amount = sales_invoice_items.sum(&:discount)
-    self.total_amount = subtotal + tax_amount - discount_amount
+    self.discount_amount = sales_invoice_items.sum(&:discount) + (additional_discount || 0)
+    
+    # Add additional charges
+    charges = additional_charges || 0
+    
+    # Calculate total before rounding
+    calculated_total = subtotal + tax_amount - discount_amount + charges
+    
+    # Apply TCS if enabled
+    if apply_tcs?
+      tcs_amount = calculated_total * (tcs_rate || 0) / 100
+      calculated_total += tcs_amount
+    end
+    
+    # Auto round off if enabled
+    if auto_round_off?
+      self.round_off_amount = calculated_total.round - calculated_total
+      calculated_total = calculated_total.round
+    end
+    
+    self.total_amount = calculated_total
     self.balance_amount = total_amount - amount_paid
+  end
+
+  def calculate_due_date
+    if payment_terms.present? && invoice_date.present?
+      self.due_date = invoice_date + payment_terms.days
+    end
   end
 
   def update_stock

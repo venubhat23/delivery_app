@@ -1,0 +1,308 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-file-invoice text-primary me-2"></i>
+          Invoice #<%= @sales_invoice.invoice_number %>
+        </h2>
+        <div class="btn-group">
+          <%= link_to sales_invoices_path, class: 'btn btn-outline-secondary' do %>
+            <i class="fas fa-arrow-left me-2"></i>Back to Invoices
+          <% end %>
+          <%= link_to edit_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-primary' do %>
+            <i class="fas fa-edit me-2"></i>Edit
+          <% end %>
+          <%= link_to download_pdf_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-success' do %>
+            <i class="fas fa-download me-2"></i>Download PDF
+          <% end %>
+          <% unless @sales_invoice.status == 'paid' %>
+            <%= link_to mark_as_paid_sales_invoice_path(@sales_invoice), 
+                        method: :patch, 
+                        class: 'btn btn-success',
+                        data: { confirm: 'Mark this invoice as paid?' } do %>
+              <i class="fas fa-check me-2"></i>Mark as Paid
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="row">
+        <!-- Main Invoice Content -->
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-body">
+              <!-- Invoice Header -->
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <h4 class="text-primary mb-3">Invoice Details</h4>
+                  <table class="table table-borderless table-sm">
+                    <tr>
+                      <td class="text-muted">Invoice Number:</td>
+                      <td class="fw-bold"><%= @sales_invoice.invoice_number %></td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Invoice Date:</td>
+                      <td><%= @sales_invoice.invoice_date.strftime('%d %B %Y') %></td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Due Date:</td>
+                      <td>
+                        <%= @sales_invoice.due_date&.strftime('%d %B %Y') || 'Not specified' %>
+                        <% if @sales_invoice.overdue? %>
+                          <span class="badge bg-danger ms-2">Overdue</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Payment Terms:</td>
+                      <td><%= @sales_invoice.payment_terms %> days</td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="col-md-6">
+                  <h4 class="text-primary mb-3">Customer Details</h4>
+                  <div class="mb-3">
+                    <strong><%= @sales_invoice.customer_name %></strong>
+                  </div>
+                  <% if @sales_invoice.bill_to.present? %>
+                    <div class="mb-2">
+                      <strong>Bill To:</strong><br>
+                      <%= simple_format(@sales_invoice.bill_to) %>
+                    </div>
+                  <% end %>
+                  <% if @sales_invoice.ship_to.present? && @sales_invoice.ship_to != @sales_invoice.bill_to %>
+                    <div class="mb-2">
+                      <strong>Ship To:</strong><br>
+                      <%= simple_format(@sales_invoice.ship_to) %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+              
+              <!-- Invoice Items -->
+              <div class="mb-4">
+                <h5 class="mb-3">Items / Services</h5>
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Item / Service</th>
+                        <th>HSN/SAC</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Tax Rate</th>
+                        <th>Discount</th>
+                        <th>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% @sales_invoice_items.each do |item| %>
+                        <tr>
+                          <td>
+                            <strong><%= item.sales_product.name %></strong>
+                            <% if item.sales_product.description.present? %>
+                              <br><small class="text-muted"><%= item.sales_product.description %></small>
+                            <% end %>
+                          </td>
+                          <td><%= item.hsn_sac %></td>
+                          <td><%= item.quantity %> <%= item.sales_product.measuring_unit %></td>
+                          <td>₹<%= number_with_precision(item.price, precision: 2) %></td>
+                          <td><%= item.tax_rate %>%</td>
+                          <td>₹<%= number_with_precision(item.discount, precision: 2) %></td>
+                          <td>₹<%= number_with_precision(item.amount, precision: 2) %></td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <!-- Invoice Summary -->
+              <div class="row">
+                <div class="col-md-6">
+                  <!-- Terms and Notes -->
+                  <% if @sales_invoice.terms_and_conditions.present? %>
+                    <div class="mb-3">
+                      <h6>Terms and Conditions:</h6>
+                      <p class="text-muted small"><%= simple_format(@sales_invoice.terms_and_conditions) %></p>
+                    </div>
+                  <% end %>
+                  
+                  <% if @sales_invoice.notes.present? %>
+                    <div class="mb-3">
+                      <h6>Notes:</h6>
+                      <p class="text-muted"><%= simple_format(@sales_invoice.notes) %></p>
+                    </div>
+                  <% end %>
+                  
+                  <% if @sales_invoice.authorized_signature.present? %>
+                    <div class="mb-3">
+                      <h6>Authorized Signature:</h6>
+                      <p><%= @sales_invoice.authorized_signature %></p>
+                    </div>
+                  <% end %>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="card bg-light">
+                    <div class="card-body">
+                      <h6 class="card-title">Invoice Summary</h6>
+                      <table class="table table-borderless table-sm">
+                        <tr>
+                          <td>Subtotal:</td>
+                          <td class="text-end">₹<%= number_with_precision(@sales_invoice.subtotal, precision: 2) %></td>
+                        </tr>
+                        <tr>
+                          <td>Tax Amount:</td>
+                          <td class="text-end">₹<%= number_with_precision(@sales_invoice.tax_amount, precision: 2) %></td>
+                        </tr>
+                        <tr>
+                          <td>Discount:</td>
+                          <td class="text-end">₹<%= number_with_precision(@sales_invoice.discount_amount, precision: 2) %></td>
+                        </tr>
+                        <% if @sales_invoice.additional_charges > 0 %>
+                          <tr>
+                            <td>Additional Charges:</td>
+                            <td class="text-end">₹<%= number_with_precision(@sales_invoice.additional_charges, precision: 2) %></td>
+                          </tr>
+                        <% end %>
+                        <% if @sales_invoice.apply_tcs? %>
+                          <tr>
+                            <td>TCS (<%= @sales_invoice.tcs_rate %>%):</td>
+                            <td class="text-end">₹<%= number_with_precision(@sales_invoice.total_amount * @sales_invoice.tcs_rate / 100, precision: 2) %></td>
+                          </tr>
+                        <% end %>
+                        <% if @sales_invoice.auto_round_off? && @sales_invoice.round_off_amount != 0 %>
+                          <tr>
+                            <td>Round Off:</td>
+                            <td class="text-end">₹<%= number_with_precision(@sales_invoice.round_off_amount, precision: 2) %></td>
+                          </tr>
+                        <% end %>
+                        <tr class="border-top">
+                          <td><strong>Total Amount:</strong></td>
+                          <td class="text-end"><strong>₹<%= number_with_precision(@sales_invoice.total_amount, precision: 2) %></strong></td>
+                        </tr>
+                        <% if @sales_invoice.amount_paid > 0 %>
+                          <tr>
+                            <td>Amount Paid:</td>
+                            <td class="text-end text-success">₹<%= number_with_precision(@sales_invoice.amount_paid, precision: 2) %></td>
+                          </tr>
+                          <tr>
+                            <td><strong>Balance Amount:</strong></td>
+                            <td class="text-end"><strong class="<%= @sales_invoice.balance_amount > 0 ? 'text-warning' : 'text-success' %>">₹<%= number_with_precision(@sales_invoice.balance_amount, precision: 2) %></strong></td>
+                          </tr>
+                        <% end %>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+          <!-- Status Card -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">Invoice Status</h6>
+            </div>
+            <div class="card-body text-center">
+              <div class="mb-3">
+                <span class="badge <%= @sales_invoice.status_badge_class %> fs-6 px-3 py-2">
+                  <%= @sales_invoice.status.humanize %>
+                </span>
+              </div>
+              <% if @sales_invoice.status != 'paid' %>
+                <p class="text-muted small">
+                  <% if @sales_invoice.overdue? %>
+                    This invoice is overdue by <%= pluralize((Date.current - @sales_invoice.due_date).to_i, 'day') %>.
+                  <% elsif @sales_invoice.due_date %>
+                    Due in <%= pluralize((@sales_invoice.due_date - Date.current).to_i, 'day') %>.
+                  <% end %>
+                </p>
+              <% end %>
+            </div>
+          </div>
+          
+          <!-- Payment Information -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">Payment Information</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-muted">Total Amount</small>
+                  <div class="fw-bold">₹<%= number_with_precision(@sales_invoice.total_amount, precision: 2) %></div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Amount Paid</small>
+                  <div class="fw-bold text-success">₹<%= number_with_precision(@sales_invoice.amount_paid, precision: 2) %></div>
+                </div>
+              </div>
+              <hr>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-muted">Balance</small>
+                  <div class="fw-bold <%= @sales_invoice.balance_amount > 0 ? 'text-warning' : 'text-success' %>">
+                    ₹<%= number_with_precision(@sales_invoice.balance_amount, precision: 2) %>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Payment Type</small>
+                  <div class="fw-bold"><%= @sales_invoice.payment_type&.humanize || 'Not specified' %></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Actions -->
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">Actions</h6>
+            </div>
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                <%= link_to edit_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-primary' do %>
+                  <i class="fas fa-edit me-2"></i>Edit Invoice
+                <% end %>
+                
+                <%= link_to download_pdf_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-success' do %>
+                  <i class="fas fa-download me-2"></i>Download PDF
+                <% end %>
+                
+                <% unless @sales_invoice.status == 'paid' %>
+                  <%= link_to mark_as_paid_sales_invoice_path(@sales_invoice), 
+                              method: :patch, 
+                              class: 'btn btn-success',
+                              data: { confirm: 'Mark this invoice as paid?' } do %>
+                    <i class="fas fa-check me-2"></i>Mark as Paid
+                  <% end %>
+                <% end %>
+                
+                <hr>
+                
+                <%= link_to @sales_invoice, method: :delete, 
+                            class: 'btn btn-outline-danger',
+                            data: { confirm: 'Are you sure you want to delete this invoice?' } do %>
+                  <i class="fas fa-trash me-2"></i>Delete Invoice
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .badge-success { background-color: #28a745 !important; }
+  .badge-warning { background-color: #ffc107 !important; color: #212529 !important; }
+  .badge-danger { background-color: #dc3545 !important; }
+  .badge-primary { background-color: #007bff !important; }
+  .badge-secondary { background-color: #6c757d !important; }
+</style>

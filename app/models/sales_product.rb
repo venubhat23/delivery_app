@@ -48,4 +48,23 @@ class SalesProduct < ApplicationRecord
       raise "Insufficient stock. Available: #{current_stock}, Required: #{quantity}"
     end
   end
+
+  def display_name
+    "#{name} (#{measuring_unit})"
+  end
+
+  def price_with_currency
+    "₹#{sales_price}"
+  end
+
+  def stock_status_badge
+    case stock_status
+    when 'out_of_stock'
+      'badge-danger'
+    when 'low_stock'
+      'badge-warning'
+    else
+      'badge-success'
+    end
+  end
 end

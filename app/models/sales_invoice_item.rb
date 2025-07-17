@@ -9,6 +9,7 @@ class SalesInvoiceItem < ApplicationRecord
   validates :discount, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   before_save :calculate_amount
+  before_save :set_hsn_sac
 
   def tax_amount
     (quantity * price * tax_rate / 100).round(2)
@@ -16,6 +17,14 @@ class SalesInvoiceItem < ApplicationRecord
 
   def line_total
     (quantity * price).round(2)
+  end
+
+  def subtotal
+    line_total - discount
+  end
+
+  def total_with_tax
+    subtotal + tax_amount
   end
 
   def profit_amount
@@ -41,5 +50,9 @@ class SalesInvoiceItem < ApplicationRecord
     line_total = quantity * price
     tax_amt = line_total * tax_rate / 100
     self.amount = line_total + tax_amt - discount
+  end
+
+  def set_hsn_sac
+    self.hsn_sac = sales_product&.hsn_sac if sales_product&.hsn_sac.present?
   end
 end

@@ -1,0 +1,492 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-edit text-primary me-2"></i>
+          Edit Sales Invoice #<%= @sales_invoice.invoice_number %>
+        </h2>
+        <div class="btn-group">
+          <%= link_to @sales_invoice, class: 'btn btn-outline-secondary' do %>
+            <i class="fas fa-arrow-left me-2"></i>Back to Invoice
+          <% end %>
+          <%= link_to sales_invoices_path, class: 'btn btn-outline-secondary' do %>
+            <i class="fas fa-list me-2"></i>All Invoices
+          <% end %>
+        </div>
+      </div>
+      
+      <%= form_with model: @sales_invoice, local: true, class: 'needs-validation', novalidate: true do |form| %>
+        <div class="row">
+          <!-- Left Column -->
+          <div class="col-lg-8">
+            <!-- Customer Details -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Customer Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <%= form.label :customer_id, 'Customer', class: 'form-label' %>
+                      <%= form.select :customer_id, 
+                                      options_from_collection_for_select(@customers, :id, :name, @sales_invoice.customer_id),
+                                      { prompt: 'Select or search customer...' },
+                                      { class: 'form-select customer-select', id: 'customer_select' } %>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <%= form.label :customer_name, 'Customer Name', class: 'form-label' %>
+                      <%= form.text_field :customer_name, class: 'form-control', required: true %>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <%= form.label :bill_to, 'Bill To', class: 'form-label' %>
+                      <%= form.text_area :bill_to, rows: 3, class: 'form-control' %>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <%= form.label :ship_to, 'Ship To', class: 'form-label' %>
+                      <%= form.text_area :ship_to, rows: 3, class: 'form-control' %>
+                      <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="sameAsBilling">
+                        <label class="form-check-label" for="sameAsBilling">
+                          Same as billing address
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Invoice Items -->
+            <div class="card mb-4">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Items / Services</h5>
+                <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
+                  <i class="fas fa-plus me-1"></i>Add Item
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered" id="itemsTable">
+                    <thead class="table-light">
+                      <tr>
+                        <th width="25%">Items / Services</th>
+                        <th width="10%">HSN/SAC</th>
+                        <th width="10%">QTY</th>
+                        <th width="15%">Price/Item (₹)</th>
+                        <th width="10%">Tax (%)</th>
+                        <th width="10%">Discount (₹)</th>
+                        <th width="15%">Amount (₹)</th>
+                        <th width="5%">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                      <%= form.fields_for :sales_invoice_items do |item_form| %>
+                        <tr class="item-row">
+                          <td>
+                            <%= item_form.select :sales_product_id, 
+                                                options_from_collection_for_select(@sales_products, :id, :display_name, item_form.object.sales_product_id),
+                                                { prompt: 'Select product...' },
+                                                { class: 'form-select product-select', onchange: 'updateProductDetails(this)' } %>
+                          </td>
+                          <td>
+                            <%= item_form.text_field :hsn_sac, class: 'form-control hsn-input', readonly: true %>
+                          </td>
+                          <td>
+                            <%= item_form.number_field :quantity, class: 'form-control quantity-input', 
+                                                       min: 1, step: 0.01, onchange: 'calculateRowTotal(this)' %>
+                          </td>
+                          <td>
+                            <%= item_form.number_field :price, class: 'form-control price-input', 
+                                                       step: 0.01, onchange: 'calculateRowTotal(this)' %>
+                          </td>
+                          <td>
+                            <%= item_form.number_field :tax_rate, class: 'form-control tax-input', 
+                                                       step: 0.01, onchange: 'calculateRowTotal(this)' %>
+                          </td>
+                          <td>
+                            <%= item_form.number_field :discount, class: 'form-control discount-input', 
+                                                       step: 0.01, onchange: 'calculateRowTotal(this)' %>
+                          </td>
+                          <td>
+                            <input type="text" class="form-control amount-display" readonly>
+                          </td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-danger remove-item">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                            <%= item_form.hidden_field :id %>
+                            <%= item_form.hidden_field :_destroy, class: 'destroy-flag' %>
+                          </td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Terms and Notes -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Terms and Notes</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <%= form.label :terms_and_conditions, 'Terms and Conditions', class: 'form-label' %>
+                  <%= form.text_area :terms_and_conditions, rows: 4, class: 'form-control' %>
+                </div>
+                <div class="mb-3">
+                  <%= form.label :notes, 'Notes', class: 'form-label' %>
+                  <%= form.text_area :notes, rows: 3, class: 'form-control' %>
+                </div>
+                <div class="mb-3">
+                  <%= form.label :authorized_signature, 'Authorized Signature', class: 'form-label' %>
+                  <%= form.text_field :authorized_signature, class: 'form-control', placeholder: 'Enter signatory name' %>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Column -->
+          <div class="col-lg-4">
+            <!-- Invoice Meta -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Invoice Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <%= form.label :invoice_number, 'Invoice Number', class: 'form-label' %>
+                  <%= form.text_field :invoice_number, class: 'form-control', readonly: true %>
+                </div>
+                <div class="mb-3">
+                  <%= form.label :invoice_date, 'Invoice Date', class: 'form-label' %>
+                  <%= form.date_field :invoice_date, class: 'form-control', required: true %>
+                </div>
+                <div class="mb-3">
+                  <%= form.label :payment_terms, 'Payment Terms (Days)', class: 'form-label' %>
+                  <%= form.number_field :payment_terms, class: 'form-control', 
+                                        min: 0, onchange: 'calculateDueDate()' %>
+                </div>
+                <div class="mb-3">
+                  <%= form.label :due_date, 'Due Date', class: 'form-label' %>
+                  <%= form.date_field :due_date, class: 'form-control', id: 'due_date_field' %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Invoice Summary -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Invoice Summary</h5>
+              </div>
+              <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Subtotal:</span>
+                  <span id="subtotal">₹<%= number_with_precision(@sales_invoice.subtotal, precision: 2) %></span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Tax Amount:</span>
+                  <span id="taxAmount">₹<%= number_with_precision(@sales_invoice.tax_amount, precision: 2) %></span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Discount:</span>
+                  <span id="discountAmount">₹<%= number_with_precision(@sales_invoice.discount_amount, precision: 2) %></span>
+                </div>
+                
+                <!-- Additional Charges -->
+                <div class="mb-3">
+                  <%= form.label :additional_charges, 'Additional Charges', class: 'form-label' %>
+                  <%= form.number_field :additional_charges, class: 'form-control', 
+                                        step: 0.01, onchange: 'calculateTotals()' %>
+                </div>
+                
+                <!-- Additional Discount -->
+                <div class="mb-3">
+                  <%= form.label :additional_discount, 'Additional Discount', class: 'form-label' %>
+                  <%= form.number_field :additional_discount, class: 'form-control', 
+                                        step: 0.01, onchange: 'calculateTotals()' %>
+                </div>
+                
+                <!-- TCS -->
+                <div class="form-check mb-3">
+                  <%= form.check_box :apply_tcs, class: 'form-check-input', onchange: 'calculateTotals()' %>
+                  <%= form.label :apply_tcs, 'Apply TCS', class: 'form-check-label' %>
+                </div>
+                <div class="mb-3" id="tcsRateDiv" style="<%= @sales_invoice.apply_tcs? ? 'display: block;' : 'display: none;' %>">
+                  <%= form.label :tcs_rate, 'TCS Rate (%)', class: 'form-label' %>
+                  <%= form.number_field :tcs_rate, class: 'form-control', 
+                                        step: 0.01, onchange: 'calculateTotals()' %>
+                </div>
+                
+                <!-- Auto Round Off -->
+                <div class="form-check mb-3">
+                  <%= form.check_box :auto_round_off, class: 'form-check-input', onchange: 'calculateTotals()' %>
+                  <%= form.label :auto_round_off, 'Auto Round Off', class: 'form-check-label' %>
+                </div>
+                
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                  <strong>Total Amount:</strong>
+                  <strong id="totalAmount">₹<%= number_with_precision(@sales_invoice.total_amount, precision: 2) %></strong>
+                </div>
+                
+                <!-- Payment -->
+                <div class="mb-3">
+                  <%= form.label :payment_type, 'Payment Type', class: 'form-label' %>
+                  <%= form.select :payment_type, 
+                                  options_for_select([
+                                    ['Cash', 'cash'],
+                                    ['Bank Transfer', 'bank'],
+                                    ['UPI', 'upi'],
+                                    ['Card', 'card']
+                                  ], @sales_invoice.payment_type), 
+                                  {}, { class: 'form-select' } %>
+                </div>
+                <div class="mb-3">
+                  <%= form.label :amount_paid, 'Amount Received', class: 'form-label' %>
+                  <%= form.number_field :amount_paid, class: 'form-control', 
+                                        step: 0.01, onchange: 'calculateBalance()' %>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span>Balance Amount:</span>
+                  <span id="balanceAmount">₹<%= number_with_precision(@sales_invoice.balance_amount, precision: 2) %></span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="card">
+              <div class="card-body">
+                <div class="d-grid gap-2">
+                  <%= form.submit 'Update Invoice', class: 'btn btn-success' %>
+                  <%= link_to 'Cancel', @sales_invoice, class: 'btn btn-outline-secondary' %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize form
+  calculateTotals();
+  
+  // Customer selection
+  document.getElementById('customer_select').addEventListener('change', function() {
+    const customerId = this.value;
+    if (customerId) {
+      fetch(`/sales_invoices/customers/${customerId}/details`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('sales_invoice_customer_name').value = data.name;
+          document.getElementById('sales_invoice_bill_to').value = data.address;
+          document.getElementById('sales_invoice_ship_to').value = data.address;
+        });
+    }
+  });
+  
+  // Same as billing checkbox
+  document.getElementById('sameAsBilling').addEventListener('change', function() {
+    if (this.checked) {
+      const billTo = document.getElementById('sales_invoice_bill_to').value;
+      document.getElementById('sales_invoice_ship_to').value = billTo;
+    }
+  });
+  
+  // Add item button
+  document.getElementById('addItemBtn').addEventListener('click', function() {
+    addNewItemRow();
+  });
+  
+  // Remove item buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
+      e.preventDefault();
+      const row = e.target.closest('.item-row');
+      const destroyFlag = row.querySelector('.destroy-flag');
+      if (destroyFlag) {
+        destroyFlag.value = '1';
+        row.style.display = 'none';
+      } else {
+        row.remove();
+      }
+      calculateTotals();
+    }
+  });
+  
+  // TCS checkbox
+  document.getElementById('sales_invoice_apply_tcs').addEventListener('change', function() {
+    const tcsDiv = document.getElementById('tcsRateDiv');
+    tcsDiv.style.display = this.checked ? 'block' : 'none';
+  });
+  
+  // Calculate initial row totals
+  document.querySelectorAll('.item-row').forEach(row => {
+    if (row.style.display !== 'none') {
+      calculateRowTotal(row.querySelector('.quantity-input'));
+    }
+  });
+});
+
+function updateProductDetails(select) {
+  const productId = select.value;
+  const row = select.closest('.item-row');
+  
+  if (productId) {
+    fetch(`/sales_invoices/products/${productId}/details`)
+      .then(response => response.json())
+      .then(data => {
+        row.querySelector('.hsn-input').value = data.hsn_sac;
+        row.querySelector('.price-input').value = data.price;
+        row.querySelector('.tax-input').value = data.tax_rate;
+        calculateRowTotal(row.querySelector('.quantity-input'));
+      });
+  }
+}
+
+function calculateRowTotal(input) {
+  const row = input.closest('.item-row');
+  if (row.style.display === 'none') return;
+  
+  const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+  const price = parseFloat(row.querySelector('.price-input').value) || 0;
+  const taxRate = parseFloat(row.querySelector('.tax-input').value) || 0;
+  const discount = parseFloat(row.querySelector('.discount-input').value) || 0;
+  
+  const lineTotal = quantity * price;
+  const taxAmount = lineTotal * taxRate / 100;
+  const total = lineTotal + taxAmount - discount;
+  
+  row.querySelector('.amount-display').value = '₹' + total.toFixed(2);
+  calculateTotals();
+}
+
+function calculateTotals() {
+  let subtotal = 0;
+  let taxAmount = 0;
+  let discountAmount = 0;
+  
+  document.querySelectorAll('.item-row').forEach(row => {
+    if (row.style.display === 'none') return;
+    
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+    const taxRate = parseFloat(row.querySelector('.tax-input').value) || 0;
+    const discount = parseFloat(row.querySelector('.discount-input').value) || 0;
+    
+    const lineTotal = quantity * price;
+    subtotal += lineTotal;
+    taxAmount += lineTotal * taxRate / 100;
+    discountAmount += discount;
+  });
+  
+  // Additional charges and discounts
+  const additionalCharges = parseFloat(document.getElementById('sales_invoice_additional_charges').value) || 0;
+  const additionalDiscount = parseFloat(document.getElementById('sales_invoice_additional_discount').value) || 0;
+  
+  let total = subtotal + taxAmount - discountAmount + additionalCharges - additionalDiscount;
+  
+  // TCS
+  if (document.getElementById('sales_invoice_apply_tcs').checked) {
+    const tcsRate = parseFloat(document.getElementById('sales_invoice_tcs_rate').value) || 0;
+    total += total * tcsRate / 100;
+  }
+  
+  // Auto round off
+  if (document.getElementById('sales_invoice_auto_round_off').checked) {
+    total = Math.round(total);
+  }
+  
+  // Update display
+  document.getElementById('subtotal').textContent = '₹' + subtotal.toFixed(2);
+  document.getElementById('taxAmount').textContent = '₹' + taxAmount.toFixed(2);
+  document.getElementById('discountAmount').textContent = '₹' + (discountAmount + additionalDiscount).toFixed(2);
+  document.getElementById('totalAmount').textContent = '₹' + total.toFixed(2);
+  
+  calculateBalance();
+}
+
+function calculateDueDate() {
+  const invoiceDate = document.getElementById('sales_invoice_invoice_date').value;
+  const paymentTerms = parseInt(document.getElementById('sales_invoice_payment_terms').value) || 0;
+  
+  if (invoiceDate) {
+    const date = new Date(invoiceDate);
+    date.setDate(date.getDate() + paymentTerms);
+    document.getElementById('due_date_field').value = date.toISOString().split('T')[0];
+  }
+}
+
+function calculateBalance() {
+  const totalText = document.getElementById('totalAmount').textContent;
+  const totalAmount = parseFloat(totalText.replace('₹', '').replace(',', ''));
+  const amountPaid = parseFloat(document.getElementById('sales_invoice_amount_paid').value) || 0;
+  const balance = totalAmount - amountPaid;
+  
+  document.getElementById('balanceAmount').textContent = '₹' + balance.toFixed(2);
+}
+
+function addNewItemRow() {
+  const tbody = document.getElementById('itemsTableBody');
+  const newRow = document.createElement('tr');
+  newRow.className = 'item-row';
+  
+  const itemsCount = tbody.children.length;
+  
+  newRow.innerHTML = `
+    <td>
+      <select name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][sales_product_id]" 
+              class="form-select product-select" onchange="updateProductDetails(this)">
+        <option value="">Select product...</option>
+        ${document.querySelector('.product-select').innerHTML}
+      </select>
+    </td>
+    <td>
+      <input type="text" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][hsn_sac]" 
+             class="form-control hsn-input" readonly>
+    </td>
+    <td>
+      <input type="number" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][quantity]" 
+             class="form-control quantity-input" value="1" min="1" step="0.01" onchange="calculateRowTotal(this)">
+    </td>
+    <td>
+      <input type="number" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][price]" 
+             class="form-control price-input" step="0.01" onchange="calculateRowTotal(this)">
+    </td>
+    <td>
+      <input type="number" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][tax_rate]" 
+             class="form-control tax-input" step="0.01" onchange="calculateRowTotal(this)">
+    </td>
+    <td>
+      <input type="number" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][discount]" 
+             class="form-control discount-input" step="0.01" value="0" onchange="calculateRowTotal(this)">
+    </td>
+    <td>
+      <input type="text" class="form-control amount-display" readonly>
+    </td>
+    <td>
+      <button type="button" class="btn btn-sm btn-danger remove-item">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  `;
+  
+  tbody.appendChild(newRow);
+}
+</script>
