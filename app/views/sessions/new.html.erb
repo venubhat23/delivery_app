@@ -527,6 +527,50 @@
             }
         }
 
+        /* Custom Alert Styling */
+        .custom-alert {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: slideInFromTop 0.5s ease-out;
+        }
+
+        .custom-alert.alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .custom-alert.alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .logout-success-alert {
+            background: linear-gradient(135deg, #d1f2eb 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .logout-success-alert .fas {
+            color: #10b981;
+            font-size: 1.2rem;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* Ensure full width on all screens */
         @media (min-width: 769px) {
             .auth-wrapper {
@@ -569,28 +613,33 @@
                         <div class="auth-card-body">
                             <%= form_with url: login_path, method: :post, local: true, class: "auth-form" do |form| %>
                                 <% if flash[:alert] %>
-                                    <div class="alert alert-danger mb-3">
+                                    <div class="alert alert-danger mb-3 custom-alert">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
                                         <%= flash[:alert] %>
                                     </div>
                                 <% end %>
                                 
                                 <% if flash[:notice] %>
-                                    <div class="alert alert-success mb-3">
-                                        <i class="fas fa-check-circle me-2"></i>
-                                        <%= flash[:notice] %>
+                                    <div class="alert alert-success mb-3 custom-alert logout-success-alert">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <div>
+                                                <div class="fw-bold">You have been logged out successfully.</div>
+                                                <div class="small">Thank you for using DeliveryPro!</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 <% end %>
                                 
                                 <div class="form-floating mb-3">
-                                    <%= form.email_field :email, class: "form-control", id: "floatingEmail", placeholder: "name@example.com", required: true %>
+                                    <%= form.email_field :email, class: "form-control", id: "floatingEmail", placeholder: "name@example.com", value: "pramodbha8@gmail.com", required: true %>
                                     <label for="floatingEmail">
                                         <i class="fas fa-envelope me-2"></i>Email Address
                                     </label>
                                 </div>
                                 
                                 <div class="form-floating mb-4">
-                                    <%= form.password_field :password, class: "form-control", id: "floatingPassword", placeholder: "Password", required: true %>
+                                    <%= form.password_field :password, class: "form-control", id: "floatingPassword", placeholder: "Password", value: "••••••••", required: true %>
                                     <label for="floatingPassword">
                                         <i class="fas fa-lock me-2"></i>Password
                                     </label>
@@ -739,6 +788,15 @@
                 setTimeout(() => popup.remove(), 300);
             }
         }, 3000);
+        
+        // Auto-hide the logout success alert after 5 seconds
+        setTimeout(function() {
+            const logoutAlert = document.querySelector('.logout-success-alert');
+            if (logoutAlert) {
+                logoutAlert.style.animation = 'fadeOut 0.5s ease-out forwards';
+                setTimeout(() => logoutAlert.remove(), 500);
+            }
+        }, 5000);
         
         // Add fadeOut animation
         const style = document.createElement('style');
