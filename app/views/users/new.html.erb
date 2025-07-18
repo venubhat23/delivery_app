@@ -539,6 +539,42 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* Rails Flash Messages */
+        .alert {
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            border-radius: 16px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+            animation: slideInDown 0.4s ease-out;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(245, 101, 101, 0.15), rgba(245, 101, 101, 0.05));
+            color: #e53e3e;
+            border-color: rgba(245, 101, 101, 0.2);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.15), rgba(72, 187, 120, 0.05));
+            color: #38a169;
+            border-color: rgba(72, 187, 120, 0.2);
+        }
+
+        .alert ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .alert li {
+            margin-bottom: 4px;
+        }
+
         .loading-spinner {
             width: 22px;
             height: 22px;
@@ -633,45 +669,69 @@
             <p>Join our delivery management system today</p>
         </div>
 
-        <form id="signupForm" class="needs-validation" novalidate>
+        <%= form_with model: @user, url: signup_path, method: :post, local: true, id: "signupForm", class: "needs-validation", novalidate: true do |form| %>
+            <% if @user.errors.any? %>
+                <div class="alert alert-danger mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <ul class="mb-0">
+                        <% @user.errors.full_messages.each do |message| %>
+                            <li><%= message %></li>
+                        <% end %>
+                    </ul>
+                </div>
+            <% end %>
+            
+            <% if flash[:alert] %>
+                <div class="alert alert-danger mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <%= flash[:alert] %>
+                </div>
+            <% end %>
+            
+            <% if flash[:notice] %>
+                <div class="alert alert-success mb-3">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <%= flash[:notice] %>
+                </div>
+            <% end %>
+            
             <div class="form-row">
                 <div class="form-group">
-                    <input type="text" id="name" name="name" class="form-control" placeholder=" " required>
+                    <%= form.text_field :name, class: "form-control", id: "name", placeholder: " ", required: true %>
                     <label for="name" class="form-label">Full Name</label>
                 </div>
                 
                 <div class="form-group">
-                    <input type="email" id="email" name="email" class="form-control" placeholder=" " required>
+                    <%= form.email_field :email, class: "form-control", id: "email", placeholder: " ", required: true %>
                     <label for="email" class="form-label">Email Address</label>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <input type="tel" id="phone" name="phone" class="form-control" placeholder=" ">
+                    <%= form.telephone_field :phone, class: "form-control", id: "phone", placeholder: " " %>
                     <label for="phone" class="form-label">Phone Number</label>
                 </div>
                 
                 <div class="form-group">
-                    <select id="role" name="role" class="form-control role-select" required>
-                        <option value="" disabled selected></option>
-                        <option value="admin">Admin</option>
-                        <option value="delivery_person">Delivery Person</option>
-                        <option value="customer">Customer</option>
-                    </select>
+                    <%= form.select :role, options_for_select([
+                        ['Admin', 'admin'],
+                        ['Delivery Person', 'delivery_person'],
+                        ['User', 'user']
+                    ], @user.role), { prompt: '' }, { class: "form-control role-select", id: "role", required: true } %>
                     <label for="role" class="form-label">Select Role</label>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <input type="password" id="password" name="password" class="form-control" placeholder=" " required>
+                    <%= form.password_field :password, class: "form-control", id: "password", placeholder: " ", required: true %>
                     <label for="password" class="form-label">Password</label>
                     <i class="fas fa-eye password-toggle" onclick="togglePassword('password')"></i>
                 </div>
                 
                 <div class="form-group">
-                    <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" placeholder=" " required>
+                    <%= form.password_field :password_confirmation, class: "form-control", id: "password_confirmation", placeholder: " ", required: true %>
                     <label for="password_confirmation" class="form-label">Confirm Password</label>
                     <i class="fas fa-eye password-toggle" onclick="togglePassword('password_confirmation')"></i>
                 </div>
@@ -681,7 +741,7 @@
                 <i class="fas fa-user-plus"></i>
                 Create Account
             </button>
-        </form>
+        <% end %>
 
         <div class="signin-link">
             <p>Already have an account? <a href="/login">Sign in here</a></p>
@@ -704,75 +764,9 @@
             }
         }
 
-        function showSignIn() {
-            showMessage('Redirecting to sign in page...', 'success');
-            setTimeout(() => {
-                console.log('Would redirect to login page');
-            }, 1500);
-        }
+        // Removed unused message functions - using Rails flash messages instead
 
-        function showMessage(message, type = 'error') {
-            const existingMessages = document.querySelectorAll('.error-message, .success-message');
-            existingMessages.forEach(msg => msg.remove());
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
-            
-            const icon = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
-            messageDiv.innerHTML = `<i class="${icon}"></i> ${message}`;
-            
-            const form = document.getElementById('signupForm');
-            form.insertBefore(messageDiv, form.firstChild);
-            
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 5000);
-        }
-
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-            
-            if (!data.name || !data.email || !data.role || !data.password || !data.password_confirmation) {
-                showMessage('Please fill in all required fields', 'error');
-                return;
-            }
-            
-            if (data.password !== data.password_confirmation) {
-                showMessage('Passwords do not match', 'error');
-                return;
-            }
-            
-            if (data.password.length < 6) {
-                showMessage('Password must be at least 6 characters long', 'error');
-                return;
-            }
-            
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.email)) {
-                showMessage('Please enter a valid email address', 'error');
-                return;
-            }
-            
-            const submitBtn = document.querySelector('.submit-btn');
-            const originalContent = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<div class="loading-spinner"></div> Creating Account...';
-            submitBtn.disabled = true;
-            
-            setTimeout(() => {
-                showMessage('Account created successfully! Welcome aboard! 🎉', 'success');
-                submitBtn.innerHTML = originalContent;
-                submitBtn.disabled = false;
-                
-                setTimeout(() => {
-                    this.reset();
-                    updateAllLabels();
-                }, 1500);
-            }, 2000);
-        });
+        // Form will now submit to Rails backend - removed JavaScript form handling
 
         function updateAllLabels() {
             const inputs = document.querySelectorAll('.form-control');
