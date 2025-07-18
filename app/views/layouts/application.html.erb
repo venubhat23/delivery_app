@@ -99,6 +99,58 @@
           margin-left: 0;
         }
       }
+      
+      /* Logout Modal Styles */
+      .modal-content {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      }
+      
+      .modal-header {
+        padding: 1.5rem 1.5rem 0;
+      }
+      
+      .modal-body {
+        padding: 1rem 1.5rem;
+      }
+      
+      .modal-footer {
+        padding: 0 1.5rem 1.5rem;
+      }
+      
+      .logout-icon {
+        opacity: 0.7;
+      }
+      
+      .btn-danger {
+        background: var(--danger-gradient);
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(248, 113, 113, 0.3);
+      }
+      
+      .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+      }
     </style>
   </head>
 
@@ -137,9 +189,9 @@
                       <li><h6 class="dropdown-header">Welcome, <%= current_user.name %></h6></li>
                       <li><hr class="dropdown-divider"></li>
                       <li>
-                        <%= button_to logout_path, method: :delete, class: "dropdown-item" do %>
+                        <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logoutModal">
                           <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        <% end %>
+                        </a>
                       </li>
                     </ul>
                   </div>
@@ -233,6 +285,36 @@
       
       <!-- Mobile Sidebar Overlay -->
       <div class="sidebar-overlay d-md-none" id="sidebarOverlay"></div>
+      
+      <!-- Logout Confirmation Modal -->
+      <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header border-0">
+              <h5 class="modal-title" id="logoutModalLabel">
+                <i class="fas fa-sign-out-alt me-2 text-warning"></i>
+                Confirm Logout
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+              <div class="logout-icon mb-3">
+                <i class="fas fa-user-times fa-3x text-muted"></i>
+              </div>
+              <h6 class="mb-3">Are you sure you want to logout?</h6>
+              <p class="text-muted mb-0">You will be redirected to the login page.</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="fas fa-times me-2"></i>Cancel
+              </button>
+              <%= form_with url: logout_path, method: :delete, local: true, class: "d-inline" do |form| %>
+                <%= form.submit "Logout", class: "btn btn-danger ms-2", data: { confirm: false } %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <script>
         // Mobile sidebar toggle
