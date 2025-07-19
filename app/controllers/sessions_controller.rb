@@ -19,7 +19,7 @@ class SessionsController < ApplicationController
   
   def destroy
     session[:user_id] = nil
-    flash[:notice] = "You have been logged out"
+    flash[:notice] = "You have been logged out successfully. Thank you for using DeliveryPro!"
     redirect_to login_path
   end
 end

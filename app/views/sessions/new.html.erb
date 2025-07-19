@@ -433,6 +433,48 @@
             }
         }
 
+        /* Rails Flash Messages */
+        .alert {
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+            animation: slideInDown 0.4s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-danger {
+            background: rgba(248, 215, 218, 0.95);
+            color: #721c24;
+            border-color: rgba(114, 28, 36, 0.2);
+        }
+
+        .alert-success {
+            background: rgba(209, 231, 221, 0.95);
+            color: #0f5132;
+            border-color: rgba(15, 81, 50, 0.2);
+            box-shadow: 0 8px 25px rgba(15, 81, 50, 0.15);
+        }
+        
+        .alert-success i {
+            color: #198754;
+        }
+
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .auth-card-header {
@@ -485,6 +527,50 @@
             }
         }
 
+        /* Custom Alert Styling */
+        .custom-alert {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: slideInFromTop 0.5s ease-out;
+        }
+
+        .custom-alert.alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .custom-alert.alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .logout-success-alert {
+            background: linear-gradient(135deg, #d1f2eb 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .logout-success-alert .fas {
+            color: #10b981;
+            font-size: 1.2rem;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* Ensure full width on all screens */
         @media (min-width: 769px) {
             .auth-wrapper {
@@ -525,16 +611,35 @@
                         </div>
                         
                         <div class="auth-card-body">
-                            <form class="auth-form" action="#" method="POST">
+                            <%= form_with url: login_path, method: :post, local: true, class: "auth-form" do |form| %>
+                                <% if flash[:alert] %>
+                                    <div class="alert alert-danger mb-3 custom-alert">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <%= flash[:alert] %>
+                                    </div>
+                                <% end %>
+                                
+                                <% if flash[:notice] %>
+                                    <div class="alert alert-success mb-3 custom-alert logout-success-alert">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <div>
+                                                <div class="fw-bold">You have been logged out successfully.</div>
+                                                <div class="small">Thank you for using DeliveryPro!</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% end %>
+                                
                                 <div class="form-floating mb-3">
-                                    <input type="email" class="form-control" id="floatingEmail" placeholder="name@example.com" required>
+                                    <%= form.email_field :email, class: "form-control", id: "floatingEmail", placeholder: "name@example.com", value: "pramodbha8@gmail.com", required: true %>
                                     <label for="floatingEmail">
                                         <i class="fas fa-envelope me-2"></i>Email Address
                                     </label>
                                 </div>
                                 
                                 <div class="form-floating mb-4">
-                                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" required>
+                                    <%= form.password_field :password, class: "form-control", id: "floatingPassword", placeholder: "Password", value: "••••••••", required: true %>
                                     <label for="floatingPassword">
                                         <i class="fas fa-lock me-2"></i>Password
                                     </label>
@@ -551,20 +656,21 @@
                                 </div>
                                 
                                 <div class="d-grid mb-4">
-                                    <button type="submit" class="btn btn-primary btn-lg auth-submit-btn">Sign In</button>
+                                    <%= form.submit "Sign In", class: "btn btn-primary btn-lg auth-submit-btn" %>
                                 </div>
-                            </form>
+                            <% end %>
                             
                             <div class="auth-divider">
                                 <span>or</span>
                             </div>
                             
-                            <div class="text-center">
-                                <p class="signup-text">
-                                    Don't have an account? 
-                                    <a href="#" class="signup-link">Create Account</a>
-                                </p>
-                            </div>
+<div class="text-center">
+    <p class="signup-text">
+        Don't have an account? 
+        <a href="/signup" class="signup-link">Create Account</a>
+    </p>
+</div>
+
                         </div>
                     </div>
                     
@@ -592,5 +698,116 @@
             </div>
         </div>
     </div>
+    
+    <!-- Logout Success Popup -->
+    <% if flash[:notice] && flash[:notice].include?("logged out") %>
+    <div class="logout-success-popup" id="logoutSuccessPopup">
+        <div class="popup-content">
+            <div class="popup-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4>Logout Successful!</h4>
+            <p>You have been safely logged out of DeliveryPro</p>
+            <div class="popup-footer">
+                <small>Redirecting to login...</small>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .logout-success-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .popup-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideInScale 0.4s ease-out;
+        }
+        
+        .popup-icon {
+            font-size: 3rem;
+            color: #198754;
+            margin-bottom: 1rem;
+        }
+        
+        .popup-content h4 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .popup-content p {
+            color: #718096;
+            margin-bottom: 1.5rem;
+        }
+        
+        .popup-footer small {
+            color: #a0aec0;
+            font-style: italic;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+    
+    <script>
+        // Auto-hide the logout success popup after 3 seconds
+        setTimeout(function() {
+            const popup = document.getElementById('logoutSuccessPopup');
+            if (popup) {
+                popup.style.animation = 'fadeOut 0.3s ease-out forwards';
+                setTimeout(() => popup.remove(), 300);
+            }
+        }, 3000);
+        
+        // Auto-hide the logout success alert after 5 seconds
+        setTimeout(function() {
+            const logoutAlert = document.querySelector('.logout-success-alert');
+            if (logoutAlert) {
+                logoutAlert.style.animation = 'fadeOut 0.5s ease-out forwards';
+                setTimeout(() => logoutAlert.remove(), 500);
+            }
+        }, 5000);
+        
+        // Add fadeOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+    <% end %>
 </body>
 </html>
