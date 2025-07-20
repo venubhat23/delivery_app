@@ -32,5 +32,9 @@
 
 /public/assets
 
+# Ignore uploaded files but keep the directory
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # Ignore master key for decrypting credentials and more.
 /config/master.key

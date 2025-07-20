@@ -135,8 +135,14 @@
               <tr class="customer-row">
                 <td>
                   <div class="d-flex align-items-center">
-                    <div class="customer-avatar me-3">
-                      <%= customer.name.first.upcase %>
+                    <div class="customer-image me-3">
+                      <% if customer.image_url.present? %>
+                        <img src="<%= customer.image_url %>" alt="<%= customer.name %>" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                      <% else %>
+                        <div class="customer-avatar">
+                          <%= customer.name.first.upcase %>
+                        </div>
+                      <% end %>
                     </div>
                     <div>
                       <strong class="text-primary"><%= customer.name %></strong>
@@ -228,8 +234,14 @@
             <div class="col-md-6 col-lg-4 mb-4">
               <div class="customer-card">
                 <div class="customer-card-header">
-                  <div class="customer-avatar">
-                    <%= customer.name.first.upcase %>
+                  <div class="customer-image">
+                    <% if customer.image_url.present? %>
+                      <img src="<%= customer.image_url %>" alt="<%= customer.name %>" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                    <% else %>
+                      <div class="customer-avatar">
+                        <%= customer.name.first.upcase %>
+                      </div>
+                    <% end %>
                   </div>
                   <div class="customer-actions">
                     <div class="dropdown">

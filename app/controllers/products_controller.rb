@@ -81,7 +81,7 @@ class ProductsController < ApplicationController
     params.require(:product).permit(
       :name, :description, :unit_type, :available_quantity, :price,
       :is_gst_applicable, :total_gst_percentage, :total_cgst_percentage,
-      :total_sgst_percentage, :total_igst_percentage, :category_id
+      :total_sgst_percentage, :total_igst_percentage, :category_id, :image_url
     )
   end
 end

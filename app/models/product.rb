@@ -75,6 +75,15 @@ class Product < ApplicationRecord
     category&.color || '#6c757d'
   end
 
+  def has_image?
+    image_url.present?
+  end
+
+  def image_filename
+    return nil unless has_image?
+    File.basename(URI.parse(image_url).path) rescue nil
+  end
+
   # Class methods
   def self.total_value
     sum { |product| product.total_value }

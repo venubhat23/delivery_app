@@ -38,6 +38,16 @@ class Customer < ApplicationRecord
   scope :by_delivery_person, ->(dp) { where(delivery_person: dp) }
   scope :recent, -> { order(created_at: :desc) }
 
+  # Image helper methods
+  def has_image?
+    image_url.present?
+  end
+
+  def image_filename
+    return nil unless has_image?
+    File.basename(URI.parse(image_url).path) rescue nil
+  end
+
 
   # CSV template for bulk import
   def self.csv_template
