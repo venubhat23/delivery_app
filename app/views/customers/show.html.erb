@@ -1,8 +1,14 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
   <h1 class="h2">
     <div class="d-flex align-items-center">
-      <div class="avatar-circle-large me-3">
-        <%= @customer.name.try(:first).to_s.upcase %>
+      <div class="customer-image me-3">
+        <% if @customer.image_url.present? %>
+          <img src="<%= @customer.image_url %>" alt="<%= @customer.name %>" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
+        <% else %>
+          <div class="avatar-circle-large">
+            <%= @customer.name.try(:first).to_s.upcase %>
+          </div>
+        <% end %>
       </div>
       <div>
         <%= @customer.name %>

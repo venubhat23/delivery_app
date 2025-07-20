@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   get '/signup', to: 'users#new'
   post '/signup', to: 'users#create'
   
+  # File upload API
+  post '/api/upload', to: 'uploads#create'
+  
   # Main application routes with full CRUD
   resources :products do
     collection do
