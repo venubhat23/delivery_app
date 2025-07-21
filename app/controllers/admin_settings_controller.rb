@@ -28,6 +28,10 @@ class AdminSettingsController < ApplicationController
   end
 
   def edit
+    # Set default brand name if empty
+    if @admin_setting.business_name.blank?
+      @admin_setting.business_name = current_user&.name || "Atma Nirbhar Farm"
+    end
   end
 
   def update
