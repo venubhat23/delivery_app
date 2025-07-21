@@ -67,12 +67,15 @@
     <div class="col-md-6">
       <div class="mb-3">
         <%= form.label :category_id, class: "form-label fw-bold" do %>
-          <i class="fas fa-tags me-1"></i>Category
+          <i class="fas fa-tags me-1"></i>Category *
         <% end %>
         <%= form.select :category_id, 
-            options_for_select([['Uncategorized', '']] + Category.all.map { |c| [c.name, c.id] }, product.category_id), 
+            options_for_select(Category.all.map { |c| [c.name, c.id] }, product.category_id), 
             { prompt: 'Select category' }, 
-            { class: "form-select" } %>
+            { class: "form-select", required: true } %>
+        <div class="invalid-feedback">
+          Please select a category for your product.
+        </div>
         <small class="form-text text-muted">Choose a category to organize your product</small>
       </div>
     </div>
@@ -81,7 +84,7 @@
         <%= form.label :description, class: "form-label fw-bold" do %>
           <i class="fas fa-info-circle me-1"></i>Description
         <% end %>
-        <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Enter product description (optional)" %>
+        <%= form.text_area :description, class: "form-control", rows: 5, placeholder: "Enter product description (optional)" %>
       </div>
     </div>
   </div>
