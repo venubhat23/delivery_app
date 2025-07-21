@@ -121,6 +121,7 @@
         <table class="table table-hover mb-0">
           <thead>
             <tr>
+              <th><i class="fas fa-image me-1"></i>Photo</th>
               <th><i class="fas fa-user me-1"></i>Customer</th>
               <th><i class="fas fa-map-marker-alt me-1"></i>Address</th>
               <th><i class="fas fa-globe me-1"></i>Location</th>
@@ -133,6 +134,15 @@
           <tbody>
             <% @customers.each do |customer| %>
               <tr class="customer-row">
+                <td>
+                  <% if customer.image_url.present? %>
+                    <img src="<%= customer.image_url %>" alt="<%= customer.name %>" class="customer-image-thumbnail">
+                  <% else %>
+                    <div class="customer-image-placeholder">
+                      <i class="fas fa-user text-muted"></i>
+                    </div>
+                  <% end %>
+                </td>
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="customer-avatar me-3">
@@ -451,6 +461,35 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Customer Image Styles */
+.customer-image-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.customer-image-thumbnail:hover {
+  transform: scale(1.1);
+}
+
+.customer-image-placeholder {
+  width: 50px;
+  height: 50px;
+  background-color: #f8f9fc;
+  border: 2px dashed #d1d3e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.customer-image-placeholder i {
+  font-size: 20px;
 }
 </style>
 

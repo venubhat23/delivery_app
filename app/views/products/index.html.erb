@@ -111,6 +111,7 @@
         <table class="table table-hover mb-0">
           <thead>
             <tr>
+              <th><i class="fas fa-image me-1"></i>Image</th>
               <th><i class="fas fa-tag me-1"></i>Product</th>
               <th><i class="fas fa-layer-group me-1"></i>Category</th>
               <th><i class="fas fa-balance-scale me-1"></i>Unit</th>
@@ -124,6 +125,15 @@
           <tbody>
             <% @products.each do |product| %>
               <tr class="product-row">
+                <td>
+                  <% if product.image_url.present? %>
+                    <img src="<%= product.image_url %>" alt="<%= product.name %>" class="product-image-thumbnail">
+                  <% else %>
+                    <div class="product-image-placeholder">
+                      <i class="fas fa-image text-muted"></i>
+                    </div>
+                  <% end %>
+                </td>
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="product-avatar me-3">
@@ -400,6 +410,35 @@
 #cardView.active, #tableView.active {
   background: var(--primary-gradient);
   color: white;
+}
+
+/* Product Image Styles */
+.product-image-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.product-image-thumbnail:hover {
+  transform: scale(1.1);
+}
+
+.product-image-placeholder {
+  width: 50px;
+  height: 50px;
+  background-color: #f8f9fc;
+  border: 2px dashed #d1d3e2;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image-placeholder i {
+  font-size: 20px;
 }
 </style>
 
