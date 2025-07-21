@@ -20,9 +20,12 @@
       </div>
     </div>
     <div class="col-md-6 mb-3">
-      <%= form.label :category, class: 'form-label' %>
-      <%= form.text_field :category, class: 'form-control', 
+      <%= form.label :category, 'Category *', class: 'form-label' %>
+      <%= form.text_field :category, class: 'form-control', required: true,
                           placeholder: 'e.g., Electronics, Clothing' %>
+      <div class="invalid-feedback">
+        Please provide a product category.
+      </div>
     </div>
   </div>
   

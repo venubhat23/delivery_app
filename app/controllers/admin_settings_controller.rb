@@ -57,8 +57,8 @@ class AdminSettingsController < ApplicationController
   end
 
   def set_default_values
-    @admin_setting.business_name = "Atma Nirbhar Farm"
-    @admin_setting.account_holder_name = "Atma Nirbhar Farm"
+    @admin_setting.business_name = current_user&.name || "Atma Nirbhar Farm"
+    @admin_setting.account_holder_name = current_user&.name || "Atma Nirbhar Farm"
     @admin_setting.bank_name = "Canara Bank"
     @admin_setting.account_number = "3194201000718"
     @admin_setting.ifsc_code = "CNRB0003194"
