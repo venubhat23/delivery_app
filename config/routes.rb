@@ -138,6 +138,24 @@ Rails.application.routes.draw do
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
   
+  # User Settings
+  resources :settings, only: [:index]
+  
   # File Upload API
   post '/api/upload', to: 'uploads#create'
+  
+  # Settings API
+  namespace :api do
+    # Timezone APIs
+    get 'settings/timezones', to: 'settings#available_timezones'
+    get 'settings/timezone', to: 'settings#show_timezone'
+    put 'settings/timezone', to: 'settings#update_timezone'
+    
+    # Profile APIs
+    get 'settings/profile', to: 'settings#show_profile'
+    put 'settings/profile', to: 'settings#update_profile'
+    
+    # Account deletion API
+    delete 'settings/account', to: 'settings#delete_account'
+  end
 end
