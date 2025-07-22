@@ -166,11 +166,16 @@
                   <button class="btn btn-link d-md-none me-3" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
                   </button>
+                  <% unless current_page?(root_path) %>
+                    <%= link_to root_path, class: "btn btn-outline-secondary me-3" do %>
+                      <i class="fas fa-arrow-left me-1"></i>Back
+                    <% end %>
+                  <% end %>
                   <%= link_to root_path, class: "navbar-brand d-flex align-items-center text-decoration-none" do %>
                     <div class="brand-icon me-2">
                       <i class="fas fa-truck-fast"></i>
                     </div>
-                    <span class="brand-text">DeliveryPro</span>
+                    <span class="brand-text">Marketincer-Brand Dashboard</span>
                   <% end %>
                 </div>
               </div>

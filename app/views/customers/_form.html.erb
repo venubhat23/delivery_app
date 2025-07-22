@@ -81,6 +81,43 @@
     </div>
   </div>
 
+  <!-- Image Upload Section -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :image_url, class: "form-label fw-bold" do %>
+          <i class="fas fa-image me-1"></i>Customer Photo
+        <% end %>
+        <%= form.hidden_field :image_url, id: "customer_image_url" %>
+        
+        <div class="image-upload-container">
+          <div class="image-preview-container" id="customerImagePreviewContainer" style="<%= customer.image_url.present? ? '' : 'display: none;' %>">
+            <img id="customerImagePreview" src="<%= customer.image_url %>" alt="Customer Photo" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+            <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeCustomerImage()">
+              <i class="fas fa-trash me-1"></i>Remove Photo
+            </button>
+          </div>
+          
+          <div class="upload-area" id="customerUploadArea" style="<%= customer.image_url.present? ? 'display: none;' : '' %>">
+            <input type="file" id="customerImageInput" accept="image/*" style="display: none;">
+            <div class="upload-placeholder" onclick="document.getElementById('customerImageInput').click();">
+              <i class="fas fa-user-circle fa-2x text-muted mb-2"></i>
+              <p class="text-muted mb-0">Click to upload photo</p>
+              <small class="text-muted">JPG, PNG, GIF up to 5MB</small>
+            </div>
+          </div>
+          
+          <div class="upload-progress" id="customerUploadProgress" style="display: none;">
+            <div class="progress mb-2">
+              <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted">Uploading...</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-md-6">
       <div class="mb-3">
@@ -161,7 +198,114 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Address changed:', this.value);
     });
   }
+  
+  // Setup customer image upload
+  setupCustomerImageUpload();
 });
+
+// Customer Image upload functions
+function setupCustomerImageUpload() {
+  const imageInput = document.getElementById('customerImageInput');
+  if (imageInput) {
+    imageInput.addEventListener('change', handleCustomerFileUpload);
+  }
+}
+
+async function handleCustomerFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    alert('Please select an image file.');
+    return;
+  }
+
+  // Validate file size (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File size must be less than 5MB.');
+    return;
+  }
+
+  showCustomerUploadProgress();
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.url) {
+      // Set the image URL in the hidden field
+      document.getElementById('customer_image_url').value = data.url;
+      
+      // Show the preview
+      showCustomerImagePreview(data.url);
+      
+      // Show success message
+      showCustomerToast('Photo uploaded successfully!', 'success');
+    } else {
+      throw new Error(data.error || 'Upload failed');
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    showCustomerToast('Photo upload failed: ' + error.message, 'error');
+  } finally {
+    hideCustomerUploadProgress();
+  }
+}
+
+function showCustomerImagePreview(imageUrl) {
+  document.getElementById('customerImagePreview').src = imageUrl;
+  document.getElementById('customerImagePreviewContainer').style.display = '';
+  document.getElementById('customerUploadArea').style.display = 'none';
+}
+
+function removeCustomerImage() {
+  document.getElementById('customer_image_url').value = '';
+  document.getElementById('customerImagePreviewContainer').style.display = 'none';
+  document.getElementById('customerUploadArea').style.display = '';
+  document.getElementById('customerImageInput').value = '';
+}
+
+function showCustomerUploadProgress() {
+  document.getElementById('customerUploadProgress').style.display = '';
+  document.getElementById('customerUploadArea').style.display = 'none';
+}
+
+function hideCustomerUploadProgress() {
+  document.getElementById('customerUploadProgress').style.display = 'none';
+  document.getElementById('customerUploadArea').style.display = '';
+}
+
+function showCustomerToast(message, type) {
+  // Create a simple toast notification
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+  toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  toast.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.remove();
+    }
+  }, 5000);
+}
 </script>
 
 <style>
@@ -191,5 +335,48 @@ document.addEventListener('DOMContentLoaded', function() {
   background-color: #d1ecf1;
   border-color: #bee5eb;
   color: #0c5460;
+}
+
+/* Image Upload Styles */
+.image-upload-container {
+  border: 2px dashed #d1d3e2;
+  border-radius: 0.35rem;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.image-upload-container:hover {
+  border-color: #4e73df;
+}
+
+.upload-placeholder {
+  cursor: pointer;
+  padding: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.upload-placeholder:hover {
+  background-color: #f8f9fc;
+  border-radius: 0.35rem;
+}
+
+.image-preview-container {
+  text-align: center;
+}
+
+.image-preview-container img {
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.upload-progress .progress {
+  height: 8px;
+  background-color: #f8f9fc;
+}
+
+.upload-progress .progress-bar {
+  background-color: #4e73df;
+  transition: width 0.3s ease;
 }
 </style>

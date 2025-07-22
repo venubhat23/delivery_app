@@ -3,6 +3,7 @@ class PurchaseProduct < ApplicationRecord
   has_many :purchase_invoices, through: :purchase_invoice_items
   
   validates :name, presence: true, uniqueness: true
+  validates :category, presence: true
   validates :purchase_price, :sales_price, presence: true, 
             numericality: { greater_than: 0 }
   validates :measuring_unit, presence: true

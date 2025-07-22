@@ -137,4 +137,7 @@ Rails.application.routes.draw do
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
+  
+  # File Upload API
+  post '/api/upload', to: 'uploads#create'
 end

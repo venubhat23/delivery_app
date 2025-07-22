@@ -12,7 +12,7 @@ class Product < ApplicationRecord
   validates :description, length: { maximum: 500 }
 
   # Associations
-  belongs_to :category, optional: true
+  belongs_to :category
   has_many :delivery_items, dependent: :destroy
   has_many :deliveries, through: :delivery_items
   has_many :delivery_assignments, dependent: :destroy
