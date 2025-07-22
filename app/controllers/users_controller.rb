@@ -7,6 +7,7 @@ class UsersController < ApplicationController
   
   def create
     @user = User.new(user_params)
+    @user.timezone = 'Asia/Kolkata' if @user.timezone.blank? # Set default timezone
     
     if @user.save
       session[:user_id] = @user.id
@@ -20,6 +21,6 @@ class UsersController < ApplicationController
   private
   
   def user_params
-    params.require(:user).permit(:name, :email, :phone, :password, :password_confirmation, :role)
+    params.require(:user).permit(:name, :email, :phone, :password, :password_confirmation, :role, :timezone)
   end
 end

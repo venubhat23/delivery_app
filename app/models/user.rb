@@ -15,6 +15,7 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: { in: %w[admin user delivery_person] }
   validates :phone, presence: true
+  validates :timezone, presence: true, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }
   
   # Scopes
   scope :delivery_people, -> { where(role: 'delivery_person') }
@@ -54,5 +55,43 @@ class User < ApplicationRecord
     delivery_people.joins("LEFT JOIN customers ON customers.delivery_person_id = users.id")
                    .group("users.id")
                    .having("COUNT(customers.id) < 50")
+  end
+  
+  # Timezone related methods
+  def timezone_object
+    ActiveSupport::TimeZone[timezone]
+  end
+  
+  def current_time_in_timezone
+    Time.current.in_time_zone(timezone)
+  end
+  
+  def self.available_timezones
+    [
+      'Asia/Kolkata',
+      'Asia/Mumbai',
+      'Asia/Delhi',
+      'Asia/Chennai',
+      'Asia/Bangalore',
+      'UTC',
+      'America/New_York',
+      'Europe/London',
+      'Asia/Tokyo',
+      'Australia/Sydney'
+    ]
+  end
+  
+  # Soft delete method for account deletion
+  def soft_delete!
+    update!(
+      email: "deleted_#{id}_#{email}",
+      name: "Deleted User",
+      phone: "deleted_#{id}",
+      is_active: false
+    )
+  end
+  
+  def active?
+    !has_attribute?(:is_active) || is_active
   end
 end
