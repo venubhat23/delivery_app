@@ -20,6 +20,9 @@ Rails.application.configure do
   config.cache_store = :memory_store
   config.active_job.queue_adapter = :inline
 
+  # Ensure assets are served properly in production
+  config.public_file_server.enabled = true
+
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
