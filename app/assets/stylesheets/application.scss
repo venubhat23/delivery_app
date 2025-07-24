@@ -64,17 +64,7 @@
   color: var(--text-primary);
 }
 
-/* Sidebar Styles */
-.sidebar {
-  position: fixed;
-  top: 10px;
-  bottom: 0;
-  left: 0;
-  z-index: 100;
-  padding: 48px 0 0;
-  box-shadow: var(--box-shadow);
-}
-
+/* Sidebar Navigation Link Styles */
 .sidebar .nav-link {
   position: relative;
   display: flex;
@@ -128,23 +118,7 @@
   font-size: 16px;
 }
 
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 998;
-  opacity: 0;
-  visibility: hidden;
-  transition: var(--transition);
-  
-  &.show {
-    opacity: 1;
-    visibility: visible;
-  }
-}
+
 
 /* Modern Cards */
 .card {
