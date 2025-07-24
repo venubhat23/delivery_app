@@ -14,8 +14,7 @@ Rails.application.configure do
   config.enable_reloading = true
 
   # Force HTTPS (required for CSRF + secure cookies)
-  config.force_ssl = true
-
+  # config.force_ssl = true
 
   # Do not eager load code on boot.
   config.eager_load = false
