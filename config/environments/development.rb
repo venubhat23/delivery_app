@@ -34,6 +34,13 @@ Rails.application.configure do
 
   # Do not eager load code on boot.
   config.eager_load = false
+config.assets.compile = false
+
+# This should be TRUE
+config.assets.digest = true
+
+# Ensure static files are served
+config.public_file_server.enabled = true
 
   # Show full error reports.
   config.consider_all_requests_local = true

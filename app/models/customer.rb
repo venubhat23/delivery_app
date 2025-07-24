@@ -1,6 +1,11 @@
 class Customer < ApplicationRecord
+  # Password authentication
+  has_secure_password
+  
+  # Virtual attribute for password confirmation
+  attr_accessor :password_confirmation
+  
   # Associations
-  belongs_to :user
   belongs_to :delivery_person, class_name: 'User', optional: true
   has_many :deliveries, dependent: :destroy
   has_many :delivery_assignments, dependent: :destroy
@@ -9,6 +14,11 @@ class Customer < ApplicationRecord
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
+  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :phone_number, presence: true, uniqueness: true, format: { with: /\A[0-9]{10}\z/, message: "must be 10 digits" }
+  validates :password, length: { minimum: 6 }, if: -> { new_record? || !password.nil? }
+  validates :password_confirmation, presence: true, if: -> { new_record? && password.present? }
+  validate :passwords_match, if: -> { password.present? && password_confirmation.present? }
   validates :latitude, numericality: { 
     greater_than_or_equal_to: -90, 
     less_than_or_equal_to: 90,
@@ -34,9 +44,9 @@ class Customer < ApplicationRecord
   scope :with_coordinates, -> { where.not(latitude: nil, longitude: nil) }
   scope :without_coordinates, -> { where(latitude: nil, longitude: nil) }
   scope :search, ->(term) { where("name ILIKE ? OR address ILIKE ?", "%#{term}%", "%#{term}%") }
-  scope :by_user, ->(user) { where(user: user) }
   scope :by_delivery_person, ->(dp) { where(delivery_person: dp) }
   scope :recent, -> { order(created_at: :desc) }
+  scope :active, -> { where(is_active: true) }
 
 
   # CSV template for bulk import
@@ -47,14 +57,14 @@ class Customer < ApplicationRecord
   end
   
   # Import customers from CSV data
-  def self.import_from_csv(csv_data, current_user)
+  def self.import_from_csv(csv_data, current_user = nil)
     require 'csv'
     
     begin
       csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
       
       # Validate headers
-      required_headers = [:name, :phone_number, :address]
+      required_headers = [:name, :phone_number, :address, :email]
       missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
       
       if missing_headers.any?
@@ -88,7 +98,7 @@ class Customer < ApplicationRecord
             member_id: row[:member_id]&.strip,
             latitude: row[:latitude]&.strip,
             longitude: row[:longitude]&.strip,
-            user: current_user
+            password: 'default123' # Default password for bulk import
           }
           
           # Remove empty values
@@ -228,7 +238,7 @@ class Customer < ApplicationRecord
           gst_number: row[:gst_number].to_s.strip.presence,
           pan_number: row[:pan_number].to_s.strip.presence,
           member_id: row[:member_id].to_s.strip.presence,
-          user: current_user
+          password: 'default123' # Default password for bulk import
         )
         
         # Handle coordinates if provided
@@ -438,6 +448,12 @@ class Customer < ApplicationRecord
     end
   end
 
+  def passwords_match
+    unless password == password_confirmation
+      errors.add(:password_confirmation, "doesn't match password")
+    end
+  end
+
   def generate_assignments_for_schedule(schedule)
     return [] unless schedule.persisted?
     
@@ -450,7 +466,6 @@ class Customer < ApplicationRecord
         assignments << {
           delivery_schedule_id: schedule.id,
           customer_id: id,
-          user_id: schedule.user_id,
           product_id: schedule.product_id,
           scheduled_date: current_date,
           status: 'pending',
