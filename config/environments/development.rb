@@ -12,11 +12,8 @@ Rails.application.configure do
 
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
-  config.action_dispatch.trusted_proxies = [
-    IPAddr.new("0.0.0.0/0") # Trust all — good for ngrok/dev
-  ]
 
-  # ✅ Force HTTPS (required for CSRF + secure cookies)
+  # Force HTTPS (required for CSRF + secure cookies)
   config.force_ssl = true
 
 
