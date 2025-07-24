@@ -2,7 +2,6 @@ class User < ApplicationRecord
   has_secure_password
   
   # Existing associations
-  has_many :customers, dependent: :destroy
   has_many :delivery_assignments, dependent: :destroy
   has_many :delivery_schedules, dependent: :destroy
   
