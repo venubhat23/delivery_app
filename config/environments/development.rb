@@ -8,18 +8,18 @@ Rails.application.configure do
   config.enable_reloading = true
 
   # Force HTTPS so it matches the ngrok URL
-  config.force_ssl = false
+  config.force_ssl = true
 
   # Ensure default_url_options use the ngrok HTTPS host
-  # config.action_mailer.default_url_options = {
-  #   host: 'gnu-modern-totally.ngrok-free.app',
-  #   protocol: 'https'
-  # }
+  config.action_mailer.default_url_options = {
+    host: 'gnu-modern-totally.ngrok-free.app',
+    protocol: 'https'
+  }
 
-  # config.action_controller.default_url_options = {
-  #   host: 'gnu-modern-totally.ngrok-free.app',
-  #   protocol: 'https'
-  # }
+  config.action_controller.default_url_options = {
+    host: 'gnu-modern-totally.ngrok-free.app',
+    protocol: 'https'
+  }
 
   # config.action_dispatch.default_headers = {
   #   'X-Forwarded-Proto' => 'https'
