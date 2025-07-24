@@ -141,9 +141,11 @@ Rails.application.routes.draw do
   # File Upload API
   post '/api/upload', to: 'uploads#create'
   
-  # Customer API routes
+  # API routes
   namespace :api do
     namespace :v1 do
+      post '/login', to: 'authentication#login'
+      post '/signup', to: 'authentication#signup'
       post '/customer_signup', to: 'authentication#customer_signup'
       post '/customer_login', to: 'authentication#customer_login'
       post '/regenerate_token', to: 'authentication#regenerate_token'
