@@ -66,18 +66,7 @@
         box-shadow: var(--box-shadow);
       }
       
-      .sidebar {
-        position: fixed;
-        top: var(--header-height);
-        left: 0;
-        width: var(--sidebar-width);
-        height: calc(100vh - var(--header-height));
-        background: var(--bg-white);
-        border-right: 1px solid var(--border-color);
-        z-index: 999;
-        overflow-y: auto;
-        transition: all 0.3s ease;
-      }
+
       
       .main-content {
         margin-left: var(--sidebar-width);
@@ -86,19 +75,7 @@
         min-height: calc(100vh - var(--header-height));
       }
       
-      @media (max-width: 768px) {
-        .sidebar {
-          transform: translateX(-100%);
-        }
-        
-        .sidebar.show {
-          transform: translateX(0);
-        }
-        
-        .main-content {
-          margin-left: 0;
-        }
-      }
+
       
       /* Logout Modal Styles */
       .modal-content {
