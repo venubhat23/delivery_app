@@ -2,7 +2,6 @@ class User < ApplicationRecord
   has_secure_password
   
   # Existing associations
-  has_many :customers, dependent: :destroy
   has_many :delivery_assignments, dependent: :destroy
   has_many :delivery_schedules, dependent: :destroy
   
@@ -13,7 +12,7 @@ class User < ApplicationRecord
   # Validations
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
-  validates :role, presence: true, inclusion: { in: %w[admin user delivery_person] }
+  validates :role, presence: true, inclusion: { in: %w[admin user delivery_person customer] }
   validates :phone, presence: true
   
   # Scopes
@@ -28,6 +27,10 @@ class User < ApplicationRecord
   
   def admin?
     role == 'admin'
+  end
+  
+  def customer?
+    role == 'customer'
   end
   
   def can_take_customers?
