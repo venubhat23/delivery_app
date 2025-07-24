@@ -8,7 +8,7 @@ Rails.application.configure do
   config.enable_reloading = true
 
   # Force HTTPS so it matches the ngrok URL
-  config.force_ssl = true
+  config.force_ssl = false
 
   # Ensure default_url_options use the ngrok HTTPS host
   config.action_mailer.default_url_options = {
