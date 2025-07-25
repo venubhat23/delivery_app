@@ -64,85 +64,138 @@
   color: var(--text-primary);
 }
 
-/* Sidebar Styles */
+/* Enhanced Sidebar Styles - Production Ready */
 .sidebar {
-  position: fixed;
-  top: 10px;
-  bottom: 0;
-  left: 0;
-  z-index: 100;
-  padding: 48px 0 0;
-  box-shadow: var(--box-shadow);
+  // Base styles are now in the HTML <style> section for better production compatibility
+  // This ensures styles load immediately without waiting for asset compilation
 }
 
-.sidebar .nav-link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  margin: 4px 0;
-  border-radius: var(--border-radius);
-  color: var(--text-secondary);
-  font-weight: 500;
-  transition: var(--transition);
-  text-decoration: none;
-  overflow: hidden;
+// Additional sidebar enhancements that complement the inline styles
+.sidebar {
+  // Ensure proper rendering in production
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 4px;
-    background: var(--primary-gradient);
-    border-radius: 0 4px 4px 0;
-    opacity: 0;
-    transition: var(--transition);
-  }
+  // Better scroll performance
+  -webkit-overflow-scrolling: touch;
   
-  &:hover {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-    color: var(--text-primary);
-    transform: translateX(4px);
+  // Prevent text selection during transitions
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  .nav-link {
+    // Prevent text selection
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
     
-    &::before {
-      opacity: 1;
+    // Better click/touch targets
+    min-height: 44px;
+    
+    // Smooth transitions for better UX
+    -webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -moz-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    // Better focus states for accessibility
+    &:focus {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+    
+    // Loading state
+    &.loading {
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
     }
   }
-  
-  &.active {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    
-    &::before {
-      opacity: 0;
-    }
-  }
 }
 
-.nav-icon {
-  width: 20px;
-  margin-right: 12px;
-  font-size: 16px;
-}
-
+// Sidebar overlay improvements
 .sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 998;
-  opacity: 0;
-  visibility: hidden;
-  transition: var(--transition);
+  // Better performance with GPU acceleration
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  
+  // Smooth backdrop blur
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   
   &.show {
+    // Animate in
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
     opacity: 1;
-    visibility: visible;
+  }
+}
+
+// Mobile-specific improvements
+@media (max-width: 768px) {
+  .sidebar {
+    // Better mobile performance
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+    
+    &.show {
+      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
+    }
+  }
+  
+  // Prevent body scroll when sidebar is open
+  body.sidebar-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .sidebar .nav-link {
+    border: 1px solid transparent;
+    
+    &:hover {
+      border-color: currentColor;
+    }
+    
+    &.active {
+      border-color: white;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar .nav-link,
+  .sidebar-overlay {
+    transition: none !important;
+    animation: none !important;
   }
 }
 
