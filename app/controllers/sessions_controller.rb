@@ -12,14 +12,12 @@ class SessionsController < ApplicationController
       flash[:notice] = "Welcome back, #{user.name}!"
       redirect_to root_path
     else
-      flash.now[:alert] = "Invalid email or password"
       render :new
     end
   end
   
   def destroy
     session[:user_id] = nil
-    flash[:notice] = "You have been logged out successfully. Thank you for using DeliveryPro!"
     redirect_to login_path
   end
 end

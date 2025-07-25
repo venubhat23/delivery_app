@@ -32,6 +32,8 @@ class CustomersController < ApplicationController
     @customer = Customer.new(customer_params)
     @customer.user = current_user
     
+    @customer.password = "customer@123"
+    @customer.password_confirmation = "customer@123"
     if @customer.save
       redirect_to @customer, notice: 'Customer was successfully created.'
     else
