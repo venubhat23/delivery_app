@@ -1,230 +1,215 @@
-<!-- app/views/delivery_people/index.html.erb -->
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h1 class="h2">
-    <i class="fas fa-truck me-2"></i>Delivery Personnel
-    <span class="badge bg-primary ms-2"><%= @total_delivery_people %></span>
-  </h1>
-  <%= link_to new_delivery_person_path, class: "btn btn-primary" do %>
-    <i class="fas fa-user-plus me-2"></i>Add Delivery Person
-  <% end %>
+<!-- Enhanced Delivery Team Index Page -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-truck me-3"></i>Delivery Team
+      </h1>
+      <p class="text-muted mb-0">Manage your delivery personnel and their customer assignments</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_delivery_person_path, class: "btn btn-primary" do %>
+        <i class="fas fa-user-plus me-2"></i>Add Delivery Person
+      <% end %>
+    </div>
+  </div>
 </div>
 
-<!-- Stats Cards -->
+<!-- Enhanced Stats Cards -->
 <div class="row mb-4">
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-primary shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-              Total Delivery People
-            </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= @total_delivery_people %>
-            </div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-truck fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-truck"></i>
       </div>
+      <div class="stats-number"><%= @total_delivery_people %></div>
+      <div class="stats-label">Total Delivery People</div>
     </div>
   </div>
-
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-success shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-              Assigned Customers
-            </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= @total_assigned_customers %>
-            </div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-users fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-users"></i>
       </div>
+      <div class="stats-number"><%= @total_assigned_customers %></div>
+      <div class="stats-label">Assigned Customers</div>
     </div>
   </div>
-
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-warning shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-              Unassigned Customers
-            </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= @unassigned_customers %>
-            </div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-user-clock fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-user-clock"></i>
       </div>
+      <div class="stats-number"><%= @unassigned_customers %></div>
+      <div class="stats-label">Unassigned Customers</div>
     </div>
   </div>
-
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-info shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-              Average Load
-            </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">
-              <%= (@total_assigned_customers.to_f / [@total_delivery_people, 1].max).round(1) %>
-            </div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-chart-bar"></i>
       </div>
+      <div class="stats-number"><%= (@total_assigned_customers.to_f / [@total_delivery_people, 1].max).round(1) %></div>
+      <div class="stats-label">Average Load</div>
     </div>
   </div>
 </div>
 
-<!-- Filters and Search -->
-<div class="card shadow mb-4">
+<!-- Enhanced Filters -->
+<div class="card mb-4">
   <div class="card-body">
     <div class="row align-items-center">
-      <div class="col-md-6">
-        <div class="input-group">
-          <span class="input-group-text"><i class="fas fa-search"></i></span>
-          <input type="text" class="form-control" id="searchInput" placeholder="Search delivery personnel...">
+      <div class="col-md-8">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <%= form_with url: delivery_people_path, method: :get, local: true, class: "d-flex" do |form| %>
+              <%= form.text_field :search, 
+                    placeholder: "Search by name, email, or phone...", 
+                    value: params[:search], 
+                    class: "form-control" %>
+              <%= form.submit "Search", class: "btn btn-outline-primary ms-2" %>
+            <% end %>
+          </div>
+          <div class="col-md-6">
+            <% if params[:search].present? %>
+              <%= link_to delivery_people_path, class: "btn btn-outline-secondary" do %>
+                <i class="fas fa-times me-2"></i>Clear Search
+              <% end %>
+            <% end %>
+          </div>
         </div>
       </div>
-      <div class="col-md-3">
-        <select class="form-select" id="capacityFilter">
-          <option value="">All Capacities</option>
-          <option value="low">Low Capacity (0-40%)</option>
-          <option value="medium">Medium Capacity (41-80%)</option>
-          <option value="high">High Capacity (81-100%)</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" id="sortBy">
-          <option value="name">Sort by Name</option>
-          <option value="customers">Sort by Customer Count</option>
-          <option value="capacity">Sort by Capacity</option>
-        </select>
+      <div class="col-md-4 text-end">
+        <div class="d-flex align-items-center justify-content-end">
+          <span class="badge bg-primary me-2"><%= @delivery_people.count %> people</span>
+          <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-secondary active" id="tableView">
+              <i class="fas fa-table"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="cardView">
+              <i class="fas fa-th"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="card shadow">
-  <div class="card-header bg-white py-3">
-    <h6 class="m-0 font-weight-bold text-primary">
-      <i class="fas fa-list me-2"></i>Delivery Personnel List
-    </h6>
+<!-- Delivery Team Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="fas fa-list me-2"></i>Delivery Team List
+      </h6>
+      <div class="d-flex align-items-center">
+        <% if params[:search].present? %>
+          <span class="badge bg-info me-2">Search Results</span>
+        <% end %>
+      </div>
+    </div>
   </div>
-  <div class="card-body">
+  <div class="card-body p-0">
     <% if @delivery_people.any? %>
-      <div class="table-responsive">
-        <table class="table table-hover" id="deliveryPersonnelTable">
-          <thead class="table-light">
+      <!-- Table View -->
+      <div id="tableViewContent" class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
             <tr>
+              <th><i class="fas fa-image me-1"></i>Photo</th>
               <th><i class="fas fa-user me-1"></i>Name</th>
-              <th><i class="fas fa-envelope me-1"></i>Email</th>
-              <th><i class="fas fa-phone me-1"></i>Phone</th>
-              <th><i class="fas fa-users me-1"></i>Assigned Customers</th>
-              <th><i class="fas fa-chart-pie me-1"></i>Capacity</th>
+              <th><i class="fas fa-envelope me-1"></i>Contact</th>
+              <th><i class="fas fa-map-marker-alt me-1"></i>Location</th>
+              <th><i class="fas fa-users me-1"></i>Customers</th>
+              <th><i class="fas fa-calendar me-1"></i>Joined</th>
               <th><i class="fas fa-cogs me-1"></i>Actions</th>
             </tr>
           </thead>
           <tbody>
             <% @delivery_people.each do |person| %>
-              <tr data-name="<%= person.name.downcase %>" data-capacity="<%= (person.assigned_customers.count.to_f / 50 * 100).round(1) %>">
+              <tr class="person-row">
+                <td>
+                  <% if person.image_url.present? %>
+                    <img src="<%= person.image_url %>" alt="<%= person.name %>" class="person-image-thumbnail">
+                  <% else %>
+                    <div class="person-image-placeholder">
+                      <i class="fas fa-user text-muted"></i>
+                    </div>
+                  <% end %>
+                </td>
                 <td>
                   <div class="d-flex align-items-center">
-                    <div class="avatar-circle me-2">
+                    <div class="person-avatar me-3">
                       <%= person.name.first.upcase %>
                     </div>
                     <div>
                       <strong class="text-primary"><%= person.name %></strong>
-                     
+                      <% if person.employee_id.present? %>
+                        <div class="text-muted small">
+                          <i class="fas fa-id-card me-1"></i>ID: <%= person.employee_id %>
+                        </div>
+                      <% end %>
                     </div>
                   </div>
                 </td>
                 <td>
-                  <a href="mailto:<%= person.email %>" class="text-decoration-none">
-                    <%= person.email %>
-                  </a>
+                  <div class="contact-info">
+                    <div class="text-muted small">
+                      <i class="fas fa-envelope me-1"></i><%= person.email %>
+                    </div>
+                    <% if person.phone_number.present? %>
+                      <div class="text-muted small">
+                        <i class="fas fa-phone me-1"></i><%= person.phone_number %>
+                      </div>
+                    <% end %>
+                  </div>
                 </td>
                 <td>
-                  <a href="tel:<%= person.phone %>" class="text-decoration-none">
-                    <%= person.phone %>
-                  </a>
+                  <% if person.address.present? %>
+                    <span class="text-muted small" title="<%= person.address %>">
+                      <i class="fas fa-map-marker-alt me-1"></i>
+                      <%= truncate(person.address, length: 30) %>
+                    </span>
+                  <% else %>
+                    <span class="text-muted">No address</span>
+                  <% end %>
                 </td>
                 <td>
-                  <span class="badge bg-info fs-6">
-                    <%= person.assigned_customers.count %> customers
+                  <div class="customer-count">
+                    <span class="fw-bold text-info">
+                      <%= person.customers.count %>
+                    </span>
+                    <% if person.customers.count > 0 %>
+                      <div class="text-muted small">customers assigned</div>
+                    <% else %>
+                      <div class="text-muted small">no assignments</div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    <%= person.created_at.strftime("%b %d, %Y") %>
                   </span>
-             
-                </td>
-                <td>
-                  <% capacity_percentage = (person.assigned_customers.count.to_f / 50 * 100).round(1) %>
-                  <div class="progress mb-1" style="width: 120px; height: 20px;">
-                    <div class="progress-bar <%= capacity_percentage > 80 ? 'bg-danger' : capacity_percentage > 60 ? 'bg-warning' : 'bg-success' %>" 
-                         style="width: <%= capacity_percentage %>%"
-                         data-bs-toggle="tooltip" 
-                         title="<%= person.assigned_customers.count %> of 50 customers assigned">
-                      <%= capacity_percentage %>%
-                    </div>
-                  </div>
-                  <small class="text-muted">
-                    <i class="fas fa-user-plus me-1"></i><%= person.available_customer_slots %> slots left
-                  </small>
                 </td>
                 <td>
                   <div class="btn-group" role="group">
                     <%= link_to delivery_person_path(person), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
                       <i class="fas fa-eye"></i>
                     <% end %>
-                    <% if person.available_customer_slots > 0 %>
-                      <%= link_to assign_customers_delivery_person_path(person), class: "btn btn-sm btn-outline-success", title: "Assign Customers" do %>
-                        <i class="fas fa-user-plus"></i>
-                      <% end %>
-                    <% end %>
-                    <% if person.assigned_customers.count > 0 %>
-                      <%= link_to manage_customers_delivery_person_path(person), class: "btn btn-sm btn-outline-warning", title: "Manage Customers" do %>
-                        <i class="fas fa-users-cog"></i>
-                      <% end %>
-                    <% end %>
-                    <%= link_to edit_delivery_person_path(person), class: "btn btn-sm btn-outline-info", title: "Edit" do %>
+                    <%= link_to edit_delivery_person_path(person), class: "btn btn-sm btn-outline-warning", title: "Edit Person" do %>
                       <i class="fas fa-edit"></i>
                     <% end %>
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                        <i class="fas fa-ellipsis-v"></i>
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li>
-                 
-                        </li>
-                        <li>
-                        
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-      <%= button_to delivery_person_path(person),
-            method: :delete,
-            form: { "data-turbo-confirm": "Are you sure? This will unassign all customers and cannot be undone.", class: "d-inline" },
-            class: "dropdown-item text-danger" do %>
-        <i class="fas fa-trash me-2"></i>Delete
-      <% end %>
-                        </li>
-                      </ul>
-                    </div>
+                    <%= link_to assign_customers_delivery_person_path(person), class: "btn btn-sm btn-outline-info", title: "Assign Customers" do %>
+                      <i class="fas fa-user-plus"></i>
+                    <% end %>
+                    <%= button_to delivery_person_path(person),
+                        method: :delete,
+                        form: { "data-turbo-confirm": "Are you sure you want to delete this delivery person?", class: "d-inline" },
+                        class: "btn btn-sm btn-outline-danger",
+                        title: "Delete Person" do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
                   </div>
                 </td>
               </tr>
@@ -233,166 +218,315 @@
         </table>
       </div>
       
-      <!-- Pagination -->
-      <% if respond_to?(:paginate) && @delivery_people.respond_to?(:current_page) %>
-        <div class="d-flex justify-content-center mt-3">
-          <%= paginate @delivery_people, theme: 'twitter-bootstrap-4' %>
+      <!-- Card View (Hidden by default) -->
+      <div id="cardViewContent" class="d-none">
+        <div class="row p-4">
+          <% @delivery_people.each do |person| %>
+            <div class="col-md-6 col-lg-4 mb-4">
+              <div class="person-card">
+                <div class="person-card-header">
+                  <div class="person-avatar-large">
+                    <%= person.name.split.map(&:first).join.upcase %>
+                  </div>
+                  <div class="person-actions">
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><%= link_to "View", delivery_person_path(person), class: "dropdown-item" %></li>
+                        <li><%= link_to "Edit", edit_delivery_person_path(person), class: "dropdown-item" %></li>
+                        <li><%= link_to "Assign Customers", assign_customers_delivery_person_path(person), class: "dropdown-item" %></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <%= button_to "Delete", delivery_person_path(person), method: :delete, 
+                              form: { "data-turbo-confirm": "Are you sure?" }, 
+                              class: "dropdown-item text-danger" %>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="person-card-body">
+                  <h6 class="person-name"><%= person.name %></h6>
+                  
+                  <div class="person-meta">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-envelope me-2 text-muted"></i>
+                      <span class="text-muted small"><%= person.email %></span>
+                    </div>
+                    
+                    <% if person.phone_number.present? %>
+                      <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-phone me-2 text-muted"></i>
+                        <span class="text-muted small"><%= person.phone_number %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if person.address.present? %>
+                      <div class="d-flex align-items-start mb-2">
+                        <i class="fas fa-map-marker-alt me-2 text-muted mt-1"></i>
+                        <span class="text-muted small"><%= truncate(person.address, length: 60) %></span>
+                      </div>
+                    <% end %>
+                  </div>
+                  
+                  <div class="person-stats">
+                    <div class="stat-item">
+                      <span class="stat-number"><%= person.customers.count %></span>
+                      <span class="stat-label">Customers</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number"><%= ((Date.current - person.created_at.to_date).to_i / 30).round %></span>
+                      <span class="stat-label">Months Active</span>
+                    </div>
+                  </div>
+                  
+                  <div class="person-footer">
+                    <small class="text-muted">
+                      <i class="fas fa-calendar me-1"></i>
+                      Joined <%= person.created_at.strftime("%b %d, %Y") %>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
         </div>
-      <% end %>
+      </div>
     <% else %>
-      <div class="text-center py-5">
-        <i class="fas fa-truck fa-4x text-muted mb-3"></i>
-        <h4 class="text-muted">No Delivery Personnel Found</h4>
-        <p class="text-muted">Start by adding your first delivery person to the system.</p>
-        <%= link_to new_delivery_person_path, class: "btn btn-primary mt-3" do %>
-          <i class="fas fa-user-plus me-2"></i>Add First Delivery Person
+      <div class="empty-state">
+        <i class="fas fa-truck"></i>
+        <h4>No Delivery Personnel Found</h4>
+        <% if params[:search].present? %>
+          <p>No delivery personnel match your search criteria.</p>
+          <%= link_to delivery_people_path, class: "btn btn-outline-primary me-2" do %>
+            <i class="fas fa-times me-2"></i>Clear Search
+          <% end %>
+        <% else %>
+          <p>Start building your delivery team by adding your first delivery person.</p>
         <% end %>
+        <div class="mt-3">
+          <%= link_to new_delivery_person_path, class: "btn btn-primary" do %>
+            <i class="fas fa-user-plus me-2"></i>Add Delivery Person
+          <% end %>
+        </div>
       </div>
     <% end %>
   </div>
 </div>
 
 <style>
-.border-left-primary { border-left: 0.25rem solid #4e73df !important; }
-.border-left-success { border-left: 0.25rem solid #1cc88a !important; }
-.border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
-.border-left-info { border-left: 0.25rem solid #36b9cc !important; }
-.text-gray-300 { color: #dddfeb !important; }
-.text-gray-800 { color: #5a5c69 !important; }
+.stats-card-success::before {
+  background: var(--success-gradient);
+}
 
-.avatar-circle {
+.stats-card-warning::before {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info::before {
+  background: var(--dark-gradient);
+}
+
+.stats-card-success .stats-icon {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning .stats-icon {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info .stats-icon {
+  background: var(--dark-gradient);
+}
+
+.person-row {
+  transition: all 0.3s ease;
+}
+
+.person-row:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  transform: translateX(5px);
+}
+
+.person-avatar {
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #4e73df, #224abe);
+  background: var(--success-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
-  width: 35px;
-  height: 35px;
-  font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-weight: 600;
+  font-size: 18px;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
 }
 
-.progress {
-  height: 20px;
-  border-radius: 10px;
+.person-image-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.person-image-thumbnail:hover {
+  transform: scale(1.1);
+}
+
+.person-image-placeholder {
+  width: 50px;
+  height: 50px;
+  background-color: #f8f9fc;
+  border: 2px dashed #d1d3e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.person-image-placeholder i {
+  font-size: 20px;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.person-card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
   overflow: hidden;
 }
 
-.progress-bar {
-  transition: width 0.3s ease;
-  border-radius: 10px;
+.person-card:hover {
+  box-shadow: var(--box-shadow-hover);
+  transform: translateY(-5px);
 }
 
-.table-hover tbody tr:hover {
-  background-color: rgba(78, 115, 223, 0.05);
+.person-card-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.person-avatar-large {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--success-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 20px;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.person-card-body {
+  padding: 1.5rem;
+}
+
+.person-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.person-meta {
+  margin-bottom: 1rem;
+}
+
+.person-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--bg-light);
+  border-radius: 8px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.person-footer {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .btn-group .btn {
-  margin: 0 1px;
+  border-radius: 8px !important;
+  margin-right: 4px;
 }
 
-.card {
-  border: none;
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+.btn-group .btn:last-child {
+  margin-right: 0;
 }
 
-.card-header {
-  border-bottom: 1px solid #e3e6f0;
+#cardView, #tableView {
+  transition: var(--transition);
 }
 
-.badge {
-  font-size: 0.75em;
-}
-
-@media (max-width: 768px) {
-  .btn-group {
-    flex-direction: column;
-  }
-  
-  .btn-group .btn {
-    margin: 1px 0;
-    border-radius: 0.25rem !important;
-  }
-  
-  .table-responsive {
-    font-size: 0.875rem;
-  }
-}
-
-.text-xs {
-  font-size: 0.7rem;
+#cardView.active, #tableView.active {
+  background: var(--primary-gradient);
+  color: white;
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize tooltips
-  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl);
-  });
-
-  // Search functionality
-  const searchInput = document.getElementById('searchInput');
-  const capacityFilter = document.getElementById('capacityFilter');
-  const sortBy = document.getElementById('sortBy');
-  const table = document.getElementById('deliveryPersonnelTable');
-  const rows = table ? table.querySelectorAll('tbody tr') : [];
-
-  function filterAndSort() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const capacityValue = capacityFilter.value;
-    const sortValue = sortBy.value;
-
-    // Filter rows
-    rows.forEach(row => {
-      const name = row.dataset.name || '';
-      const capacity = parseFloat(row.dataset.capacity) || 0;
-      
-      let showRow = name.includes(searchTerm);
-      
-      if (showRow && capacityValue) {
-        switch(capacityValue) {
-          case 'low':
-            showRow = capacity <= 40;
-            break;
-          case 'medium':
-            showRow = capacity > 40 && capacity <= 80;
-            break;
-          case 'high':
-            showRow = capacity > 80;
-            break;
-        }
-      }
-      
-      row.style.display = showRow ? '' : 'none';
+  const tableView = document.getElementById('tableView');
+  const cardView = document.getElementById('cardView');
+  const tableContent = document.getElementById('tableViewContent');
+  const cardContent = document.getElementById('cardViewContent');
+  
+  if (tableView && cardView) {
+    tableView.addEventListener('click', function() {
+      tableView.classList.add('active');
+      cardView.classList.remove('active');
+      tableContent.classList.remove('d-none');
+      cardContent.classList.add('d-none');
     });
-
-    // Sort visible rows
-    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-    visibleRows.sort((a, b) => {
-      switch(sortValue) {
-        case 'name':
-          return a.dataset.name.localeCompare(b.dataset.name);
-        case 'customers':
-          const aCustomers = parseInt(a.querySelector('.badge').textContent) || 0;
-          const bCustomers = parseInt(b.querySelector('.badge').textContent) || 0;
-          return bCustomers - aCustomers;
-        case 'capacity':
-          return parseFloat(b.dataset.capacity) - parseFloat(a.dataset.capacity);
-        default:
-          return 0;
-      }
+    
+    cardView.addEventListener('click', function() {
+      cardView.classList.add('active');
+      tableView.classList.remove('active');
+      cardContent.classList.remove('d-none');
+      tableContent.classList.add('d-none');
     });
-
-    const tbody = table.querySelector('tbody');
-    visibleRows.forEach(row => tbody.appendChild(row));
   }
-
-  if (searchInput) searchInput.addEventListener('input', filterAndSort);
-  if (capacityFilter) capacityFilter.addEventListener('change', filterAndSort);
-  if (sortBy) sortBy.addEventListener('change', filterAndSort);
 });
 </script>
