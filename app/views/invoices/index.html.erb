@@ -8,18 +8,17 @@
       <p class="text-muted mb-0">Manage your invoices, track payments, and monitor overdue accounts</p>
     </div>
     <div class="d-flex gap-2">
-      <%= link_to 'Generate Invoice', generate_invoices_path, class: 'btn btn-success' do %>
+      <%= link_to generate_invoices_path, class: 'btn btn-success' do %>
         <i class="fas fa-plus me-2"></i>Generate Invoice
       <% end %>
-      <%= link_to 'Generate Monthly for All', 
-            generate_monthly_for_all_invoices_path, 
+      <%= link_to generate_monthly_for_all_invoices_path, 
             method: :post,
             data: { 
               confirm: 'This will generate invoices for all customers with completed deliveries this month and send WhatsApp notifications. Continue?',
               disable_with: 'Generating...'
             },
             class: 'btn btn-primary' do %>
-        <i class="fas fa-calendar me-2"></i>Monthly Batch
+        <i class="fas fa-calendar me-2"></i>Generate Monthly for All
       <% end %>
     </div>
   </div>
@@ -140,7 +139,7 @@
         <i class="fas fa-list me-2"></i>Invoice List
       </h6>
       <div class="d-flex align-items-center">
-        <% if params.any? { |k, v| k.in?(['customer_id', 'status', 'month', 'year', 'search']) && v.present? } %>
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['customer_id', 'status', 'month', 'year', 'search']) && v.present? } %>
           <span class="badge bg-info me-2">Filtered Results</span>
         <% end %>
       </div>
@@ -330,7 +329,7 @@
       <div class="empty-state">
         <i class="fas fa-file-invoice"></i>
         <h4>No Invoices Found</h4>
-        <% if params.any? { |k, v| k.in?(['customer_id', 'status', 'month', 'year', 'search']) && v.present? } %>
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['customer_id', 'status', 'month', 'year', 'search']) && v.present? } %>
           <p>No invoices match your current filters.</p>
           <%= link_to invoices_path, class: "btn btn-outline-primary me-2" do %>
             <i class="fas fa-times me-2"></i>Clear Filters
@@ -339,18 +338,17 @@
           <p>Start by generating your first invoice.</p>
         <% end %>
         <div class="mt-3">
-          <%= link_to 'Generate Invoice', generate_invoices_path, class: 'btn btn-success me-2' do %>
+          <%= link_to generate_invoices_path, class: 'btn btn-success me-2' do %>
             <i class="fas fa-plus me-2"></i>Generate Invoice
           <% end %>
-          <%= link_to 'Generate Monthly for All', 
-                generate_monthly_for_all_invoices_path, 
+          <%= link_to generate_monthly_for_all_invoices_path, 
                 method: :post,
                 data: { 
                   confirm: 'Generate monthly invoices?',
                   disable_with: 'Generating...'
                 },
                 class: 'btn btn-primary' do %>
-            <i class="fas fa-calendar me-2"></i>Monthly Batch
+            <i class="fas fa-calendar me-2"></i>Generate Monthly for All
           <% end %>
         </div>
       </div>

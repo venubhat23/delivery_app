@@ -1,0 +1,559 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-plus-circle text-primary me-2"></i>
+          Create Purchase Invoice
+        </h2>
+        <div class="d-flex gap-2">
+          <%= link_to purchase_invoices_path, class: 'btn btn-outline-secondary' do %>
+            <i class="fas fa-arrow-left me-2"></i>Back to Invoices
+          <% end %>
+          <button type="button" class="btn btn-outline-secondary" title="Settings">
+            <i class="fas fa-cog"></i>
+          </button>
+        </div>
+      </div>
+      
+      <%= form_with model: @purchase_invoice, local: true, class: 'needs-validation', novalidate: true do |form| %>
+        <div class="row">
+          <!-- Left Column -->
+          <div class="col-lg-8">
+            <!-- Party Information -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Party Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Bill From</h6>
+                    <div class="mb-3">
+                      <%= form.select :party_name, 
+                                      options_from_collection_for_select(@purchase_customers, :name, :display_name, @purchase_invoice.party_name),
+                                      { prompt: 'Select or search vendor...' },
+                                      { class: 'form-select party-select', id: 'party_select' } %>
+                      <div class="form-text">
+                        <%= link_to '#', class: 'text-decoration-none', data: { bs_toggle: 'modal', bs_target: '#createVendorModal' } do %>
+                          <i class="fas fa-plus me-1"></i>Create New Vendor
+                        <% end %>
+                      </div>
+                    </div>
+                    
+                    <div id="partyDetails" class="border rounded p-3 bg-light" style="display: none;">
+                      <div id="partyAddress"></div>
+                      <div id="partyPhone"></div>
+                      <div id="partyEmail"></div>
+                      <div id="partyGst"></div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Ship From</h6>
+                    <div class="mb-3">
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="changeShippingBtn">
+                        <i class="fas fa-edit me-1"></i>Change Shipping Address
+                      </button>
+                    </div>
+                    
+                    <div id="shippingDetails" class="border rounded p-3 bg-light" style="display: none;">
+                      <div id="shippingAddress"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Invoice Items -->
+            <div class="card mb-4">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Items / Services</h5>
+                <div>
+                  <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="scanBarcodeBtn">
+                    <i class="fas fa-barcode me-1"></i>Scan Barcode
+                  </button>
+                  <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
+                    <i class="fas fa-plus me-1"></i>Add Item
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered" id="itemsTable">
+                    <thead class="table-light">
+                      <tr>
+                        <th width="5%">NO</th>
+                        <th width="25%">ITEMS</th>
+                        <th width="10%">HSN</th>
+                        <th width="10%">QTY</th>
+                        <th width="15%">PRICE/ITEM (₹)</th>
+                        <th width="10%">DISCOUNT</th>
+                        <th width="10%">TAX</th>
+                        <th width="15%">AMOUNT (₹)</th>
+                        <th width="5%">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                      <%= form.fields_for :purchase_invoice_items do |item_form| %>
+                        <tr class="item-row">
+                          <td class="text-center">
+                            <span class="item-number">1</span>
+                          </td>
+                          <td>
+                            <%= item_form.select :purchase_product_id, 
+                                                options_from_collection_for_select(@purchase_products, :id, :display_name, item_form.object.purchase_product_id),
+                                                { prompt: 'Select product...' },
+                                                { class: 'form-select product-select', onchange: 'updateProductDetails(this)' } %>
+                            <div class="mt-1">
+                              <%= item_form.text_area :description, rows: 1, class: 'form-control form-control-sm', placeholder: 'Description' %>
+                            </div>
+                          </td>
+                          <td>
+                            <%= item_form.text_field :hsn_sac, class: 'form-control hsn-field', readonly: true %>
+                          </td>
+                          <td>
+                            <div class="input-group">
+                              <%= item_form.number_field :quantity, step: 0.01, min: 0, class: 'form-control quantity-field', 
+                                                         value: item_form.object.quantity || 1, onchange: 'calculateLineTotal(this)' %>
+                              <span class="input-group-text unit-text">PCS</span>
+                            </div>
+                          </td>
+                          <td>
+                            <%= item_form.number_field :price, step: 0.01, min: 0, class: 'form-control price-field', 
+                                                       onchange: 'calculateLineTotal(this)' %>
+                          </td>
+                          <td>
+                            <div class="input-group">
+                              <%= item_form.number_field :discount, step: 0.01, min: 0, class: 'form-control discount-field', 
+                                                         value: 0, onchange: 'calculateLineTotal(this)' %>
+                              <span class="input-group-text">₹</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="input-group">
+                              <%= item_form.number_field :tax_rate, step: 0.01, min: 0, max: 100, class: 'form-control tax-field', 
+                                                         value: 0, onchange: 'calculateLineTotal(this)' %>
+                              <span class="input-group-text">%</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="fw-bold amount-display">₹0.00</div>
+                          </td>
+                          <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-item-btn">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Additional Charges & Calculations -->
+            <div class="card mb-4">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="d-flex flex-column gap-2">
+                      <button type="button" class="btn btn-outline-secondary btn-sm text-start" id="addChargesBtn">
+                        <i class="fas fa-plus me-2"></i>Add Additional Charges <span class="float-end">₹ 0</span>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm text-start" id="addDiscountBtn">
+                        <i class="fas fa-minus me-2"></i>Add Discount <span class="float-end">- ₹ 0</span>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm text-start" id="addCustomBtn">
+                        <i class="fas fa-plus me-2"></i>Add
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="calculation-summary">
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>SUBTOTAL:</span>
+                        <span id="subtotalAmount">₹ 0</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span>Taxable Amount:</span>
+                        <span id="taxableAmount">₹ 0</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-3 fw-bold border-top pt-2">
+                        <span>Total Amount:</span>
+                        <span id="totalAmount">₹ 0</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Payment Section -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Payment</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="form-check">
+                      <%= form.check_box :auto_round_off, class: 'form-check-input' %>
+                      <%= form.label :auto_round_off, 'Auto Round Off', class: 'form-check-label' %>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <%= form.label :amount_paid, 'Amount Paid', class: 'form-label' %>
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <%= form.number_field :amount_paid, step: 0.01, min: 0, class: 'form-control', 
+                                              value: 0, onchange: 'calculateBalance()' %>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <%= form.label :payment_type, 'Payment Method', class: 'form-label' %>
+                      <%= form.select :payment_type, 
+                                      options_for_select([
+                                        ['Cash', 'cash'],
+                                        ['Bank Transfer', 'bank'],
+                                        ['UPI', 'upi'],
+                                        ['Card', 'card'],
+                                        ['Cheque', 'cheque']
+                                      ], 'cash'),
+                                      {}, { class: 'form-select' } %>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label class="form-label">Balance Amount</label>
+                      <div class="form-control-plaintext fw-bold" id="balanceAmount">₹ 0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Terms and Conditions -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Terms and Conditions</h5>
+              </div>
+              <div class="card-body">
+                <%= form.text_area :terms_and_conditions, rows: 4, class: 'form-control',
+                                   value: "Goods once sold will not be taken back or exchanged\nAll disputes are subject to [ENTER_YOUR_CITY_NAME] jurisdiction only" %>
+              </div>
+            </div>
+            
+            <!-- Signature Section -->
+            <div class="card mb-4">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <label class="form-label">Authorized signatory for Purchase</label>
+                    <div class="border rounded p-3 text-center" style="min-height: 100px;">
+                      <button type="button" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Signature
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Column -->
+          <div class="col-lg-4">
+            <!-- Invoice Details -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Invoice Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <%= form.label :invoice_number, 'Purchase Inv No', class: 'form-label' %>
+                  <%= form.text_field :invoice_number, class: 'form-control', readonly: true, 
+                                      placeholder: 'Auto-generated' %>
+                </div>
+                
+                <div class="mb-3">
+                  <%= form.label :invoice_date, 'Purchase Inv Date', class: 'form-label' %>
+                  <%= form.date_field :invoice_date, class: 'form-control', required: true %>
+                </div>
+                
+                <div class="mb-3">
+                  <%= form.label :original_invoice_number, 'Original Inv No', class: 'form-label' %>
+                  <%= form.text_field :original_invoice_number, class: 'form-control', 
+                                      placeholder: 'Optional' %>
+                </div>
+                
+                <div class="text-end">
+                  <button type="button" class="btn btn-sm btn-outline-secondary">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Payment Terms -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Payment Terms</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <%= form.label :payment_terms, 'Payment Terms', class: 'form-label' %>
+                  <div class="input-group">
+                    <%= form.number_field :payment_terms, class: 'form-control', 
+                                          value: 30, min: 1, onchange: 'calculateDueDate()' %>
+                    <span class="input-group-text">days</span>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="form-label">Due Date</label>
+                  <div class="form-control-plaintext" id="dueDateDisplay">
+                    <%= (@purchase_invoice.invoice_date + 30.days).strftime('%d %b %Y') if @purchase_invoice.invoice_date %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="row">
+          <div class="col-12">
+            <div class="d-flex justify-content-end gap-2 mb-4">
+              <%= link_to purchase_invoices_path, class: 'btn btn-outline-secondary' do %>
+                Cancel
+              <% end %>
+              <%= form.submit 'Save Purchase Invoice', class: 'btn btn-primary' %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Add item functionality
+  document.getElementById('addItemBtn').addEventListener('click', function() {
+    addNewItemRow();
+  });
+  
+  // Remove item functionality
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-item-btn')) {
+      removeItemRow(e.target.closest('tr'));
+    }
+  });
+  
+  // Party selection
+  document.getElementById('party_select').addEventListener('change', function() {
+    updatePartyDetails(this.value);
+  });
+  
+  // Calculate due date
+  document.querySelector('[name="purchase_invoice[payment_terms]"]').addEventListener('change', function() {
+    calculateDueDate();
+  });
+  
+  document.querySelector('[name="purchase_invoice[invoice_date]"]').addEventListener('change', function() {
+    calculateDueDate();
+  });
+});
+
+function addNewItemRow() {
+  const tbody = document.getElementById('itemsTableBody');
+  const rowCount = tbody.children.length + 1;
+  
+  const newRow = document.createElement('tr');
+  newRow.className = 'item-row';
+  newRow.innerHTML = `
+    <td class="text-center">
+      <span class="item-number">${rowCount}</span>
+    </td>
+    <td>
+      <select class="form-select product-select" name="purchase_invoice[purchase_invoice_items_attributes][${rowCount}][purchase_product_id]" onchange="updateProductDetails(this)">
+        <option value="">Select product...</option>
+        <% @purchase_products.each do |product| %>
+          <option value="<%= product.id %>" data-price="<%= product.purchase_price %>" data-hsn="<%= product.hsn_sac %>" data-unit="<%= product.measuring_unit %>">
+            <%= product.display_name %>
+          </option>
+        <% end %>
+      </select>
+      <textarea class="form-control form-control-sm mt-1" rows="1" placeholder="Description" name="purchase_invoice[purchase_invoice_items_attributes][${rowCount}][description]"></textarea>
+    </td>
+    <td>
+      <input type="text" class="form-control hsn-field" name="purchase_invoice[purchase_invoice_items_attributes][${rowCount}][hsn_sac]" readonly>
+    </td>
+    <td>
+      <div class="input-group">
+        <input type="number" step="0.01" min="0" class="form-control quantity-field" name="purchase_invoice[purchase_invoice_items_attributes][${rowCount}][quantity]" value="1" onchange="calculateLineTotal(this)">
+        <span class="input-group-text unit-text">PCS</span>
+      </div>
+    </td>
+    <td>
+      <input type="number" step="0.01" min="0" class="form-control price-field" name="purchase_invoice[purchase_invoice_items_attributes][${rowCount}][price]" onchange="calculateLineTotal(this)">
+    </td>
+    <td>
+      <div class="input-group">
+        <input type="number" step="0.01" min="0" class="form-control discount-field" name="purchase_invoice[purchase_invoice_items_attributes][${rowCount}][discount]" value="0" onchange="calculateLineTotal(this)">
+        <span class="input-group-text">₹</span>
+      </div>
+    </td>
+    <td>
+      <div class="input-group">
+        <input type="number" step="0.01" min="0" max="100" class="form-control tax-field" name="purchase_invoice[purchase_invoice_items_attributes][${rowCount}][tax_rate]" value="0" onchange="calculateLineTotal(this)">
+        <span class="input-group-text">%</span>
+      </div>
+    </td>
+    <td>
+      <div class="fw-bold amount-display">₹0.00</div>
+    </td>
+    <td class="text-center">
+      <button type="button" class="btn btn-sm btn-outline-danger remove-item-btn">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  `;
+  
+  tbody.appendChild(newRow);
+  updateItemNumbers();
+}
+
+function removeItemRow(row) {
+  if (document.querySelectorAll('.item-row').length > 1) {
+    row.remove();
+    updateItemNumbers();
+    calculateTotals();
+  }
+}
+
+function updateItemNumbers() {
+  document.querySelectorAll('.item-number').forEach((el, index) => {
+    el.textContent = index + 1;
+  });
+}
+
+function updateProductDetails(select) {
+  const row = select.closest('tr');
+  const option = select.selectedOptions[0];
+  
+  if (option && option.value) {
+    const price = option.dataset.price || 0;
+    const hsn = option.dataset.hsn || '';
+    const unit = option.dataset.unit || 'PCS';
+    
+    row.querySelector('.price-field').value = price;
+    row.querySelector('.hsn-field').value = hsn;
+    row.querySelector('.unit-text').textContent = unit;
+    
+    calculateLineTotal(select);
+  }
+}
+
+function calculateLineTotal(element) {
+  const row = element.closest('tr');
+  const quantity = parseFloat(row.querySelector('.quantity-field').value) || 0;
+  const price = parseFloat(row.querySelector('.price-field').value) || 0;
+  const discount = parseFloat(row.querySelector('.discount-field').value) || 0;
+  const taxRate = parseFloat(row.querySelector('.tax-field').value) || 0;
+  
+  const subtotal = quantity * price;
+  const discountAmount = discount;
+  const taxableAmount = subtotal - discountAmount;
+  const taxAmount = taxableAmount * (taxRate / 100);
+  const total = taxableAmount + taxAmount;
+  
+  row.querySelector('.amount-display').textContent = `₹${total.toFixed(2)}`;
+  
+  calculateTotals();
+}
+
+function calculateTotals() {
+  let subtotal = 0;
+  let taxAmount = 0;
+  
+  document.querySelectorAll('.item-row').forEach(row => {
+    const quantity = parseFloat(row.querySelector('.quantity-field').value) || 0;
+    const price = parseFloat(row.querySelector('.price-field').value) || 0;
+    const discount = parseFloat(row.querySelector('.discount-field').value) || 0;
+    const taxRate = parseFloat(row.querySelector('.tax-field').value) || 0;
+    
+    const lineSubtotal = quantity * price;
+    const lineDiscountAmount = discount;
+    const lineTaxableAmount = lineSubtotal - lineDiscountAmount;
+    const lineTaxAmount = lineTaxableAmount * (taxRate / 100);
+    
+    subtotal += lineSubtotal;
+    taxAmount += lineTaxAmount;
+  });
+  
+  const total = subtotal + taxAmount;
+  
+  document.getElementById('subtotalAmount').textContent = `₹ ${subtotal.toFixed(2)}`;
+  document.getElementById('taxableAmount').textContent = `₹ ${(subtotal - 0).toFixed(2)}`;
+  document.getElementById('totalAmount').textContent = `₹ ${total.toFixed(2)}`;
+  
+  calculateBalance();
+}
+
+function calculateBalance() {
+  const totalElement = document.getElementById('totalAmount');
+  const totalText = totalElement.textContent.replace('₹ ', '').replace(',', '');
+  const total = parseFloat(totalText) || 0;
+  
+  const amountPaid = parseFloat(document.querySelector('[name="purchase_invoice[amount_paid]"]').value) || 0;
+  const balance = total - amountPaid;
+  
+  document.getElementById('balanceAmount').textContent = `₹ ${balance.toFixed(2)}`;
+}
+
+function calculateDueDate() {
+  const invoiceDate = document.querySelector('[name="purchase_invoice[invoice_date]"]').value;
+  const paymentTerms = parseInt(document.querySelector('[name="purchase_invoice[payment_terms]"]').value) || 30;
+  
+  if (invoiceDate) {
+    const date = new Date(invoiceDate);
+    date.setDate(date.getDate() + paymentTerms);
+    
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+    document.getElementById('dueDateDisplay').textContent = date.toLocaleDateString('en-GB', options);
+  }
+}
+
+function updatePartyDetails(partyName) {
+  // This would typically make an AJAX call to fetch party details
+  // For now, we'll just show/hide the details section
+  const detailsDiv = document.getElementById('partyDetails');
+  const shippingDiv = document.getElementById('shippingDetails');
+  
+  if (partyName) {
+    detailsDiv.style.display = 'block';
+    shippingDiv.style.display = 'block';
+    
+    // In a real implementation, you'd fetch and populate the actual party details
+    document.getElementById('partyAddress').innerHTML = '<strong>Address:</strong> Loading...';
+    document.getElementById('partyPhone').innerHTML = '<strong>Phone:</strong> Loading...';
+    document.getElementById('partyEmail').innerHTML = '<strong>Email:</strong> Loading...';
+    document.getElementById('partyGst').innerHTML = '<strong>GST:</strong> Loading...';
+    document.getElementById('shippingAddress').innerHTML = '<strong>Shipping:</strong> Same as billing address';
+  } else {
+    detailsDiv.style.display = 'none';
+    shippingDiv.style.display = 'none';
+  }
+}
+
+// Initialize calculations on page load
+document.addEventListener('DOMContentLoaded', function() {
+  calculateDueDate();
+  calculateTotals();
+});
+</script>

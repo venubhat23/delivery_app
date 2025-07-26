@@ -2,6 +2,7 @@
 # app/models/sales_invoice.rb
 class SalesInvoice < ApplicationRecord
   belongs_to :customer, optional: true
+  belongs_to :sales_customer, optional: true
   has_many :sales_invoice_items, dependent: :destroy
   has_many :sales_products, through: :sales_invoice_items
 
@@ -111,20 +112,35 @@ class SalesInvoice < ApplicationRecord
     )
   end
 
+  def get_customer
+    sales_customer || customer
+  end
+
   def customer_address
-    customer&.address || ''
+    get_customer&.address || get_customer&.full_address || ''
   end
 
   def customer_phone
-    customer&.phone_number || ''
+    get_customer&.phone_number || ''
   end
 
   def customer_email
-    customer&.email || ''
+    get_customer&.email || ''
   end
 
   def customer_gst
-    customer&.gst_number || ''
+    get_customer&.gst_number || ''
+  end
+
+  def customer_type
+    return 'SalesCustomer' if sales_customer.present?
+    return 'Customer' if customer.present?
+    'None'
+  end
+
+  # Alias method for compatibility with views
+  def paid_amount
+    amount_paid
   end
 
   def status_badge_class

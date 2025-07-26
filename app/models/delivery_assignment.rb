@@ -93,6 +93,11 @@ class DeliveryAssignment < ApplicationRecord
     status == 'completed' && !invoice_generated?
   end
 
+  # Alias method for backward compatibility
+  def delivery_date
+    scheduled_date
+  end
+
   # CLASS METHODS
   def self.monthly_summary_for_customer(customer_id, month, year)
     start_date = Date.new(year, month, 1).beginning_of_month

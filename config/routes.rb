@@ -22,6 +22,16 @@ Rails.application.routes.draw do
       get :bulk_import
       post :process_bulk_import
       post :validate_csv
+      get :download_template
+    end
+  end
+  
+  resources :parties do
+    collection do
+      get :bulk_import
+      post :process_bulk_import
+      post :validate_csv
+      get :download_template
     end
   end
   
@@ -46,12 +56,19 @@ Rails.application.routes.draw do
   resources :purchase_invoices do
     member do
       patch :mark_as_paid
+      patch :add_payment
       get :download_pdf
     end
     
     collection do
-      get :profit_analysis
-      get :sales_analysis
+      post :bulk_upload
+    end
+  end
+  
+  # Purchase Customers
+  resources :purchase_customers do
+    collection do
+      get :search
     end
   end
   
@@ -59,6 +76,7 @@ Rails.application.routes.draw do
   resources :sales_invoices do
     member do
       patch :mark_as_paid
+      get :mark_as_paid
       get :download_pdf
       get :get_product_details
       get :get_customer_details
@@ -69,6 +87,13 @@ Rails.application.routes.draw do
       get :sales_analysis
       get 'products/:id/details', to: 'sales_invoices#get_product_details', as: 'product_details'
       get 'customers/:id/details', to: 'sales_invoices#get_customer_details', as: 'customer_details'
+    end
+  end
+  
+  # Sales Customers
+  resources :sales_customers do
+    collection do
+      get :search
     end
   end
   

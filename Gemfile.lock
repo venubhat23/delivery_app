@@ -405,6 +405,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   jquery-rails
+  jwt
   kamal
   pg (~> 1.1)
   propshaft
