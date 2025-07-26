@@ -42,9 +42,16 @@ class SalesProductsController < ApplicationController
         format.html { redirect_to sales_products_path, notice: 'Sales product was successfully created.' }
         format.json { render json: { success: true, product: @sales_product, message: 'Product created successfully' } }
       else
+        Rails.logger.error "Failed to create sales product: #{@sales_product.errors.full_messages}"
         format.html { render :new }
-        format.json { render json: { success: false, errors: @sales_product.errors.full_messages, message: 'Failed to create product' } }
+        format.json { render json: { success: false, errors: @sales_product.errors.full_messages, message: @sales_product.errors.full_messages.join(', ') } }
       end
+    end
+  rescue => e
+    Rails.logger.error "Exception creating sales product: #{e.message}"
+    respond_to do |format|
+      format.html { redirect_to sales_products_path, alert: 'Error creating product. Please try again.' }
+      format.json { render json: { success: false, message: e.message } }
     end
   end
   
