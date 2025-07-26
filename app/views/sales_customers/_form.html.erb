@@ -1,0 +1,172 @@
+<%= form_with model: sales_customer, local: true, class: 'needs-validation', novalidate: true do |form| %>
+  <% if sales_customer.errors.any? %>
+    <div class="alert alert-danger">
+      <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+      <ul class="mb-0">
+        <% sales_customer.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :name, 'Customer Name *', class: 'form-label' %>
+        <%= form.text_field :name, class: 'form-control', required: true, placeholder: 'Enter customer name' %>
+        <div class="invalid-feedback">
+          Please provide a customer name.
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :phone_number, 'Phone Number *', class: 'form-label' %>
+        <%= form.text_field :phone_number, class: 'form-control', required: true, placeholder: 'Enter phone number' %>
+        <div class="invalid-feedback">
+          Please provide a phone number.
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :email, 'Email', class: 'form-label' %>
+        <%= form.email_field :email, class: 'form-control', placeholder: 'Enter email address' %>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :gst_number, 'GST Number', class: 'form-label' %>
+        <%= form.text_field :gst_number, class: 'form-control', placeholder: 'Enter GST number' %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :pan_number, 'PAN Number', class: 'form-label' %>
+        <%= form.text_field :pan_number, class: 'form-control', placeholder: 'Enter PAN number' %>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :contact_person, 'Contact Person', class: 'form-label' %>
+        <%= form.text_field :contact_person, class: 'form-control', placeholder: 'Enter contact person name' %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mb-3">
+    <%= form.label :address, 'Address', class: 'form-label' %>
+    <%= form.text_area :address, rows: 3, class: 'form-control', placeholder: 'Enter address' %>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :city, 'City', class: 'form-label' %>
+        <%= form.text_field :city, class: 'form-control', placeholder: 'Enter city' %>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :state, 'State', class: 'form-label' %>
+        <%= form.text_field :state, class: 'form-control', placeholder: 'Enter state' %>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :pincode, 'Pincode', class: 'form-label' %>
+        <%= form.text_field :pincode, class: 'form-control', placeholder: 'Enter pincode' %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mb-3">
+    <%= form.label :shipping_address, 'Shipping Address', class: 'form-label' %>
+    <%= form.text_area :shipping_address, rows: 3, class: 'form-control', placeholder: 'Enter shipping address (optional - will use billing address if empty)' %>
+  </div>
+
+  <div class="form-check mb-4">
+    <%= form.check_box :is_active, class: 'form-check-input', checked: true %>
+    <%= form.label :is_active, 'Active Customer', class: 'form-check-label' %>
+  </div>
+  
+  <div class="d-flex justify-content-end gap-2">
+    <%= link_to 'Cancel', sales_customers_path, class: 'btn btn-outline-secondary' %>
+    <%= form.submit sales_customer.persisted? ? 'Update Customer' : 'Create Customer', class: 'btn btn-primary' %>
+  </div>
+<% end %>
+
+<style>
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn {
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+}
+
+.btn-outline-secondary {
+  border: 2px solid #6b7280;
+  color: #6b7280;
+  background: transparent;
+}
+
+.btn-outline-secondary:hover {
+  background: #6b7280;
+  color: white;
+  border-color: #6b7280;
+}
+
+.alert {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+  color: #991b1b;
+  border-left: 4px solid #ef4444;
+}
+
+.form-check-input:checked {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+</style>
