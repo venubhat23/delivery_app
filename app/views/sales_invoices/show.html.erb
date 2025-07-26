@@ -10,9 +10,7 @@
           <%= link_to sales_invoices_path, class: 'btn btn-outline-secondary' do %>
             <i class="fas fa-arrow-left me-2"></i>Back to Invoices
           <% end %>
-          <%= link_to edit_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-primary' do %>
-            <i class="fas fa-edit me-2"></i>Edit
-          <% end %>
+
           <%= link_to download_pdf_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-success' do %>
             <i class="fas fa-download me-2"></i>Download PDF
           <% end %>
@@ -266,9 +264,7 @@
             </div>
             <div class="card-body">
               <div class="d-grid gap-2">
-                <%= link_to edit_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-primary' do %>
-                  <i class="fas fa-edit me-2"></i>Edit Invoice
-                <% end %>
+
                 
                 <%= link_to download_pdf_sales_invoice_path(@sales_invoice), class: 'btn btn-outline-success' do %>
                   <i class="fas fa-download me-2"></i>Download PDF

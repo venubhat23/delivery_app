@@ -1,0 +1,307 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-file-invoice text-primary me-2"></i>
+          Purchase Invoice: <%= @purchase_invoice.invoice_number %>
+        </h2>
+        <div class="d-flex gap-2">
+          <%= link_to purchase_invoices_path, class: 'btn btn-outline-secondary' do %>
+            <i class="fas fa-arrow-left me-2"></i>Back to Invoices
+          <% end %>
+
+          <%= link_to download_pdf_purchase_invoice_path(@purchase_invoice), class: 'btn btn-outline-success', target: '_blank' do %>
+            <i class="fas fa-file-pdf me-2"></i>Download PDF
+          <% end %>
+          <% if @purchase_invoice.status != 'paid' %>
+            <%= link_to mark_as_paid_purchase_invoice_path(@purchase_invoice), method: :patch, 
+                        class: 'btn btn-success', 
+                        confirm: 'Are you sure you want to mark this invoice as paid?' do %>
+              <i class="fas fa-check me-2"></i>Mark as Paid
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Invoice Status -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="alert alert-<%= @purchase_invoice.status == 'paid' ? 'success' : (@purchase_invoice.overdue? ? 'danger' : 'info') %>">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Status:</strong> 
+                <span class="badge <%= @purchase_invoice.status_badge_class %> ms-2">
+                  <%= @purchase_invoice.status.humanize %>
+                </span>
+                <% if @purchase_invoice.overdue? %>
+                  <span class="ms-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <%= pluralize(@purchase_invoice.days_overdue, 'day') %> overdue
+                  </span>
+                <% elsif @purchase_invoice.status != 'paid' %>
+                  <span class="ms-2">
+                    Due in <%= pluralize(@purchase_invoice.days_until_due, 'day') %>
+                  </span>
+                <% end %>
+              </div>
+              <div>
+                <strong>Balance:</strong> ₹<%= number_with_precision(@purchase_invoice.balance_amount, precision: 2) %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Invoice Details -->
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Party Information -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Party Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="text-muted">Bill From</h6>
+                  <div class="mb-3">
+                    <strong><%= @purchase_invoice.party_name %></strong><br>
+                    <% if @purchase_invoice.party_address.present? %>
+                      <%= simple_format(@purchase_invoice.party_address) %>
+                    <% end %>
+                    <% if @purchase_invoice.party_phone.present? %>
+                      <div><strong>Phone:</strong> <%= @purchase_invoice.party_phone %></div>
+                    <% end %>
+                    <% if @purchase_invoice.party_email.present? %>
+                      <div><strong>Email:</strong> <%= @purchase_invoice.party_email %></div>
+                    <% end %>
+                    <% if @purchase_invoice.party_gst.present? %>
+                      <div><strong>GST:</strong> <%= @purchase_invoice.party_gst %></div>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-muted">Ship From</h6>
+                  <div class="mb-3">
+                    <%= simple_format(@purchase_invoice.shipping_address) if @purchase_invoice.shipping_address.present? %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Invoice Items -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Items / Services</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-bordered mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th width="5%">NO</th>
+                      <th width="30%">ITEMS</th>
+                      <th width="10%">HSN</th>
+                      <th width="10%">QTY</th>
+                      <th width="15%">PRICE/ITEM (₹)</th>
+                      <th width="10%">DISCOUNT</th>
+                      <th width="10%">TAX</th>
+                      <th width="15%">AMOUNT (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% @purchase_invoice.purchase_invoice_items.each_with_index do |item, index| %>
+                      <tr>
+                        <td class="text-center"><%= index + 1 %></td>
+                        <td>
+                          <strong><%= item.product_name %></strong>
+                          <% if item.description.present? %>
+                            <br><small class="text-muted"><%= item.description %></small>
+                          <% end %>
+                        </td>
+                        <td><%= item.product_hsn %></td>
+                        <td><%= item.quantity %> <%= item.product_unit %></td>
+                        <td>₹<%= number_with_precision(item.price, precision: 2) %></td>
+                        <td>₹<%= number_with_precision(item.discount, precision: 2) %></td>
+                        <td><%= item.tax_rate %>%</td>
+                        <td class="fw-bold">₹<%= number_with_precision(item.total_amount, precision: 2) %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Payment History -->
+          <% if @purchase_invoice.amount_paid > 0 %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Payment History</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <strong>Amount Paid:</strong> ₹<%= number_with_precision(@purchase_invoice.amount_paid, precision: 2) %>
+                  </div>
+                  <div class="col-md-4">
+                    <strong>Payment Method:</strong> <%= @purchase_invoice.payment_type&.humanize %>
+                  </div>
+                  <div class="col-md-4">
+                    <strong>Balance:</strong> ₹<%= number_with_precision(@purchase_invoice.balance_amount, precision: 2) %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          
+          <!-- Terms and Conditions -->
+          <% if @purchase_invoice.terms_and_conditions.present? %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Terms and Conditions</h5>
+              </div>
+              <div class="card-body">
+                <%= simple_format(@purchase_invoice.terms_and_conditions) %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-lg-4">
+          <!-- Invoice Details -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Invoice Details</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong>Purchase Inv No:</strong><br>
+                <%= @purchase_invoice.invoice_number %>
+              </div>
+              
+              <div class="mb-3">
+                <strong>Purchase Inv Date:</strong><br>
+                <%= @purchase_invoice.invoice_date.strftime('%d %b %Y') %>
+              </div>
+              
+              <% if @purchase_invoice.original_invoice_number.present? %>
+                <div class="mb-3">
+                  <strong>Original Inv No:</strong><br>
+                  <%= @purchase_invoice.original_invoice_number %>
+                </div>
+              <% end %>
+              
+              <div class="mb-3">
+                <strong>Payment Terms:</strong><br>
+                <%= @purchase_invoice.payment_terms %> days
+              </div>
+              
+              <div class="mb-3">
+                <strong>Due Date:</strong><br>
+                <%= @purchase_invoice.due_date.strftime('%d %b %Y') %>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Amount Summary -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Amount Summary</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal:</span>
+                <span>₹<%= number_with_precision(@purchase_invoice.subtotal, precision: 2) %></span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-2">
+                <span>Tax Amount:</span>
+                <span>₹<%= number_with_precision(@purchase_invoice.tax_amount, precision: 2) %></span>
+              </div>
+              
+              <% if @purchase_invoice.discount_amount > 0 %>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Discount:</span>
+                  <span>- ₹<%= number_with_precision(@purchase_invoice.discount_amount, precision: 2) %></span>
+                </div>
+              <% end %>
+              
+              <% if @purchase_invoice.additional_charges.to_f > 0 %>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Additional Charges:</span>
+                  <span>₹<%= number_with_precision(@purchase_invoice.additional_charges, precision: 2) %></span>
+                </div>
+              <% end %>
+              
+              <% if @purchase_invoice.round_off_amount.to_f != 0 %>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Round Off:</span>
+                  <span>₹<%= number_with_precision(@purchase_invoice.round_off_amount, precision: 2) %></span>
+                </div>
+              <% end %>
+              
+              <hr>
+              
+              <div class="d-flex justify-content-between mb-3 fw-bold">
+                <span>Total Amount:</span>
+                <span>₹<%= number_with_precision(@purchase_invoice.total_amount, precision: 2) %></span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-2">
+                <span>Amount Paid:</span>
+                <span class="text-success">₹<%= number_with_precision(@purchase_invoice.amount_paid, precision: 2) %></span>
+              </div>
+              
+              <div class="d-flex justify-content-between fw-bold">
+                <span>Balance Amount:</span>
+                <span class="<%= @purchase_invoice.balance_amount > 0 ? 'text-danger' : 'text-success' %>">
+                  ₹<%= number_with_precision(@purchase_invoice.balance_amount, precision: 2) %>
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quick Actions -->
+          <% if @purchase_invoice.status != 'paid' %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Quick Payment</h5>
+              </div>
+              <div class="card-body">
+                <%= form_with url: add_payment_purchase_invoice_path(@purchase_invoice), method: :patch, local: true do |form| %>
+                  <div class="mb-3">
+                    <%= form.label :amount, 'Payment Amount', class: 'form-label' %>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <%= form.number_field :amount, step: 0.01, min: 0, max: @purchase_invoice.balance_amount, 
+                                            class: 'form-control', required: true %>
+                    </div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <%= form.label :payment_type, 'Payment Method', class: 'form-label' %>
+                    <%= form.select :payment_type, 
+                                    options_for_select([
+                                      ['Cash', 'cash'],
+                                      ['Bank Transfer', 'bank'],
+                                      ['UPI', 'upi'],
+                                      ['Card', 'card'],
+                                      ['Cheque', 'cheque']
+                                    ], 'cash'),
+                                    {}, { class: 'form-select' } %>
+                  </div>
+                  
+                  <%= form.submit 'Add Payment', class: 'btn btn-success w-100' %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

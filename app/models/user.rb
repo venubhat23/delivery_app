@@ -2,9 +2,10 @@ class User < ApplicationRecord
   has_secure_password
   
   # Existing associations
-  has_many :customers, dependent: :destroy
   has_many :delivery_assignments, dependent: :destroy
   has_many :delivery_schedules, dependent: :destroy
+  has_many :parties, dependent: :destroy
+  has_many :advertisements, dependent: :destroy
   
   # New associations for delivery person functionality
   has_many :assigned_customers, class_name: 'Customer', foreign_key: 'delivery_person_id', dependent: :nullify
@@ -13,8 +14,9 @@ class User < ApplicationRecord
   # Validations
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
-  validates :role, presence: true, inclusion: { in: %w[admin user delivery_person] }
+  validates :role, presence: true, inclusion: { in: %w[admin user delivery_person customer] }
   validates :phone, presence: true
+  validates :employee_id, uniqueness: true, allow_blank: true
   
   # Scopes
   scope :delivery_people, -> { where(role: 'delivery_person') }
@@ -28,6 +30,10 @@ class User < ApplicationRecord
   
   def admin?
     role == 'admin'
+  end
+  
+  def customer?
+    role == 'customer'
   end
   
   def can_take_customers?
@@ -54,5 +60,12 @@ class User < ApplicationRecord
     delivery_people.joins("LEFT JOIN customers ON customers.delivery_person_id = users.id")
                    .group("users.id")
                    .having("COUNT(customers.id) < 50")
+  end
+  
+  # Add image_url method for delivery people
+  def image_url
+    # Return nil or a default image URL since users table doesn't have image_url column
+    # You can customize this to return a default avatar or implement image upload later
+    nil
   end
 end

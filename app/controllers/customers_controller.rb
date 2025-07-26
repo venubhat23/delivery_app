@@ -32,10 +32,17 @@ class CustomersController < ApplicationController
     @customer = Customer.new(customer_params)
     @customer.user = current_user
     
-    if @customer.save
-      redirect_to @customer, notice: 'Customer was successfully created.'
-    else
-      render :new, status: :unprocessable_entity
+    @customer.password = "customer@123"
+    @customer.password_confirmation = "customer@123"
+    
+    respond_to do |format|
+      if @customer.save
+        format.html { redirect_to @customer, notice: 'Customer was successfully created.' }
+        format.json { render json: { success: true, customer: @customer, message: 'Customer created successfully' } }
+      else
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: { success: false, errors: @customer.errors.full_messages, message: 'Failed to create customer' } }
+      end
     end
   end
   
@@ -110,6 +117,20 @@ class CustomersController < ApplicationController
       render json: { valid: false, message: "Invalid CSV format: #{e.message}" }
     rescue => e
       render json: { valid: false, message: "Error validating CSV: #{e.message}" }
+    end
+  end
+  
+  # Download CSV template
+  def download_template
+    template_content = Customer.csv_template
+    
+    respond_to do |format|
+      format.csv do
+        send_data template_content,
+                  filename: 'customers_template.csv',
+                  type: 'text/csv',
+                  disposition: 'attachment'
+      end
     end
   end
   

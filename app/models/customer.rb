@@ -1,5 +1,11 @@
 class Customer < ApplicationRecord
   # Associations
+  has_secure_password
+  
+  # Virtual attribute for password confirmation
+  attr_accessor :password_confirmation
+  
+
   belongs_to :user
   belongs_to :delivery_person, class_name: 'User', optional: true
   has_many :deliveries, dependent: :destroy
@@ -9,6 +15,9 @@ class Customer < ApplicationRecord
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
+  validates :phone_number, presence: true
+  validates :address, presence: true, length: { minimum: 5, maximum: 255 }
+  validates :user_id, presence: true
   validates :latitude, numericality: { 
     greater_than_or_equal_to: -90, 
     less_than_or_equal_to: 90,
@@ -47,112 +56,6 @@ class Customer < ApplicationRecord
   end
   
   # Import customers from CSV data
-  def self.import_from_csv(csv_data, current_user)
-    require 'csv'
-    
-    begin
-      csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
-      
-      # Validate headers
-      required_headers = [:name, :phone_number, :address]
-      missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
-      
-      if missing_headers.any?
-        return {
-          success: false,
-          message: "Missing required columns: #{missing_headers.join(', ')}",
-          imported_count: 0,
-          errors: [],
-          skipped_rows: []
-        }
-      end
-      
-      # Limit to 50 customers max
-      rows_to_process = csv.first(50)
-      imported_count = 0
-      errors = []
-      skipped_rows = []
-      
-      rows_to_process.each_with_index do |row, index|
-        begin
-          # Skip empty rows
-          next if row.to_h.values.all?(&:blank?)
-          
-          customer_params = {
-            name: row[:name]&.strip,
-            phone_number: row[:phone_number]&.strip,
-            address: row[:address]&.strip,
-            email: row[:email]&.strip,
-            gst_number: row[:gst_number]&.strip,
-            pan_number: row[:pan_number]&.strip,
-            member_id: row[:member_id]&.strip,
-            latitude: row[:latitude]&.strip,
-            longitude: row[:longitude]&.strip,
-            user: current_user
-          }
-          
-          # Remove empty values
-          customer_params.reject! { |k, v| v.blank? }
-          
-          # Convert coordinates to float if present
-          if customer_params[:latitude].present?
-            customer_params[:latitude] = customer_params[:latitude].to_f
-          end
-          if customer_params[:longitude].present?
-            customer_params[:longitude] = customer_params[:longitude].to_f
-          end
-          
-          customer = Customer.new(customer_params)
-          
-          if customer.save
-            imported_count += 1
-          else
-            errors << {
-              row: index + 2, # +2 because index starts at 0 and we have header row
-              data: row.to_h,
-              errors: customer.errors.full_messages
-            }
-            skipped_rows << row.to_h
-          end
-          
-        rescue => e
-          errors << {
-            row: index + 2,
-            data: row.to_h,
-            errors: [e.message]
-          }
-          skipped_rows << row.to_h
-        end
-      end
-      
-      {
-        success: true,
-        message: "Import completed successfully",
-        imported_count: imported_count,
-        total_processed: rows_to_process.count,
-        errors: errors,
-        skipped_rows: skipped_rows
-      }
-      
-    rescue CSV::MalformedCSVError => e
-      {
-        success: false,
-        message: "Invalid CSV format: #{e.message}",
-        imported_count: 0,
-        errors: [],
-        skipped_rows: []
-      }
-    rescue => e
-      {
-        success: false,
-        message: "Error processing CSV: #{e.message}",
-        imported_count: 0,
-        errors: [],
-        skipped_rows: []
-      }
-    end
-  end
-  
   def self.import_from_csv(csv_data, current_user)
     require 'csv'
     
@@ -231,6 +134,10 @@ class Customer < ApplicationRecord
           user: current_user
         )
         
+        # Set default password as specified by user
+        customer.password = "customer@123"
+        customer.password_confirmation = "customer@123"
+        
         # Handle coordinates if provided
         if row[:latitude].present? && row[:longitude].present?
           customer.latitude = row[:latitude].to_f
@@ -256,13 +163,6 @@ class Customer < ApplicationRecord
     end
     
     result
-  end
-  
-  # Method to get CSV template
-  def self.csv_template
-    "name,phone_number,address,email,gst_number,pan_number,member_id,latitude,longitude\n" +
-    "John Doe,9999999999,123 Main St,john@example.com,GST123,PAN123,MEM123,12.9716,77.5946\n" +
-    "Jane Smith,8888888888,456 Oak Ave,jane@example.com,,,,,\n"
   end
   
   # Instance methods

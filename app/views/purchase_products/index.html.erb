@@ -1,124 +1,176 @@
-  <div class="container-fluid px-0">
-  <div class="mt-4"></div>
+<!-- Enhanced Purchase Products Index Page -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-boxes me-3"></i>Purchase Products
+      </h1>
+      <p class="text-muted mb-0">Manage your purchase inventory and track procurement</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to raw('<i class="fas fa-plus"></i> Add New Product'), new_purchase_product_path, class: 'btn btn-primary' %>
+    </div>
+  </div>
+</div>
 
-  <!-- Attractive Top Summary Cards -->
-  <div class="row g-4 mb-4 mt-4">
-    <div class="col-md-3">
-      <div class="card text-bg-primary shadow-sm border-0 h-100">
-        <div class="card-body d-flex flex-column align-items-center">
-          <i class="fas fa-cubes fa-2x mb-2"></i>
-          <h5 class="card-title">Total Products</h5>
-          <h3 class="fw-bold mb-0"><%= @purchase_products.count %></h3>
-        </div>
+<!-- Enhanced Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-cubes"></i>
       </div>
+      <div class="stats-number"><%= @purchase_products.count %></div>
+      <div class="stats-label">Total Products</div>
     </div>
-    <div class="col-md-3">
-      <div class="card text-bg-success shadow-sm border-0 h-100">
-        <div class="card-body d-flex flex-column align-items-center w-100">
-          <i class="fas fa-rupee-sign fa-2x mb-2"></i>
-          <h5 class="card-title mb-1">Total Purchase Value</h5>
-          <h4 class="fw-bold mb-2">₹<%= number_with_precision(@total_purchase_value, precision: 2) %></h4>
-          <hr class="w-50 my-2" />
-          <h5 class="card-title mb-1">Total Sales Value</h5>
-          <h4 class="fw-bold mb-0">₹<%= number_with_precision(@total_sales_value, precision: 2) %></h4>
-        </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-rupee-sign"></i>
       </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@total_purchase_value, precision: 2) %></div>
+      <div class="stats-label">Total Purchase Value</div>
+      <div class="stats-sublabel">Sales: ₹<%= number_with_delimiter(@total_sales_value, precision: 2) %></div>
     </div>
-    <div class="col-md-3">
-      <div class="card text-bg-warning shadow-sm border-0 h-100">
-        <div class="card-body d-flex flex-column align-items-center">
-          <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-          <h5 class="card-title">Low Stock Items</h5>
-          <h3 class="fw-bold mb-0"><%= @low_stock_count %></h3>
-        </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-exclamation-triangle"></i>
       </div>
+      <div class="stats-number"><%= @low_stock_count %></div>
+      <div class="stats-label">Low Stock Items</div>
     </div>
-    <div class="col-md-3">
-      <div class="card text-bg-info shadow-sm border-0 h-100">
-        <div class="card-body d-flex flex-column align-items-center">
-          <i class="fas fa-layer-group fa-2x mb-2"></i>
-          <h5 class="card-title">Total Categories</h5>
-          <h3 class="fw-bold mb-0"><%= @categories_count %></h3>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-layer-group"></i>
+      </div>
+      <div class="stats-number"><%= @categories_count %></div>
+      <div class="stats-label">Total Categories</div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Filters & Search -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <%= form_with url: purchase_products_path, method: :get, local: true, class: 'row g-3' do |form| %>
+          <div class="col-md-6">
+            <%= form.text_field :search, placeholder: 'Search by name...', value: params[:search], class: 'form-control' %>
+          </div>
+          <div class="col-md-4">
+            <%= form.select :category, options_for_select([['All Categories', '']] + @purchase_products.distinct.pluck(:category).compact.map { |c| [c, c] }, params[:category]), {}, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-2">
+            <%= form.submit 'Filter', class: 'btn btn-outline-primary' %>
+          </div>
+        <% end %>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="d-flex align-items-center justify-content-end">
+          <span class="badge bg-primary me-2"><%= @purchase_products.count %> products</span>
+          <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-secondary active" id="tableView">
+              <i class="fas fa-table"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="cardView">
+              <i class="fas fa-th"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <!-- End Cards -->
+</div>
 
-  <div class="row">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3 mb-0"><i class="fas fa-boxes"></i> Purchase Products</h2>
-        <%= link_to raw('<i class="fas fa-plus"></i> Add New Product'), new_purchase_product_path, class: 'btn btn-success' %>
-      </div>
-
-      <!-- Filters -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <%= form_with url: purchase_products_path, method: :get, local: true, class: 'row g-3 align-items-end' do |form| %>
-            <div class="col-md-4">
-              <%= form.label :search, "Search", class: "form-label visually-hidden" %>
-              <%= form.text_field :search, placeholder: 'Search by name...', value: params[:search], class: 'form-control' %>
-            </div>
-            <div class="col-md-4">
-              <%= form.label :category, "Category", class: "form-label visually-hidden" %>
-              <%= form.select :category, options_for_select([['All Categories', '']] + @purchase_products.distinct.pluck(:category).compact.map { |c| [c, c] }, params[:category]), {}, { class: 'form-select' } %>
-            </div>
-            <div class="col-md-2">
-              <%= form.submit 'Filter', class: 'btn btn-outline-primary w-100' %>
-            </div>
-            <div class="col-md-2">
-              <%= link_to 'Clear', purchase_products_path, class: 'btn btn-outline-secondary w-100' %>
-            </div>
+<!-- Products Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="fas fa-list me-2"></i>Purchase Products List
+      </h6>
+      <div class="d-flex align-items-center">
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['search', 'category']) && v.present? } %>
+          <%= link_to purchase_products_path, class: "btn btn-outline-secondary btn-sm" do %>
+            <i class="fas fa-times me-1"></i>Clear
           <% end %>
-        </div>
+        <% end %>
       </div>
-
-      <!-- Table -->
-      <div class="card">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped align-middle table-hover">
-              <thead class="table-light">
-                <tr>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Purchase Price</th>
-                  <th>Sales Price</th>
-                  <th>Profit Margin</th>
-                  <th>Unit</th>
-                  <th>Opening Stock</th>
-                  <th>Current Stock</th>
-                  <th>Stock Value</th>
-                  <th>Serialization</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Mark as Paid</th>
-                  <th>Edit</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @purchase_products.each do |product| %>
-                  <tr>
-                    <td>
-                      <strong><%= product.name %></strong>
-                    </td>
-                    <td>
-                      <% if product.category.present? %>
-                        <span class="badge bg-info text-dark"><%= product.category %></span>
-                      <% else %>
-                        <span class="text-muted">-</span>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <% if @purchase_products.any? %>
+      <!-- Table View -->
+      <div id="tableViewContent" class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th><i class="fas fa-tag me-1"></i>Name</th>
+              <th><i class="fas fa-layer-group me-1"></i>Category</th>
+              <th><i class="fas fa-shopping-cart me-1"></i>Purchase Price</th>
+              <th><i class="fas fa-rupee-sign me-1"></i>Sales Price</th>
+              <th><i class="fas fa-chart-line me-1"></i>Profit Margin</th>
+              <th><i class="fas fa-balance-scale me-1"></i>Unit</th>
+              <th><i class="fas fa-warehouse me-1"></i>Stock</th>
+              <th><i class="fas fa-dollar-sign me-1"></i>Stock Value</th>
+              <th><i class="fas fa-barcode me-1"></i>Serialization</th>
+              <th><i class="fas fa-info-circle me-1"></i>Status</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @purchase_products.each do |product| %>
+              <tr class="product-row">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="product-avatar me-3">
+                      <%= product.name.first.upcase %>
+                    </div>
+                    <div>
+                      <strong class="text-primary"><%= product.name %></strong>
+                      <% if product.description.present? %>
+                        <div class="text-muted small" title="<%= product.description %>">
+                          <%= truncate(product.description, length: 30) %>
+                        </div>
                       <% end %>
-                    </td>
-                    <td>₹<%= number_with_precision(product.purchase_price, precision: 2) %></td>
-                    <td>₹<%= number_with_precision(product.sales_price, precision: 2) %></td>
-                    <td>
-                      <% margin = product.purchase_price.to_f > 0 ? (((product.sales_price.to_f - product.purchase_price.to_f) / product.purchase_price.to_f) * 100).round(2) : 0 %>
-                      <span class="badge <%= margin >= 0 ? 'bg-success' : 'bg-danger' %>"><%= margin %>%</span>
-                    </td>
-                    <td><%= product.measuring_unit %></td>
-                    <td><%= product.opening_stock %></td>
-                    <td>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if product.category.present? %>
+                    <span class="badge bg-info"><%= product.category %></span>
+                  <% else %>
+                    <span class="text-muted">Uncategorized</span>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="fw-bold text-info">
+                    ₹<%= number_with_precision(product.purchase_price, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">
+                    ₹<%= number_with_precision(product.sales_price, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <% margin = product.purchase_price.to_f > 0 ? (((product.sales_price.to_f - product.purchase_price.to_f) / product.purchase_price.to_f) * 100).round(2) : 0 %>
+                  <span class="badge <%= margin >= 0 ? 'bg-success' : 'bg-danger' %>">
+                    <i class="fas fa-percentage me-1"></i><%= margin %>%
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"><%= product.measuring_unit %></span>
+                </td>
+                <td>
+                  <div class="stock-info">
+                    <div class="stock-current">
                       <% stock_class = if product.current_stock.to_i <= 0
                                         'bg-danger'
                                       elsif product.current_stock.to_i <= 10
@@ -127,73 +179,218 @@
                                         'bg-success'
                                       end %>
                       <span class="badge <%= stock_class %>">
-                        <%= product.current_stock %>
+                        <i class="fas fa-warehouse me-1"></i><%= product.current_stock %>
                       </span>
-                    </td>
-                    <td>₹<%= number_with_precision(product.purchase_price.to_f * product.current_stock.to_i, precision: 2) %></td>
-                    <td>
-                      <% if product.enable_serialization %>
-                        <span class="badge bg-primary">Yes</span>
-                      <% else %>
-                        <span class="badge bg-secondary">No</span>
+                    </div>
+                    <div class="text-muted small">
+                      Opening: <%= product.opening_stock %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">
+                    ₹<%= number_with_precision(product.purchase_price.to_f * product.current_stock.to_i, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <% if product.enable_serialization %>
+                    <span class="badge bg-primary">
+                      <i class="fas fa-check me-1"></i>Yes
+                    </span>
+                  <% else %>
+                    <span class="badge bg-secondary">
+                      <i class="fas fa-times me-1"></i>No
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <% if product.status == "paid" %>
+                    <span class="badge bg-success">
+                      <i class="fas fa-check-circle me-1"></i>Paid
+                    </span>
+                  <% else %>
+                    <span class="badge bg-danger">
+                      <i class="fas fa-exclamation-circle me-1"></i>Unpaid
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to purchase_product_path(product), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_purchase_product_path(product), class: "btn btn-sm btn-outline-warning", title: "Edit Product" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <% if product.status != "paid" %>
+                      <%= button_to mark_as_paid_purchase_product_path(product), method: :patch, class: "btn btn-sm btn-outline-success", data: { confirm: "Mark as paid?" } do %>
+                        <i class="fas fa-check-circle"></i>
                       <% end %>
-                    </td>
-                    <td>
-                      <% if product.description.present? %>
-                        <span data-bs-toggle="tooltip" title="<%= product.description %>">
-                          <%= truncate(product.description, length: 30) %>
-                        </span>
-                      <% else %>
-                        <span class="text-muted">-</span>
+                    <% end %>
+                    <%= button_to purchase_product_path(product),
+                        method: :delete,
+                        form: { "data-turbo-confirm": "Are you sure you want to delete this product?", class: "d-inline" },
+                        class: "btn btn-sm btn-outline-danger",
+                        title: "Delete Product" do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Card View (Hidden by default) -->
+      <div id="cardViewContent" class="d-none">
+        <div class="row p-4">
+          <% @purchase_products.each do |product| %>
+            <div class="col-md-6 col-lg-4 mb-4">
+              <div class="product-card">
+                <div class="product-card-header">
+                  <div class="product-avatar">
+                    <%= product.name.first.upcase %>
+                  </div>
+                  <div class="product-status">
+                    <% if product.status == "paid" %>
+                      <span class="badge bg-success">Paid</span>
+                    <% else %>
+                      <span class="badge bg-danger">Unpaid</span>
+                    <% end %>
+                  </div>
+                </div>
+                
+                <div class="product-card-body">
+                  <h6 class="product-name"><%= product.name %></h6>
+                  
+                  <div class="product-meta">
+                    <% if product.category.present? %>
+                      <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-info me-2"><%= product.category %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if product.description.present? %>
+                      <div class="text-muted small mb-2">
+                        <%= truncate(product.description, length: 80) %>
+                      </div>
+                    <% end %>
+                  </div>
+                  
+                  <div class="product-stats">
+                    <div class="stat-item">
+                      <span class="stat-label">Purchase</span>
+                      <span class="stat-value text-info">₹<%= number_with_precision(product.purchase_price, precision: 2) %></span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Sales</span>
+                      <span class="stat-value text-success">₹<%= number_with_precision(product.sales_price, precision: 2) %></span>
+                    </div>
+                  </div>
+                  
+                  <div class="product-stats">
+                    <div class="stat-item">
+                      <span class="stat-label">Current Stock</span>
+                      <% stock_class = if product.current_stock.to_i <= 0
+                                        'text-danger'
+                                      elsif product.current_stock.to_i <= 10
+                                        'text-warning'
+                                      else
+                                        'text-success'
+                                      end %>
+                      <span class="stat-value <%= stock_class %>">
+                        <%= product.current_stock %> <%= product.measuring_unit %>
+                      </span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Margin</span>
+                      <% margin = product.purchase_price.to_f > 0 ? (((product.sales_price.to_f - product.purchase_price.to_f) / product.purchase_price.to_f) * 100).round(2) : 0 %>
+                      <span class="stat-value <%= margin >= 0 ? 'text-success' : 'text-danger' %>">
+                        <%= margin %>%
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="product-features">
+                    <% if product.enable_serialization %>
+                      <span class="badge bg-primary me-2">
+                        <i class="fas fa-barcode me-1"></i>Serialized
+                      </span>
+                    <% end %>
+                    <span class="badge bg-secondary">
+                      <%= product.measuring_unit %>
+                    </span>
+                  </div>
+                  
+                  <div class="product-actions mt-3">
+                    <%= link_to purchase_product_path(product), class: "btn btn-sm btn-outline-primary me-1" do %>
+                      <i class="fas fa-eye me-1"></i>View
+                    <% end %>
+                    <%= link_to edit_purchase_product_path(product), class: "btn btn-sm btn-outline-warning me-1" do %>
+                      <i class="fas fa-edit me-1"></i>Edit
+                    <% end %>
+                    <% if product.status != "paid" %>
+                      <%= button_to mark_as_paid_purchase_product_path(product), method: :patch, class: "btn btn-sm btn-outline-success me-1", data: { confirm: "Mark as paid?" } do %>
+                        <i class="fas fa-check me-1"></i>Paid
                       <% end %>
-                    </td>
-                    <!-- Status column with tick if paid -->
-                    <td>
-                      <% if product.status == "paid" %>
-                        <span class="badge bg-success">
-                          <i class="fas fa-check-circle"></i> Paid
-                        </span>
-                      <% else %>
-                        <span class="badge bg-danger">Unpaid</span>
-                      <% end %>
-                    </td>
-                    <!-- Mark as Paid button -->
-                    <td>
-                      <% if product.status != "paid" %>
-                        <%= button_to "Mark as Paid", mark_as_paid_purchase_product_path(product), method: :patch, class: "btn btn-sm btn-outline-success", data: { confirm: "Mark this product as paid?" } %>
-                      <% end %>
-                    </td>
-                    <!-- Edit button only -->
-                    <td>
-                      <%= link_to edit_purchase_product_path(product), class: "btn btn-sm btn-outline-secondary", title: "Edit", data: { bs_toggle: "tooltip" } do %>
-                        <i class="fas fa-edit"></i>
-                      <% end %>
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          </div>
-          <% if @purchase_products.empty? %>
-            <div class="text-center py-5">
-              <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-              <h5 class="text-muted">No products found</h5>
-              <p class="text-muted">Start by adding your first product.</p>
-              <%= link_to raw('<i class="fas fa-plus"></i> Add Product'), new_purchase_product_path, class: 'btn btn-primary' %>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
             </div>
           <% end %>
         </div>
       </div>
-    </div>
+    <% else %>
+      <div class="empty-state">
+        <i class="fas fa-boxes"></i>
+        <h4>No Purchase Products Found</h4>
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['search', 'category']) && v.present? } %>
+          <p>No products match your current filters.</p>
+          <%= link_to purchase_products_path, class: "btn btn-outline-primary me-2" do %>
+            <i class="fas fa-times me-2"></i>Clear Filters
+          <% end %>
+        <% else %>
+          <p>Start building your purchase inventory by adding your first product.</p>
+        <% end %>
+        <div class="mt-3">
+          <%= link_to raw('<i class="fas fa-plus"></i> Add Product'), new_purchase_product_path, class: 'btn btn-primary' %>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>
 
+<!-- Styles are now handled by shared_index_styles.scss -->
+
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tableView = document.getElementById('tableView');
+  const cardView = document.getElementById('cardView');
+  const tableContent = document.getElementById('tableViewContent');
+  const cardContent = document.getElementById('cardViewContent');
+  
+  if (tableView && cardView) {
+    tableView.addEventListener('click', function() {
+      tableView.classList.add('active');
+      cardView.classList.remove('active');
+      tableContent.classList.remove('d-none');
+      cardContent.classList.add('d-none');
+    });
+    
+    cardView.addEventListener('click', function() {
+      cardView.classList.add('active');
+      tableView.classList.remove('active');
+      cardContent.classList.remove('d-none');
+      tableContent.classList.add('d-none');
+    });
+  }
+
   // Enable Bootstrap tooltips
-  document.addEventListener("DOMContentLoaded", function(){
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
   });
+});
 </script>

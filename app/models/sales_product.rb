@@ -4,6 +4,7 @@ class SalesProduct < ApplicationRecord
   has_many :sales_invoices, through: :sales_invoice_items
 
   validates :name, presence: true
+  validates :category, presence: true
   validates :purchase_price, :sales_price, presence: true, numericality: { greater_than: 0 }
   validates :measuring_unit, presence: true
   validates :opening_stock, :current_stock, presence: true, numericality: { greater_than_or_equal_to: 0 }

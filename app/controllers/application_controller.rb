@@ -1,9 +1,10 @@
 class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
+  skip_before_action :verify_authenticity_token
   
   before_action :require_login
   
-  helper_method :current_user, :logged_in?
+  helper_method :current_user, :logged_in?, :admin_setting
   
   private
   
@@ -17,15 +18,17 @@ class ApplicationController < ActionController::Base
   
   def require_login
     unless logged_in?
-      flash[:alert] = "Please log in to access this page"
       redirect_to login_path
     end
   end
   
   def require_admin
     unless current_user&.admin?
-      flash[:alert] = "Access denied. Admin privileges required."
       redirect_to root_path
     end
+  end
+  
+  def admin_setting
+    @admin_setting ||= AdminSetting.first || AdminSetting.new
   end
 end

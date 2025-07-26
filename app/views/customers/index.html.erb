@@ -18,7 +18,7 @@
   </div>
 </div>
 
-<!-- Stats Cards -->
+<!-- Enhanced Stats Cards -->
 <div class="row mb-4">
   <div class="col-md-3 mb-3">
     <div class="stats-card">
@@ -30,7 +30,7 @@
     </div>
   </div>
   <div class="col-md-3 mb-3">
-    <div class="stats-card">
+    <div class="stats-card stats-card-success">
       <div class="stats-icon">
         <i class="fas fa-user-check"></i>
       </div>
@@ -39,7 +39,7 @@
     </div>
   </div>
   <div class="col-md-3 mb-3">
-    <div class="stats-card">
+    <div class="stats-card stats-card-warning">
       <div class="stats-icon">
         <i class="fas fa-user-times"></i>
       </div>
@@ -48,7 +48,7 @@
     </div>
   </div>
   <div class="col-md-3 mb-3">
-    <div class="stats-card">
+    <div class="stats-card stats-card-info">
       <div class="stats-icon">
         <i class="fas fa-map-marker-alt"></i>
       </div>
@@ -58,7 +58,7 @@
   </div>
 </div>
 
-<!-- Filters -->
+<!-- Enhanced Filters -->
 <div class="card mb-4">
   <div class="card-body">
     <div class="row align-items-center">
@@ -121,6 +121,7 @@
         <table class="table table-hover mb-0">
           <thead>
             <tr>
+              <th><i class="fas fa-image me-1"></i>Photo</th>
               <th><i class="fas fa-user me-1"></i>Customer</th>
               <th><i class="fas fa-map-marker-alt me-1"></i>Address</th>
               <th><i class="fas fa-globe me-1"></i>Location</th>
@@ -133,6 +134,15 @@
           <tbody>
             <% @customers.each do |customer| %>
               <tr class="customer-row">
+                <td>
+                  <% if customer.image_url.present? %>
+                    <img src="<%= customer.image_url %>" alt="<%= customer.name %>" class="customer-image-thumbnail">
+                  <% else %>
+                    <div class="customer-image-placeholder">
+                      <i class="fas fa-user text-muted"></i>
+                    </div>
+                  <% end %>
+                </td>
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="customer-avatar me-3">
@@ -152,6 +162,7 @@
                   <div class="address-cell">
                     <% if customer.address.present? %>
                       <span class="text-truncate" title="<%= customer.address %>">
+                        <i class="fas fa-map-marker-alt me-1 text-muted"></i>
                         <%= truncate(customer.address, length: 50) %>
                       </span>
                     <% else %>
@@ -169,16 +180,25 @@
                       </span>
                     </div>
                   <% else %>
-                    <span class="badge bg-secondary">No coordinates</span>
+                    <span class="badge bg-secondary">
+                      <i class="fas fa-map-marker-slash me-1"></i>No coordinates
+                    </span>
                   <% end %>
                 </td>
                 <td>
                   <% if customer.delivery_person.present? %>
                     <div class="delivery-person-badge">
-                      <span class="badge bg-primary">
-                        <i class="fas fa-truck me-1"></i>
-                        <%= customer.delivery_person.name %>
-                      </span>
+                      <div class="d-flex align-items-center">
+                        <div class="delivery-person-mini-avatar me-2">
+                          <%= customer.delivery_person.name.first.upcase %>
+                        </div>
+                        <div>
+                          <span class="badge bg-primary">
+                            <i class="fas fa-truck me-1"></i>
+                            <%= customer.delivery_person.name %>
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   <% else %>
                     <span class="badge bg-warning text-dark">
@@ -189,12 +209,17 @@
                 </td>
                 <td>
                   <div class="added-by-info">
-                    <i class="fas fa-user me-1"></i>
-                    <span class="text-muted"><%= customer.user.name %></span>
+                    <div class="d-flex align-items-center">
+                      <div class="user-mini-avatar me-2">
+                        <%= customer.user.name.first.upcase %>
+                      </div>
+                      <span class="text-muted"><%= customer.user.name %></span>
+                    </div>
                   </div>
                 </td>
                 <td>
                   <span class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>
                     <%= customer.created_at.strftime("%b %d, %Y") %>
                   </span>
                 </td>
@@ -228,8 +253,8 @@
             <div class="col-md-6 col-lg-4 mb-4">
               <div class="customer-card">
                 <div class="customer-card-header">
-                  <div class="customer-avatar">
-                    <%= customer.name.first.upcase %>
+                  <div class="customer-avatar-large">
+                    <%= customer.name.split.map(&:first).join.upcase %>
                   </div>
                   <div class="customer-actions">
                     <div class="dropdown">
@@ -256,17 +281,36 @@
                   <div class="customer-meta">
                     <% if customer.phone_number.present? %>
                       <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-phone me-2 text-muted"></i>
+                        <i class="fas fa-phone me-2 text-primary"></i>
                         <span class="text-muted"><%= customer.phone_number %></span>
                       </div>
                     <% end %>
                     
                     <% if customer.address.present? %>
                       <div class="d-flex align-items-start mb-2">
-                        <i class="fas fa-map-marker-alt me-2 text-muted mt-1"></i>
+                        <i class="fas fa-map-marker-alt me-2 text-danger mt-1"></i>
                         <span class="text-muted small"><%= truncate(customer.address, length: 100) %></span>
                       </div>
                     <% end %>
+                  </div>
+                  
+                  <div class="customer-stats">
+                    <div class="stat-item">
+                      <span class="stat-label">Status</span>
+                      <% if customer.delivery_person.present? %>
+                        <span class="stat-value text-success">Assigned</span>
+                      <% else %>
+                        <span class="stat-value text-warning">Unassigned</span>
+                      <% end %>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Location</span>
+                      <% if customer.latitude && customer.longitude %>
+                        <span class="stat-value text-success">Geo-Located</span>
+                      <% else %>
+                        <span class="stat-value text-muted">Not Located</span>
+                      <% end %>
+                    </div>
                   </div>
                   
                   <div class="customer-badges">
@@ -291,14 +335,16 @@
                   </div>
                   
                   <div class="customer-footer">
-                    <small class="text-muted">
-                      <i class="fas fa-user me-1"></i>
-                      Added by <%= customer.user.name %>
-                    </small>
-                    <small class="text-muted">
-                      <i class="fas fa-calendar me-1"></i>
-                      <%= customer.created_at.strftime("%b %d, %Y") %>
-                    </small>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <small class="text-muted">
+                        <i class="fas fa-user me-1"></i>
+                        Added by <%= customer.user.name %>
+                      </small>
+                      <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        <%= customer.created_at.strftime("%b %d, %Y") %>
+                      </small>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -332,18 +378,256 @@
 </div>
 
 <style>
-.customer-row {
+/* Enhanced Customer Index Styles - Modern & Professional */
+
+/* Page Layout Improvements */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 0 0 0 60px;
+}
+
+.stats-card:hover {
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: var(--primary-gradient);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  z-index: 2;
+}
+
+.stats-card .stats-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card .stats-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card-success::before {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning::before {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info::before {
+  background: var(--dark-gradient);
+}
+
+.stats-card-success .stats-icon {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning .stats-icon {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info .stats-icon {
+  background: var(--dark-gradient);
+}
+
+/* Enhanced Filter Card */
+.card {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1.5rem 2rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+/* Enhanced Customer Table */
+.table {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: none;
+  margin: 0;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  padding: 1.5rem 1rem;
+  border: none;
+  position: relative;
+}
+
+.table thead th i {
+  opacity: 0.8;
+  margin-right: 0.5rem;
+}
+
+.customer-row {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
 }
 
 .customer-row:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  transform: translateX(5px);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  transform: translateX(8px) scale(1.01);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
 }
 
+.customer-row td {
+  padding: 1.5rem 1rem;
+  vertical-align: middle;
+  border-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Enhanced Customer Avatar */
 .customer-avatar {
-  width: 45px;
-  height: 45px;
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  background: var(--success-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+  transition: all 0.3s ease;
+}
+
+.customer-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 35px rgba(79, 172, 254, 0.4);
+}
+
+.customer-avatar-large {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: var(--success-gradient);
   display: flex;
@@ -351,106 +635,432 @@
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 20px;
   box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
 }
 
+/* Mini Avatars */
+.delivery-person-mini-avatar, .user-mini-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Enhanced Customer Images */
+.customer-image-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 2px solid white;
+}
+
+.customer-image-thumbnail:hover {
+  transform: scale(1.15) rotate(2deg);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.customer-image-placeholder {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2px dashed rgba(102, 126, 234, 0.3);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.customer-image-placeholder:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  transform: scale(1.05);
+}
+
+.customer-image-placeholder i {
+  font-size: 20px;
+  color: rgba(102, 126, 234, 0.4);
+}
+
+/* Enhanced Address Cell */
 .address-cell {
   max-width: 200px;
 }
 
+.address-cell .text-truncate {
+  display: flex;
+  align-items: center;
+}
+
+/* Enhanced Location Badge */
 .location-badge {
   display: flex;
   align-items: center;
 }
 
+/* Enhanced Delivery Person Badge */
 .delivery-person-badge {
   display: flex;
   align-items: center;
 }
 
+/* Enhanced Added By Info */
 .added-by-info {
   display: flex;
   align-items: center;
 }
 
+/* Enhanced Customer Cards */
 .customer-card {
-  background: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  transition: var(--transition);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
+}
+
+.customer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--success-gradient);
 }
 
 .customer-card:hover {
-  box-shadow: var(--box-shadow-hover);
-  transform: translateY(-5px);
+  box-shadow: 0 25px 50px rgba(79, 172, 254, 0.15);
+  transform: translateY(-10px) scale(1.02);
 }
 
 .customer-card-header {
-  padding: 1.5rem;
+  padding: 2rem;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
 }
 
 .customer-card-body {
-  padding: 1.5rem;
+  padding: 2rem;
 }
 
 .customer-name {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 1rem;
+  font-size: 1.1rem;
 }
 
 .customer-meta {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.customer-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-light);
+  border-radius: 12px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .customer-badges {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .customer-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding-top: 1rem;
   border-top: 1px solid var(--border-color);
 }
 
-.customer-footer small {
-  display: flex;
-  align-items: center;
+/* Enhanced Badges */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
+.badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.badge.bg-info {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+/* Enhanced Action Buttons */
 .btn-group .btn {
-  border-radius: 8px !important;
-  margin-right: 4px;
+  border-radius: 12px !important;
+  margin-right: 6px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .btn-group .btn:last-child {
   margin-right: 0;
 }
 
+.btn-outline-primary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.btn-outline-warning {
+  border: 2px solid #f59e0b;
+  color: #f59e0b;
+  background: transparent;
+}
+
+.btn-outline-warning:hover {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+.btn-outline-danger {
+  border: 2px solid #ef4444;
+  color: #ef4444;
+  background: transparent;
+}
+
+.btn-outline-danger:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* Enhanced View Toggle Buttons */
 #cardView, #tableView {
-  transition: var(--transition);
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  background: transparent;
+  color: #667eea;
 }
 
 #cardView.active, #tableView.active {
   background: var(--primary-gradient);
   color: white;
+  border-color: transparent;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
 }
 
+#cardView:hover, #tableView:hover {
+  border-color: #667eea;
+  transform: translateY(-1px);
+}
+
+/* Enhanced Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  font-size: 5rem;
+  opacity: 0.2;
+  margin-bottom: 2rem;
+  background: var(--success-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state h4 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+/* Enhanced Form Controls */
+.form-select, .form-control {
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Text Truncate Enhancement */
 .text-truncate {
   display: inline-block;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+  
+  .stats-card {
+    margin-bottom: 1.5rem;
+  }
+  
+  .customer-row:hover {
+    transform: translateX(4px);
+  }
+  
+  .customer-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn-group .btn {
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
+/* Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .card, .customer-card, .stats-card {
+    border: 2px solid #000;
+  }
+  
+  .badge {
+    border: 1px solid #000;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .page-header {
+    background: none !important;
+    color: #000 !important;
+    box-shadow: none !important;
+  }
+  
+  .btn, .badge {
+    display: none !important;
+  }
+  
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
 }
 </style>
 

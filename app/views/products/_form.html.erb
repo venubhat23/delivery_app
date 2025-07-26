@@ -67,12 +67,15 @@
     <div class="col-md-6">
       <div class="mb-3">
         <%= form.label :category_id, class: "form-label fw-bold" do %>
-          <i class="fas fa-tags me-1"></i>Category
+          <i class="fas fa-tags me-1"></i>Category *
         <% end %>
         <%= form.select :category_id, 
-            options_for_select([['Uncategorized', '']] + Category.all.map { |c| [c.name, c.id] }, product.category_id), 
+            options_for_select(Category.all.map { |c| [c.name, c.id] }, product.category_id), 
             { prompt: 'Select category' }, 
-            { class: "form-select" } %>
+            { class: "form-select", required: true } %>
+        <div class="invalid-feedback">
+          Please select a category for your product.
+        </div>
         <small class="form-text text-muted">Choose a category to organize your product</small>
       </div>
     </div>
@@ -81,7 +84,44 @@
         <%= form.label :description, class: "form-label fw-bold" do %>
           <i class="fas fa-info-circle me-1"></i>Description
         <% end %>
-        <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Enter product description (optional)" %>
+        <%= form.text_area :description, class: "form-control", rows: 5, placeholder: "Enter product description (optional)" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Upload Section -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :image_url, class: "form-label fw-bold" do %>
+          <i class="fas fa-image me-1"></i>Product Image
+        <% end %>
+        <%= form.hidden_field :image_url, id: "product_image_url" %>
+        
+        <div class="image-upload-container">
+          <div class="image-preview-container" id="imagePreviewContainer" style="<%= product.image_url.present? ? '' : 'display: none;' %>">
+            <img id="imagePreview" src="<%= product.image_url %>" alt="Product Image" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+            <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeImage()">
+              <i class="fas fa-trash me-1"></i>Remove Image
+            </button>
+          </div>
+          
+          <div class="upload-area" id="uploadArea" style="<%= product.image_url.present? ? 'display: none;' : '' %>">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <div class="upload-placeholder" onclick="document.getElementById('imageInput').click();">
+              <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+              <p class="text-muted mb-0">Click to upload image</p>
+              <small class="text-muted">JPG, PNG, GIF up to 5MB</small>
+            </div>
+          </div>
+          
+          <div class="upload-progress" id="uploadProgress" style="display: none;">
+            <div class="progress mb-2">
+              <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted">Uploading...</small>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -210,8 +250,115 @@
         document.getElementById('gst-fields').style.display = this.checked ? '' : 'none';
       });
     }
+    
+    // Image upload functionality
+    setupImageUpload();
   }, false);
 })();
+
+// Image upload functions
+function setupImageUpload() {
+  const imageInput = document.getElementById('imageInput');
+  if (imageInput) {
+    imageInput.addEventListener('change', handleFileUpload);
+  }
+}
+
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    alert('Please select an image file.');
+    return;
+  }
+
+  // Validate file size (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File size must be less than 5MB.');
+    return;
+  }
+
+  showUploadProgress();
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.url) {
+      // Set the image URL in the hidden field
+      document.getElementById('product_image_url').value = data.url;
+      
+      // Show the preview
+      showImagePreview(data.url);
+      
+      // Show success message
+      showToast('Image uploaded successfully!', 'success');
+    } else {
+      throw new Error(data.error || 'Upload failed');
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    showToast('Image upload failed: ' + error.message, 'error');
+  } finally {
+    hideUploadProgress();
+  }
+}
+
+function showImagePreview(imageUrl) {
+  document.getElementById('imagePreview').src = imageUrl;
+  document.getElementById('imagePreviewContainer').style.display = '';
+  document.getElementById('uploadArea').style.display = 'none';
+}
+
+function removeImage() {
+  document.getElementById('product_image_url').value = '';
+  document.getElementById('imagePreviewContainer').style.display = 'none';
+  document.getElementById('uploadArea').style.display = '';
+  document.getElementById('imageInput').value = '';
+}
+
+function showUploadProgress() {
+  document.getElementById('uploadProgress').style.display = '';
+  document.getElementById('uploadArea').style.display = 'none';
+}
+
+function hideUploadProgress() {
+  document.getElementById('uploadProgress').style.display = 'none';
+  document.getElementById('uploadArea').style.display = '';
+}
+
+function showToast(message, type) {
+  // Create a simple toast notification
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+  toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  toast.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.remove();
+    }
+  }, 5000);
+}
 </script>
 
 <style>
@@ -244,5 +391,48 @@
 .was-validated .form-control:valid,
 .was-validated .form-select:valid {
   border-color: #1cc88a;
+}
+
+/* Image Upload Styles */
+.image-upload-container {
+  border: 2px dashed #d1d3e2;
+  border-radius: 0.35rem;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.image-upload-container:hover {
+  border-color: #4e73df;
+}
+
+.upload-placeholder {
+  cursor: pointer;
+  padding: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.upload-placeholder:hover {
+  background-color: #f8f9fc;
+  border-radius: 0.35rem;
+}
+
+.image-preview-container {
+  text-align: center;
+}
+
+.image-preview-container img {
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.upload-progress .progress {
+  height: 8px;
+  background-color: #f8f9fc;
+}
+
+.upload-progress .progress-bar {
+  background-color: #4e73df;
+  transition: width 0.3s ease;
 }
 </style>

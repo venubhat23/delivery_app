@@ -93,6 +93,11 @@ class DeliveryAssignment < ApplicationRecord
     status == 'completed' && !invoice_generated?
   end
 
+  # Alias method for backward compatibility
+  def delivery_date
+    scheduled_date
+  end
+
   # CLASS METHODS
   def self.monthly_summary_for_customer(customer_id, month, year)
     start_date = Date.new(year, month, 1).beginning_of_month
@@ -108,7 +113,7 @@ class DeliveryAssignment < ApplicationRecord
     summary = assignments.group_by(&:product).map do |product, product_assignments|
       total_quantity = product_assignments.sum(&:quantity)
       unit_price = product.price
-      total_amount = total_quantity * unit_price
+      total_amount = (total_quantity && unit_price) ? total_quantity * unit_price : 0
 
       {
         product: product,

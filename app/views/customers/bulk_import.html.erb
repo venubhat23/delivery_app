@@ -28,11 +28,15 @@
               </li>
               <li class="mb-2">
                 <i class="fas fa-check text-success me-2"></i>
-                Use CSV format with proper headers
+                Use CSV format (.csv) with proper headers
               </li>
               <li class="mb-2">
                 <i class="fas fa-check text-success me-2"></i>
-                Paste your CSV data in the text area below
+                Upload a CSV file or paste your CSV data directly
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check text-success me-2"></i>
+                Ensure data aligns with required fields to avoid upload errors
               </li>
             </ul>
           </div>
@@ -64,17 +68,154 @@
       </div>
     </div>
 
-    <!-- CSV Import Card -->
-    <div class="card shadow">
+    <!-- Upload Format Selection -->
+    <div class="card shadow mb-4">
+      <div class="card-header bg-primary text-white py-3">
+        <h6 class="m-0 font-weight-bold">
+          <i class="fas fa-cog me-2"></i>Select Upload Format
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="upload-option">
+              <input type="radio" class="btn-check" name="uploadFormat" id="csvFileOption" value="file" checked>
+              <label class="btn btn-outline-primary w-100 p-3" for="csvFileOption">
+                <i class="fas fa-file-csv fa-2x mb-2 d-block"></i>
+                <strong>CSV File Upload</strong>
+                <small class="d-block text-muted mt-1">Upload a .csv file from your computer</small>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="upload-option">
+              <input type="radio" class="btn-check" name="uploadFormat" id="csvTextOption" value="text">
+              <label class="btn btn-outline-secondary w-100 p-3" for="csvTextOption">
+                <i class="fas fa-edit fa-2x mb-2 d-block"></i>
+                <strong>Direct CSV Input</strong>
+                <small class="d-block text-muted mt-1">Copy and paste CSV data directly</small>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="upload-option">
+              <input type="radio" class="btn-check" name="uploadFormat" id="csvTableOption" value="table">
+              <label class="btn btn-outline-success w-100 p-3" for="csvTableOption">
+                <i class="fas fa-table fa-2x mb-2 d-block"></i>
+                <strong>CSV Table Input</strong>
+                <small class="d-block text-muted mt-1">Add customers using interactive table</small>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV File Upload Card -->
+    <div class="card shadow mb-4" id="fileUploadCard">
       <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">
-          <i class="fas fa-file-csv me-2"></i>CSV Data Import
+          <i class="fas fa-cloud-upload-alt me-2"></i>CSV File Upload
+        </h6>
+        <div class="card-header-actions">
+          <button type="button" class="btn btn-sm btn-outline-danger" id="clearFileBtn">
+            <i class="fas fa-trash me-1"></i>Clear
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- File Upload Area -->
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-content">
+            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+            <h5 class="upload-title">Choose CSV File or Drag & Drop</h5>
+            <p class="upload-subtitle text-muted">Select a CSV file with customer data</p>
+            <input type="file" id="csvFile" accept=".csv" class="file-input" hidden>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('csvFile').click()">
+              <i class="fas fa-folder-open me-2"></i>Browse Files
+            </button>
+            <p class="file-requirements mt-3">
+              <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Supported format: CSV (.csv) • Maximum file size: 5MB
+              </small>
+            </p>
+          </div>
+        </div>
+
+        <!-- File Info Display -->
+        <div id="fileInfo" class="file-info" style="display: none;">
+          <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+            <div class="d-flex align-items-center">
+              <i class="fas fa-file-csv text-success me-3 fa-2x"></i>
+              <div>
+                <h6 class="mb-1" id="fileName">filename.csv</h6>
+                <small class="text-muted">
+                  <span id="fileSize">0 KB</span> • 
+                  <span id="fileRows">0 rows</span>
+                </small>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="removeFileBtn">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- File Validation Status -->
+        <div id="fileValidationStatus" class="alert" style="display: none;"></div>
+
+        <!-- File Preview -->
+        <div id="filePreview" style="display: none;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">
+              <i class="fas fa-table me-2"></i>File Preview 
+              <span class="badge bg-primary" id="filePreviewCount">0</span>
+            </h6>
+            <small class="text-muted">Showing first 10 rows</small>
+          </div>
+          <div class="table-responsive preview-table-container">
+            <table class="table table-sm table-bordered table-hover" id="filePreviewTable">
+              <thead class="table-light">
+                <tr id="filePreviewHeaders">
+                  <!-- Headers will be populated dynamically -->
+                </tr>
+              </thead>
+              <tbody id="filePreviewBody">
+                <!-- Rows will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- File Action Buttons -->
+        <div class="d-flex justify-content-between align-items-center mt-4" id="fileActions" style="display: none;">
+          <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary" id="validateFileBtn">
+              <i class="fas fa-check-circle me-2"></i>Validate CSV File
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-success btn-lg" id="importFileBtn" style="display: none;">
+              <i class="fas fa-upload me-2"></i>Add Customers
+              <span class="badge bg-light text-success ms-2" id="fileImportCount">0</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV Text Input Card -->
+    <div class="card shadow mb-4" id="textInputCard" style="display: none;">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-edit me-2"></i>Direct CSV Input
         </h6>
         <div class="card-header-actions">
           <button type="button" class="btn btn-sm btn-outline-secondary" id="loadSampleBtn">
             <i class="fas fa-copy me-1"></i>Load Sample
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger" id="clearBtn">
+          <button type="button" class="btn btn-sm btn-outline-danger" id="clearTextBtn">
             <i class="fas fa-trash me-1"></i>Clear
           </button>
         </div>
@@ -100,8 +241,8 @@
             </div>
           </div>
 
-          <!-- Validation Status -->
-          <div id="validationStatus" class="alert" style="display: none;"></div>
+          <!-- Text Validation Status -->
+          <div id="textValidationStatus" class="alert" style="display: none;"></div>
 
           <!-- CSV Preview -->
           <div id="csvPreview" style="display: none;">
@@ -126,37 +267,131 @@
             </div>
           </div>
 
-          <!-- Action Buttons -->
+          <!-- Text Action Buttons -->
           <div class="d-flex justify-content-between align-items-center mt-4">
             <div class="btn-group">
-              <button type="button" class="btn btn-outline-primary" id="validateBtn">
+              <button type="button" class="btn btn-outline-primary" id="validateTextBtn">
                 <i class="fas fa-check-circle me-2"></i>Validate CSV
               </button>
             </div>
             <div>
-              <button type="button" class="btn btn-success btn-lg" id="importBtn" style="display: none;">
+              <button type="button" class="btn btn-success btn-lg" id="importTextBtn" style="display: none;">
                 <i class="fas fa-upload me-2"></i>Add Customers
-                <span class="badge bg-light text-success ms-2" id="importCount">0</span>
+                <span class="badge bg-light text-success ms-2" id="textImportCount">0</span>
               </button>
             </div>
           </div>
+        </form>
+      </div>
+    </div>
 
-          <!-- Progress Indicator -->
-          <div id="importProgress" style="display: none;" class="mt-4">
-            <div class="progress-container">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted">
-                  <i class="fas fa-spinner fa-spin me-2"></i>Your customers are uploading...
-                </span>
-                <span class="text-muted">Bulk Upload is in progress.</span>
-              </div>
-              <div class="progress">
-                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                     role="progressbar" style="width: 0%"></div>
-              </div>
+    <!-- CSV Table Input Card -->
+    <div class="card shadow mb-4" id="tableInputCard" style="display: none;">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-table me-2"></i>CSV Table Input
+        </h6>
+        <div class="card-header-actions">
+          <button type="button" class="btn btn-sm btn-outline-success" id="addRowBtn">
+            <i class="fas fa-plus me-1"></i>Add Row
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="loadSampleTableBtn">
+            <i class="fas fa-copy me-1"></i>Load Sample
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" id="clearTableBtn">
+            <i class="fas fa-trash me-1"></i>Clear All
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Table Input Instructions -->
+        <div class="alert alert-info mb-4">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <div>
+              <small>
+                <strong>You can upload only 4000 customers at once.</strong> For uploading more than 4000 customers, please contact our support team at 7400417400
+              </small>
             </div>
           </div>
-        </form>
+        </div>
+
+        <!-- Interactive CSV Table -->
+        <div class="table-responsive csv-table-container">
+          <table class="table table-bordered table-hover" id="csvTable">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 40px;">#</th>
+                <th style="min-width: 150px;">Customer Name*<br><small class="text-muted">(mandatory field)</small></th>
+                <th style="min-width: 120px;">Mobile Number*<br><small class="text-muted">(mandatory field)</small></th>
+                <th style="min-width: 200px;">Address*<br><small class="text-muted">(mandatory field)</small></th>
+                <th style="min-width: 150px;">Email</th>
+                <th style="min-width: 120px;">GST Number</th>
+                <th style="min-width: 120px;">PAN Number</th>
+                <th style="min-width: 120px;">Member ID</th>
+                <th style="min-width: 100px;">Latitude</th>
+                <th style="min-width: 100px;">Longitude</th>
+                <th style="width: 60px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="csvTableBody">
+              <!-- Initial empty rows will be added by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Stats -->
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+          <div class="table-stats">
+            <small class="text-muted">
+              <i class="fas fa-users me-1"></i>
+              <span id="tableRowCount">0</span> customers • 
+              <span id="tableValidCount">0</span> valid • 
+              <span id="tableInvalidCount">0</span> with errors
+            </small>
+          </div>
+          <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="validateTableBtn">
+              <i class="fas fa-check-circle me-1"></i>Validate Table
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Validation Status -->
+        <div id="tableValidationStatus" class="alert" style="display: none;"></div>
+
+        <!-- Table Action Buttons -->
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="btn-group">
+            <button type="button" class="btn btn-outline-secondary" id="exportTableBtn">
+              <i class="fas fa-download me-2"></i>Export as CSV
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-success btn-lg" id="importTableBtn" style="display: none;">
+              <i class="fas fa-upload me-2"></i>Add Customers
+              <span class="badge bg-light text-success ms-2" id="tableImportCount">0</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div id="importProgress" style="display: none;" class="card shadow mb-4">
+      <div class="card-body">
+        <div class="progress-container">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted">
+              <i class="fas fa-spinner fa-spin me-2"></i>Your customers are uploading...
+            </span>
+            <span class="text-muted">Bulk Upload is in progress.</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                 role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -171,6 +406,11 @@
         <p class="mb-3 text-muted">Use this template format for your CSV data:</p>
         <div class="template-container">
           <pre class="csv-template"><%= @csv_template %></pre>
+        </div>
+        <div class="mt-3">
+          <button type="button" class="btn btn-outline-primary btn-sm" id="downloadTemplateBtn">
+            <i class="fas fa-download me-2"></i>Download Template
+          </button>
         </div>
       </div>
     </div>
@@ -197,27 +437,110 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // Elements
   const csvData = document.getElementById('csvData');
-  const validateBtn = document.getElementById('validateBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const importBtn = document.getElementById('importBtn');
+  const csvFile = document.getElementById('csvFile');
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInfo = document.getElementById('fileInfo');
+  const fileActions = document.getElementById('fileActions');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  const fileRows = document.getElementById('fileRows');
+  
+  // Cards
+  const fileUploadCard = document.getElementById('fileUploadCard');
+  const textInputCard = document.getElementById('textInputCard');
+  const tableInputCard = document.getElementById('tableInputCard');
+  
+  // Buttons
+  const validateTextBtn = document.getElementById('validateTextBtn');
+  const validateFileBtn = document.getElementById('validateFileBtn');
+  const clearTextBtn = document.getElementById('clearTextBtn');
+  const clearFileBtn = document.getElementById('clearFileBtn');
+  const importTextBtn = document.getElementById('importTextBtn');
+  const importFileBtn = document.getElementById('importFileBtn');
   const loadSampleBtn = document.getElementById('loadSampleBtn');
-  const validationStatus = document.getElementById('validationStatus');
+  const removeFileBtn = document.getElementById('removeFileBtn');
+  const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+  
+  // Table input buttons
+  const addRowBtn = document.getElementById('addRowBtn');
+  const clearTableBtn = document.getElementById('clearTableBtn');
+  const loadSampleTableBtn = document.getElementById('loadSampleTableBtn');
+  const validateTableBtn = document.getElementById('validateTableBtn');
+  const importTableBtn = document.getElementById('importTableBtn');
+  const exportTableBtn = document.getElementById('exportTableBtn');
+  
+  // Table elements
+  const csvTable = document.getElementById('csvTable');
+  const csvTableBody = document.getElementById('csvTableBody');
+  const tableRowCount = document.getElementById('tableRowCount');
+  const tableValidCount = document.getElementById('tableValidCount');
+  const tableInvalidCount = document.getElementById('tableInvalidCount');
+  const tableImportCount = document.getElementById('tableImportCount');
+  const tableValidationStatus = document.getElementById('tableValidationStatus');
+  
+  // Status and preview elements
+  const textValidationStatus = document.getElementById('textValidationStatus');
+  const fileValidationStatus = document.getElementById('fileValidationStatus');
   const csvPreview = document.getElementById('csvPreview');
+  const filePreview = document.getElementById('filePreview');
   const csvPreviewBody = document.getElementById('csvPreviewBody');
+  const filePreviewBody = document.getElementById('filePreviewBody');
   const previewHeaders = document.getElementById('previewHeaders');
+  const filePreviewHeaders = document.getElementById('filePreviewHeaders');
   const importProgress = document.getElementById('importProgress');
+  
+  // Counters
   const lineCount = document.getElementById('lineCount');
   const charCount = document.getElementById('charCount');
   const previewCount = document.getElementById('previewCount');
-  const importCount = document.getElementById('importCount');
+  const filePreviewCount = document.getElementById('filePreviewCount');
+  const textImportCount = document.getElementById('textImportCount');
+  const fileImportCount = document.getElementById('fileImportCount');
+  
+  // Modal
   const successModal = new bootstrap.Modal(document.getElementById('successModal'));
   const goToCustomersBtn = document.getElementById('goToCustomersBtn');
   
-  let isValidCSV = false;
+  // State
+  let isValidTextCSV = false;
+  let isValidFileCSV = false;
+  let isValidTableCSV = false;
   let validationTimeout;
+  let currentFileData = null;
+  let tableData = [];
+  let tableRowCounter = 0;
 
-  // Character and line counter
+  // Upload format selection
+  document.querySelectorAll('input[name="uploadFormat"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      if (this.value === 'file') {
+        fileUploadCard.style.display = 'block';
+        textInputCard.style.display = 'none';
+        tableInputCard.style.display = 'none';
+      } else if (this.value === 'text') {
+        fileUploadCard.style.display = 'none';
+        textInputCard.style.display = 'block';
+        tableInputCard.style.display = 'none';
+      } else if (this.value === 'table') {
+        fileUploadCard.style.display = 'none';
+        textInputCard.style.display = 'none';
+        tableInputCard.style.display = 'block';
+        initializeTable(); // Initialize the table with empty rows
+      }
+    });
+  });
+
+  // File upload handling
+  csvFile.addEventListener('change', handleFileSelect);
+  
+  // Drag and drop
+  uploadArea.addEventListener('dragover', handleDragOver);
+  uploadArea.addEventListener('drop', handleFileDrop);
+  uploadArea.addEventListener('dragleave', handleDragLeave);
+
+  // Character and line counter for text input
   function updateCounters() {
     const text = csvData.value;
     const lines = text.split('\n').filter(line => line.trim()).length;
@@ -225,15 +548,15 @@ document.addEventListener('DOMContentLoaded', function() {
     lineCount.textContent = lines.toLocaleString();
   }
 
-  // Auto-validate on input with debounce
+  // Auto-validate text input on change
   csvData.addEventListener('input', function() {
     updateCounters();
     clearTimeout(validationTimeout);
     validationTimeout = setTimeout(() => {
       if (csvData.value.trim()) {
-        validateCSV();
+        validateTextCSV();
       } else {
-        hidePreview();
+        hideTextPreview();
       }
     }, 1000);
   });
@@ -241,45 +564,149 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize counters
   updateCounters();
 
-  // Validate CSV button
-  validateBtn.addEventListener('click', validateCSV);
+  // Button event listeners
+  validateTextBtn.addEventListener('click', validateTextCSV);
+  validateFileBtn.addEventListener('click', validateFileCSV);
+  clearTextBtn.addEventListener('click', clearTextInput);
+  clearFileBtn.addEventListener('click', clearFileInput);
+  importTextBtn.addEventListener('click', () => importCustomers('text'));
+  importFileBtn.addEventListener('click', () => importCustomers('file'));
+  loadSampleBtn.addEventListener('click', loadSampleData);
+  removeFileBtn.addEventListener('click', clearFileInput);
+  downloadTemplateBtn.addEventListener('click', downloadTemplate);
+  goToCustomersBtn.addEventListener('click', () => window.location.href = '<%= customers_path %>');
+  
+  // Table input event listeners
+  addRowBtn.addEventListener('click', addTableRow);
+  clearTableBtn.addEventListener('click', clearTable);
+  loadSampleTableBtn.addEventListener('click', loadSampleTableData);
+  validateTableBtn.addEventListener('click', validateTableData);
+  importTableBtn.addEventListener('click', importTableCustomers);
+  exportTableBtn.addEventListener('click', exportTableAsCSV);
 
-  // Clear button
-  clearBtn.addEventListener('click', function() {
+  // File handling functions
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      processFile(file);
+    }
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    uploadArea.classList.add('drag-over');
+  }
+
+  function handleDragLeave(event) {
+    event.preventDefault();
+    uploadArea.classList.remove('drag-over');
+  }
+
+  function handleFileDrop(event) {
+    event.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        processFile(file);
+      } else {
+        showFileValidationMessage('Please select a valid CSV file.', 'danger');
+      }
+    }
+  }
+
+  function processFile(file) {
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      showFileValidationMessage('File size too large. Maximum allowed size is 5MB.', 'danger');
+      return;
+    }
+
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      currentFileData = e.target.result;
+      const lines = currentFileData.split('\n').filter(line => line.trim()).length;
+      fileRows.textContent = lines > 0 ? (lines - 1) + ' data rows' : '0 rows'; // -1 for header
+      
+      uploadArea.style.display = 'none';
+      fileInfo.style.display = 'block';
+      fileActions.style.display = 'flex';
+      
+      // Auto-validate
+      validateFileCSV();
+    };
+    reader.readAsText(file);
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function clearFileInput() {
+    csvFile.value = '';
+    currentFileData = null;
+    uploadArea.style.display = 'block';
+    fileInfo.style.display = 'none';
+    fileActions.style.display = 'none';
+    hideFilePreview();
+    isValidFileCSV = false;
+  }
+
+  function clearTextInput() {
     csvData.value = '';
-    hidePreview();
-    isValidCSV = false;
+    hideTextPreview();
+    isValidTextCSV = false;
     updateCounters();
-  });
+  }
 
-  // Import button
-  importBtn.addEventListener('click', importCustomers);
-
-  // Load sample data
-  loadSampleBtn.addEventListener('click', function() {
+  function loadSampleData() {
     csvData.value = `name,phone_number,address,email,gst_number,pan_number,member_id,latitude,longitude
 John Doe,9999999999,123 Main St Delhi,john@example.com,GST123,PAN123,MEM123,28.6139,77.2090
 Jane Smith,8888888888,456 Oak Ave Mumbai,jane@example.com,GST456,PAN456,MEM456,19.0760,72.8777
 Sample Party 1,8999999990,J204 Salarpuria Bangalore,sample1@example.com,09AABCS1429B1ZS,,MEM001,12.9716,77.5946
 Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AABCS1429B1ZS,,MEM002,26.8467,80.9462`;
     updateCounters();
-    validateCSV();
-  });
+    validateTextCSV();
+  }
 
-  // Go to customers button
-  goToCustomersBtn.addEventListener('click', function() {
-    window.location.href = '<%= customers_path %>';
-  });
+  function downloadTemplate() {
+    window.location.href = '<%= download_template_customers_path(format: :csv) %>';
+  }
 
-  function validateCSV() {
+  // Validation functions
+  function validateTextCSV() {
     const csvText = csvData.value.trim();
     
     if (!csvText) {
-      showValidationMessage('Please paste CSV data', 'danger');
-      hidePreview();
+      showTextValidationMessage('Please paste CSV data', 'danger');
+      hideTextPreview();
       return;
     }
 
+    validateCSVData(csvText, 'text');
+  }
+
+  function validateFileCSV() {
+    if (!currentFileData) {
+      showFileValidationMessage('Please select a CSV file', 'danger');
+      hideFilePreview();
+      return;
+    }
+
+    validateCSVData(currentFileData, 'file');
+  }
+
+  function validateCSVData(csvText, type) {
+    const validateBtn = type === 'text' ? validateTextBtn : validateFileBtn;
+    
     // Show loading state
     validateBtn.disabled = true;
     validateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validating...';
@@ -295,47 +722,89 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
     .then(response => response.json())
     .then(data => {
       if (data.valid) {
-        showValidationMessage(`✓ CSV is valid! Found ${data.row_count} customers ready to import.`, 'success');
-        showPreview(csvText, data.row_count);
-        isValidCSV = true;
+        if (type === 'text') {
+          showTextValidationMessage(`✓ CSV is valid! Found ${data.row_count} customers ready to import.`, 'success');
+          showTextPreview(csvText, data.row_count);
+          isValidTextCSV = true;
+        } else {
+          showFileValidationMessage(`✓ CSV file is valid! Found ${data.row_count} customers ready to import.`, 'success');
+          showFilePreview(csvText, data.row_count);
+          isValidFileCSV = true;
+        }
       } else {
-        showValidationMessage(data.message, 'danger');
-        hidePreview();
-        isValidCSV = false;
+        if (type === 'text') {
+          showTextValidationMessage(data.message, 'danger');
+          hideTextPreview();
+          isValidTextCSV = false;
+        } else {
+          showFileValidationMessage(data.message, 'danger');
+          hideFilePreview();
+          isValidFileCSV = false;
+        }
       }
     })
     .catch(error => {
-      showValidationMessage('Error validating CSV: ' + error.message, 'danger');
-      hidePreview();
-      isValidCSV = false;
+      const message = 'Error validating CSV: ' + error.message;
+      if (type === 'text') {
+        showTextValidationMessage(message, 'danger');
+        hideTextPreview();
+        isValidTextCSV = false;
+      } else {
+        showFileValidationMessage(message, 'danger');
+        hideFilePreview();
+        isValidFileCSV = false;
+      }
     })
     .finally(() => {
       validateBtn.disabled = false;
-      validateBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Validate CSV';
+      validateBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Validate CSV' + (type === 'file' ? ' File' : '');
     });
   }
 
-  function showValidationMessage(message, type) {
-    validationStatus.className = `alert alert-${type}`;
-    validationStatus.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
-    validationStatus.style.display = 'block';
+  // Message display functions
+  function showTextValidationMessage(message, type) {
+    textValidationStatus.className = `alert alert-${type}`;
+    textValidationStatus.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+    textValidationStatus.style.display = 'block';
   }
 
-  function showPreview(csvText, rowCount) {
+  function showFileValidationMessage(message, type) {
+    fileValidationStatus.className = `alert alert-${type}`;
+    fileValidationStatus.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+    fileValidationStatus.style.display = 'block';
+  }
+
+  // Preview functions
+  function showTextPreview(csvText, rowCount) {
+    showPreview(csvText, rowCount, 'text');
+  }
+
+  function showFilePreview(csvText, rowCount) {
+    showPreview(csvText, rowCount, 'file');
+  }
+
+  function showPreview(csvText, rowCount, type) {
     try {
       const lines = csvText.split('\n');
       const headers = lines[0].split(',').map(h => h.trim());
       
+      const previewElement = type === 'text' ? csvPreview : filePreview;
+      const headersElement = type === 'text' ? previewHeaders : filePreviewHeaders;
+      const bodyElement = type === 'text' ? csvPreviewBody : filePreviewBody;
+      const countElement = type === 'text' ? previewCount : filePreviewCount;
+      const importCountElement = type === 'text' ? textImportCount : fileImportCount;
+      const importBtn = type === 'text' ? importTextBtn : importFileBtn;
+      
       // Clear previous preview
-      previewHeaders.innerHTML = '';
-      csvPreviewBody.innerHTML = '';
+      headersElement.innerHTML = '';
+      bodyElement.innerHTML = '';
       
       // Add headers
       headers.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
         th.className = 'text-nowrap';
-        previewHeaders.appendChild(th);
+        headersElement.appendChild(th);
       });
       
       // Show first 10 data rows
@@ -360,32 +829,44 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
             row.appendChild(cell);
           }
           
-          csvPreviewBody.appendChild(row);
+          bodyElement.appendChild(row);
         }
       }
       
-      previewCount.textContent = rowCount;
-      importCount.textContent = rowCount;
-      csvPreview.style.display = 'block';
+      countElement.textContent = rowCount;
+      importCountElement.textContent = rowCount;
+      previewElement.style.display = 'block';
       importBtn.style.display = 'inline-block';
     } catch (error) {
       console.error('Error showing preview:', error);
     }
   }
 
-  function hidePreview() {
+  function hideTextPreview() {
     csvPreview.style.display = 'none';
-    importBtn.style.display = 'none';
-    validationStatus.style.display = 'none';
+    importTextBtn.style.display = 'none';
+    textValidationStatus.style.display = 'none';
   }
 
-  function importCustomers() {
-    if (!isValidCSV) {
+  function hideFilePreview() {
+    filePreview.style.display = 'none';
+    importFileBtn.style.display = 'none';
+    fileValidationStatus.style.display = 'none';
+  }
+
+  // Import function
+  function importCustomers(type) {
+    const isValid = type === 'text' ? isValidTextCSV : isValidFileCSV;
+    const dataSource = type === 'text' ? csvData.value : currentFileData;
+    const importBtn = type === 'text' ? importTextBtn : importFileBtn;
+    const importCountElement = type === 'text' ? textImportCount : fileImportCount;
+
+    if (!isValid) {
       alert('Please validate CSV data first');
       return;
     }
 
-    if (!csvData.value.trim()) {
+    if (!dataSource || !dataSource.trim()) {
       alert('No data to import');
       return;
     }
@@ -410,12 +891,15 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
         'Content-Type': 'application/json',
         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
       },
-      body: JSON.stringify({ csv_data: csvData.value })
+      body: JSON.stringify({ csv_data: dataSource })
     })
     .then(response => response.json())
     .then(data => {
       clearInterval(progressInterval);
       progressBar.style.width = '100%';
+      
+      // Debug logging
+      console.log('Import response:', data);
       
       setTimeout(() => {
         if (data.success) {
@@ -423,17 +907,472 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
             `Successfully imported ${data.imported_count} customers!`;
           successModal.show();
         } else {
-          showValidationMessage(data.message, 'danger');
+          // Show detailed error information
+          let errorMessage = data.message;
+          if (data.errors && data.errors.length > 0) {
+            errorMessage += '\n\nDetails:\n' + data.errors.slice(0, 5).join('\n');
+            if (data.errors.length > 5) {
+              errorMessage += `\n... and ${data.errors.length - 5} more errors`;
+            }
+          }
+          
+          if (type === 'text') {
+            showTextValidationMessage(errorMessage, 'danger');
+          } else {
+            showFileValidationMessage(errorMessage, 'danger');
+          }
         }
       }, 500);
     })
     .catch(error => {
       clearInterval(progressInterval);
-      showValidationMessage('Error importing customers: ' + error.message, 'danger');
+      const message = 'Error importing customers: ' + error.message;
+      if (type === 'text') {
+        showTextValidationMessage(message, 'danger');
+      } else {
+        showFileValidationMessage(message, 'danger');
+      }
     })
     .finally(() => {
       importBtn.disabled = false;
-      importBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Add Customers <span class="badge bg-light text-success ms-2">' + importCount.textContent + '</span>';
+      importBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Add Customers <span class="badge bg-light text-success ms-2">' + importCountElement.textContent + '</span>';
+      setTimeout(() => {
+        importProgress.style.display = 'none';
+      }, 500);
+    });
+  }
+
+  // Table management functions
+  function initializeTable() {
+    tableData = [];
+    tableRowCounter = 0;
+    csvTableBody.innerHTML = '';
+    
+    // Add 5 initial empty rows
+    for (let i = 0; i < 5; i++) {
+      addTableRow();
+    }
+    updateTableStats();
+  }
+
+  function addTableRow() {
+    tableRowCounter++;
+    const rowIndex = tableData.length;
+    
+    const rowData = {
+      id: tableRowCounter,
+      name: '',
+      phone_number: '',
+      address: '',
+      email: '',
+      gst_number: '',
+      pan_number: '',
+      member_id: '',
+      latitude: '',
+      longitude: '',
+      isValid: false,
+      errors: []
+    };
+    
+    tableData.push(rowData);
+    
+    const row = document.createElement('tr');
+    row.dataset.rowIndex = rowIndex;
+    row.innerHTML = `
+      <td class="text-center">${tableRowCounter}</td>
+      <td><input type="text" class="form-control form-control-sm" name="name" placeholder="Enter customer name" value="${rowData.name}"></td>
+      <td><input type="text" class="form-control form-control-sm" name="phone_number" placeholder="Enter mobile number" value="${rowData.phone_number}"></td>
+      <td><input type="text" class="form-control form-control-sm" name="address" placeholder="Enter address" value="${rowData.address}"></td>
+      <td><input type="email" class="form-control form-control-sm" name="email" placeholder="Enter email" value="${rowData.email}"></td>
+      <td><input type="text" class="form-control form-control-sm" name="gst_number" placeholder="Enter GST number" value="${rowData.gst_number}"></td>
+      <td><input type="text" class="form-control form-control-sm" name="pan_number" placeholder="Enter PAN number" value="${rowData.pan_number}"></td>
+      <td><input type="text" class="form-control form-control-sm" name="member_id" placeholder="Enter member ID" value="${rowData.member_id}"></td>
+      <td><input type="number" class="form-control form-control-sm" name="latitude" placeholder="Latitude" step="any" value="${rowData.latitude}"></td>
+      <td><input type="number" class="form-control form-control-sm" name="longitude" placeholder="Longitude" step="any" value="${rowData.longitude}"></td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTableRow(${rowIndex})">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    `;
+    
+    csvTableBody.appendChild(row);
+    
+    // Add input event listeners for real-time validation
+    const inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('input', function() {
+        updateRowData(rowIndex, input.name, input.value);
+        validateRow(rowIndex);
+        updateTableStats();
+      });
+    });
+    
+    updateTableStats();
+  }
+
+  function removeTableRow(rowIndex) {
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (row) {
+      row.remove();
+      tableData.splice(rowIndex, 1);
+      
+      // Update row indices for remaining rows
+      const remainingRows = csvTableBody.querySelectorAll('tr');
+      remainingRows.forEach((row, index) => {
+        row.dataset.rowIndex = index;
+        const removeBtn = row.querySelector('button[onclick]');
+        if (removeBtn) {
+          removeBtn.setAttribute('onclick', `removeTableRow(${index})`);
+        }
+      });
+      
+      updateTableStats();
+    }
+  }
+
+  function updateRowData(rowIndex, fieldName, value) {
+    if (tableData[rowIndex]) {
+      tableData[rowIndex][fieldName] = value;
+    }
+  }
+
+  function validateRow(rowIndex) {
+    const rowData = tableData[rowIndex];
+    if (!rowData) return;
+    
+    rowData.errors = [];
+    rowData.isValid = true;
+    
+    // Check required fields
+    if (!rowData.name || rowData.name.trim() === '') {
+      rowData.errors.push('Customer name is required');
+      rowData.isValid = false;
+    }
+    
+    if (!rowData.phone_number || rowData.phone_number.trim() === '') {
+      rowData.errors.push('Mobile number is required');
+      rowData.isValid = false;
+    } else if (!/^\d{10}$/.test(rowData.phone_number.trim())) {
+      rowData.errors.push('Mobile number must be 10 digits');
+      rowData.isValid = false;
+    }
+    
+    if (!rowData.address || rowData.address.trim() === '') {
+      rowData.errors.push('Shipping address is required');
+      rowData.isValid = false;
+    }
+    
+    // Update row visual state
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (row) {
+      if (rowData.isValid && hasAnyData(rowData)) {
+        row.classList.remove('table-danger');
+        row.classList.add('table-success');
+      } else if (!rowData.isValid && hasAnyData(rowData)) {
+        row.classList.remove('table-success');
+        row.classList.add('table-danger');
+      } else {
+        row.classList.remove('table-success', 'table-danger');
+      }
+    }
+  }
+
+  function hasAnyData(rowData) {
+    return rowData.name || rowData.phone_number || rowData.address || 
+           rowData.email || rowData.gst_number || rowData.pan_number || 
+           rowData.member_id || rowData.latitude || rowData.longitude;
+  }
+
+  function updateTableStats() {
+    const totalRows = tableData.filter(row => hasAnyData(row)).length;
+    const validRows = tableData.filter(row => row.isValid && hasAnyData(row)).length;
+    const invalidRows = tableData.filter(row => !row.isValid && hasAnyData(row)).length;
+    
+    tableRowCount.textContent = totalRows;
+    tableValidCount.textContent = validRows;
+    tableInvalidCount.textContent = invalidRows;
+    tableImportCount.textContent = validRows;
+    
+    // Show/hide import button based on valid rows
+    if (validRows > 0) {
+      importTableBtn.style.display = 'inline-block';
+    } else {
+      importTableBtn.style.display = 'none';
+    }
+  }
+
+  function clearTable() {
+    if (confirm('Are you sure you want to clear all data?')) {
+      initializeTable();
+      tableValidationStatus.style.display = 'none';
+      importTableBtn.style.display = 'none';
+      isValidTableCSV = false;
+    }
+  }
+
+  function loadSampleTableData() {
+    // Clear existing data
+    tableData = [];
+    csvTableBody.innerHTML = '';
+    tableRowCounter = 0;
+    
+    // Sample data
+    const sampleData = [
+      {
+        name: 'John Doe',
+        phone_number: '9999999999',
+        address: '123 Main St Delhi',
+        email: 'john@example.com',
+        gst_number: 'GST123',
+        pan_number: 'PAN123',
+        member_id: 'MEM123',
+        latitude: '28.6139',
+        longitude: '77.2090'
+      },
+      {
+        name: 'Jane Smith',
+        phone_number: '8888888888',
+        address: '456 Oak Ave Mumbai',
+        email: 'jane@example.com',
+        gst_number: 'GST456',
+        pan_number: 'PAN456',
+        member_id: 'MEM456',
+        latitude: '19.0760',
+        longitude: '72.8777'
+      },
+      {
+        name: 'Sample Party 1',
+        phone_number: '8999999990',
+        address: 'J204 Salarpuria Bangalore',
+        email: 'sample1@example.com',
+        gst_number: '09AABCS1429B1ZS',
+        pan_number: '',
+        member_id: 'MEM001',
+        latitude: '12.9716',
+        longitude: '77.5946'
+      }
+    ];
+    
+    // Add sample rows
+    sampleData.forEach(data => {
+      tableRowCounter++;
+      const rowIndex = tableData.length;
+      
+      const rowData = { ...data, id: tableRowCounter, isValid: false, errors: [] };
+      tableData.push(rowData);
+      
+      const row = document.createElement('tr');
+      row.dataset.rowIndex = rowIndex;
+      row.innerHTML = `
+        <td class="text-center">${tableRowCounter}</td>
+        <td><input type="text" class="form-control form-control-sm" name="name" placeholder="Enter customer name" value="${rowData.name}"></td>
+        <td><input type="text" class="form-control form-control-sm" name="phone_number" placeholder="Enter mobile number" value="${rowData.phone_number}"></td>
+        <td><input type="text" class="form-control form-control-sm" name="address" placeholder="Enter address" value="${rowData.address}"></td>
+        <td><input type="email" class="form-control form-control-sm" name="email" placeholder="Enter email" value="${rowData.email}"></td>
+        <td><input type="text" class="form-control form-control-sm" name="gst_number" placeholder="Enter GST number" value="${rowData.gst_number}"></td>
+        <td><input type="text" class="form-control form-control-sm" name="pan_number" placeholder="Enter PAN number" value="${rowData.pan_number}"></td>
+        <td><input type="text" class="form-control form-control-sm" name="member_id" placeholder="Enter member ID" value="${rowData.member_id}"></td>
+        <td><input type="number" class="form-control form-control-sm" name="latitude" placeholder="Latitude" step="any" value="${rowData.latitude}"></td>
+        <td><input type="number" class="form-control form-control-sm" name="longitude" placeholder="Longitude" step="any" value="${rowData.longitude}"></td>
+        <td class="text-center">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTableRow(${rowIndex})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
+      
+      csvTableBody.appendChild(row);
+      
+      // Add input event listeners
+      const inputs = row.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('input', function() {
+          updateRowData(rowIndex, input.name, input.value);
+          validateRow(rowIndex);
+          updateTableStats();
+        });
+      });
+      
+      validateRow(rowIndex);
+    });
+    
+    // Add a few empty rows
+    for (let i = 0; i < 3; i++) {
+      addTableRow();
+    }
+    
+    updateTableStats();
+  }
+
+  function validateTableData() {
+    // Validate all rows
+    tableData.forEach((row, index) => {
+      validateRow(index);
+    });
+    
+    const validRows = tableData.filter(row => row.isValid && hasAnyData(row));
+    const invalidRows = tableData.filter(row => !row.isValid && hasAnyData(row));
+    
+    if (validRows.length === 0) {
+      showTableValidationMessage('No valid customer data found. Please fill in the required fields.', 'danger');
+      isValidTableCSV = false;
+    } else if (invalidRows.length > 0) {
+      showTableValidationMessage(`Found ${validRows.length} valid customers and ${invalidRows.length} rows with errors. Please fix the errors before importing.`, 'warning');
+      isValidTableCSV = false;
+    } else {
+      showTableValidationMessage(`✓ All ${validRows.length} customers are valid and ready to import!`, 'success');
+      isValidTableCSV = true;
+    }
+    
+    updateTableStats();
+  }
+
+  function showTableValidationMessage(message, type) {
+    tableValidationStatus.className = `alert alert-${type}`;
+    tableValidationStatus.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+    tableValidationStatus.style.display = 'block';
+  }
+
+  function exportTableAsCSV() {
+    const validRows = tableData.filter(row => hasAnyData(row));
+    
+    if (validRows.length === 0) {
+      alert('No data to export');
+      return;
+    }
+    
+    // Create CSV content
+    const headers = ['name', 'phone_number', 'address', 'email', 'gst_number', 'pan_number', 'member_id', 'latitude', 'longitude'];
+    const csvContent = [
+      headers.join(','),
+      ...validRows.map(row => {
+        return [
+          row.name || '',
+          row.phone_number || '',
+          row.address || '',
+          row.email || '',
+          row.gst_number || '',
+          row.pan_number || '',
+          row.member_id || '',
+          row.latitude || '',
+          row.longitude || ''
+        ].map(field => `"${field}"`).join(',');
+      })
+    ].join('\n');
+    
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'customers_table_data.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  function getTableDataAsCSV() {
+    const validRows = tableData.filter(row => row.isValid && hasAnyData(row));
+    
+    if (validRows.length === 0) {
+      return '';
+    }
+    
+    // Create CSV content matching the expected format
+    const headers = ['name', 'phone_number', 'address', 'email', 'gst_number', 'pan_number', 'member_id', 'latitude', 'longitude'];
+    const csvContent = [
+      headers.join(','),
+      ...validRows.map(row => {
+        return [
+          row.name || '',
+          row.phone_number || '',
+          row.address || '',
+          row.email || '',
+          row.gst_number || '',
+          row.pan_number || '',
+          row.member_id || '',
+          row.latitude || '',
+          row.longitude || ''
+        ].join(',');
+      })
+    ].join('\n');
+    
+    return csvContent;
+  }
+
+  // Handle table import separately to avoid function override issues
+  function importTableCustomers() {
+    const isValid = isValidTableCSV;
+    const csvData = getTableDataAsCSV();
+    
+    if (!isValid) {
+      alert('Please validate table data first');
+      return;
+    }
+
+    if (!csvData || !csvData.trim()) {
+      alert('No valid data to import');
+      return;
+    }
+
+    // Show progress
+    importTableBtn.disabled = true;
+    importTableBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    importProgress.style.display = 'block';
+
+    // Simulate progress
+    let progress = 0;
+    const progressBar = importProgress.querySelector('.progress-bar');
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 30;
+      if (progress > 90) progress = 90;
+      progressBar.style.width = progress + '%';
+    }, 200);
+
+    fetch('<%= process_bulk_import_customers_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ csv_data: csvData })
+    })
+         .then(response => response.json())
+     .then(data => {
+       clearInterval(progressInterval);
+       progressBar.style.width = '100%';
+       
+       // Debug logging
+       console.log('Table import response:', data);
+       
+       setTimeout(() => {
+         if (data.success) {
+           document.getElementById('successMessage').textContent = 
+             `Successfully imported ${data.imported_count} customers!`;
+           successModal.show();
+         } else {
+           // Show detailed error information
+           let errorMessage = data.message;
+           if (data.errors && data.errors.length > 0) {
+             errorMessage += '\n\nDetails:\n' + data.errors.slice(0, 5).join('\n');
+             if (data.errors.length > 5) {
+               errorMessage += `\n... and ${data.errors.length - 5} more errors`;
+             }
+           }
+           showTableValidationMessage(errorMessage, 'danger');
+         }
+       }, 500);
+    })
+    .catch(error => {
+      clearInterval(progressInterval);
+      const message = 'Error importing customers: ' + error.message;
+      showTableValidationMessage(message, 'danger');
+    })
+    .finally(() => {
+      importTableBtn.disabled = false;
+      importTableBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Add Customers <span class="badge bg-light text-success ms-2">' + tableImportCount.textContent + '</span>';
       setTimeout(() => {
         importProgress.style.display = 'none';
       }, 500);
@@ -458,6 +1397,82 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   margin-left: 0.5rem;
 }
 
+/* Upload option styles */
+.upload-option {
+  margin-bottom: 1rem;
+}
+
+.upload-option .btn {
+  transition: all 0.3s ease;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-option .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.upload-option .btn-check:checked + .btn {
+  background-color: #4e73df;
+  border-color: #4e73df;
+  color: white;
+}
+
+/* File upload area styles */
+.upload-area {
+  border: 2px dashed #e3e6f0;
+  border-radius: 0.5rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #f8f9fc;
+}
+
+.upload-area:hover {
+  border-color: #4e73df;
+  background: #f0f4ff;
+}
+
+.upload-area.drag-over {
+  border-color: #4e73df;
+  background: #e3f2fd;
+  transform: scale(1.02);
+}
+
+.upload-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  color: #4e73df;
+  margin-bottom: 1rem;
+}
+
+.upload-title {
+  color: #5a5c69;
+  margin-bottom: 0.5rem;
+}
+
+.upload-subtitle {
+  margin-bottom: 1.5rem;
+}
+
+.file-requirements {
+  margin-bottom: 0;
+}
+
+/* File info styles */
+.file-info {
+  margin-top: 1rem;
+}
+
+/* CSV input styles */
 .csv-input-container {
   position: relative;
 }
@@ -487,6 +1502,7 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   font-size: 0.75rem;
 }
 
+/* Preview table styles */
 .preview-table-container {
   max-height: 400px;
   border: 1px solid #e3e6f0;
@@ -515,6 +1531,7 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   background-color: rgba(78, 115, 223, 0.05);
 }
 
+/* Template styles */
 .csv-template {
   background: #f8f9fc;
   border: 1px solid #e3e6f0;
@@ -529,6 +1546,7 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   margin: 0;
 }
 
+/* Progress styles */
 .progress-container {
   background: #f8f9fc;
   border: 1px solid #e3e6f0;
@@ -542,6 +1560,7 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   background-color: #e3e6f0;
 }
 
+/* Button styles */
 .btn-group .btn {
   border-radius: 0.35rem !important;
 }
@@ -550,6 +1569,7 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   font-size: 0.75em;
 }
 
+/* Success animation */
 .success-icon {
   animation: successPulse 0.6s ease-in-out;
 }
@@ -560,6 +1580,7 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* Alert styles */
 .alert {
   border-radius: 0.5rem;
   border: none;
@@ -581,8 +1602,115 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   white-space: nowrap;
 }
 
+/* CSV Table Input Styles */
+.csv-table-container {
+  max-height: 600px;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.5rem;
+  background: white;
+}
+
+.csv-table-container table {
+  margin: 0;
+}
+
+.csv-table-container thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fc !important;
+  z-index: 10;
+  border-bottom: 2px solid #e3e6f0;
+  font-size: 0.8rem;
+  padding: 0.75rem 0.5rem;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.csv-table-container tbody td {
+  padding: 0.5rem;
+  vertical-align: middle;
+  border-color: #e3e6f0;
+}
+
+.csv-table-container input {
+  border: 1px solid #d1d3e2;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  padding: 0.375rem 0.5rem;
+  width: 100%;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.csv-table-container input:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.1rem rgba(78, 115, 223, 0.25);
+  outline: none;
+}
+
+.csv-table-container .table-success {
+  background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+.csv-table-container .table-success input {
+  border-color: #198754;
+  background-color: rgba(25, 135, 84, 0.05);
+}
+
+.csv-table-container .table-danger {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.csv-table-container .table-danger input {
+  border-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+.table-stats {
+  font-size: 0.9rem;
+}
+
+.table-stats .fas {
+  color: #4e73df;
+}
+
+/* Button styles for table actions */
+.card-header-actions .btn {
+  font-size: 0.85rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.card-header-actions .btn-outline-success {
+  color: #198754;
+  border-color: #198754;
+}
+
+.card-header-actions .btn-outline-success:hover {
+  color: white;
+  background-color: #198754;
+  border-color: #198754;
+}
+
+/* Alert styles for table validation */
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .upload-area {
+    padding: 2rem 1rem;
+  }
+  
+  .upload-content {
+    max-width: 100%;
+  }
+  
+  .upload-icon {
+    font-size: 2rem;
+  }
+  
   .csv-textarea {
     min-height: 250px;
     font-size: 0.8rem;
@@ -601,6 +1729,43 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   .card-header-actions .btn {
     margin-left: 0;
     margin-right: 0.5rem;
+  }
+  
+  .upload-option .btn {
+    height: 100px;
+    font-size: 0.9rem;
+  }
+  
+  /* Table responsive adjustments */
+  .csv-table-container {
+    max-height: 400px;
+  }
+  
+  .csv-table-container thead th {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.25rem;
+    min-width: 80px;
+  }
+  
+  .csv-table-container tbody td {
+    padding: 0.25rem;
+  }
+  
+  .csv-table-container input {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.375rem;
+  }
+  
+  .table-stats {
+    font-size: 0.8rem;
+  }
+  
+  .card-header-actions .btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0;
+    margin-right: 0.25rem;
+    margin-top: 0.25rem;
   }
 }
 </style>

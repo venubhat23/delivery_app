@@ -1,0 +1,256 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-user text-primary me-2"></i>
+          <%= @sales_customer.name %>
+        </h2>
+        <div class="btn-group">
+          <%= link_to edit_sales_customer_path(@sales_customer), class: 'btn btn-outline-primary' do %>
+            <i class="fas fa-edit me-2"></i>Edit Customer
+          <% end %>
+          <%= link_to sales_customers_path, class: 'btn btn-outline-secondary' do %>
+            <i class="fas fa-arrow-left me-2"></i>Back to Customers
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="row">
+        <!-- Customer Details -->
+        <div class="col-lg-8">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Customer Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">Customer Name</label>
+                    <div class="fw-semibold"><%= @sales_customer.name %></div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">Phone Number</label>
+                    <div>
+                      <% if @sales_customer.phone_number.present? %>
+                        <a href="tel:<%= @sales_customer.phone_number %>" class="text-decoration-none">
+                          <i class="fas fa-phone text-success me-2"></i>
+                          <%= @sales_customer.phone_number %>
+                        </a>
+                      <% else %>
+                        <span class="text-muted">Not provided</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">Email</label>
+                    <div>
+                      <% if @sales_customer.email.present? %>
+                        <a href="mailto:<%= @sales_customer.email %>" class="text-decoration-none">
+                          <i class="fas fa-envelope text-primary me-2"></i>
+                          <%= @sales_customer.email %>
+                        </a>
+                      <% else %>
+                        <span class="text-muted">Not provided</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">Contact Person</label>
+                    <div><%= @sales_customer.contact_person.present? ? @sales_customer.contact_person : 'Not specified' %></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">GST Number</label>
+                    <div>
+                      <% if @sales_customer.gst_number.present? %>
+                        <code><%= @sales_customer.gst_number %></code>
+                      <% else %>
+                        <span class="text-muted">Not provided</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">PAN Number</label>
+                    <div>
+                      <% if @sales_customer.pan_number.present? %>
+                        <code><%= @sales_customer.pan_number %></code>
+                      <% else %>
+                        <span class="text-muted">Not provided</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Address Information -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Address Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">Billing Address</label>
+                    <div>
+                      <% if @sales_customer.address.present? %>
+                        <%= simple_format(@sales_customer.address) %>
+                      <% else %>
+                        <span class="text-muted">Not provided</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">City</label>
+                    <div><%= @sales_customer.city.present? ? @sales_customer.city : 'Not specified' %></div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">State</label>
+                    <div><%= @sales_customer.state.present? ? @sales_customer.state : 'Not specified' %></div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">Pincode</label>
+                    <div><%= @sales_customer.pincode.present? ? @sales_customer.pincode : 'Not specified' %></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label text-muted">Shipping Address</label>
+                    <div>
+                      <% if @sales_customer.shipping_address.present? %>
+                        <%= simple_format(@sales_customer.shipping_address) %>
+                      <% else %>
+                        <span class="text-muted">Same as billing address</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Customer Status & Actions -->
+        <div class="col-lg-4">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Status & Actions</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label text-muted">Status</label>
+                <div>
+                  <% if @sales_customer.is_active %>
+                    <span class="badge bg-success fs-6">Active</span>
+                  <% else %>
+                    <span class="badge bg-secondary fs-6">Inactive</span>
+                  <% end %>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label text-muted">Created</label>
+                <div><%= @sales_customer.created_at.strftime('%B %d, %Y at %I:%M %p') %></div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label text-muted">Last Updated</label>
+                <div><%= @sales_customer.updated_at.strftime('%B %d, %Y at %I:%M %p') %></div>
+              </div>
+              
+              <hr>
+              
+              <div class="d-grid gap-2">
+                <%= link_to new_sales_invoice_path(sales_customer_id: @sales_customer.id), 
+                            class: 'btn btn-primary' do %>
+                  <i class="fas fa-file-invoice me-2"></i>Create Invoice
+                <% end %>
+                
+                <%= link_to edit_sales_customer_path(@sales_customer), 
+                            class: 'btn btn-outline-primary' do %>
+                  <i class="fas fa-edit me-2"></i>Edit Customer
+                <% end %>
+                
+                <%= link_to @sales_customer, method: :delete, 
+                            class: 'btn btn-outline-danger',
+                            confirm: 'Are you sure you want to delete this customer? This action cannot be undone.' do %>
+                  <i class="fas fa-trash me-2"></i>Delete Customer
+                <% end %>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Recent Invoices -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Recent Invoices</h5>
+            </div>
+            <div class="card-body">
+              <% if @sales_customer.sales_invoices.any? %>
+                <% @sales_customer.sales_invoices.limit(5).order(created_at: :desc).each do |invoice| %>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                      <div class="fw-semibold"><%= invoice.invoice_number %></div>
+                      <small class="text-muted"><%= invoice.invoice_date.strftime('%b %d, %Y') %></small>
+                    </div>
+                    <div class="text-end">
+                      <div class="fw-semibold">₹<%= number_with_precision(invoice.total_amount, precision: 2) %></div>
+                      <span class="badge bg-<%= invoice.status == 'paid' ? 'success' : 'warning' %> small">
+                        <%= invoice.status.humanize %>
+                      </span>
+                    </div>
+                  </div>
+                <% end %>
+                
+                <% if @sales_customer.sales_invoices.count > 5 %>
+                  <div class="text-center mt-3">
+                    <small class="text-muted">
+                      and <%= @sales_customer.sales_invoices.count - 5 %> more invoices...
+                    </small>
+                  </div>
+                <% end %>
+              <% else %>
+                <div class="text-center py-3">
+                  <i class="fas fa-file-invoice fa-2x text-muted mb-2"></i>
+                  <div class="text-muted">No invoices yet</div>
+                  <small class="text-muted">Create the first invoice for this customer</small>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

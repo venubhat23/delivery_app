@@ -1,0 +1,218 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-bullhorn me-2"></i><%= @advertisement.name %>
+    <span class="badge bg-<%= @advertisement.status_class %> ms-2">
+      <%= @advertisement.status_text %>
+    </span>
+  </h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <%= link_to edit_advertisement_path(@advertisement), class: "btn btn-warning me-2" do %>
+      <i class="fas fa-edit me-2"></i>Edit
+    <% end %>
+    <%= link_to advertisements_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Ads
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Advertisement Image -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-image me-2"></i>Advertisement Image
+        </h6>
+      </div>
+      <div class="card-body text-center">
+        <% if @advertisement.image_url.present? %>
+          <img src="<%= @advertisement.image_url %>" 
+               alt="<%= @advertisement.name %>" 
+               class="img-fluid rounded shadow-lg"
+               style="max-width: 100%; max-height: 500px;">
+        <% else %>
+          <div class="no-image-placeholder py-5">
+            <i class="fas fa-image fa-4x text-gray-300 mb-3"></i>
+            <h4 class="text-gray-500">No Image Available</h4>
+            <p class="text-gray-400">This advertisement doesn't have an image attached.</p>
+            <%= link_to edit_advertisement_path(@advertisement), class: "btn btn-primary" do %>
+              <i class="fas fa-plus me-2"></i>Add Image
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <!-- Advertisement Details -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-info-circle me-2"></i>Advertisement Details
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="detail-item mb-3">
+          <h6 class="fw-bold text-primary mb-1">
+            <i class="fas fa-tag me-2"></i>Name
+          </h6>
+          <p class="text-dark mb-0 fs-5 fw-bold">
+            <%= @advertisement.name %>
+          </p>
+        </div>
+        
+        <div class="detail-item mb-3">
+          <h6 class="fw-bold text-success mb-1">
+            <i class="fas fa-calendar-plus me-2"></i>Start Date
+          </h6>
+          <p class="text-dark mb-0">
+            <%= @advertisement.start_date.strftime("%B %d, %Y") %>
+            <% if @advertisement.upcoming? %>
+              <span class="badge bg-info ms-2">Upcoming</span>
+            <% end %>
+          </p>
+        </div>
+        
+        <div class="detail-item mb-3">
+          <h6 class="fw-bold text-warning mb-1">
+            <i class="fas fa-calendar-minus me-2"></i>End Date
+          </h6>
+          <p class="text-dark mb-0">
+            <%= @advertisement.end_date.strftime("%B %d, %Y") %>
+            <% if @advertisement.expired? %>
+              <span class="badge bg-secondary ms-2">Expired</span>
+            <% end %>
+          </p>
+        </div>
+        
+        <div class="detail-item mb-3">
+          <h6 class="fw-bold text-info mb-1">
+            <i class="fas fa-clock me-2"></i>Duration
+          </h6>
+          <p class="text-dark mb-0">
+            <span class="fs-4 fw-bold text-primary"><%= @advertisement.duration_days %></span> days
+          </p>
+        </div>
+        
+        <div class="detail-item mb-3">
+          <h6 class="fw-bold text-purple mb-1">
+            <i class="fas fa-toggle-on me-2"></i>Status
+          </h6>
+          <span class="badge bg-<%= @advertisement.status_class %> fs-6 px-3 py-2">
+            <%= @advertisement.status_text %>
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Timeline Information -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-info">
+          <i class="fas fa-history me-2"></i>Timeline
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="timeline-item mb-3">
+          <h6 class="fw-bold text-success mb-1">Created</h6>
+          <p class="text-muted mb-0">
+            <%= @advertisement.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+          </p>
+        </div>
+        
+        <div class="timeline-item mb-3">
+          <h6 class="fw-bold text-warning mb-1">Last Updated</h6>
+          <p class="text-muted mb-0">
+            <%= @advertisement.updated_at.strftime("%B %d, %Y at %I:%M %p") %>
+          </p>
+        </div>
+        
+        <div class="timeline-item">
+          <h6 class="fw-bold text-info mb-1">Created By</h6>
+          <p class="text-muted mb-0">
+            <i class="fas fa-user me-1"></i><%= @advertisement.user.name %>
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-secondary">
+          <i class="fas fa-cogs me-2"></i>Actions
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <%= link_to edit_advertisement_path(@advertisement), class: "btn btn-warning" do %>
+            <i class="fas fa-edit me-2"></i>Edit Advertisement
+          <% end %>
+          
+          <% if @advertisement.active? %>
+            <%= link_to edit_advertisement_path(@advertisement), class: "btn btn-outline-secondary" do %>
+              <i class="fas fa-pause me-2"></i>Deactivate
+            <% end %>
+          <% else %>
+            <%= link_to edit_advertisement_path(@advertisement), class: "btn btn-outline-success" do %>
+              <i class="fas fa-play me-2"></i>Activate
+            <% end %>
+          <% end %>
+          
+          <hr>
+          
+          <%= link_to advertisement_path(@advertisement), 
+              method: :delete, 
+              class: "btn btn-danger", 
+              data: { 
+                confirm: "Are you sure you want to delete '#{@advertisement.name}'? This action cannot be undone." 
+              } do %>
+            <i class="fas fa-trash me-2"></i>Delete Advertisement
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.detail-item, .timeline-item {
+  padding: 0.75rem;
+  border-left: 3px solid #e3e6f0;
+  background-color: #f8f9fc;
+  border-radius: 0 0.35rem 0.35rem 0;
+}
+
+.detail-item:hover, .timeline-item:hover {
+  border-left-color: #4e73df;
+  background-color: #eaecf4;
+  transition: all 0.3s ease;
+}
+
+.no-image-placeholder {
+  border: 2px dashed #d1d3e2;
+  border-radius: 0.35rem;
+  background-color: #f8f9fc;
+}
+
+.text-gray-300 {
+  color: #dddfeb !important;
+}
+
+.text-gray-400 {
+  color: #b7b9cc !important;
+}
+
+.text-gray-500 {
+  color: #858796 !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
+}
+
+.text-purple {
+  color: #6f42c1 !important;
+}
+</style>
