@@ -25,21 +25,34 @@
                   <div class="col-md-6">
                     <div class="mb-3">
                       <%= form.label :customer_id, 'Customer', class: 'form-label' %>
-                      <%= form.select :customer_id, 
-                                      options_from_collection_for_select(@customers, :id, :name, @sales_invoice.customer_id),
-                                      { prompt: 'Select or search customer...' },
-                                      { class: 'form-select customer-select', id: 'customer_select' } %>
+                      <div class="input-group">
+                        <select class="form-select customer-select" id="customer_select" name="sales_invoice[customer_id]">
+                          <option value="">Select or type customer name...</option>
+                          <% @customers.each do |customer| %>
+                            <option value="<%= customer.id %>" 
+                                    data-name="<%= customer.name %>"
+                                    data-address="<%= customer.address %>"
+                                    data-phone="<%= customer.phone_number %>"
+                                    data-email="<%= customer.email %>"
+                                    data-gst="<%= customer.gst_number %>"
+                                    <%= 'selected' if @sales_invoice.customer_id == customer.id %>>
+                              <%= customer.name %> - <%= customer.phone_number %>
+                            </option>
+                          <% end %>
+                        </select>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
+                          <i class="fas fa-plus"></i>
+                        </button>
+                      </div>
                       <div class="form-text">
-                        <%= link_to '#', class: 'text-decoration-none', data: { bs_toggle: 'modal', bs_target: '#createCustomerModal' } do %>
-                          <i class="fas fa-plus me-1"></i>Create New Customer
-                        <% end %>
+                        <small>Start typing to search customers or click + to add new</small>
                       </div>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="mb-3">
                       <%= form.label :customer_name, 'Customer Name', class: 'form-label' %>
-                      <%= form.text_field :customer_name, class: 'form-control', required: true %>
+                      <%= form.text_field :customer_name, class: 'form-control', required: true, placeholder: 'Enter customer name' %>
                     </div>
                   </div>
                 </div>
@@ -48,13 +61,13 @@
                   <div class="col-md-6">
                     <div class="mb-3">
                       <%= form.label :bill_to, 'Bill To', class: 'form-label' %>
-                      <%= form.text_area :bill_to, rows: 3, class: 'form-control' %>
+                      <%= form.text_area :bill_to, rows: 3, class: 'form-control', placeholder: 'Billing address will be auto-filled' %>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="mb-3">
                       <%= form.label :ship_to, 'Ship To', class: 'form-label' %>
-                      <%= form.text_area :ship_to, rows: 3, class: 'form-control' %>
+                      <%= form.text_area :ship_to, rows: 3, class: 'form-control', placeholder: 'Shipping address will be auto-filled' %>
                       <div class="form-check mt-2">
                         <input class="form-check-input" type="checkbox" id="sameAsBilling">
                         <label class="form-check-label" for="sameAsBilling">
@@ -94,10 +107,24 @@
                       <%= form.fields_for :sales_invoice_items do |item_form| %>
                         <tr class="item-row">
                           <td>
-                            <%= item_form.select :sales_product_id, 
-                                                options_from_collection_for_select(@sales_products, :id, :display_name, item_form.object.sales_product_id),
-                                                { prompt: 'Select product...' },
-                                                { class: 'form-select product-select', onchange: 'updateProductDetails(this)' } %>
+                            <div class="input-group">
+                              <select class="form-select product-select" name="<%= item_form.object_name %>[sales_product_id]" onchange="updateProductDetails(this)">
+                                <option value="">Select or type product...</option>
+                                <% @sales_products.each do |product| %>
+                                  <option value="<%= product.id %>" 
+                                          data-price="<%= product.sales_price %>"
+                                          data-tax="<%= product.tax_rate || 0 %>"
+                                          data-hsn="<%= product.hsn_sac || '' %>"
+                                          data-stock="<%= product.current_stock %>"
+                                          <%= 'selected' if item_form.object.sales_product_id == product.id %>>
+                                    <%= product.display_name %> (Stock: <%= product.current_stock %>)
+                                  </option>
+                                <% end %>
+                              </select>
+                              <button type="button" class="btn btn-outline-primary btn-sm" onclick="openAddProductModal(this)">
+                                <i class="fas fa-plus"></i>
+                              </button>
+                            </div>
                           </td>
                           <td>
                             <%= item_form.text_field :hsn_sac, class: 'form-control hsn-input', readonly: true %>
@@ -291,23 +318,168 @@
   </div>
 </div>
 
+<!-- Create Customer Modal -->
+<div class="modal fade" id="createCustomerModal" tabindex="-1" aria-labelledby="createCustomerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createCustomerModalLabel">Add New Customer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="newCustomerForm">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="newCustomerName" class="form-label">Customer Name *</label>
+                <input type="text" class="form-control" id="newCustomerName" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="newCustomerPhone" class="form-label">Phone Number *</label>
+                <input type="tel" class="form-control" id="newCustomerPhone" required>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="newCustomerAddress" class="form-label">Address *</label>
+            <textarea class="form-control" id="newCustomerAddress" rows="3" required></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="newCustomerEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="newCustomerEmail">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="newCustomerGST" class="form-label">GST Number</label>
+                <input type="text" class="form-control" id="newCustomerGST">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createNewCustomer()">Add Customer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="newProductForm">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="newProductName" class="form-label">Product Name *</label>
+                <input type="text" class="form-control" id="newProductName" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="newProductCategory" class="form-label">Category *</label>
+                <input type="text" class="form-control" id="newProductCategory" required>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="newProductSalesPrice" class="form-label">Sales Price *</label>
+                <input type="number" class="form-control" id="newProductSalesPrice" step="0.01" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="newProductPurchasePrice" class="form-label">Purchase Price *</label>
+                <input type="number" class="form-control" id="newProductPurchasePrice" step="0.01" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="newProductUnit" class="form-label">Unit *</label>
+                <select class="form-select" id="newProductUnit" required>
+                  <option value="">Select Unit</option>
+                  <option value="pieces">Pieces</option>
+                  <option value="kg">Kg</option>
+                  <option value="liters">Liters</option>
+                  <option value="meters">Meters</option>
+                  <option value="boxes">Boxes</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="newProductStock" class="form-label">Opening Stock *</label>
+                <input type="number" class="form-control" id="newProductStock" min="0" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="newProductTax" class="form-label">Tax Rate (%)</label>
+                <input type="number" class="form-control" id="newProductTax" step="0.01" min="0" max="100">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="newProductHSN" class="form-label">HSN/SAC Code</label>
+                <input type="text" class="form-control" id="newProductHSN">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createNewProduct()">Add Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+let currentProductRow = null;
+
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize form
   calculateDueDate();
   calculateTotals();
   
+  // Initialize searchable customer dropdown
+  initializeCustomerSearch();
+  
+  // Initialize product selects
+  initializeProductSelects();
+  
   // Customer selection
   document.getElementById('customer_select').addEventListener('change', function() {
-    const customerId = this.value;
-    if (customerId) {
-      fetch(`/sales_invoices/customers/${customerId}/details`)
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('sales_invoice_customer_name').value = data.name;
-          document.getElementById('sales_invoice_bill_to').value = data.address;
-          document.getElementById('sales_invoice_ship_to').value = data.address;
-        });
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+      const customerData = {
+        name: selectedOption.dataset.name,
+        address: selectedOption.dataset.address,
+        phone: selectedOption.dataset.phone,
+        email: selectedOption.dataset.email,
+        gst: selectedOption.dataset.gst
+      };
+      
+      fillCustomerDetails(customerData);
+    } else {
+      clearCustomerDetails();
     }
   });
   
@@ -341,19 +513,203 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+function initializeCustomerSearch() {
+  const customerSelect = document.getElementById('customer_select');
+  
+  // Make it searchable by converting to a searchable input
+  customerSelect.addEventListener('input', function() {
+    // This would be enhanced with a proper search library like Select2 or Choices.js
+    // For now, we'll use the basic functionality
+  });
+}
+
+function initializeProductSelects() {
+  document.querySelectorAll('.product-select').forEach(select => {
+    // Make product selects searchable
+    // This would be enhanced with a proper search library
+  });
+}
+
+function fillCustomerDetails(customerData) {
+  document.getElementById('sales_invoice_customer_name').value = customerData.name || '';
+  document.getElementById('sales_invoice_bill_to').value = customerData.address || '';
+  document.getElementById('sales_invoice_ship_to').value = customerData.address || '';
+}
+
+function clearCustomerDetails() {
+  document.getElementById('sales_invoice_customer_name').value = '';
+  document.getElementById('sales_invoice_bill_to').value = '';
+  document.getElementById('sales_invoice_ship_to').value = '';
+}
+
+function createNewCustomer() {
+  const form = document.getElementById('newCustomerForm');
+  const formData = new FormData(form);
+  
+  const customerData = {
+    name: document.getElementById('newCustomerName').value,
+    phone_number: document.getElementById('newCustomerPhone').value,
+    address: document.getElementById('newCustomerAddress').value,
+    email: document.getElementById('newCustomerEmail').value,
+    gst_number: document.getElementById('newCustomerGST').value
+  };
+  
+  // Validate required fields
+  if (!customerData.name || !customerData.phone_number || !customerData.address) {
+    alert('Please fill in all required fields (Name, Phone, Address)');
+    return;
+  }
+  
+  // Create customer via AJAX
+  fetch('/customers', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({ customer: customerData })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Add new customer to dropdown
+      const customerSelect = document.getElementById('customer_select');
+      const newOption = document.createElement('option');
+      newOption.value = data.customer.id;
+      newOption.textContent = `${data.customer.name} - ${data.customer.phone_number}`;
+      newOption.dataset.name = data.customer.name;
+      newOption.dataset.address = data.customer.address;
+      newOption.dataset.phone = data.customer.phone_number;
+      newOption.dataset.email = data.customer.email || '';
+      newOption.dataset.gst = data.customer.gst_number || '';
+      newOption.selected = true;
+      
+      customerSelect.appendChild(newOption);
+      
+      // Fill customer details
+      fillCustomerDetails(data.customer);
+      
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('createCustomerModal'));
+      modal.hide();
+      
+      // Reset form
+      form.reset();
+      
+      alert('Customer created successfully!');
+    } else {
+      alert('Error creating customer: ' + (data.message || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error creating customer. Please try again.');
+  });
+}
+
+function openAddProductModal(button) {
+  currentProductRow = button.closest('.item-row');
+  const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+  modal.show();
+}
+
+function createNewProduct() {
+  const form = document.getElementById('newProductForm');
+  
+  const productData = {
+    name: document.getElementById('newProductName').value,
+    category: document.getElementById('newProductCategory').value,
+    sales_price: document.getElementById('newProductSalesPrice').value,
+    purchase_price: document.getElementById('newProductPurchasePrice').value,
+    measuring_unit: document.getElementById('newProductUnit').value,
+    opening_stock: document.getElementById('newProductStock').value,
+    current_stock: document.getElementById('newProductStock').value,
+    tax_rate: document.getElementById('newProductTax').value || 0,
+    hsn_sac: document.getElementById('newProductHSN').value
+  };
+  
+  // Validate required fields
+  if (!productData.name || !productData.category || !productData.sales_price || 
+      !productData.purchase_price || !productData.measuring_unit || !productData.opening_stock) {
+    alert('Please fill in all required fields');
+    return;
+  }
+  
+  // Create product via AJAX
+  fetch('/sales_products', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({ sales_product: productData })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Add new product to all product dropdowns
+      document.querySelectorAll('.product-select').forEach(select => {
+        const newOption = document.createElement('option');
+        newOption.value = data.product.id;
+        newOption.textContent = `${data.product.name} (${data.product.measuring_unit}) (Stock: ${data.product.current_stock})`;
+        newOption.dataset.price = data.product.sales_price;
+        newOption.dataset.tax = data.product.tax_rate || 0;
+        newOption.dataset.hsn = data.product.hsn_sac || '';
+        newOption.dataset.stock = data.product.current_stock;
+        
+        select.appendChild(newOption);
+      });
+      
+      // Select the new product in the current row if available
+      if (currentProductRow) {
+        const productSelect = currentProductRow.querySelector('.product-select');
+        productSelect.value = data.product.id;
+        updateProductDetails(productSelect);
+      }
+      
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+      modal.hide();
+      
+      // Reset form
+      form.reset();
+      currentProductRow = null;
+      
+      alert('Product created successfully!');
+    } else {
+      alert('Error creating product: ' + (data.message || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error creating product. Please try again.');
+  });
+}
+
 function updateProductDetails(select) {
-  const productId = select.value;
+  const selectedOption = select.options[select.selectedIndex];
   const row = select.closest('.item-row');
   
-  if (productId) {
-    fetch(`/sales_invoices/products/${productId}/details`)
-      .then(response => response.json())
-      .then(data => {
-        row.querySelector('.hsn-input').value = data.hsn_sac;
-        row.querySelector('.price-input').value = data.price;
-        row.querySelector('.tax-input').value = data.tax_rate;
-        calculateRowTotal(row.querySelector('.quantity-input'));
-      });
+  if (selectedOption.value) {
+    const productData = {
+      price: selectedOption.dataset.price,
+      tax_rate: selectedOption.dataset.tax,
+      hsn_sac: selectedOption.dataset.hsn,
+      stock: selectedOption.dataset.stock
+    };
+    
+    row.querySelector('.hsn-input').value = productData.hsn_sac || '';
+    row.querySelector('.price-input').value = productData.price || '';
+    row.querySelector('.tax-input').value = productData.tax_rate || '';
+    
+    calculateRowTotal(row.querySelector('.quantity-input'));
+  } else {
+    // Clear fields if no product selected
+    row.querySelector('.hsn-input').value = '';
+    row.querySelector('.price-input').value = '';
+    row.querySelector('.tax-input').value = '';
+    row.querySelector('.amount-display').value = '';
+    calculateTotals();
   }
 }
 
@@ -461,11 +817,16 @@ function addNewItemRow() {
   
   newRow.innerHTML = `
     <td>
-      <select name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][sales_product_id]" 
-              class="form-select product-select" onchange="updateProductDetails(this)">
-        <option value="">Select product...</option>
-        ${document.querySelector('.product-select').innerHTML}
-      </select>
+      <div class="input-group">
+        <select name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][sales_product_id]" 
+                class="form-select product-select" onchange="updateProductDetails(this)">
+          <option value="">Select or type product...</option>
+          ${getProductOptionsHTML()}
+        </select>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="openAddProductModal(this)">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
     </td>
     <td>
       <input type="text" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][hsn_sac]" 
@@ -498,5 +859,13 @@ function addNewItemRow() {
   `;
   
   tbody.appendChild(newRow);
+}
+
+function getProductOptionsHTML() {
+  const firstProductSelect = document.querySelector('.product-select');
+  if (firstProductSelect) {
+    return firstProductSelect.innerHTML;
+  }
+  return '';
 }
 </script>

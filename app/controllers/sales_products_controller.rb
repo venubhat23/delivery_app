@@ -37,10 +37,14 @@ class SalesProductsController < ApplicationController
   def create
     @sales_product = SalesProduct.new(sales_product_params)
     
-    if @sales_product.save
-      redirect_to sales_products_path, notice: 'Sales product was successfully created.'
-    else
-      render :new
+    respond_to do |format|
+      if @sales_product.save
+        format.html { redirect_to sales_products_path, notice: 'Sales product was successfully created.' }
+        format.json { render json: { success: true, product: @sales_product, message: 'Product created successfully' } }
+      else
+        format.html { render :new }
+        format.json { render json: { success: false, errors: @sales_product.errors.full_messages, message: 'Failed to create product' } }
+      end
     end
   end
   
@@ -80,6 +84,6 @@ class SalesProductsController < ApplicationController
   def sales_product_params
     params.require(:sales_product).permit(:name, :category, :purchase_price, :sales_price, 
                                          :measuring_unit, :opening_stock, :current_stock, 
-                                         :enable_serialization, :description)
+                                         :enable_serialization, :description, :tax_rate, :hsn_sac)
   end
 end
