@@ -10,6 +10,7 @@ class PurchaseInvoiceItem < ApplicationRecord
             numericality: { greater_than_or_equal_to: 0 }
   
   before_save :calculate_amount
+  before_save :set_hsn_sac
   after_create :update_product_stock
   after_destroy :revert_product_stock
   
@@ -35,15 +36,17 @@ class PurchaseInvoiceItem < ApplicationRecord
     purchase_product&.name || 'Unknown Product'
   end
   
-  def product_hsn
-    purchase_product&.hsn_sac || ''
-  end
+
   
   def product_unit
     purchase_product&.measuring_unit || 'PCS'
   end
   
   private
+  
+  def set_hsn_sac
+    self.hsn_sac = purchase_product&.hsn_sac if purchase_product&.hsn_sac.present?
+  end
   
   def update_product_stock
     purchase_product.update_stock(quantity, 'add') if purchase_product

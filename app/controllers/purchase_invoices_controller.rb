@@ -134,7 +134,7 @@ class PurchaseInvoicesController < ApplicationController
       :auto_round_off, :amount_paid, :payment_type, :notes,
       :terms_and_conditions, :authorized_signature,
       purchase_invoice_items_attributes: [
-        :id, :purchase_product_id, :quantity, :price, :tax_rate, :discount, :_destroy
+        :id, :purchase_product_id, :quantity, :price, :tax_rate, :discount, :description, :hsn_sac, :_destroy
       ]
     )
   end
