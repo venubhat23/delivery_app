@@ -1,152 +1,976 @@
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3 mb-0">Sales Products</h2>
-        <%= link_to 'Add New Product', new_sales_product_path, class: 'btn btn-success' %>
+<!-- Enhanced Sales Products Index Page -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-shopping-cart me-3"></i>Sales Products
+      </h1>
+      <p class="text-muted mb-0">Manage your sales inventory and track product performance</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to 'Add New Product', new_sales_product_path, class: 'btn btn-primary' do %>
+        <i class="fas fa-plus me-2"></i>Add New Product
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-shopping-cart"></i>
       </div>
-      
-      <!-- Summary Cards -->
-      <div class="row mb-4">
-        <div class="col-md-3">
-          <div class="card bg-primary text-white">
-            <div class="card-body">
-              <h5 class="card-title">Total Products</h5>
-              <h3><%= @sales_products.count %></h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card bg-success text-white">
-            <div class="card-body">
-              <h5 class="card-title">Total Stock Value</h5>
-              <h3>₹<%= number_with_precision(@total_stock_value, precision: 2) %></h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card bg-warning text-white">
-            <div class="card-body">
-              <h5 class="card-title">Low Stock Items</h5>
-              <h3><%= @low_stock_count %></h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card bg-info text-white">
-            <div class="card-body">
-              <h5 class="card-title">Categories</h5>
-              <h3><%= @categories_count %></h3>
-            </div>
-          </div>
-        </div>
+      <div class="stats-number"><%= @sales_products.count %></div>
+      <div class="stats-label">Total Products</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-rupee-sign"></i>
       </div>
-      
-      <!-- Filters -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <%= form_with url: sales_products_path, method: :get, local: true, class: 'row g-3' do |form| %>
-            <div class="col-md-3">
-              <%= form.text_field :search, placeholder: 'Search products...', 
-                                  value: params[:search], class: 'form-control' %>
-            </div>
-            <div class="col-md-3">
-              <%= form.select :category, options_for_select([['All Categories', '']] + 
-                              SalesProduct.categories.map { |c| [c, c] }, 
-                              params[:category]), {}, { class: 'form-select' } %>
-            </div>
-            <div class="col-md-3">
-              <%= form.select :stock_status, options_for_select([
-                                ['All Stock Status', ''], 
-                                ['In Stock', 'in_stock'], 
-                                ['Low Stock', 'low_stock'], 
-                                ['Out of Stock', 'out_of_stock']
-                              ], params[:stock_status]), {}, { class: 'form-select' } %>
-            </div>
-            <div class="col-md-3">
-              <%= form.submit 'Filter', class: 'btn btn-outline-primary me-2' %>
-              <%= link_to 'Clear', sales_products_path, class: 'btn btn-outline-secondary' %>
-            </div>
-          <% end %>
-        </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@total_stock_value, precision: 2) %></div>
+      <div class="stats-label">Total Stock Value</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-exclamation-triangle"></i>
       </div>
-      
-      <!-- Products Table -->
-      <div class="card">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Purchase Price</th>
-                  <th>Sales Price</th>
-                  <th>Profit Margin</th>
-                  <th>Current Stock</th>
-                  <th>Stock Value</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @sales_products.each do |product| %>
-                  <tr>
-                    <td>
-                      <strong><%= product.name %></strong>
-                      <% if product.description.present? %>
-                        <br><small class="text-muted"><%= truncate(product.description, length: 50) %></small>
-                      <% end %>
-                    </td>
-                    <td>
-                      <% if product.category.present? %>
-                        <span class="badge bg-info"><%= product.category %></span>
-                      <% else %>
-                        <span class="text-muted">-</span>
-                      <% end %>
-                    </td>
-                    <td>₹<%= number_with_precision(product.purchase_price, precision: 2) %></td>
-                    <td>₹<%= number_with_precision(product.sales_price, precision: 2) %></td>
-                    <td>
-                      <span class="badge <%= product.profit_margin > 0 ? 'bg-success' : 'bg-danger' %>">
-                        <%= product.profit_margin %>%
-                      </span>
-                    </td>
-                    <td>
-                      <span class="badge <%= case product.stock_status
-                                            when 'out_of_stock' then 'bg-danger'
-                                            when 'low_stock' then 'bg-warning'
-                                            else 'bg-success'
-                                            end %>">
-                        <%= product.current_stock %> <%= product.measuring_unit %>
-                      </span>
-                    </td>
-                    <td>₹<%= number_with_precision(product.stock_value, precision: 2) %></td>
-                    <td>
-                      <% case product.stock_status %>
-                      <% when 'out_of_stock' %>
-                        <span class="badge bg-danger">Out of Stock</span>
-                      <% when 'low_stock' %>
-                        <span class="badge bg-warning">Low Stock</span>
-                      <% else %>
-                        <span class="badge bg-success">In Stock</span>
-                      <% end %>
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
+      <div class="stats-number"><%= @low_stock_count %></div>
+      <div class="stats-label">Low Stock Items</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-tags"></i>
+      </div>
+      <div class="stats-number"><%= @categories_count %></div>
+      <div class="stats-label">Categories</div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Filters & Search -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <%= form_with url: sales_products_path, method: :get, local: true, class: 'row g-3' do |form| %>
+          <div class="col-md-4">
+            <%= form.text_field :search, placeholder: 'Search products...', 
+                                value: params[:search], class: 'form-control' %>
           </div>
-          
-          <% if @sales_products.empty? %>
-            <div class="text-center py-5">
-              <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-              <h5 class="text-muted">No products found</h5>
-              <p class="text-muted">Start by adding your first product for sale.</p>
-              <%= link_to 'Add Product', new_sales_product_path, class: 'btn btn-primary' %>
-            </div>
-          <% end %>
+          <div class="col-md-3">
+            <%= form.select :category, options_for_select([['All Categories', '']] + 
+                            SalesProduct.categories.map { |c| [c, c] }, 
+                            params[:category]), {}, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-3">
+            <%= form.select :stock_status, options_for_select([
+                              ['All Stock Status', ''], 
+                              ['In Stock', 'in_stock'], 
+                              ['Low Stock', 'low_stock'], 
+                              ['Out of Stock', 'out_of_stock']
+                            ], params[:stock_status]), {}, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-2">
+            <%= form.submit 'Filter', class: 'btn btn-outline-primary' %>
+          </div>
+        <% end %>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="d-flex align-items-center justify-content-end">
+          <span class="badge bg-primary me-2"><%= @sales_products.count %> products</span>
+          <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-secondary active" id="tableView">
+              <i class="fas fa-table"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="cardView">
+              <i class="fas fa-th"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Products Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="fas fa-list me-2"></i>Sales Products List
+      </h6>
+      <div class="d-flex align-items-center">
+        <% if params.any? { |k, v| k.in?(['search', 'category', 'stock_status']) && v.present? } %>
+          <%= link_to sales_products_path, class: "btn btn-outline-secondary btn-sm" do %>
+            <i class="fas fa-times me-1"></i>Clear
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <% if @sales_products.any? %>
+      <!-- Table View -->
+      <div id="tableViewContent" class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th><i class="fas fa-tag me-1"></i>Name</th>
+              <th><i class="fas fa-layer-group me-1"></i>Category</th>
+              <th><i class="fas fa-shopping-cart me-1"></i>Purchase Price</th>
+              <th><i class="fas fa-rupee-sign me-1"></i>Sales Price</th>
+              <th><i class="fas fa-chart-line me-1"></i>Profit Margin</th>
+              <th><i class="fas fa-warehouse me-1"></i>Current Stock</th>
+              <th><i class="fas fa-dollar-sign me-1"></i>Stock Value</th>
+              <th><i class="fas fa-info-circle me-1"></i>Status</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @sales_products.each do |product| %>
+              <tr class="product-row">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="product-avatar me-3">
+                      <%= product.name.first.upcase %>
+                    </div>
+                    <div>
+                      <strong class="text-primary"><%= product.name %></strong>
+                      <% if product.description.present? %>
+                        <div class="text-muted small">
+                          <%= truncate(product.description, length: 50) %>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if product.category.present? %>
+                    <span class="badge bg-info"><%= product.category %></span>
+                  <% else %>
+                    <span class="text-muted">Uncategorized</span>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="fw-bold text-info">
+                    ₹<%= number_with_precision(product.purchase_price, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">
+                    ₹<%= number_with_precision(product.sales_price, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge <%= product.profit_margin > 0 ? 'bg-success' : 'bg-danger' %>">
+                    <i class="fas fa-percentage me-1"></i><%= product.profit_margin %>%
+                  </span>
+                </td>
+                <td>
+                  <div class="stock-indicator">
+                    <span class="badge <%= case product.stock_status
+                                          when 'out_of_stock' then 'bg-danger'
+                                          when 'low_stock' then 'bg-warning'
+                                          else 'bg-success'
+                                          end %>">
+                      <%= product.current_stock %> <%= product.measuring_unit %>
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">
+                    ₹<%= number_with_precision(product.stock_value, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <% case product.stock_status %>
+                  <% when 'out_of_stock' %>
+                    <span class="badge bg-danger">
+                      <i class="fas fa-times me-1"></i>Out of Stock
+                    </span>
+                  <% when 'low_stock' %>
+                    <span class="badge bg-warning">
+                      <i class="fas fa-exclamation-triangle me-1"></i>Low Stock
+                    </span>
+                  <% else %>
+                    <span class="badge bg-success">
+                      <i class="fas fa-check me-1"></i>In Stock
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to sales_product_path(product), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_sales_product_path(product), class: "btn btn-sm btn-outline-warning", title: "Edit Product" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <%= button_to sales_product_path(product),
+                        method: :delete,
+                        form: { "data-turbo-confirm": "Are you sure you want to delete this product?", class: "d-inline" },
+                        class: "btn btn-sm btn-outline-danger",
+                        title: "Delete Product" do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Card View (Hidden by default) -->
+      <div id="cardViewContent" class="d-none">
+        <div class="row p-4">
+          <% @sales_products.each do |product| %>
+            <div class="col-md-6 col-lg-4 mb-4">
+              <div class="product-card">
+                <div class="product-card-header">
+                  <div class="product-avatar">
+                    <%= product.name.first.upcase %>
+                  </div>
+                  <div class="product-actions">
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><%= link_to "View", sales_product_path(product), class: "dropdown-item" %></li>
+                        <li><%= link_to "Edit", edit_sales_product_path(product), class: "dropdown-item" %></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <%= button_to "Delete", sales_product_path(product), method: :delete, 
+                              form: { "data-turbo-confirm": "Are you sure?" }, 
+                              class: "dropdown-item text-danger" %>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="product-card-body">
+                  <h6 class="product-name"><%= product.name %></h6>
+                  
+                  <div class="product-meta">
+                    <% if product.category.present? %>
+                      <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-info me-2"><%= product.category %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if product.description.present? %>
+                      <div class="text-muted small mb-2">
+                        <%= truncate(product.description, length: 80) %>
+                      </div>
+                    <% end %>
+                  </div>
+                  
+                  <div class="product-stats">
+                    <div class="stat-item">
+                      <span class="stat-label">Purchase</span>
+                      <span class="stat-value text-info">₹<%= number_with_precision(product.purchase_price, precision: 2) %></span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Sales</span>
+                      <span class="stat-value text-success">₹<%= number_with_precision(product.sales_price, precision: 2) %></span>
+                    </div>
+                  </div>
+                  
+                  <div class="product-stats">
+                    <div class="stat-item">
+                      <span class="stat-label">Stock</span>
+                      <span class="stat-value <%= case product.stock_status
+                                                when 'out_of_stock' then 'text-danger'
+                                                when 'low_stock' then 'text-warning'
+                                                else 'text-success'
+                                                end %>">
+                        <%= product.current_stock %> <%= product.measuring_unit %>
+                      </span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Margin</span>
+                      <span class="stat-value <%= product.profit_margin > 0 ? 'text-success' : 'text-danger' %>">
+                        <%= product.profit_margin %>%
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="product-status mt-3">
+                    <% case product.stock_status %>
+                    <% when 'out_of_stock' %>
+                      <div class="alert alert-danger alert-sm">
+                        <i class="fas fa-times me-1"></i>Out of Stock
+                      </div>
+                    <% when 'low_stock' %>
+                      <div class="alert alert-warning alert-sm">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Low Stock Alert
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <i class="fas fa-shopping-cart"></i>
+        <h4>No Sales Products Found</h4>
+        <% if params.any? { |k, v| k.in?(['search', 'category', 'stock_status']) && v.present? } %>
+          <p>No products match your current filters.</p>
+          <%= link_to sales_products_path, class: "btn btn-outline-primary me-2" do %>
+            <i class="fas fa-times me-2"></i>Clear Filters
+          <% end %>
+        <% else %>
+          <p>Start building your sales inventory by adding your first product.</p>
+        <% end %>
+        <div class="mt-3">
+          <%= link_to 'Add Product', new_sales_product_path, class: 'btn btn-primary' do %>
+            <i class="fas fa-plus me-2"></i>Add Product
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+/* Enhanced Sales Products Index Styles - Modern & Professional */
+
+/* Page Layout Improvements */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 0 0 0 60px;
+}
+
+.stats-card:hover {
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: var(--primary-gradient);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  z-index: 2;
+}
+
+.stats-card .stats-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card .stats-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card-success::before {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning::before {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info::before {
+  background: var(--dark-gradient);
+}
+
+.stats-card-success .stats-icon {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning .stats-icon {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info .stats-icon {
+  background: var(--dark-gradient);
+}
+
+/* Enhanced Filter Card */
+.card {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1.5rem 2rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+/* Enhanced Product Table */
+.table {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: none;
+  margin: 0;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  padding: 1.5rem 1rem;
+  border: none;
+  position: relative;
+}
+
+.table thead th i {
+  opacity: 0.8;
+  margin-right: 0.5rem;
+}
+
+.product-row {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+}
+
+.product-row:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  transform: translateX(8px) scale(1.01);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+}
+
+.product-row td {
+  padding: 1.5rem 1rem;
+  vertical-align: middle;
+  border-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Enhanced Product Avatar */
+.product-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.product-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+}
+
+/* Enhanced Stock Indicator */
+.stock-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Enhanced Product Cards */
+.product-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
+}
+
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient);
+}
+
+.product-card:hover {
+  box-shadow: 0 25px 50px rgba(102, 126, 234, 0.15);
+  transform: translateY(-10px) scale(1.02);
+}
+
+.product-card-header {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
+}
+
+.product-card-body {
+  padding: 2rem;
+}
+
+.product-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.product-meta {
+  margin-bottom: 1.5rem;
+}
+
+.product-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+  padding: 1rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+/* Enhanced Badges */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.badge.bg-info {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+}
+
+/* Enhanced Action Buttons */
+.btn-group .btn {
+  border-radius: 12px !important;
+  margin-right: 6px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+.btn-outline-primary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.btn-outline-warning {
+  border: 2px solid #f59e0b;
+  color: #f59e0b;
+  background: transparent;
+}
+
+.btn-outline-warning:hover {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+.btn-outline-danger {
+  border: 2px solid #ef4444;
+  color: #ef4444;
+  background: transparent;
+}
+
+.btn-outline-danger:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* Enhanced View Toggle Buttons */
+#cardView, #tableView {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  background: transparent;
+  color: #667eea;
+}
+
+#cardView.active, #tableView.active {
+  background: var(--primary-gradient);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+#cardView:hover, #tableView:hover {
+  border-color: #667eea;
+  transform: translateY(-1px);
+}
+
+/* Enhanced Alert */
+.alert-sm {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 0;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+  color: #92400e;
+  border-left: 4px solid #f59e0b;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+  color: #991b1b;
+  border-left: 4px solid #ef4444;
+}
+
+/* Enhanced Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  font-size: 5rem;
+  opacity: 0.2;
+  margin-bottom: 2rem;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state h4 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+/* Enhanced Form Controls */
+.form-select, .form-control {
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+  
+  .stats-card {
+    margin-bottom: 1.5rem;
+  }
+  
+  .product-row:hover {
+    transform: translateX(4px);
+  }
+  
+  .product-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn-group .btn {
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
+/* Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .card, .product-card, .stats-card {
+    border: 2px solid #000;
+  }
+  
+  .badge {
+    border: 1px solid #000;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .page-header {
+    background: none !important;
+    color: #000 !important;
+    box-shadow: none !important;
+  }
+  
+  .btn, .badge {
+    display: none !important;
+  }
+  
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tableView = document.getElementById('tableView');
+  const cardView = document.getElementById('cardView');
+  const tableContent = document.getElementById('tableViewContent');
+  const cardContent = document.getElementById('cardViewContent');
+  
+  if (tableView && cardView) {
+    tableView.addEventListener('click', function() {
+      tableView.classList.add('active');
+      cardView.classList.remove('active');
+      tableContent.classList.remove('d-none');
+      cardContent.classList.add('d-none');
+    });
+    
+    cardView.addEventListener('click', function() {
+      cardView.classList.add('active');
+      tableView.classList.remove('active');
+      cardContent.classList.remove('d-none');
+      tableContent.classList.add('d-none');
+    });
+  }
+});
+</script>
