@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
   
   before_action :require_login
   
-  helper_method :current_user, :logged_in?
+  helper_method :current_user, :logged_in?, :admin_setting
   
   private
   
@@ -26,5 +26,9 @@ class ApplicationController < ActionController::Base
     unless current_user&.admin?
       redirect_to root_path
     end
+  end
+  
+  def admin_setting
+    @admin_setting ||= AdminSetting.first || AdminSetting.new
   end
 end

@@ -113,7 +113,7 @@ class DeliveryAssignment < ApplicationRecord
     summary = assignments.group_by(&:product).map do |product, product_assignments|
       total_quantity = product_assignments.sum(&:quantity)
       unit_price = product.price
-      total_amount = total_quantity * unit_price
+      total_amount = (total_quantity && unit_price) ? total_quantity * unit_price : 0
 
       {
         product: product,
