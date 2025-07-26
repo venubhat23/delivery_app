@@ -90,10 +90,19 @@ class PurchaseCustomersController < ApplicationController
   end
   
   def purchase_customer_params
-    params.require(:purchase_customer).permit(
-      :name, :address, :city, :state, :pincode, :phone_number,
-      :email, :gst_number, :pan_number, :contact_person,
-      :shipping_address, :is_active
-    )
+    # Handle both nested and flat parameter structures
+    if params[:purchase_customer].present?
+      params.require(:purchase_customer).permit(
+        :name, :address, :city, :state, :pincode, :phone_number,
+        :email, :gst_number, :pan_number, :contact_person,
+        :shipping_address, :is_active
+      )
+    else
+      params.permit(
+        :name, :address, :city, :state, :pincode, :phone_number,
+        :email, :gst_number, :pan_number, :contact_person,
+        :shipping_address, :is_active
+      )
+    end
   end
 end
