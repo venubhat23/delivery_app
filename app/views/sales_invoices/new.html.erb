@@ -24,29 +24,50 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="mb-3">
-                      <%= form.label :customer_id, 'Customer', class: 'form-label' %>
+                      <label class="form-label">Customer</label>
                       <div class="input-group">
-                        <select class="form-select customer-select" id="customer_select" name="sales_invoice[customer_id]">
+                        <select class="form-select customer-select" id="customer_select">
                           <option value="">Select or type customer name...</option>
-                          <% @customers.each do |customer| %>
-                            <option value="<%= customer.id %>" 
-                                    data-name="<%= customer.name %>"
-                                    data-address="<%= customer.address %>"
-                                    data-phone="<%= customer.phone_number %>"
-                                    data-email="<%= customer.email %>"
-                                    data-gst="<%= customer.gst_number %>"
-                                    <%= 'selected' if @sales_invoice.customer_id == customer.id %>>
-                              <%= customer.name %> - <%= customer.phone_number %>
-                            </option>
-                          <% end %>
+                          <optgroup label="Regular Customers">
+                            <% @customers.each do |customer| %>
+                              <option value="<%= customer.id %>" 
+                                      data-type="Customer"
+                                      data-name="<%= customer.name %>"
+                                      data-address="<%= customer.address %>"
+                                      data-phone="<%= customer.phone_number %>"
+                                      data-email="<%= customer.email %>"
+                                      data-gst="<%= customer.gst_number %>"
+                                      <%= 'selected' if @sales_invoice.customer_id == customer.id %>>
+                                <%= customer.name %> - <%= customer.phone_number %>
+                              </option>
+                            <% end %>
+                          </optgroup>
+                          <optgroup label="Sales Customers">
+                            <% @sales_customers.each do |sales_customer| %>
+                              <option value="<%= sales_customer.id %>" 
+                                      data-type="SalesCustomer"
+                                      data-name="<%= sales_customer.name %>"
+                                      data-address="<%= sales_customer.full_address %>"
+                                      data-phone="<%= sales_customer.phone_number %>"
+                                      data-email="<%= sales_customer.email %>"
+                                      data-gst="<%= sales_customer.gst_number %>"
+                                      <%= 'selected' if @sales_invoice.sales_customer_id == sales_customer.id %>>
+                                <%= sales_customer.name %> - <%= sales_customer.phone_number %>
+                              </option>
+                            <% end %>
+                          </optgroup>
                         </select>
-                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createSalesCustomerModal">
                           <i class="fas fa-plus"></i>
                         </button>
                       </div>
                       <div class="form-text">
                         <small>Start typing to search customers or click + to add new</small>
                       </div>
+                      
+                      <!-- Hidden fields for customer selection -->
+                      <%= form.hidden_field :customer_id, id: 'hidden_customer_id' %>
+                      <%= form.hidden_field :sales_customer_id, id: 'hidden_sales_customer_id' %>
                     </div>
                   </div>
                   <div class="col-md-6">
@@ -107,17 +128,39 @@
                       <%= form.fields_for :sales_invoice_items do |item_form| %>
                         <tr class="item-row">
                           <td>
+                            <div class="mb-2">
+                              <label class="form-label small">Item/Service Type</label>
+                              <select class="form-select form-select-sm item-type-select" name="<%= item_form.object_name %>[item_type]" onchange="toggleProductOptions(this)">
+                                <option value="SalesProduct" <%= 'selected' if item_form.object.item_type == 'SalesProduct' || item_form.object.item_type.blank? %>>Sales Product</option>
+                                <option value="Product" <%= 'selected' if item_form.object.item_type == 'Product' %>>Regular Product</option>
+                              </select>
+                            </div>
                             <div class="input-group">
-                              <select class="form-select product-select" name="<%= item_form.object_name %>[sales_product_id]" onchange="updateProductDetails(this)">
-                                <option value="">Select or type product...</option>
+                              <select class="form-select product-select sales-product-select" name="<%= item_form.object_name %>[sales_product_id]" onchange="updateProductDetails(this)" style="<%= 'display: none;' if item_form.object.item_type == 'Product' %>">
+                                <option value="">Select sales product...</option>
                                 <% @sales_products.each do |product| %>
                                   <option value="<%= product.id %>" 
+                                          data-type="SalesProduct"
                                           data-price="<%= product.sales_price %>"
                                           data-tax="<%= product.tax_rate || 0 %>"
                                           data-hsn="<%= product.hsn_sac || '' %>"
                                           data-stock="<%= product.current_stock %>"
                                           <%= 'selected' if item_form.object.sales_product_id == product.id %>>
                                     <%= product.display_name %> (Stock: <%= product.current_stock %>)
+                                  </option>
+                                <% end %>
+                              </select>
+                              <select class="form-select product-select regular-product-select" name="<%= item_form.object_name %>[product_id]" onchange="updateProductDetails(this)" style="<%= 'display: none;' if item_form.object.item_type != 'Product' %>">
+                                <option value="">Select regular product...</option>
+                                <% @products.each do |product| %>
+                                  <option value="<%= product.id %>" 
+                                          data-type="Product"
+                                          data-price="<%= product.price %>"
+                                          data-tax="0"
+                                          data-hsn=""
+                                          data-stock="<%= product.available_quantity %>"
+                                          <%= 'selected' if item_form.object.product_id == product.id %>>
+                                    <%= product.display_name %>
                                   </option>
                                 <% end %>
                               </select>
@@ -817,11 +860,23 @@ function addNewItemRow() {
   
   newRow.innerHTML = `
     <td>
+      <div class="mb-2">
+        <label class="form-label small">Item/Service Type</label>
+        <select class="form-select form-select-sm item-type-select" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][item_type]" onchange="toggleProductOptions(this)">
+          <option value="SalesProduct">Sales Product</option>
+          <option value="Product">Regular Product</option>
+        </select>
+      </div>
       <div class="input-group">
         <select name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][sales_product_id]" 
-                class="form-select product-select" onchange="updateProductDetails(this)">
-          <option value="">Select or type product...</option>
-          ${getProductOptionsHTML()}
+                class="form-select product-select sales-product-select" onchange="updateProductDetails(this)">
+          <option value="">Select sales product...</option>
+          ${getSalesProductOptionsHTML()}
+        </select>
+        <select name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][product_id]" 
+                class="form-select product-select regular-product-select" onchange="updateProductDetails(this)" style="display: none;">
+          <option value="">Select regular product...</option>
+          ${getRegularProductOptionsHTML()}
         </select>
         <button type="button" class="btn btn-outline-primary btn-sm" onclick="openAddProductModal(this)">
           <i class="fas fa-plus"></i>
@@ -861,11 +916,66 @@ function addNewItemRow() {
   tbody.appendChild(newRow);
 }
 
-function getProductOptionsHTML() {
-  const firstProductSelect = document.querySelector('.product-select');
-  if (firstProductSelect) {
-    return firstProductSelect.innerHTML;
+function getSalesProductOptionsHTML() {
+  const firstSalesProductSelect = document.querySelector('.sales-product-select');
+  if (firstSalesProductSelect) {
+    return firstSalesProductSelect.innerHTML;
   }
   return '';
 }
+
+function getRegularProductOptionsHTML() {
+  const firstRegularProductSelect = document.querySelector('.regular-product-select');
+  if (firstRegularProductSelect) {
+    return firstRegularProductSelect.innerHTML;
+  }
+  return '';
+}
+
+// Function to toggle product options based on item type
+function toggleProductOptions(selectElement) {
+  const row = selectElement.closest('tr');
+  const salesProductSelect = row.querySelector('.sales-product-select');
+  const regularProductSelect = row.querySelector('.regular-product-select');
+  
+  if (selectElement.value === 'Product') {
+    salesProductSelect.style.display = 'none';
+    regularProductSelect.style.display = 'block';
+    salesProductSelect.value = '';
+  } else {
+    salesProductSelect.style.display = 'block';
+    regularProductSelect.style.display = 'none';
+    regularProductSelect.value = '';
+  }
+}
+
+// Update customer selection
+document.getElementById('customer_select').addEventListener('change', function() {
+  const selectedOption = this.options[this.selectedIndex];
+  const customerType = selectedOption.getAttribute('data-type');
+  
+  if (customerType === 'SalesCustomer') {
+    document.getElementById('hidden_sales_customer_id').value = selectedOption.value;
+    document.getElementById('hidden_customer_id').value = '';
+  } else if (customerType === 'Customer') {
+    document.getElementById('hidden_customer_id').value = selectedOption.value;
+    document.getElementById('hidden_sales_customer_id').value = '';
+  } else {
+    document.getElementById('hidden_customer_id').value = '';
+    document.getElementById('hidden_sales_customer_id').value = '';
+  }
+  
+  // Update customer details
+  if (selectedOption.value) {
+    document.querySelector('input[name="sales_invoice[customer_name]"]').value = selectedOption.getAttribute('data-name') || '';
+    document.querySelector('textarea[name="sales_invoice[bill_to]"]').value = selectedOption.getAttribute('data-address') || '';
+    document.querySelector('textarea[name="sales_invoice[ship_to]"]').value = selectedOption.getAttribute('data-address') || '';
+  }
+});
 </script>
+
+<!-- Sales Customer Modal -->
+<%= render 'sales_customers/modal_form', sales_customer: SalesCustomer.new %>
+
+<!-- Sales Product Modal -->
+<%= render 'sales_products/modal_form' %>

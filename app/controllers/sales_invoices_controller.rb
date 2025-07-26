@@ -41,7 +41,9 @@ class SalesInvoicesController < ApplicationController
     @sales_invoice.payment_terms = 30
     @sales_invoice.sales_invoice_items.build
     @sales_products = SalesProduct.all.order(:name)
+    @products = Product.all.order(:name)
     @customers = Customer.all.order(:name)
+    @sales_customers = SalesCustomer.active.order(:name)
     set_default_terms_and_conditions
   end
   
@@ -55,13 +57,20 @@ class SalesInvoicesController < ApplicationController
       @sales_invoice.customer_name = customer.name
       @sales_invoice.bill_to = customer.address
       @sales_invoice.ship_to = customer.address
+    elsif @sales_invoice.sales_customer_id.present?
+      sales_customer = SalesCustomer.find(@sales_invoice.sales_customer_id)
+      @sales_invoice.customer_name = sales_customer.name
+      @sales_invoice.bill_to = sales_customer.full_address
+      @sales_invoice.ship_to = sales_customer.shipping_address_display
     end
     
     if @sales_invoice.save
       redirect_to @sales_invoice, notice: 'Sales invoice was successfully created.'
     else
       @sales_products = SalesProduct.all.order(:name)
+      @products = Product.all.order(:name)
       @customers = Customer.all.order(:name)
+      @sales_customers = SalesCustomer.active.order(:name)
       set_default_terms_and_conditions
       render :new
     end
@@ -69,7 +78,9 @@ class SalesInvoicesController < ApplicationController
   
   def edit
     @sales_products = SalesProduct.all.order(:name)
+    @products = Product.all.order(:name)
     @customers = Customer.all.order(:name)
+    @sales_customers = SalesCustomer.active.order(:name)
   end
   
   def update
@@ -77,7 +88,9 @@ class SalesInvoicesController < ApplicationController
       redirect_to @sales_invoice, notice: 'Sales invoice was successfully updated.'
     else
       @sales_products = SalesProduct.all.order(:name)
+      @products = Product.all.order(:name)
       @customers = Customer.all.order(:name)
+      @sales_customers = SalesCustomer.active.order(:name)
       render :edit
     end
   end
@@ -99,24 +112,53 @@ class SalesInvoicesController < ApplicationController
   end
   
   def get_product_details
-    product = SalesProduct.find(params[:id])
-    render json: {
-      price: product.sales_price,
-      tax_rate: product.tax_rate || 0,
-      hsn_sac: product.hsn_sac || '',
-      current_stock: product.current_stock
-    }
+    product_type = params[:type] || 'SalesProduct'
+    
+    if product_type == 'Product'
+      product = Product.find(params[:id])
+      render json: {
+        price: product.price,
+        tax_rate: 0, # Products don't have tax_rate in current structure
+        hsn_sac: '', # Products don't have HSN/SAC in current structure
+        current_stock: product.available_quantity,
+        type: 'Product'
+      }
+    else
+      product = SalesProduct.find(params[:id])
+      render json: {
+        price: product.sales_price,
+        tax_rate: product.tax_rate || 0,
+        hsn_sac: product.hsn_sac || '',
+        current_stock: product.current_stock,
+        type: 'SalesProduct'
+      }
+    end
   end
   
   def get_customer_details
-    customer = Customer.find(params[:id])
-    render json: {
-      name: customer.name,
-      address: customer.address,
-      phone: customer.phone_number,
-      email: customer.email,
-      gst_number: customer.gst_number
-    }
+    customer_type = params[:type] || 'Customer'
+    
+    if customer_type == 'SalesCustomer'
+      customer = SalesCustomer.find(params[:id])
+      render json: {
+        name: customer.name,
+        address: customer.full_address,
+        phone: customer.phone_number,
+        email: customer.email,
+        gst_number: customer.gst_number,
+        type: 'SalesCustomer'
+      }
+    else
+      customer = Customer.find(params[:id])
+      render json: {
+        name: customer.name,
+        address: customer.address,
+        phone: customer.phone_number,
+        email: customer.email,
+        gst_number: customer.gst_number,
+        type: 'Customer'
+      }
+    end
   end
   
   def profit_analysis
@@ -162,13 +204,13 @@ class SalesInvoicesController < ApplicationController
   end
   
   def sales_invoice_params
-    params.require(:sales_invoice).permit(:invoice_type, :customer_id, :customer_name, 
+    params.require(:sales_invoice).permit(:invoice_type, :customer_id, :sales_customer_id, :customer_name, 
                                          :invoice_date, :due_date, :payment_terms, :notes,
                                          :amount_paid, :bill_to, :ship_to, :additional_charges,
                                          :additional_discount, :apply_tcs, :tcs_rate, 
                                          :auto_round_off, :payment_type, :terms_and_conditions,
                                          :authorized_signature,
-                                         sales_invoice_items_attributes: [:id, :sales_product_id, 
+                                         sales_invoice_items_attributes: [:id, :sales_product_id, :product_id, :item_type,
                                          :quantity, :price, :tax_rate, :discount, :hsn_sac, :_destroy])
   end
   

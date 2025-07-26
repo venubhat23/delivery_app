@@ -89,6 +89,13 @@ Rails.application.routes.draw do
     end
   end
   
+  # Sales Customers
+  resources :sales_customers do
+    collection do
+      get :search
+    end
+  end
+  
   # Delivery People Management
   resources :delivery_people, path: 'delivery-person' do
     member do
