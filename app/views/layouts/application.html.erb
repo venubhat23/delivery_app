@@ -635,10 +635,10 @@
               </li>
               
               <li class="nav-item" role="none">
-                <%= link_to sales_products_path, 
-                    class: "nav-link #{'active' if current_page?(sales_products_path) || controller_name == 'sales_products'}", 
+                <%= link_to sales_invoices_path, 
+                    class: "nav-link #{'active' if current_page?(sales_invoices_path) || controller_name == 'sales_invoices'}", 
                     role: "menuitem",
-                    "aria-current": (current_page?(sales_products_path) || controller_name == 'sales_products') ? "page" : nil do %>
+                    "aria-current": (current_page?(sales_invoices_path) || controller_name == 'sales_invoices') ? "page" : nil do %>
                   <i class="fas fa-chart-bar nav-icon" aria-hidden="true"></i>
                   <span class="nav-text">Sales</span>
                 <% end %>
