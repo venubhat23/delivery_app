@@ -56,12 +56,19 @@ Rails.application.routes.draw do
   resources :purchase_invoices do
     member do
       patch :mark_as_paid
+      patch :add_payment
       get :download_pdf
     end
     
     collection do
-      get :profit_analysis
-      get :sales_analysis
+      post :bulk_upload
+    end
+  end
+  
+  # Purchase Customers
+  resources :purchase_customers do
+    collection do
+      get :search
     end
   end
   
