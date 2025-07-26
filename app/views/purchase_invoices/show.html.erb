@@ -10,9 +10,7 @@
           <%= link_to purchase_invoices_path, class: 'btn btn-outline-secondary' do %>
             <i class="fas fa-arrow-left me-2"></i>Back to Invoices
           <% end %>
-          <%= link_to edit_purchase_invoice_path(@purchase_invoice), class: 'btn btn-outline-primary' do %>
-            <i class="fas fa-edit me-2"></i>Edit
-          <% end %>
+
           <%= link_to download_pdf_purchase_invoice_path(@purchase_invoice), class: 'btn btn-outline-success', target: '_blank' do %>
             <i class="fas fa-file-pdf me-2"></i>Download PDF
           <% end %>
