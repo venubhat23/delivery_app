@@ -264,7 +264,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
 
   create_table "sales_invoice_items", force: :cascade do |t|
     t.bigint "sales_invoice_id", null: false
-    t.bigint "sales_product_id", null: false
+    t.bigint "sales_product_id"
     t.decimal "quantity", precision: 10, scale: 2, null: false
     t.decimal "price", precision: 10, scale: 2, null: false
     t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0"

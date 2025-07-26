@@ -2,27 +2,28 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Purchase Invoice</title>
+  <title>Sales Invoice</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       font-size: 12px;
       line-height: 1.4;
       color: #333;
-      margin: 0;
-      padding: 20px;
     }
-    .header {
+    
+    .invoice-header {
       text-align: center;
       margin-bottom: 30px;
       border-bottom: 2px solid #333;
       padding-bottom: 20px;
     }
+
     .company-name {
       font-size: 24px;
       font-weight: bold;
       margin-bottom: 10px;
     }
+
     .invoice-title {
       font-size: 18px;
       font-weight: bold;
@@ -33,53 +34,54 @@
       justify-content: space-between;
       margin-bottom: 30px;
     }
-    .invoice-info, .party-info {
+    
+    .invoice-details > div {
       width: 48%;
     }
-    .invoice-info h3, .party-info h3 {
-      font-size: 14px;
-      margin-bottom: 10px;
-      color: #333;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 5px;
-    }
-    table {
+    
+    .invoice-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
-    th, td {
+    
+    .invoice-table th,
+    .invoice-table td {
       border: 1px solid #ddd;
       padding: 8px;
       text-align: left;
     }
-    th {
+    
+    .invoice-table th {
       background-color: #f5f5f5;
       font-weight: bold;
     }
+    
     .text-right {
       text-align: right;
     }
+    
     .total-section {
-      margin-top: 20px;
-      float: right;
-      width: 300px;
+      margin-left: 60%;
+      width: 40%;
     }
+    
     .total-row {
       display: flex;
       justify-content: space-between;
       padding: 5px 0;
+      border-bottom: 1px solid #eee;
     }
+    
     .total-row.final {
-      border-top: 2px solid #333;
       font-weight: bold;
+      border-bottom: 2px solid #333;
       font-size: 14px;
     }
-    .footer {
-      margin-top: 50px;
-      text-align: center;
+    
+    .terms {
+      margin-top: 30px;
       font-size: 10px;
-      color: #666;
     }
   </style>
 </head>
