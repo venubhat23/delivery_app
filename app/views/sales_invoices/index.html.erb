@@ -223,9 +223,7 @@
                     <%= link_to sales_invoice_path(invoice), class: "btn btn-sm btn-outline-primary", title: "View Invoice" do %>
                       <i class="fas fa-eye"></i>
                     <% end %>
-                    <%= link_to edit_sales_invoice_path(invoice), class: "btn btn-sm btn-outline-warning", title: "Edit Invoice" do %>
-                      <i class="fas fa-edit"></i>
-                    <% end %>
+
                     <%= link_to download_pdf_sales_invoice_path(invoice), 
                           class: 'btn btn-sm btn-outline-info', 
                           target: '_blank' do %>
@@ -301,9 +299,7 @@
                     <%= link_to sales_invoice_path(invoice), class: "btn btn-sm btn-outline-primary me-1" do %>
                       <i class="fas fa-eye me-1"></i>View
                     <% end %>
-                    <%= link_to edit_sales_invoice_path(invoice), class: "btn btn-sm btn-outline-warning me-1" do %>
-                      <i class="fas fa-edit me-1"></i>Edit
-                    <% end %>
+
                     <%= link_to download_pdf_sales_invoice_path(invoice), 
                           class: 'btn btn-sm btn-outline-info me-1', 
                           target: '_blank' do %>

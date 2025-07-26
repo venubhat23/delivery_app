@@ -194,9 +194,7 @@
                     <%= link_to invoice, class: 'btn btn-sm btn-outline-primary', title: 'View' do %>
                       <i class="fas fa-eye"></i>
                     <% end %>
-                    <%= link_to edit_purchase_invoice_path(invoice), class: 'btn btn-sm btn-outline-secondary', title: 'Edit' do %>
-                      <i class="fas fa-edit"></i>
-                    <% end %>
+
                     <% if invoice.status != 'paid' %>
                       <%= link_to mark_as_paid_purchase_invoice_path(invoice), method: :patch, 
                                   class: 'btn btn-sm btn-outline-success', title: 'Mark as Paid',
