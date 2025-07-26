@@ -1,0 +1,167 @@
+<!-- app/views/parties/new.html.erb -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-user-plus me-2"></i>Add New Party
+  </h1>
+  <%= link_to parties_path, class: "btn btn-outline-secondary" do %>
+    <i class="fas fa-arrow-left me-2"></i>Back to Parties
+  <% end %>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-info-circle me-2"></i>Party Information
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= form_with model: @party, local: true do |form| %>
+          <% if @party.errors.any? %>
+            <div class="alert alert-danger">
+              <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+              <ul class="mb-0">
+                <% @party.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= form.label :name, class: "form-label" %>
+                <span class="text-danger">*</span>
+                <%= form.text_field :name, class: "form-control", placeholder: "Enter party name" %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= form.label :mobile_number, class: "form-label" %>
+                <span class="text-danger">*</span>
+                <%= form.text_field :mobile_number, class: "form-control", placeholder: "10-digit mobile number" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <%= form.label :gst_number, class: "form-label" %>
+                <%= form.text_field :gst_number, class: "form-control", placeholder: "GST Number (optional)" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-shipping-fast me-2"></i>Shipping Information
+              </h6>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <%= form.label :shipping_address, class: "form-label" %>
+                <%= form.text_area :shipping_address, class: "form-control", rows: 3, placeholder: "Enter shipping address" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= form.label :shipping_city, class: "form-label" %>
+                <%= form.text_field :shipping_city, class: "form-control", placeholder: "City" %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= form.label :shipping_state, class: "form-label" %>
+                <%= form.text_field :shipping_state, class: "form-control", placeholder: "State" %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= form.label :shipping_pincode, class: "form-label" %>
+                <%= form.text_field :shipping_pincode, class: "form-control", placeholder: "Pincode" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-file-invoice me-2"></i>Billing Information
+              </h6>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-8">
+              <div class="mb-3">
+                <%= form.label :billing_address, class: "form-label" %>
+                <%= form.text_area :billing_address, class: "form-control", rows: 3, placeholder: "Enter billing address" %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= form.label :billing_pincode, class: "form-label" %>
+                <%= form.text_field :billing_pincode, class: "form-control", placeholder: "Billing Pincode" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <%= link_to parties_path, class: "btn btn-secondary" do %>
+              <i class="fas fa-times me-2"></i>Cancel
+            <% end %>
+            <%= form.submit "Create Party", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="card shadow">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-info">
+          <i class="fas fa-lightbulb me-2"></i>Tips
+        </h6>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled">
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <strong>Required fields</strong> are marked with <span class="text-danger">*</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Mobile number must be exactly 10 digits
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            GST number format: 15 characters (optional)
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Billing address can be same as shipping address
+          </li>
+        </ul>
+        
+        <hr>
+        
+        <div class="text-center">
+          <%= link_to bulk_import_parties_path, class: "btn btn-success btn-sm" do %>
+            <i class="fas fa-upload me-2"></i>Bulk Import Parties
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

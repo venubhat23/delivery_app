@@ -585,6 +585,16 @@
               </li>
               
               <li class="nav-item" role="none">
+                <%= link_to parties_path, 
+                    class: "nav-link #{'active' if current_page?(parties_path) || controller_name == 'parties'}", 
+                    role: "menuitem",
+                    "aria-current": (current_page?(parties_path) || controller_name == 'parties') ? "page" : nil do %>
+                  <i class="fas fa-handshake nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Parties</span>
+                <% end %>
+              </li>
+              
+              <li class="nav-item" role="none">
                 <%= link_to delivery_people_path, 
                     class: "nav-link #{'active' if current_page?(delivery_people_path) || current_page?(new_delivery_person_path) || controller_name == 'delivery_people'}", 
                     role: "menuitem",
