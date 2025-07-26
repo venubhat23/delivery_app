@@ -79,7 +79,8 @@ class SalesInvoicesController < ApplicationController
       @sales_invoice.bill_to = sales_customer.full_address
       @sales_invoice.ship_to = sales_customer.shipping_address_display
     end
-    
+    @sales_invoice.invoice_type ||= 'sales'
+   
     if @sales_invoice.save
       redirect_to @sales_invoice, notice: 'Sales invoice was successfully created.'
     else
