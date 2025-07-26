@@ -99,6 +99,6 @@ class PurchaseProductsController < ApplicationController
   def purchase_product_params
     params.require(:purchase_product).permit(:name, :category, :purchase_price, :sales_price, 
                                            :measuring_unit, :opening_stock, :current_stock, 
-                                           :enable_serialization, :description, :hsn_sac)
+                                           :enable_serialization, :description, :hsn_sac, :tax_rate)
   end
 end
