@@ -199,7 +199,7 @@
                 </td>
                 <td>
                   <span class="<%= assignment.overdue? ? 'text-danger fw-bold' : 'text-muted' %>">
-                    <%= assignment.delivery_date.strftime('%d %b %Y') %>
+                    <%= assignment.scheduled_date.strftime('%d %b %Y') %>
                   </span>
                   <% if assignment.overdue? %>
                     <div class="text-danger small">
@@ -290,7 +290,7 @@
                     <div class="detail-item">
                       <i class="fas fa-calendar me-2 text-muted"></i>
                       <span class="<%= assignment.overdue? ? 'text-danger' : '' %>">
-                        <%= assignment.delivery_date.strftime('%d %b %Y') %>
+                        <%= assignment.scheduled_date.strftime('%d %b %Y') %>
                       </span>
                     </div>
                   </div>
