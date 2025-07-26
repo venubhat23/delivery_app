@@ -23,58 +23,64 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Enhanced Page Header */
-.page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 20px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-.page-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  animation: rotate 20s linear infinite;
-}
-
-.page-header h1 {
+/* Enhanced Page Header - High specificity to override application.scss */
+.main-content .page-header,
+body .page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   color: white !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 2;
+  border-radius: 20px !important;
+  padding: 2.5rem !important;
+  margin-bottom: 2rem !important;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.main-content .page-header::before,
+body .page-header::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  right: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%) !important;
+  animation: rotate 20s linear infinite !important;
+}
+
+.main-content .page-header h1,
+body .page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  position: relative !important;
+  z-index: 2 !important;
   margin: 0 !important;
 }
 
-.page-header p {
+.main-content .page-header p,
+body .page-header p {
   color: rgba(255, 255, 255, 0.9) !important;
-  position: relative;
-  z-index: 2;
+  position: relative !important;
+  z-index: 2 !important;
   margin: 0 !important;
 }
 
-.page-header .btn {
-  position: relative;
-  z-index: 2;
-  backdrop-filter: blur(10px);
+.main-content .page-header .btn,
+body .page-header .btn {
+  position: relative !important;
+  z-index: 2 !important;
+  backdrop-filter: blur(10px) !important;
   background: rgba(255, 255, 255, 0.15) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: white !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
 }
 
-.page-header .btn:hover {
+.main-content .page-header .btn:hover,
+body .page-header .btn:hover {
   background: rgba(255, 255, 255, 0.25) !important;
-  transform: translateY(-2px);
+  transform: translateY(-2px) !important;
   color: white !important;
 }
 

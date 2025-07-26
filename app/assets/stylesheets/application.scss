@@ -426,7 +426,7 @@
   }
 }
 
-/* Page Headers */
+/* Page Headers - Basic fallback styles (overridden by shared_index_styles.scss for index pages) */
 .page-header {
   background: var(--bg-white);
   border-radius: var(--border-radius);
@@ -448,7 +448,9 @@
   }
 }
 
-/* Stats Cards */
+/* Index pages use enhanced styling from shared_index_styles.scss */
+
+/* Stats Cards - Basic fallback styles (enhanced versions in shared_index_styles.scss) */
 .stats-card {
   background: var(--bg-white);
   border-radius: var(--border-radius);
