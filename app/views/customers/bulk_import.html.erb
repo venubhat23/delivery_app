@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
   clearTableBtn.addEventListener('click', clearTable);
   loadSampleTableBtn.addEventListener('click', loadSampleTableData);
   validateTableBtn.addEventListener('click', validateTableData);
-  importTableBtn.addEventListener('click', () => importCustomers('table'));
+  importTableBtn.addEventListener('click', importTableCustomers);
   exportTableBtn.addEventListener('click', exportTableAsCSV);
 
   // File handling functions
@@ -898,16 +898,28 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
       clearInterval(progressInterval);
       progressBar.style.width = '100%';
       
+      // Debug logging
+      console.log('Import response:', data);
+      
       setTimeout(() => {
         if (data.success) {
           document.getElementById('successMessage').textContent = 
             `Successfully imported ${data.imported_count} customers!`;
           successModal.show();
         } else {
+          // Show detailed error information
+          let errorMessage = data.message;
+          if (data.errors && data.errors.length > 0) {
+            errorMessage += '\n\nDetails:\n' + data.errors.slice(0, 5).join('\n');
+            if (data.errors.length > 5) {
+              errorMessage += `\n... and ${data.errors.length - 5} more errors`;
+            }
+          }
+          
           if (type === 'text') {
-            showTextValidationMessage(data.message, 'danger');
+            showTextValidationMessage(errorMessage, 'danger');
           } else {
-            showFileValidationMessage(data.message, 'danger');
+            showFileValidationMessage(errorMessage, 'danger');
           }
         }
       }, 500);
@@ -1290,76 +1302,81 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
     return csvContent;
   }
 
-  // Update the import function to handle table data
-  const originalImportCustomers = importCustomers;
-  function importCustomers(type) {
-    if (type === 'table') {
-      const isValid = isValidTableCSV;
-      const csvData = getTableDataAsCSV();
-      
-      if (!isValid) {
-        alert('Please validate table data first');
-        return;
-      }
-
-      if (!csvData || !csvData.trim()) {
-        alert('No valid data to import');
-        return;
-      }
-
-      // Show progress
-      importTableBtn.disabled = true;
-      importTableBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
-      importProgress.style.display = 'block';
-
-      // Simulate progress
-      let progress = 0;
-      const progressBar = importProgress.querySelector('.progress-bar');
-      const progressInterval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress > 90) progress = 90;
-        progressBar.style.width = progress + '%';
-      }, 200);
-
-      fetch('<%= process_bulk_import_customers_path %>', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ csv_data: csvData })
-      })
-      .then(response => response.json())
-      .then(data => {
-        clearInterval(progressInterval);
-        progressBar.style.width = '100%';
-        
-        setTimeout(() => {
-          if (data.success) {
-            document.getElementById('successMessage').textContent = 
-              `Successfully imported ${data.imported_count} customers!`;
-            successModal.show();
-          } else {
-            showTableValidationMessage(data.message, 'danger');
-          }
-        }, 500);
-      })
-      .catch(error => {
-        clearInterval(progressInterval);
-        const message = 'Error importing customers: ' + error.message;
-        showTableValidationMessage(message, 'danger');
-      })
-      .finally(() => {
-        importTableBtn.disabled = false;
-        importTableBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Add Customers <span class="badge bg-light text-success ms-2">' + tableImportCount.textContent + '</span>';
-        setTimeout(() => {
-          importProgress.style.display = 'none';
-        }, 500);
-      });
-    } else {
-      // Call original function for file and text imports
-      originalImportCustomers(type);
+  // Handle table import separately to avoid function override issues
+  function importTableCustomers() {
+    const isValid = isValidTableCSV;
+    const csvData = getTableDataAsCSV();
+    
+    if (!isValid) {
+      alert('Please validate table data first');
+      return;
     }
+
+    if (!csvData || !csvData.trim()) {
+      alert('No valid data to import');
+      return;
+    }
+
+    // Show progress
+    importTableBtn.disabled = true;
+    importTableBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    importProgress.style.display = 'block';
+
+    // Simulate progress
+    let progress = 0;
+    const progressBar = importProgress.querySelector('.progress-bar');
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 30;
+      if (progress > 90) progress = 90;
+      progressBar.style.width = progress + '%';
+    }, 200);
+
+    fetch('<%= process_bulk_import_customers_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ csv_data: csvData })
+    })
+         .then(response => response.json())
+     .then(data => {
+       clearInterval(progressInterval);
+       progressBar.style.width = '100%';
+       
+       // Debug logging
+       console.log('Table import response:', data);
+       
+       setTimeout(() => {
+         if (data.success) {
+           document.getElementById('successMessage').textContent = 
+             `Successfully imported ${data.imported_count} customers!`;
+           successModal.show();
+         } else {
+           // Show detailed error information
+           let errorMessage = data.message;
+           if (data.errors && data.errors.length > 0) {
+             errorMessage += '\n\nDetails:\n' + data.errors.slice(0, 5).join('\n');
+             if (data.errors.length > 5) {
+               errorMessage += `\n... and ${data.errors.length - 5} more errors`;
+             }
+           }
+           showTableValidationMessage(errorMessage, 'danger');
+         }
+       }, 500);
+    })
+    .catch(error => {
+      clearInterval(progressInterval);
+      const message = 'Error importing customers: ' + error.message;
+      showTableValidationMessage(message, 'danger');
+    })
+    .finally(() => {
+      importTableBtn.disabled = false;
+      importTableBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Add Customers <span class="badge bg-light text-success ms-2">' + tableImportCount.textContent + '</span>';
+      setTimeout(() => {
+        importProgress.style.display = 'none';
+      }, 500);
+    });
   }
 });
 </script>
