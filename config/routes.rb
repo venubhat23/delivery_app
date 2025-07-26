@@ -76,6 +76,7 @@ Rails.application.routes.draw do
   resources :sales_invoices do
     member do
       patch :mark_as_paid
+      get :mark_as_paid
       get :download_pdf
       get :get_product_details
       get :get_customer_details

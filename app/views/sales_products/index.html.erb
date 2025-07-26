@@ -108,7 +108,7 @@
         <i class="fas fa-list me-2"></i>Sales Products List
       </h6>
       <div class="d-flex align-items-center">
-        <% if params.slice(:search, :category, :stock_status).any? { |k, v| v.present? } %>
+        <% if params.slice(:search, :category, :stock_status).to_h.any? { |k, v| v.present? } %>
           <%= link_to sales_products_path, class: "btn btn-outline-secondary btn-sm" do %>
             <i class="fas fa-times me-1"></i>Clear
           <% end %>
@@ -327,7 +327,7 @@
       <div class="empty-state">
         <i class="fas fa-shopping-cart"></i>
         <h4>No Sales Products Found</h4>
-        <% if params.slice(:search, :category, :stock_status).any? { |k, v| v.present? } %>
+        <% if params.slice(:search, :category, :stock_status).to_h.any? { |k, v| v.present? } %>
           <p>No products match your current filters.</p>
           <%= link_to sales_products_path, class: "btn btn-outline-primary me-2" do %>
             <i class="fas fa-times me-2"></i>Clear Filters

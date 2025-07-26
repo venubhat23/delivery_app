@@ -118,8 +118,13 @@ class SalesInvoicesController < ApplicationController
   
   def mark_as_paid
     payment_type = params[:payment_type] || 'cash'
-    @sales_invoice.mark_as_paid!(payment_type)
-    redirect_to @sales_invoice, notice: 'Invoice marked as paid successfully.'
+    
+    begin
+      @sales_invoice.mark_as_paid!(payment_type)
+      redirect_to @sales_invoice, notice: 'Invoice marked as paid successfully.'
+    rescue => e
+      redirect_to @sales_invoice, alert: "Error marking invoice as paid: #{e.message}"
+    end
   end
   
   def download_pdf

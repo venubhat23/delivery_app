@@ -138,6 +138,11 @@ class SalesInvoice < ApplicationRecord
     'None'
   end
 
+  # Alias method for compatibility with views
+  def paid_amount
+    amount_paid
+  end
+
   def status_badge_class
     case status
     when 'paid'
