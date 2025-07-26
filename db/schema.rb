@@ -10,9 +10,27 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_17_120002) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "admin_settings", force: :cascade do |t|
+    t.string "business_name"
+    t.text "address"
+    t.string "mobile"
+    t.string "email"
+    t.string "gstin"
+    t.string "pan_number"
+    t.string "account_holder_name"
+    t.string "bank_name"
+    t.string "account_number"
+    t.string "ifsc_code"
+    t.string "upi_id"
+    t.text "terms_and_conditions"
+    t.string "qr_code_path"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "categories", force: :cascade do |t|
     t.string "name", null: false
@@ -49,9 +67,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_17_120002) do
     t.string "address_landmark"
     t.string "address_type"
     t.boolean "is_active", default: true
+    t.string "password_digest"
+    t.string "pincode"
+    t.string "landmark"
+    t.string "city"
+    t.string "postal_code"
+    t.string "state"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
     t.index ["is_active"], name: "index_customers_on_is_active"
-    t.index ["member_id"], name: "index_customers_on_member_id", unique: true
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -236,6 +259,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_17_120002) do
     t.string "status"
     t.index ["category"], name: "index_purchase_products_on_category"
     t.index ["name"], name: "index_purchase_products_on_name"
+    t.index ["status"], name: "index_purchase_products_on_status"
   end
 
   create_table "sales_invoice_items", force: :cascade do |t|
