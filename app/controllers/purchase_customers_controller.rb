@@ -18,9 +18,33 @@ class PurchaseCustomersController < ApplicationController
     @purchase_customer = PurchaseCustomer.new(purchase_customer_params)
     
     if @purchase_customer.save
-      redirect_to @purchase_customer, notice: 'Purchase customer was successfully created.'
+      respond_to do |format|
+        format.html { redirect_to @purchase_customer, notice: 'Purchase customer was successfully created.' }
+        format.json { 
+          render json: { 
+            success: true, 
+            vendor: {
+              id: @purchase_customer.id,
+              name: @purchase_customer.name,
+              display_name: @purchase_customer.display_name,
+              address: @purchase_customer.full_address,
+              phone: @purchase_customer.phone_number,
+              email: @purchase_customer.email,
+              gst_number: @purchase_customer.gst_number
+            }
+          }
+        }
+      end
     else
-      render :new
+      respond_to do |format|
+        format.html { render :new }
+        format.json { 
+          render json: { 
+            success: false, 
+            errors: @purchase_customer.errors.full_messages 
+          }
+        }
+      end
     end
   end
   

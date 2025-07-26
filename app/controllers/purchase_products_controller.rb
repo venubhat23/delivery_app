@@ -33,9 +33,33 @@ class PurchaseProductsController < ApplicationController
     @purchase_product = PurchaseProduct.new(purchase_product_params)
     
     if @purchase_product.save
-      redirect_to purchase_products_path, notice: 'Purchase product was successfully created.'
+      respond_to do |format|
+        format.html { redirect_to purchase_products_path, notice: 'Purchase product was successfully created.' }
+        format.json { 
+          render json: { 
+            success: true, 
+            product: {
+              id: @purchase_product.id,
+              name: @purchase_product.name,
+              display_name: @purchase_product.display_name,
+              purchase_price: @purchase_product.purchase_price,
+              sales_price: @purchase_product.sales_price,
+              hsn_sac: @purchase_product.hsn_sac,
+              measuring_unit: @purchase_product.measuring_unit
+            }
+          }
+        }
+      end
     else
-      render :new
+      respond_to do |format|
+        format.html { render :new }
+        format.json { 
+          render json: { 
+            success: false, 
+            errors: @purchase_product.errors.full_messages 
+          }
+        }
+      end
     end
   end
   
@@ -57,7 +81,13 @@ class PurchaseProductsController < ApplicationController
   
   def search
     @products = PurchaseProduct.where('name ILIKE ?', "%#{params[:term]}%").limit(10)
-    render json: @products.map { |p| { id: p.id, name: p.name, price: p.sales_price } }
+    render json: @products.map { |p| { 
+      id: p.id, 
+      name: p.name, 
+      price: p.purchase_price,
+      hsn_sac: p.hsn_sac,
+      measuring_unit: p.measuring_unit
+    } }
   end
   
   private
@@ -69,6 +99,6 @@ class PurchaseProductsController < ApplicationController
   def purchase_product_params
     params.require(:purchase_product).permit(:name, :category, :purchase_price, :sales_price, 
                                            :measuring_unit, :opening_stock, :current_stock, 
-                                           :enable_serialization, :description)
+                                           :enable_serialization, :description, :hsn_sac)
   end
 end
