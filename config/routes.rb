@@ -26,6 +26,8 @@ Rails.application.routes.draw do
     end
   end
   
+  resources :advertisements
+  
   resources :parties do
     collection do
       get :bulk_import

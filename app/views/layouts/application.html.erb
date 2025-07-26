@@ -585,12 +585,12 @@
               </li>
               
               <li class="nav-item" role="none">
-                <%= link_to parties_path, 
-                    class: "nav-link #{'active' if current_page?(parties_path) || controller_name == 'parties'}", 
+                <%= link_to advertisements_path, 
+                    class: "nav-link #{'active' if current_page?(advertisements_path) || controller_name == 'advertisements'}", 
                     role: "menuitem",
-                    "aria-current": (current_page?(parties_path) || controller_name == 'parties') ? "page" : nil do %>
-                  <i class="fas fa-handshake nav-icon" aria-hidden="true"></i>
-                  <span class="nav-text">Parties</span>
+                    "aria-current": (current_page?(advertisements_path) || controller_name == 'advertisements') ? "page" : nil do %>
+                  <i class="fas fa-bullhorn nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Ads</span>
                 <% end %>
               </li>
               

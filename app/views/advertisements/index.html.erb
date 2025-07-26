@@ -1,0 +1,276 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-bullhorn me-2"></i>Ad Management
+  </h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <%= link_to new_advertisement_path, class: "btn btn-primary" do %>
+      <i class="fas fa-plus me-2"></i>Create Ad
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-primary shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Ads</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @total_advertisements %></div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-bullhorn fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Ads</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @active_count %></div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-info shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Currently Running</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @current_count %></div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Inactive Ads</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @inactive_count %></div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-pause-circle fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-filter me-2"></i>Filters & Search
+    </h6>
+  </div>
+  <div class="card-body">
+    <%= form_with url: advertisements_path, method: :get, local: true, class: "row g-3" do |form| %>
+      <div class="col-md-4">
+        <%= form.select :status, 
+            options_for_select([
+              ['All Status', ''],
+              ['Active', 'active'],
+              ['Inactive', 'inactive']
+            ], params[:status]), 
+            {}, 
+            { class: "form-select", onchange: "this.form.submit();" } %>
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-search me-2"></i>Apply Filters
+        </button>
+        <%= link_to advertisements_path, class: "btn btn-outline-secondary ms-2" do %>
+          <i class="fas fa-times me-2"></i>Clear
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Advertisements Table -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-list me-2"></i>All Advertisements
+    </h6>
+  </div>
+  <div class="card-body">
+    <% if @advertisements.any? %>
+      <div class="table-responsive">
+        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Image</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Duration</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @advertisements.each do |advertisement| %>
+              <tr>
+                <td>
+                  <div class="fw-bold"><%= advertisement.name %></div>
+                  <small class="text-muted">
+                    Created: <%= advertisement.created_at.strftime("%b %d, %Y") %>
+                  </small>
+                </td>
+                <td class="text-center">
+                  <% if advertisement.image_url.present? %>
+                    <img src="<%= advertisement.image_url %>" 
+                         alt="<%= advertisement.name %>" 
+                         class="img-thumbnail" 
+                         style="max-width: 80px; max-height: 80px; cursor: pointer;"
+                         data-bs-toggle="modal" 
+                         data-bs-target="#imageModal<%= advertisement.id %>">
+                  <% else %>
+                    <span class="text-muted">
+                      <i class="fas fa-image fa-2x"></i>
+                      <br><small>No Image</small>
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="fw-bold"><%= advertisement.start_date.strftime("%b %d, %Y") %></span>
+                  <% if advertisement.upcoming? %>
+                    <br><small class="badge bg-info">Upcoming</small>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="fw-bold"><%= advertisement.end_date.strftime("%b %d, %Y") %></span>
+                  <% if advertisement.expired? %>
+                    <br><small class="badge bg-secondary">Expired</small>
+                  <% end %>
+                </td>
+                <td class="text-center">
+                  <span class="fw-bold"><%= advertisement.duration_days %></span> days
+                </td>
+                <td>
+                  <span class="badge bg-<%= advertisement.status_class %>">
+                    <%= advertisement.status_text %>
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group" role="group" aria-label="Actions">
+                    <%= link_to advertisement_path(advertisement), class: "btn btn-sm btn-outline-info", title: "View" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_advertisement_path(advertisement), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <%= link_to advertisement_path(advertisement), 
+                        method: :delete, 
+                        class: "btn btn-sm btn-outline-danger", 
+                        title: "Delete",
+                        data: { 
+                          confirm: "Are you sure you want to delete '#{advertisement.name}'?" 
+                        } do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="fas fa-bullhorn fa-3x text-gray-300 mb-3"></i>
+        <h4 class="text-gray-500">No Advertisements Found</h4>
+        <p class="text-gray-400 mb-4">Get started by creating your first advertisement campaign.</p>
+        <%= link_to new_advertisement_path, class: "btn btn-primary" do %>
+          <i class="fas fa-plus me-2"></i>Create Your First Ad
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Image Modals -->
+<% @advertisements.each do |advertisement| %>
+  <% if advertisement.image_url.present? %>
+    <div class="modal fade" id="imageModal<%= advertisement.id %>" tabindex="-1" aria-labelledby="imageModalLabel<%= advertisement.id %>" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="imageModalLabel<%= advertisement.id %>">
+              <i class="fas fa-image me-2"></i><%= advertisement.name %>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center">
+            <img src="<%= advertisement.image_url %>" 
+                 alt="<%= advertisement.name %>" 
+                 class="img-fluid rounded shadow">
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<style>
+.border-left-primary {
+  border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+  border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+  border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid #f6c23e !important;
+}
+
+.text-xs {
+  font-size: 0.7rem;
+}
+
+.text-gray-300 {
+  color: #dddfeb !important;
+}
+
+.text-gray-400 {
+  color: #b7b9cc !important;
+}
+
+.text-gray-500 {
+  color: #858796 !important;
+}
+
+.text-gray-800 {
+  color: #5a5c69 !important;
+}
+
+.shadow {
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+</style>
