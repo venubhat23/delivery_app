@@ -209,7 +209,7 @@
                         <i class="fas fa-ellipsis-v"></i>
                       </button>
                       <ul class="dropdown-menu">
-                        <li><%= link_to 'Download PDF', purchase_invoice_path(invoice, format: :pdf), 
+                        <li><%= link_to 'Download PDF', download_pdf_purchase_invoice_path(invoice), 
                                         class: 'dropdown-item', target: '_blank' do %>
                           <i class="fas fa-file-pdf me-2"></i>Download PDF
                         <% end %></li>
