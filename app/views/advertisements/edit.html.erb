@@ -1,0 +1,98 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <i class="fas fa-edit me-2"></i>Edit Advertisement
+    <small class="text-muted">- <%= @advertisement.name %></small>
+  </h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <%= link_to advertisement_path(@advertisement), class: "btn btn-outline-info me-2" do %>
+      <i class="fas fa-eye me-2"></i>View
+    <% end %>
+    <%= link_to advertisements_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Ads
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-bullhorn me-2"></i>Advertisement Details
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= render 'form', advertisement: @advertisement %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-info">
+          <i class="fas fa-info-circle me-2"></i>Advertisement Info
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="info-item mb-3">
+          <h6 class="fw-bold text-primary mb-1">Created</h6>
+          <p class="text-muted mb-0">
+            <%= @advertisement.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+          </p>
+        </div>
+        
+        <div class="info-item mb-3">
+          <h6 class="fw-bold text-success mb-1">Last Updated</h6>
+          <p class="text-muted mb-0">
+            <%= @advertisement.updated_at.strftime("%B %d, %Y at %I:%M %p") %>
+          </p>
+        </div>
+        
+        <div class="info-item mb-3">
+          <h6 class="fw-bold text-warning mb-1">Duration</h6>
+          <p class="text-muted mb-0">
+            <%= @advertisement.duration_days %> days
+          </p>
+        </div>
+        
+        <div class="info-item">
+          <h6 class="fw-bold text-info mb-1">Current Status</h6>
+          <span class="badge bg-<%= @advertisement.status_class %>">
+            <%= @advertisement.status_text %>
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+        </h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          Deleting this advertisement will permanently remove it from the system.
+        </p>
+        <%= link_to advertisement_path(@advertisement), 
+            method: :delete, 
+            class: "btn btn-danger", 
+            data: { 
+              confirm: "Are you sure you want to delete '#{@advertisement.name}'? This action cannot be undone." 
+            } do %>
+          <i class="fas fa-trash me-2"></i>Delete Advertisement
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.info-item {
+  padding: 0.75rem;
+  border-left: 3px solid #e3e6f0;
+  background-color: #f8f9fc;
+  border-radius: 0 0.35rem 0.35rem 0;
+}
+</style>
