@@ -258,7 +258,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <label class="form-label">Authorized signatory for <%= current_user&.business_name || 'Purchase' %></label>
+              <label class="form-label">Authorized signatory for <%= admin_setting&.business_name || 'Purchase' %></label>
               <div class="border rounded p-3 text-center signature-container" style="min-height: 120px;" id="signatureContainer">
                 <% if purchase_invoice.authorized_signature.present? %>
                   <img src="<%= purchase_invoice.authorized_signature %>" alt="Authorized Signature" class="img-fluid" style="max-height: 80px;">
