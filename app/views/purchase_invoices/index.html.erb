@@ -1,0 +1,314 @@
+<!-- Purchase Invoices Dashboard -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-shopping-cart me-3"></i>Purchase Invoices
+      </h1>
+      <p class="text-muted mb-0">Manage your purchase invoices and track payment status</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_purchase_invoice_path, class: 'btn btn-primary' do %>
+        <i class="fas fa-plus me-2"></i>Create Purchase Invoice
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_precision(@total_purchases, precision: 2) %></div>
+      <div class="stats-label">Total Purchases</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_precision(@total_paid, precision: 2) %></div>
+      <div class="stats-label">Paid</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_precision(@total_unpaid, precision: 2) %></div>
+      <div class="stats-label">Unpaid</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-danger">
+      <div class="stats-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stats-number"><%= @overdue_count %></div>
+      <div class="stats-label">Overdue Invoices</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <%= form_with url: purchase_invoices_path, method: :get, local: true, class: 'row g-3' do |form| %>
+          <div class="col-md-3">
+            <%= form.text_field :party, placeholder: 'Search by vendor...', 
+                                value: params[:party], class: 'form-control' %>
+          </div>
+          <div class="col-md-2">
+            <%= form.select :status, 
+                            options_for_select([
+                              ['All Status', ''],
+                              ['Paid', 'paid'],
+                              ['Unpaid', 'unpaid'],
+                              ['Partial', 'partial'],
+                              ['Overdue', 'overdue']
+                            ], params[:status]), 
+                            {}, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-2">
+            <%= form.select :date_filter,
+                            options_for_select([
+                              ['Last 365 Days', 'last_365_days'],
+                              ['This Month', 'this_month'],
+                              ['Last Month', 'last_month'],
+                              ['This Year', 'this_year'],
+                              ['Custom Range', 'custom']
+                            ], params[:date_filter] || 'last_365_days'),
+                            {}, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-2">
+            <%= form.date_field :start_date, value: params[:start_date], 
+                                class: 'form-control', placeholder: 'Start Date' %>
+          </div>
+          <div class="col-md-2">
+            <%= form.date_field :end_date, value: params[:end_date], 
+                                class: 'form-control', placeholder: 'End Date' %>
+          </div>
+          <div class="col-md-1">
+            <%= form.submit 'Filter', class: 'btn btn-outline-primary' %>
+          </div>
+        <% end %>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="d-flex align-items-center justify-content-end">
+          <span class="badge bg-primary me-2"><%= @purchase_invoices.count %> invoices</span>
+          <%= link_to purchase_invoices_path(show_all: true), class: 'btn btn-sm btn-outline-secondary me-2' do %>
+            <i class="fas fa-list me-1"></i>Show All
+          <% end %>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-download me-1"></i>Export
+            </button>
+            <ul class="dropdown-menu">
+              <li><%= link_to '#', class: 'dropdown-item' do %>
+                <i class="fas fa-file-csv me-2"></i>Export CSV
+              <% end %></li>
+              <li><%= link_to '#', class: 'dropdown-item' do %>
+                <i class="fas fa-file-pdf me-2"></i>Export PDF
+              <% end %></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Invoices Table -->
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">Purchase Invoices</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @purchase_invoices.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Purchase Invoice Number</th>
+              <th>Party Name</th>
+              <th>Due In</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @purchase_invoices.each do |invoice| %>
+              <tr>
+                <td>
+                  <div class="fw-medium"><%= invoice.invoice_date.strftime('%d %b %Y') %></div>
+                  <small class="text-muted"><%= time_ago_in_words(invoice.created_at) %> ago</small>
+                </td>
+                <td>
+                  <%= link_to invoice.invoice_number, invoice, class: 'text-decoration-none fw-medium' %>
+                  <% if invoice.original_invoice_number.present? %>
+                    <br><small class="text-muted">Orig: <%= invoice.original_invoice_number %></small>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="fw-medium"><%= invoice.party_name %></div>
+                  <% if invoice.party_phone.present? %>
+                    <small class="text-muted"><%= invoice.party_phone %></small>
+                  <% end %>
+                </td>
+                <td>
+                  <% if invoice.status == 'paid' %>
+                    <span class="text-success">Paid</span>
+                  <% elsif invoice.overdue? %>
+                    <span class="text-danger">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      <%= pluralize(invoice.days_overdue, 'day') %> overdue
+                    </span>
+                  <% else %>
+                    <span class="text-primary">
+                      <%= pluralize(invoice.days_until_due, 'day') %> left
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="fw-medium">₹<%= number_with_precision(invoice.total_amount, precision: 2) %></div>
+                  <% if invoice.balance_amount > 0 %>
+                    <small class="text-danger">Balance: ₹<%= number_with_precision(invoice.balance_amount, precision: 2) %></small>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="badge <%= invoice.status_badge_class %>">
+                    <%= invoice.status.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to invoice, class: 'btn btn-sm btn-outline-primary', title: 'View' do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_purchase_invoice_path(invoice), class: 'btn btn-sm btn-outline-secondary', title: 'Edit' do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <% if invoice.status != 'paid' %>
+                      <%= link_to mark_as_paid_purchase_invoice_path(invoice), method: :patch, 
+                                  class: 'btn btn-sm btn-outline-success', title: 'Mark as Paid',
+                                  confirm: 'Are you sure you want to mark this invoice as paid?' do %>
+                        <i class="fas fa-check"></i>
+                      <% end %>
+                    <% end %>
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><%= link_to 'Download PDF', purchase_invoice_path(invoice, format: :pdf), 
+                                        class: 'dropdown-item', target: '_blank' do %>
+                          <i class="fas fa-file-pdf me-2"></i>Download PDF
+                        <% end %></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><%= link_to 'Delete', invoice, method: :delete, 
+                                        class: 'dropdown-item text-danger',
+                                        confirm: 'Are you sure you want to delete this invoice?' do %>
+                          <i class="fas fa-trash me-2"></i>Delete
+                        <% end %></li>
+                      </ul>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <!-- Empty State -->
+      <div class="text-center py-5">
+        <div class="mb-4">
+          <i class="fas fa-shopping-cart" style="font-size: 4rem; color: #dee2e6;"></i>
+        </div>
+        <h5 class="text-muted">No Transactions Matching the current filter</h5>
+        <p class="text-muted mb-4">Create your first purchase invoice to get started</p>
+        <%= link_to new_purchase_invoice_path, class: 'btn btn-primary' do %>
+          <i class="fas fa-plus me-2"></i>Create Purchase Invoice
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.stats-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #e9ecef;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #007bff;
+}
+
+.stats-card-success::before { background: #28a745; }
+.stats-card-warning::before { background: #ffc107; }
+.stats-card-danger::before { background: #dc3545; }
+
+.stats-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(0,123,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.stats-card-success .stats-icon { background: rgba(40,167,69,0.1); color: #28a745; }
+.stats-card-warning .stats-icon { background: rgba(255,193,7,0.1); color: #ffc107; }
+.stats-card-danger .stats-icon { background: rgba(220,53,69,0.1); color: #dc3545; }
+
+.stats-icon i {
+  font-size: 20px;
+  color: #007bff;
+}
+
+.stats-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 4px;
+}
+
+.stats-label {
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.badge-success { background-color: #28a745 !important; }
+.badge-warning { background-color: #ffc107 !important; color: #212529 !important; }
+.badge-danger { background-color: #dc3545 !important; }
+.badge-primary { background-color: #007bff !important; }
+.badge-secondary { background-color: #6c757d !important; }
+</style>

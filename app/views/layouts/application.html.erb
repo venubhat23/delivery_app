@@ -625,10 +625,10 @@
               </li>
               
               <li class="nav-item" role="none">
-                <%= link_to purchase_products_path, 
-                    class: "nav-link #{'active' if current_page?(purchase_products_path) || controller_name == 'purchase_products'}", 
+                <%= link_to purchase_invoices_path, 
+                    class: "nav-link #{'active' if current_page?(purchase_invoices_path) || controller_name == 'purchase_invoices'}", 
                     role: "menuitem",
-                    "aria-current": (current_page?(purchase_products_path) || controller_name == 'purchase_products') ? "page" : nil do %>
+                    "aria-current": (current_page?(purchase_invoices_path) || controller_name == 'purchase_invoices') ? "page" : nil do %>
                   <i class="fas fa-shopping-cart nav-icon" aria-hidden="true"></i>
                   <span class="nav-text">Purchases</span>
                 <% end %>
