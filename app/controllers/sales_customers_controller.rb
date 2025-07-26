@@ -18,6 +18,7 @@ class SalesCustomersController < ApplicationController
   
   def create
     @sales_customer = SalesCustomer.new(sales_customer_params)
+    @sales_customer.is_active = true if @sales_customer.is_active.nil?
     
     if @sales_customer.save
       if request.xhr?
@@ -44,7 +45,8 @@ class SalesCustomersController < ApplicationController
           errors: @sales_customer.errors.full_messages
         }, status: :unprocessable_entity
       else
-        render :new
+        # For non-AJAX requests, render the modal form partial
+        render partial: 'modal_form', locals: { sales_customer: @sales_customer }, status: :unprocessable_entity
       end
     end
   end

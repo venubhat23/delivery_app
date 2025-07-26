@@ -10,6 +10,10 @@
       <%= form_with model: sales_customer, url: sales_customers_path, local: false, 
                     class: 'needs-validation', novalidate: true, id: 'salesCustomerForm' do |form| %>
         <div class="modal-body">
+          <div id="customerFormErrors" class="alert alert-danger" style="display: none;">
+            <h6>Please fix the following errors:</h6>
+            <ul id="customerErrorsList" class="mb-0"></ul>
+          </div>
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
@@ -94,7 +98,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <%= form.submit 'Create Customer', class: 'btn btn-primary' %>
+          <%= form.submit 'Create Customer', class: 'btn btn-primary', id: 'createCustomerBtn', data: { loading_text: 'Creating...' } %>
         </div>
       <% end %>
     </div>

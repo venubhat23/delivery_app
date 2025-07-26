@@ -39,6 +39,22 @@ class SalesInvoicesController < ApplicationController
     @sales_invoice = SalesInvoice.new
     @sales_invoice.invoice_date = Date.current
     @sales_invoice.payment_terms = 30
+    
+    # Pre-select customer if provided
+    if params[:sales_customer_id].present?
+      @sales_customer = SalesCustomer.find(params[:sales_customer_id])
+      @sales_invoice.sales_customer_id = @sales_customer.id
+      @sales_invoice.customer_name = @sales_customer.name
+      @sales_invoice.bill_to = @sales_customer.full_address
+      @sales_invoice.ship_to = @sales_customer.shipping_address_display
+    elsif params[:customer_id].present?
+      @customer = Customer.find(params[:customer_id])
+      @sales_invoice.customer_id = @customer.id
+      @sales_invoice.customer_name = @customer.name
+      @sales_invoice.bill_to = @customer.address
+      @sales_invoice.ship_to = @customer.address
+    end
+    
     @sales_invoice.sales_invoice_items.build
     @sales_products = SalesProduct.all.order(:name)
     @products = Product.all.order(:name)
