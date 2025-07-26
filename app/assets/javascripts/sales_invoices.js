@@ -6,6 +6,14 @@ document.addEventListener('DOMContentLoaded', function() {
     salesCustomerForm.addEventListener('submit', function(e) {
       e.preventDefault();
       
+      const submitBtn = document.getElementById('createCustomerBtn');
+      const originalText = submitBtn.textContent;
+      const loadingText = submitBtn.dataset.loadingText || 'Creating...';
+      
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.textContent = loadingText;
+      
       const formData = new FormData(this);
       
       fetch('/sales_customers', {
@@ -16,7 +24,12 @@ document.addEventListener('DOMContentLoaded', function() {
           'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => Promise.reject(data));
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.success) {
           // Add new customer to dropdown
@@ -36,14 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
           
           salesCustomersOptgroup.appendChild(newOption);
           
-          // Update hidden fields
-          document.getElementById('hidden_sales_customer_id').value = data.customer.id;
-          document.getElementById('hidden_customer_id').value = '';
-          
-          // Update customer details
-          document.querySelector('input[name="sales_invoice[customer_name]"]').value = data.customer.name;
-          document.querySelector('textarea[name="sales_invoice[bill_to]"]').value = data.customer.address;
-          document.querySelector('textarea[name="sales_invoice[ship_to]"]').value = data.customer.address;
+          // Trigger change event to update form fields
+          customerSelect.dispatchEvent(new Event('change'));
           
           // Close modal
           const modal = bootstrap.Modal.getInstance(document.getElementById('createSalesCustomerModal'));
@@ -55,12 +62,18 @@ document.addEventListener('DOMContentLoaded', function() {
           // Show success message
           showAlert('success', data.message);
         } else {
-          showAlert('danger', 'Error: ' + data.errors.join(', '));
+          showFormErrors(data.errors || ['Unknown error']);
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        showAlert('danger', 'An error occurred while creating the customer.');
+        const errors = error.errors ? error.errors : ['An error occurred while creating the customer.'];
+        showFormErrors(errors);
+      })
+      .finally(() => {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       });
     });
   }
@@ -119,6 +132,14 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
+  
+  // Clear form errors when modal is opened
+  const salesCustomerModal = document.getElementById('createSalesCustomerModal');
+  if (salesCustomerModal) {
+    salesCustomerModal.addEventListener('show.bs.modal', function() {
+      clearFormErrors();
+    });
+  }
 });
 
 // Function to show alert messages
@@ -140,6 +161,30 @@ function showAlert(type, message) {
       alertDiv.remove();
     }
   }, 5000);
+}
+
+// Function to show form errors in modal
+function showFormErrors(errors) {
+  const errorDiv = document.getElementById('customerFormErrors');
+  const errorsList = document.getElementById('customerErrorsList');
+  
+  if (errorDiv && errorsList) {
+    errorsList.innerHTML = '';
+    errors.forEach(error => {
+      const li = document.createElement('li');
+      li.textContent = error;
+      errorsList.appendChild(li);
+    });
+    errorDiv.style.display = 'block';
+  }
+}
+
+// Function to clear form errors
+function clearFormErrors() {
+  const errorDiv = document.getElementById('customerFormErrors');
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+  }
 }
 
 // Function to open add product modal (called from button)
