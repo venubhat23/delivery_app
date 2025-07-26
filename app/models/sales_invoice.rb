@@ -177,8 +177,12 @@ class SalesInvoice < ApplicationRecord
   end
 
   def calculate_totals
-    self.subtotal = sales_invoice_items.sum { |item| item.quantity * item.price }
-    self.tax_amount = sales_invoice_items.sum { |item| (item.quantity * item.price * item.tax_rate / 100) }
+    self.subtotal = sales_invoice_items.sum { |item| 
+      (item.quantity && item.price) ? item.quantity * item.price : 0 
+    }
+    self.tax_amount = sales_invoice_items.sum { |item| 
+      (item.quantity && item.price && item.tax_rate) ? (item.quantity * item.price * item.tax_rate / 100) : 0 
+    }
     self.discount_amount = sales_invoice_items.sum(&:discount) + (additional_discount || 0)
     
     # Add additional charges

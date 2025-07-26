@@ -205,7 +205,7 @@ def self.generate_invoice_number(type = 'manual')
       product = Product.find(product_id)
       total_quantity = product_assignments.sum(&:quantity)
       unit_price = product.price
-      total_price = total_quantity * unit_price
+      total_price = (total_quantity && unit_price) ? total_quantity * unit_price : 0
 
       invoice.invoice_items.build(
         product: product,

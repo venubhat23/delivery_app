@@ -16,14 +16,17 @@ class SalesInvoiceItem < ApplicationRecord
   before_save :set_hsn_sac
 
   def tax_amount
+    return 0 if quantity.nil? || price.nil? || tax_rate.nil?
     (quantity * price * tax_rate / 100).round(2)
   end
 
   def line_total
+    return 0 if quantity.nil? || price.nil?
     (quantity * price).round(2)
   end
 
   def subtotal
+    return 0 if discount.nil?
     line_total - discount
   end
 
@@ -76,6 +79,7 @@ class SalesInvoiceItem < ApplicationRecord
   end
 
   def calculate_amount
+    return if quantity.nil? || price.nil? || tax_rate.nil? || discount.nil?
     line_total = quantity * price
     tax_amt = line_total * tax_rate / 100
     self.amount = line_total + tax_amt - discount

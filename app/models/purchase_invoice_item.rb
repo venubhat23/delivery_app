@@ -15,20 +15,24 @@ class PurchaseInvoiceItem < ApplicationRecord
   after_destroy :revert_product_stock
   
   def calculate_amount
+    return if quantity.nil? || price.nil? || discount.nil?
     base_amount = quantity * price
     discount_amount = base_amount * (discount / 100)
     self.amount = base_amount - discount_amount
   end
   
   def tax_amount
+    return 0 if amount.nil? || tax_rate.nil?
     amount * (tax_rate / 100)
   end
   
   def total_amount
+    return 0 if amount.nil?
     amount + tax_amount
   end
   
   def line_total
+    return 0 if quantity.nil? || price.nil? || discount.nil?
     (quantity * price) - discount + tax_amount
   end
   
