@@ -96,7 +96,7 @@
         <i class="fas fa-list me-2"></i>Purchase Products List
       </h6>
       <div class="d-flex align-items-center">
-        <% if params.any? { |k, v| k.in?(['search', 'category']) && v.present? } %>
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['search', 'category']) && v.present? } %>
           <%= link_to purchase_products_path, class: "btn btn-outline-secondary btn-sm" do %>
             <i class="fas fa-times me-1"></i>Clear
           <% end %>

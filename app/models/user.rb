@@ -58,4 +58,11 @@ class User < ApplicationRecord
                    .group("users.id")
                    .having("COUNT(customers.id) < 50")
   end
+  
+  # Add image_url method for delivery people
+  def image_url
+    # Return nil or a default image URL since users table doesn't have image_url column
+    # You can customize this to return a default avatar or implement image upload later
+    nil
+  end
 end
