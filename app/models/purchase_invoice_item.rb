@@ -40,7 +40,9 @@ class PurchaseInvoiceItem < ApplicationRecord
     purchase_product&.name || 'Unknown Product'
   end
   
-
+  def product_hsn
+    purchase_product&.hsn_sac || hsn_sac || ''
+  end
   
   def product_unit
     purchase_product&.measuring_unit || 'PCS'
