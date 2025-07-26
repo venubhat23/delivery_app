@@ -120,7 +120,7 @@
         <i class="fas fa-list me-2"></i>Sales Invoices List
       </h6>
       <div class="d-flex align-items-center">
-        <% if params.any? { |k, v| k.in?(['customer', 'status', 'month', 'year', 'amount_min']) && v.present? } %>
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['customer', 'status', 'month', 'year', 'amount_min']) && v.present? } %>
           <span class="badge bg-info me-2">Filtered Results</span>
         <% end %>
       </div>
@@ -320,7 +320,7 @@
       <div class="empty-state">
         <i class="fas fa-file-invoice-dollar"></i>
         <h4>No Sales Invoices Found</h4>
-        <% if params.any? { |k, v| k.in?(['customer', 'status', 'month', 'year', 'amount_min']) && v.present? } %>
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['customer', 'status', 'month', 'year', 'amount_min']) && v.present? } %>
           <p>No invoices match your current filters.</p>
           <%= link_to sales_invoices_path, class: "btn btn-outline-primary me-2" do %>
             <i class="fas fa-times me-2"></i>Clear Filters

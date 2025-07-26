@@ -346,7 +346,7 @@
       <div class="empty-state">
         <i class="fas fa-boxes"></i>
         <h4>No Purchase Products Found</h4>
-        <% if params.any? { |k, v| k.in?(['search', 'category']) && v.present? } %>
+        <% if params.to_unsafe_h.any? { |k, v| k.in?(['search', 'category']) && v.present? } %>
           <p>No products match your current filters.</p>
           <%= link_to purchase_products_path, class: "btn btn-outline-primary me-2" do %>
             <i class="fas fa-times me-2"></i>Clear Filters

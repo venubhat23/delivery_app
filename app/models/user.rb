@@ -14,6 +14,7 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: { in: %w[admin user delivery_person customer] }
   validates :phone, presence: true
+  validates :employee_id, uniqueness: true, allow_blank: true
   
   # Scopes
   scope :delivery_people, -> { where(role: 'delivery_person') }
