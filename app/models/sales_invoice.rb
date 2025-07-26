@@ -89,6 +89,9 @@ class SalesInvoice < ApplicationRecord
     # Ensure totals are calculated first
     calculate_totals if total_amount.nil? || total_amount.zero?
     
+    # Save the calculated totals first
+    save! if changed?
+    
     transaction do
       update!(
         status: 'paid',

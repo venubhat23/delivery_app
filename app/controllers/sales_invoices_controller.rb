@@ -130,6 +130,20 @@ class SalesInvoicesController < ApplicationController
   
   def download_pdf
     respond_to do |format|
+      format.html do
+        pdf = WickedPdf.new.pdf_from_string(
+          render_to_string(
+            template: 'sales_invoices/pdf_template',
+            layout: 'pdf',
+            locals: { sales_invoice: @sales_invoice }
+          ),
+          page_size: 'A4',
+          margin: { top: 20, bottom: 20, left: 20, right: 20 }
+        )
+        
+        filename = "sales_invoice_#{@sales_invoice.invoice_number.gsub('/', '_')}.pdf"
+        send_data pdf, filename: filename, type: 'application/pdf', disposition: 'attachment'
+      end
       format.pdf do
         pdf = WickedPdf.new.pdf_from_string(
           render_to_string(
