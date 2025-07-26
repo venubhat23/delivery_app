@@ -1,0 +1,129 @@
+<div class="header">
+  <div class="company-name">Your Company Name</div>
+  <div class="invoice-title">PURCHASE INVOICE</div>
+</div>
+
+<div class="invoice-details">
+  <div class="invoice-info">
+    <h3>Invoice Information</h3>
+    <p><strong>Invoice Number:</strong> <%= @purchase_invoice.invoice_number %></p>
+    <p><strong>Invoice Date:</strong> <%= @purchase_invoice.invoice_date.strftime("%B %d, %Y") %></p>
+    <p><strong>Payment Terms:</strong> <%= @purchase_invoice.payment_terms %> days</p>
+    <% if @purchase_invoice.original_invoice_number.present? %>
+      <p><strong>Original Invoice:</strong> <%= @purchase_invoice.original_invoice_number %></p>
+    <% end %>
+    <p><strong>Status:</strong> <%= @purchase_invoice.status.titleize %></p>
+  </div>
+  
+  <div class="party-info">
+    <h3>Party Information</h3>
+    <p><strong>Party Name:</strong> <%= @purchase_invoice.party_name %></p>
+    <% if @purchase_invoice.bill_from.present? %>
+      <p><strong>Bill From:</strong></p>
+      <p><%= simple_format(@purchase_invoice.bill_from) %></p>
+    <% end %>
+    <% if @purchase_invoice.ship_from.present? %>
+      <p><strong>Ship From:</strong></p>
+      <p><%= simple_format(@purchase_invoice.ship_from) %></p>
+    <% end %>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Description</th>
+      <th>HSN/SAC</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Discount</th>
+      <th>Tax Rate</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @purchase_invoice.purchase_invoice_items.each do |item| %>
+      <tr>
+        <td><%= item.purchase_product&.name %></td>
+        <td><%= item.description %></td>
+        <td><%= item.hsn_sac %></td>
+        <td class="text-right"><%= item.quantity %></td>
+        <td class="text-right">₹<%= number_with_precision(item.price, precision: 2) %></td>
+        <td class="text-right"><%= item.discount %>%</td>
+        <td class="text-right"><%= item.tax_rate %>%</td>
+        <td class="text-right">₹<%= number_with_precision(item.total_amount, precision: 2) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="total-section">
+  <div class="total-row">
+    <span>Subtotal:</span>
+    <span>₹<%= number_with_precision(@purchase_invoice.subtotal, precision: 2) %></span>
+  </div>
+  
+  <% if @purchase_invoice.additional_charges.present? && @purchase_invoice.additional_charges > 0 %>
+    <div class="total-row">
+      <span>Additional Charges:</span>
+      <span>₹<%= number_with_precision(@purchase_invoice.additional_charges, precision: 2) %></span>
+    </div>
+  <% end %>
+  
+  <% if @purchase_invoice.additional_discount.present? && @purchase_invoice.additional_discount > 0 %>
+    <div class="total-row">
+      <span>Additional Discount:</span>
+      <span>-₹<%= number_with_precision(@purchase_invoice.additional_discount, precision: 2) %></span>
+    </div>
+  <% end %>
+  
+  <div class="total-row">
+    <span>Tax Amount:</span>
+    <span>₹<%= number_with_precision(@purchase_invoice.tax_amount, precision: 2) %></span>
+  </div>
+  
+  <div class="total-row final">
+    <span>Total Amount:</span>
+    <span>₹<%= number_with_precision(@purchase_invoice.total_amount, precision: 2) %></span>
+  </div>
+  
+  <% if @purchase_invoice.amount_paid > 0 %>
+    <div class="total-row">
+      <span>Amount Paid:</span>
+      <span>₹<%= number_with_precision(@purchase_invoice.amount_paid, precision: 2) %></span>
+    </div>
+    
+    <div class="total-row">
+      <span>Balance Amount:</span>
+      <span>₹<%= number_with_precision(@purchase_invoice.balance_amount, precision: 2) %></span>
+    </div>
+  <% end %>
+</div>
+
+<div style="clear: both;"></div>
+
+<% if @purchase_invoice.notes.present? %>
+  <div style="margin-top: 30px;">
+    <h3>Notes:</h3>
+    <p><%= simple_format(@purchase_invoice.notes) %></p>
+  </div>
+<% end %>
+
+<% if @purchase_invoice.terms_and_conditions.present? %>
+  <div style="margin-top: 20px;">
+    <h3>Terms and Conditions:</h3>
+    <p><%= simple_format(@purchase_invoice.terms_and_conditions) %></p>
+  </div>
+<% end %>
+
+<% if @purchase_invoice.authorized_signature.present? %>
+  <div style="margin-top: 30px; text-align: right;">
+    <p><strong>Authorized Signature:</strong></p>
+    <p><%= @purchase_invoice.authorized_signature %></p>
+  </div>
+<% end %>
+
+<div class="footer">
+  <p>Generated on <%= Date.current.strftime("%B %d, %Y") %></p>
+</div>

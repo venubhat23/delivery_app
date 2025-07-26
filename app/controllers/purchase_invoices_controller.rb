@@ -82,8 +82,13 @@ class PurchaseInvoicesController < ApplicationController
   
   def mark_as_paid
     payment_type = params[:payment_type] || 'cash'
-    @purchase_invoice.mark_as_paid!(payment_type)
-    redirect_to @purchase_invoice, notice: 'Invoice marked as paid.'
+    
+    begin
+      @purchase_invoice.mark_as_paid!(payment_type)
+      redirect_to @purchase_invoice, notice: 'Invoice marked as paid successfully.'
+    rescue => e
+      redirect_to @purchase_invoice, alert: "Error marking invoice as paid: #{e.message}"
+    end
   end
   
   def add_payment
@@ -101,6 +106,13 @@ class PurchaseInvoicesController < ApplicationController
   
   def download_pdf
     respond_to do |format|
+      format.html do
+        render pdf: "purchase_invoice_#{@purchase_invoice.invoice_number}",
+               template: 'purchase_invoices/pdf',
+               layout: 'pdf',
+               page_size: 'A4',
+               margin: { top: 10, bottom: 10, left: 10, right: 10 }
+      end
       format.pdf do
         render pdf: "purchase_invoice_#{@purchase_invoice.invoice_number}",
                template: 'purchase_invoices/pdf',

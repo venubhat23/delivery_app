@@ -86,12 +86,20 @@ class SalesInvoice < ApplicationRecord
   end
 
   def mark_as_paid!(payment_type = 'cash')
-    update!(
-      status: 'paid',
-      amount_paid: total_amount,
-      balance_amount: 0,
-      payment_type: payment_type
-    )
+    # Ensure totals are calculated first
+    calculate_totals if total_amount.nil? || total_amount.zero?
+    
+    # Save the calculated totals first
+    save! if changed?
+    
+    transaction do
+      update!(
+        status: 'paid',
+        amount_paid: total_amount,
+        balance_amount: 0,
+        payment_type: payment_type
+      )
+    end
   end
 
   def add_payment(amount, payment_type = 'cash')

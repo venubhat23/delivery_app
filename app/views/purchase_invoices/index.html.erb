@@ -209,12 +209,12 @@
                         <i class="fas fa-ellipsis-v"></i>
                       </button>
                       <ul class="dropdown-menu">
-                        <li><%= link_to 'Download PDF', purchase_invoice_path(invoice, format: :pdf), 
+                        <li><%= link_to download_pdf_purchase_invoice_path(invoice, format: :pdf), 
                                         class: 'dropdown-item', target: '_blank' do %>
                           <i class="fas fa-file-pdf me-2"></i>Download PDF
                         <% end %></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><%= link_to 'Delete', invoice, method: :delete, 
+                        <li><%= link_to invoice, method: :delete, 
                                         class: 'dropdown-item text-danger',
                                         confirm: 'Are you sure you want to delete this invoice?' do %>
                           <i class="fas fa-trash me-2"></i>Delete
@@ -244,71 +244,4 @@
   </div>
 </div>
 
-<style>
-.stats-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border: 1px solid #e9ecef;
-  position: relative;
-  overflow: hidden;
-}
-
-.stats-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: #007bff;
-}
-
-.stats-card-success::before { background: #28a745; }
-.stats-card-warning::before { background: #ffc107; }
-.stats-card-danger::before { background: #dc3545; }
-
-.stats-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(0,123,255,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-.stats-card-success .stats-icon { background: rgba(40,167,69,0.1); color: #28a745; }
-.stats-card-warning .stats-icon { background: rgba(255,193,7,0.1); color: #ffc107; }
-.stats-card-danger .stats-icon { background: rgba(220,53,69,0.1); color: #dc3545; }
-
-.stats-icon i {
-  font-size: 20px;
-  color: #007bff;
-}
-
-.stats-number {
-  font-size: 24px;
-  font-weight: 700;
-  color: #212529;
-  margin-bottom: 4px;
-}
-
-.stats-label {
-  font-size: 14px;
-  color: #6c757d;
-  font-weight: 500;
-}
-
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.badge-success { background-color: #28a745 !important; }
-.badge-warning { background-color: #ffc107 !important; color: #212529 !important; }
-.badge-danger { background-color: #dc3545 !important; }
-.badge-primary { background-color: #007bff !important; }
-.badge-secondary { background-color: #6c757d !important; }
-</style>
+<!-- Styles are now handled by shared_index_styles.scss -->

@@ -88,6 +88,12 @@ class PurchaseInvoice < ApplicationRecord
   end
   
   def mark_as_paid!(payment_type = 'cash')
+    # Ensure totals are calculated first
+    calculate_totals if total_amount.nil? || total_amount.zero?
+    
+    # Save the calculated totals first
+    save! if changed?
+    
     update!(
       amount_paid: total_amount,
       balance_amount: 0,

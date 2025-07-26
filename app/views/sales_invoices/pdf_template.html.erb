@@ -1,0 +1,137 @@
+<div class="invoice-header">
+  <div class="company-name">Your Company Name</div>
+  <div>Sales Invoice</div>
+</div>
+
+<div class="invoice-details">
+  <div>
+    <h4>Bill To:</h4>
+    <p><strong><%= sales_invoice.customer_name %></strong></p>
+    <% if sales_invoice.bill_to.present? %>
+      <p><%= simple_format(sales_invoice.bill_to) %></p>
+    <% end %>
+  </div>
+  
+  <div>
+    <h4>Invoice Details:</h4>
+    <p><strong>Invoice #:</strong> <%= sales_invoice.invoice_number %></p>
+    <p><strong>Date:</strong> <%= sales_invoice.invoice_date.strftime('%B %d, %Y') %></p>
+    <p><strong>Due Date:</strong> <%= sales_invoice.due_date.strftime('%B %d, %Y') if sales_invoice.due_date %></p>
+    <p><strong>Payment Terms:</strong> <%= sales_invoice.payment_terms %> days</p>
+    <p><strong>Status:</strong> <%= sales_invoice.status.humanize %></p>
+  </div>
+</div>
+
+<% if sales_invoice.ship_to.present? && sales_invoice.ship_to != sales_invoice.bill_to %>
+<div style="margin-bottom: 20px;">
+  <h4>Ship To:</h4>
+  <p><%= simple_format(sales_invoice.ship_to) %></p>
+</div>
+<% end %>
+
+<table class="invoice-table">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>HSN/SAC</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Tax Rate</th>
+      <th>Discount</th>
+      <th class="text-right">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% sales_invoice.sales_invoice_items.each do |item| %>
+      <tr>
+        <td><%= item.product_name %></td>
+        <td><%= item.hsn_sac %></td>
+        <td><%= item.quantity %></td>
+        <td>₹<%= number_with_precision(item.price, precision: 2) %></td>
+        <td><%= item.tax_rate %>%</td>
+        <td>₹<%= number_with_precision(item.discount, precision: 2) %></td>
+        <td class="text-right">₹<%= number_with_precision(item.amount, precision: 2) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="total-section">
+  <div class="total-row">
+    <span>Subtotal:</span>
+    <span>₹<%= number_with_precision(sales_invoice.subtotal, precision: 2) %></span>
+  </div>
+  
+  <% if sales_invoice.tax_amount > 0 %>
+    <div class="total-row">
+      <span>Tax:</span>
+      <span>₹<%= number_with_precision(sales_invoice.tax_amount, precision: 2) %></span>
+    </div>
+  <% end %>
+  
+  <% if sales_invoice.discount_amount > 0 %>
+    <div class="total-row">
+      <span>Discount:</span>
+      <span>-₹<%= number_with_precision(sales_invoice.discount_amount, precision: 2) %></span>
+    </div>
+  <% end %>
+  
+  <% if sales_invoice.additional_charges > 0 %>
+    <div class="total-row">
+      <span>Additional Charges:</span>
+      <span>₹<%= number_with_precision(sales_invoice.additional_charges, precision: 2) %></span>
+    </div>
+  <% end %>
+  
+  <% if sales_invoice.apply_tcs? && sales_invoice.tcs_rate > 0 %>
+    <div class="total-row">
+      <span>TCS (<%= sales_invoice.tcs_rate %>%):</span>
+      <span>₹<%= number_with_precision((sales_invoice.subtotal + sales_invoice.tax_amount - sales_invoice.discount_amount + (sales_invoice.additional_charges || 0)) * sales_invoice.tcs_rate / 100, precision: 2) %></span>
+    </div>
+  <% end %>
+  
+  <% if sales_invoice.auto_round_off? && sales_invoice.round_off_amount != 0 %>
+    <div class="total-row">
+      <span>Round Off:</span>
+      <span><%= sales_invoice.round_off_amount > 0 ? '+' : '' %>₹<%= number_with_precision(sales_invoice.round_off_amount, precision: 2) %></span>
+    </div>
+  <% end %>
+  
+  <div class="total-row final">
+    <span>Total:</span>
+    <span>₹<%= number_with_precision(sales_invoice.total_amount, precision: 2) %></span>
+  </div>
+  
+  <% if sales_invoice.amount_paid > 0 %>
+    <div class="total-row">
+      <span>Amount Paid:</span>
+      <span>₹<%= number_with_precision(sales_invoice.amount_paid, precision: 2) %></span>
+    </div>
+    
+    <div class="total-row final">
+      <span>Balance Due:</span>
+      <span>₹<%= number_with_precision(sales_invoice.balance_amount, precision: 2) %></span>
+    </div>
+  <% end %>
+</div>
+
+<% if sales_invoice.notes.present? %>
+<div style="margin-top: 30px;">
+  <h4>Notes:</h4>
+  <p><%= simple_format(sales_invoice.notes) %></p>
+</div>
+<% end %>
+
+<% if sales_invoice.terms_and_conditions.present? %>
+<div class="terms">
+  <h4>Terms and Conditions:</h4>
+  <p><%= simple_format(sales_invoice.terms_and_conditions) %></p>
+</div>
+<% end %>
+
+<% if sales_invoice.authorized_signature.present? %>
+<div style="margin-top: 50px; text-align: right;">
+  <p>Authorized Signature:</p>
+  <p><%= sales_invoice.authorized_signature %></p>
+</div>
+<% end %>
