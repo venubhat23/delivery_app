@@ -115,6 +115,20 @@ class CustomersController < ApplicationController
     end
   end
   
+  # Download CSV template
+  def download_template
+    template_content = Customer.csv_template
+    
+    respond_to do |format|
+      format.csv do
+        send_data template_content,
+                  filename: 'customers_template.csv',
+                  type: 'text/csv',
+                  disposition: 'attachment'
+      end
+    end
+  end
+  
   private
   
   def set_customer

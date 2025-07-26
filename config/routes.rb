@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       get :bulk_import
       post :process_bulk_import
       post :validate_csv
+      get :download_template
     end
   end
   
