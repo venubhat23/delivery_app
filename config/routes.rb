@@ -26,15 +26,6 @@ Rails.application.routes.draw do
     end
   end
   
-  resources :parties do
-    collection do
-      get :bulk_import
-      post :process_bulk_import
-      post :validate_csv
-      get :download_template
-    end
-  end
-  
   # Purchase Products System
   resources :purchase_products do
     collection do
