@@ -32,6 +32,12 @@ class User < ApplicationRecord
   def customer?
     role == 'customer'
   end
+
+  # Add image_url method to fix the view error
+  def image_url
+    # Return nil for now - can be enhanced later to support actual image uploads
+    nil
+  end
   
   def can_take_customers?
     return false unless delivery_person?
