@@ -1,0 +1,141 @@
+/* Tab Navigation Z-Index Fix */
+/* This file specifically addresses the issue where tab navigation appears below other elements */
+
+/* Ensure all tab-related elements have proper z-index */
+.nav-tabs,
+.nav-pills,
+.nav-tabs .nav-link,
+.nav-pills .nav-link,
+.tab-content,
+.tab-pane,
+.main-content .nav-tabs,
+.main-content .nav-pills,
+.main-content .nav-tabs .nav-link,
+.main-content .nav-pills .nav-link,
+.main-content .tab-content,
+.main-content .tab-pane {
+  position: relative !important;
+  z-index: 1060 !important; /* Higher than header (1050) and sidebar (1040) */
+}
+
+/* Modern tab styling */
+.nav-tabs,
+.main-content .nav-tabs {
+  background: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 0.5rem !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+  margin-bottom: 0 !important;
+  border-bottom: none !important;
+  position: relative !important;
+  z-index: 1060 !important;
+}
+
+.nav-tabs .nav-link,
+.main-content .nav-tabs .nav-link {
+  border: none !important;
+  border-radius: 8px !important;
+  margin-right: 0.5rem !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 500 !important;
+  color: #718096 !important;
+  background: transparent !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  z-index: 1061 !important;
+}
+
+.nav-tabs .nav-link:hover,
+.main-content .nav-tabs .nav-link:hover {
+  background: rgba(102, 126, 234, 0.1) !important;
+  color: #667eea !important;
+  transform: translateY(-1px) !important;
+  border-color: transparent !important;
+}
+
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link,
+.main-content .nav-tabs .nav-link.active,
+.main-content .nav-tabs .nav-item.show .nav-link {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  border: none !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
+  position: relative !important;
+  z-index: 1061 !important;
+}
+
+.tab-content,
+.main-content .tab-content {
+  background: white !important;
+  border-radius: 0 0 12px 12px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+  padding: 2rem !important;
+  min-height: 400px !important;
+  position: relative !important;
+  z-index: 1060 !important;
+}
+
+/* Ensure tab content is properly displayed */
+.tab-content > .tab-pane {
+  display: none;
+}
+
+.tab-content > .active {
+  display: block;
+}
+
+/* Fix for focus states */
+.nav-tabs .nav-link:focus,
+.nav-tabs .nav-link:hover,
+.main-content .nav-tabs .nav-link:focus,
+.main-content .nav-tabs .nav-link:hover {
+  border-color: transparent !important;
+  isolation: isolate;
+}
+
+/* Ensure dropdown menus in tabs have proper z-index */
+.nav-tabs .dropdown-menu,
+.nav-pills .dropdown-menu,
+.main-content .nav-tabs .dropdown-menu,
+.main-content .nav-pills .dropdown-menu {
+  z-index: 1070 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-tabs,
+  .main-content .nav-tabs {
+    padding: 0.25rem !important;
+  }
+  
+  .nav-tabs .nav-link,
+  .main-content .nav-tabs .nav-link {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .tab-content,
+  .main-content .tab-content {
+    padding: 1rem !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .nav-tabs,
+  .nav-pills,
+  .main-content .nav-tabs,
+  .main-content .nav-pills {
+    display: none !important;
+  }
+  
+  .tab-content,
+  .main-content .tab-content {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+}
