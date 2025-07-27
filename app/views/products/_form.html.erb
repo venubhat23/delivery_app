@@ -164,6 +164,19 @@
     </div>
   </div>
 
+  <!-- HSN/SAC Code Section -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :hsn_sac, class: "form-label fw-bold" do %>
+          <i class="fas fa-barcode me-1"></i>HSN/SAC Code
+        <% end %>
+        <%= form.text_field :hsn_sac, class: "form-control", placeholder: "Enter HSN/SAC code" %>
+        <small class="form-text text-muted">Harmonized System of Nomenclature or Service Accounting Code</small>
+      </div>
+    </div>
+  </div>
+
   <!-- GST Section -->
   <div class="mb-3">
     <%= form.label :is_gst_applicable, class: "form-label fw-bold" do %>
