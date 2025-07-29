@@ -868,5 +868,188 @@
         <%= yield %>
       </div>
     <% end %>
+
+    <!-- Image Zoom Modal Component -->
+    <div class="modal fade" id="imageZoomModal" tabindex="-1" aria-labelledby="imageZoomModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+          <div class="modal-header border-0 position-absolute top-0 end-0 z-3">
+            <button type="button" class="btn btn-light btn-sm rounded-circle" data-bs-dismiss="modal" aria-label="Close" style="width: 40px; height: 40px;">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body p-0 d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+            <img id="zoomedImage" src="" alt="" class="img-fluid rounded shadow-lg" style="max-height: 80vh; max-width: 100%; object-fit: contain;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Zoom JavaScript -->
+    <script>
+      (function() {
+        'use strict';
+        
+        // Function to open image zoom modal
+        window.openImageZoom = function(imageSrc, imageAlt) {
+          const modal = document.getElementById('imageZoomModal');
+          const zoomedImage = document.getElementById('zoomedImage');
+          
+          if (modal && zoomedImage && imageSrc) {
+            zoomedImage.src = imageSrc;
+            zoomedImage.alt = imageAlt || 'Zoomed Image';
+            
+            // Show the modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Add loading state
+            zoomedImage.style.opacity = '0.5';
+            
+            // Handle image load
+            zoomedImage.onload = function() {
+              this.style.opacity = '1';
+            };
+            
+            // Handle image error
+            zoomedImage.onerror = function() {
+              this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIG5vdCBmb3VuZDwvdGV4dD4KICA8L3N2Zz4K';
+              this.alt = 'Image not found';
+              this.style.opacity = '1';
+            };
+          }
+        };
+        
+        // Function to make images clickable for zoom
+        window.makeImagesZoomable = function() {
+          // Find all product and customer thumbnail images
+          const thumbnailImages = document.querySelectorAll('.product-image-thumbnail, .customer-image-thumbnail');
+          
+          thumbnailImages.forEach(function(img) {
+            // Add zoom cursor style
+            img.style.cursor = 'zoom-in';
+            img.title = 'Click to zoom';
+            
+            // Remove existing click listeners to prevent duplicates
+            const newImg = img.cloneNode(true);
+            img.parentNode.replaceChild(newImg, img);
+            
+            // Add click event listener
+            newImg.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const imageSrc = this.src;
+              const imageAlt = this.alt;
+              
+              if (imageSrc && imageSrc !== '') {
+                openImageZoom(imageSrc, imageAlt);
+              }
+            });
+          });
+        };
+        
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+          makeImagesZoomable();
+        });
+        
+        // Re-initialize after Turbo navigation (for Rails with Turbo)
+        document.addEventListener('turbo:load', function() {
+          makeImagesZoomable();
+        });
+        
+        // Handle modal keyboard navigation
+        document.addEventListener('keydown', function(e) {
+          const modal = document.getElementById('imageZoomModal');
+          if (modal && modal.classList.contains('show')) {
+            if (e.key === 'Escape') {
+              const bsModal = bootstrap.Modal.getInstance(modal);
+              if (bsModal) {
+                bsModal.hide();
+              }
+            }
+          }
+        });
+        
+      })();
+    </script>
+
+    <!-- Enhanced Modal Styles for Image Zoom -->
+    <style>
+      #imageZoomModal .modal-content {
+        background: rgba(0, 0, 0, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border: none !important;
+        box-shadow: none !important;
+      }
+      
+      #imageZoomModal .modal-header {
+        background: transparent;
+        border: none;
+        padding: 1rem;
+      }
+      
+      #imageZoomModal .modal-header .btn {
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+      }
+      
+      #imageZoomModal .modal-header .btn:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: scale(1.1);
+      }
+      
+      #imageZoomModal .modal-body {
+        padding: 2rem;
+      }
+      
+      #zoomedImage {
+        transition: all 0.3s ease;
+        border-radius: 15px !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+      }
+      
+      #imageZoomModal .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.9);
+      }
+      
+      /* Loading animation for zoomed image */
+      #zoomedImage[style*="opacity: 0.5"] {
+        position: relative;
+      }
+      
+      #zoomedImage[style*="opacity: 0.5"]::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid #fff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        transform: translate(-50%, -50%);
+      }
+      
+      @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+      }
+      
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        #imageZoomModal .modal-body {
+          padding: 1rem;
+        }
+        
+        #zoomedImage {
+          max-height: 70vh !important;
+        }
+      }
+    </style>
   </body>
 </html>
