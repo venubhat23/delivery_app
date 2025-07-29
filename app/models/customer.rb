@@ -5,6 +5,8 @@ class Customer < ApplicationRecord
   # Virtual attribute for password confirmation
   attr_accessor :password_confirmation
   
+  # Callbacks
+  before_save :normalize_member_id
 
   belongs_to :user
   belongs_to :delivery_person, class_name: 'User', optional: true
@@ -18,6 +20,7 @@ class Customer < ApplicationRecord
   validates :phone_number, presence: true
   validates :address, presence: true, length: { minimum: 5, maximum: 255 }
   validates :user_id, presence: true
+  validates :member_id, uniqueness: { allow_blank: true }, allow_blank: true
   validates :latitude, numericality: { 
     greater_than_or_equal_to: -90, 
     less_than_or_equal_to: 90,
@@ -310,6 +313,11 @@ class Customer < ApplicationRecord
   end
 
   private
+
+  def normalize_member_id
+    # Convert empty string member_id to nil to avoid unique constraint violations
+    self.member_id = nil if member_id.blank?
+  end
 
   def delivery_person_capacity_check
     return unless delivery_person_id.present?
