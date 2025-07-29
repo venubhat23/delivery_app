@@ -166,6 +166,16 @@ Rails.application.routes.draw do
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
   
+  # Reports
+  resources :reports, only: [:index] do
+    collection do
+      post :generate_gst_report
+    end
+    member do
+      get :download_pdf
+    end
+  end
+  
   # File Upload API
   post '/api/upload', to: 'uploads#create'
   
