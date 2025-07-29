@@ -188,12 +188,9 @@ async function handleFileUpload(event) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/upload', {
+    const response = await fetch('https://kitintellect.tech/storage/public/api/upload/aaFacebook', {
       method: 'POST',
-      body: formData,
-      headers: {
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
+      body: formData
     });
 
     const data = await response.json();
@@ -206,13 +203,27 @@ async function handleFileUpload(event) {
       showImagePreview(data.url);
       
       // Show success message
-      showToast('Image uploaded successfully!', 'success');
+      if (typeof toast !== 'undefined') {
+        toast.success('File uploaded successfully!', {
+          position: 'top-right',
+          autoClose: 5000
+        });
+      } else {
+        showToast('Image uploaded successfully!', 'success');
+      }
     } else {
-      throw new Error(data.error || 'Upload failed');
+      throw new Error('Upload failed');
     }
   } catch (error) {
     console.error('Error uploading file:', error);
-    showToast('Image upload failed: ' + error.message, 'error');
+    if (typeof toast !== 'undefined') {
+      toast.error('File upload failed!', {
+        position: 'top-right',
+        autoClose: 5000
+      });
+    } else {
+      showToast('Image upload failed: ' + error.message, 'error');
+    }
   } finally {
     hideUploadProgress();
   }
