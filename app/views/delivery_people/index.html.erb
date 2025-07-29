@@ -120,7 +120,6 @@
               <th><i class="fas fa-image me-1"></i>Photo</th>
               <th><i class="fas fa-user me-1"></i>Name</th>
               <th><i class="fas fa-envelope me-1"></i>Contact</th>
-              <th><i class="fas fa-map-marker-alt me-1"></i>Location</th>
               <th><i class="fas fa-users me-1"></i>Customers</th>
               <th><i class="fas fa-calendar me-1"></i>Joined</th>
               <th><i class="fas fa-cogs me-1"></i>Actions</th>
@@ -162,29 +161,19 @@
                     <div class="text-muted small">
                       <i class="fas fa-envelope me-1"></i><%= person.email %>
                     </div>
-                    <% if person.phone_number.present? %>
+                    <% if person.phone.present? %>
                       <div class="text-muted small">
-                        <i class="fas fa-phone me-1"></i><%= person.phone_number %>
+                        <i class="fas fa-phone me-1"></i><%= person.phone %>
                       </div>
                     <% end %>
                   </div>
                 </td>
                 <td>
-                  <% if person.address.present? %>
-                    <span class="text-muted small" title="<%= person.address %>">
-                      <i class="fas fa-map-marker-alt me-1"></i>
-                      <%= truncate(person.address, length: 30) %>
-                    </span>
-                  <% else %>
-                    <span class="text-muted">No address</span>
-                  <% end %>
-                </td>
-                <td>
                   <div class="customer-count">
                     <span class="fw-bold text-info">
-                      <%= person.customers.count %>
+                      <%= person.customer_count %>
                     </span>
-                    <% if person.customers.count > 0 %>
+                    <% if person.customer_count > 0 %>
                       <div class="text-muted small">customers assigned</div>
                     <% else %>
                       <div class="text-muted small">no assignments</div>
@@ -261,24 +250,18 @@
                       <span class="text-muted small"><%= person.email %></span>
                     </div>
                     
-                    <% if person.phone_number.present? %>
+                    <% if person.phone.present? %>
                       <div class="d-flex align-items-center mb-2">
                         <i class="fas fa-phone me-2 text-muted"></i>
-                        <span class="text-muted small"><%= person.phone_number %></span>
+                        <span class="text-muted small"><%= person.phone %></span>
                       </div>
                     <% end %>
                     
-                    <% if person.address.present? %>
-                      <div class="d-flex align-items-start mb-2">
-                        <i class="fas fa-map-marker-alt me-2 text-muted mt-1"></i>
-                        <span class="text-muted small"><%= truncate(person.address, length: 60) %></span>
-                      </div>
-                    <% end %>
                   </div>
                   
                   <div class="person-stats">
                     <div class="stat-item">
-                      <span class="stat-number"><%= person.customers.count %></span>
+                      <span class="stat-number"><%= person.customer_count %></span>
                       <span class="stat-label">Customers</span>
                     </div>
                     <div class="stat-item">

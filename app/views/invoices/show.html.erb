@@ -416,7 +416,7 @@
                   <div class="description"><%= item.product.description %></div>
                 <% end %>
               </td>
-              <td><%= item.product&.hsn_code || '' %></td>
+              <td><%= item.product&.hsn_sac || '' %></td>
               <td><%= item.quantity %> <%= item.product&.unit_type || 'PCS' %></td>
               <td><%= number_with_delimiter(item.unit_price || 0) %></td>
               <td>
