@@ -32,6 +32,9 @@ class CustomersController < ApplicationController
     @customer = Customer.new(customer_params)
     @customer.user = current_user
     
+    # Handle empty member_id by setting it to nil to avoid unique constraint violation
+    @customer.member_id = nil if @customer.member_id.blank?
+    
     @customer.password = "customer@123"
     @customer.password_confirmation = "customer@123"
     
@@ -50,7 +53,11 @@ class CustomersController < ApplicationController
   end
   
   def update
-    if @customer.update(customer_params)
+    # Handle empty member_id by setting it to nil to avoid unique constraint violation
+    params_to_update = customer_params
+    params_to_update[:member_id] = nil if params_to_update[:member_id].blank?
+    
+    if @customer.update(params_to_update)
       redirect_to @customer, notice: 'Customer was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
