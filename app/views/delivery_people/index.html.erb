@@ -182,9 +182,9 @@
                 <td>
                   <div class="customer-count">
                     <span class="fw-bold text-info">
-                      <%= person.customers.count %>
+                      <%= person.customer_count %>
                     </span>
-                    <% if person.customers.count > 0 %>
+                    <% if person.customer_count > 0 %>
                       <div class="text-muted small">customers assigned</div>
                     <% else %>
                       <div class="text-muted small">no assignments</div>
@@ -278,7 +278,7 @@
                   
                   <div class="person-stats">
                     <div class="stat-item">
-                      <span class="stat-number"><%= person.customers.count %></span>
+                      <span class="stat-number"><%= person.customer_count %></span>
                       <span class="stat-label">Customers</span>
                     </div>
                     <div class="stat-item">
