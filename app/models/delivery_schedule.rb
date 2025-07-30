@@ -14,6 +14,7 @@ class DeliverySchedule < ApplicationRecord
   validate :start_date_not_in_past
 
   scope :active, -> { where(status: 'active') }
+  scope :completed, -> { where(status: 'completed') }
   scope :by_customer, ->(customer_id) { where(customer_id: customer_id) }
   scope :by_delivery_person, ->(user_id) { where(user_id: user_id) }
 
