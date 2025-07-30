@@ -543,34 +543,33 @@
                 "Rupees #{total_amount.to_i} only"
               end
             %>
-            <div?><%= words %></div>
+            <div?><%= words %> Rupees</div>
           </div>
         </div>
-      </div>
+        <div class="terms-signature">
+          <div class="terms">
+            <h3>TERMS AND CONDITIONS</h3>
+            <% if @invoice.notes.present? %>
+              <div style="padding-left: 20px;"><%= simple_format(@invoice.notes) %></div?>
+            <% else %>
+              <ol style="padding-left: 20px;">
+                <li>
+                  Kindly Do Make Every Month Payment on or Before the 10th of The
+                  Month
+                </li>
+                <li>
+                  Kindly Share the Screenshot Immediately Once the Payment is Done
+                  to Confirm Your Payment
+                </li>
+              </ol>
+            <% end %>
+          </div>
 
-      <div class="terms-signature">
-        <div class="terms">
-          <h3>TERMS AND CONDITIONS</h3>
-          <% if @invoice.notes.present? %>
-            <div style="padding-left: 20px;"><%= simple_format(@invoice.notes) %></div?>
-          <% else %>
-            <ol style="padding-left: 20px;">
-              <li>
-                Kindly Do Make Every Month Payment on or Before the 10th of The
-                Month
-              </li>
-              <li>
-                Kindly Share the Screenshot Immediately Once the Payment is Done
-                to Confirm Your Payment
-              </li>
-            </ol>
-          <% end %>
-        </div>
-
-        <div class="signature-block">
-          <div class="signature-box"></div>
-          <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
-          <div class="signature-name">Atma Nirbhar Farm</div>
+          <div class="signature-block">
+            <div class="signature-box"></div>
+            <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
+            <div class="signature-name">Atma Nirbhar Farm</div>
+          </div>
         </div>
       </div>
     </div>

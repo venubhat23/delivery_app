@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_26_120004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -30,6 +30,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.string "qr_code_path"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "advertisements", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "image_url"
+    t.date "start_date", null: false
+    t.date "end_date", null: false
+    t.string "status", default: "active"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["end_date"], name: "index_advertisements_on_end_date"
+    t.index ["start_date", "end_date"], name: "index_advertisements_on_start_date_and_end_date"
+    t.index ["start_date"], name: "index_advertisements_on_start_date"
+    t.index ["status"], name: "index_advertisements_on_status"
+    t.index ["user_id"], name: "index_advertisements_on_user_id"
   end
 
   create_table "categories", force: :cascade do |t|
@@ -68,13 +84,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.string "address_type"
     t.boolean "is_active", default: true
     t.string "password_digest"
-    t.string "pincode"
-    t.string "landmark"
-    t.string "city"
-    t.string "postal_code"
-    t.string "state"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
     t.index ["is_active"], name: "index_customers_on_is_active"
+    t.index ["member_id"], name: "index_customers_on_member_id", unique: true
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -181,6 +193,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "parties", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "mobile_number", null: false
+    t.string "gst_number"
+    t.text "shipping_address"
+    t.string "shipping_pincode"
+    t.string "shipping_city"
+    t.string "shipping_state"
+    t.text "billing_address"
+    t.string "billing_pincode"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gst_number"], name: "index_parties_on_gst_number"
+    t.index ["mobile_number"], name: "index_parties_on_mobile_number"
+    t.index ["name"], name: "index_parties_on_name"
+    t.index ["user_id"], name: "index_parties_on_user_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "name"
     t.string "description"
@@ -206,6 +237,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.index ["sku"], name: "index_products_on_sku", unique: true
   end
 
+  create_table "purchase_customers", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "address"
+    t.string "city"
+    t.string "state"
+    t.string "pincode"
+    t.string "phone_number", null: false
+    t.string "email"
+    t.string "gst_number"
+    t.string "pan_number"
+    t.string "contact_person"
+    t.text "shipping_address"
+    t.boolean "is_active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gst_number"], name: "index_purchase_customers_on_gst_number"
+    t.index ["is_active"], name: "index_purchase_customers_on_is_active"
+    t.index ["name"], name: "index_purchase_customers_on_name", unique: true
+  end
+
   create_table "purchase_invoice_items", force: :cascade do |t|
     t.bigint "purchase_invoice_id", null: false
     t.bigint "purchase_product_id", null: false
@@ -216,6 +267,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.decimal "amount", precision: 10, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "description"
+    t.string "hsn_sac"
     t.index ["purchase_invoice_id", "purchase_product_id"], name: "index_purchase_items_on_invoice_and_product"
     t.index ["purchase_invoice_id"], name: "index_purchase_invoice_items_on_purchase_invoice_id"
     t.index ["purchase_product_id"], name: "index_purchase_invoice_items_on_purchase_product_id"
@@ -223,7 +276,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
 
   create_table "purchase_invoices", force: :cascade do |t|
     t.string "invoice_number", null: false
-    t.string "invoice_type", null: false
     t.string "party_name", null: false
     t.date "invoice_date", null: false
     t.date "due_date"
@@ -238,9 +290,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "original_invoice_number"
+    t.text "bill_from"
+    t.text "ship_from"
+    t.decimal "additional_charges", precision: 10, scale: 2, default: "0.0"
+    t.decimal "additional_discount", precision: 10, scale: 2, default: "0.0"
+    t.boolean "auto_round_off", default: false
+    t.decimal "round_off_amount", precision: 10, scale: 2, default: "0.0"
+    t.string "payment_type", default: "cash"
+    t.text "terms_and_conditions"
+    t.text "authorized_signature"
     t.index ["invoice_number"], name: "index_purchase_invoices_on_invoice_number"
-    t.index ["invoice_type"], name: "index_purchase_invoices_on_invoice_type"
+    t.index ["original_invoice_number"], name: "index_purchase_invoices_on_original_invoice_number"
     t.index ["party_name"], name: "index_purchase_invoices_on_party_name"
+    t.index ["payment_type"], name: "index_purchase_invoices_on_payment_type"
     t.index ["status"], name: "index_purchase_invoices_on_status"
   end
 
@@ -257,14 +320,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "status"
+    t.string "hsn_sac"
+    t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0"
     t.index ["category"], name: "index_purchase_products_on_category"
+    t.index ["hsn_sac"], name: "index_purchase_products_on_hsn_sac"
     t.index ["name"], name: "index_purchase_products_on_name"
-    t.index ["status"], name: "index_purchase_products_on_status"
+  end
+
+  create_table "sales_customers", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "address"
+    t.string "city"
+    t.string "state"
+    t.string "pincode"
+    t.string "phone_number", null: false
+    t.string "email"
+    t.string "gst_number"
+    t.string "pan_number"
+    t.string "contact_person"
+    t.text "shipping_address"
+    t.boolean "is_active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gst_number"], name: "index_sales_customers_on_gst_number"
+    t.index ["is_active"], name: "index_sales_customers_on_is_active"
+    t.index ["name"], name: "index_sales_customers_on_name", unique: true
   end
 
   create_table "sales_invoice_items", force: :cascade do |t|
     t.bigint "sales_invoice_id", null: false
-    t.bigint "sales_product_id"
+    t.bigint "sales_product_id", null: false
     t.decimal "quantity", precision: 10, scale: 2, null: false
     t.decimal "price", precision: 10, scale: 2, null: false
     t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0"
@@ -273,6 +358,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "hsn_sac"
+    t.string "item_type", default: "SalesProduct"
+    t.bigint "product_id"
+    t.index ["item_type", "product_id"], name: "index_sales_invoice_items_on_item_type_and_product_id"
+    t.index ["item_type", "sales_product_id"], name: "index_sales_invoice_items_on_item_type_and_sales_product_id"
+    t.index ["product_id"], name: "index_sales_invoice_items_on_product_id"
     t.index ["sales_invoice_id", "sales_product_id"], name: "index_sales_items_on_invoice_and_product"
     t.index ["sales_invoice_id"], name: "index_sales_invoice_items_on_sales_invoice_id"
     t.index ["sales_product_id"], name: "index_sales_invoice_items_on_sales_product_id"
@@ -307,10 +397,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.string "payment_type", default: "cash"
     t.text "terms_and_conditions"
     t.text "authorized_signature"
+    t.bigint "sales_customer_id"
     t.index ["customer_id"], name: "index_sales_invoices_on_customer_id"
     t.index ["customer_name"], name: "index_sales_invoices_on_customer_name"
     t.index ["invoice_number"], name: "index_sales_invoices_on_invoice_number"
     t.index ["invoice_type"], name: "index_sales_invoices_on_invoice_type"
+    t.index ["sales_customer_id"], name: "index_sales_invoices_on_sales_customer_id"
     t.index ["status"], name: "index_sales_invoices_on_status"
   end
 
@@ -340,9 +432,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.string "role"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "employee_id"
+    t.index ["employee_id"], name: "index_users_on_employee_id", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
 
+  add_foreign_key "advertisements", "users"
   add_foreign_key "customers", "users"
   add_foreign_key "customers", "users", column: "delivery_person_id"
   add_foreign_key "deliveries", "customers"
@@ -359,8 +454,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoice_items", "products"
   add_foreign_key "invoices", "customers"
+  add_foreign_key "parties", "users"
   add_foreign_key "products", "categories"
   add_foreign_key "purchase_invoice_items", "purchase_invoices"
   add_foreign_key "purchase_invoice_items", "purchase_products"
+  add_foreign_key "sales_invoice_items", "products"
   add_foreign_key "sales_invoices", "customers"
+  add_foreign_key "sales_invoices", "sales_customers"
 end

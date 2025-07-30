@@ -16,31 +16,36 @@
         margin: 0 auto;
         background-color: white;
         padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
 
-      .invoice-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
+      /* Use table-based layout instead of flexbox for PDF compatibility */
+      .invoice-header-table {
+        width: 100%;
+        border-collapse: collapse;
         margin-bottom: 15px;
       }
 
-      .left-section {
-        display: flex;
-        align-items: center;
-        margin-top: 20px;
+      .invoice-header-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .logo-cell {
+        width: 200px;
+        padding-right: 20px;
       }
 
       .logo {
         width: 150px;
         height: auto;
-        margin-right: 20px;
       }
 
-      .right-section {
-        flex: 1;
+      .company-info-cell {
+        width: auto;
+      }
+
+      .tax-label-container {
+        margin-bottom: 20px;
       }
 
       .tax-label {
@@ -62,7 +67,7 @@
         color: #5a4ec9;
         font-size: 36px;
         font-weight: bold;
-        margin: 20px 0 10px 0;
+        margin: 0 0 10px 0;
       }
 
       .address,
@@ -77,39 +82,50 @@
 
       .top-bar {
         height: 12px;
-        background-color: #5a4ec9; /* purple top bar */
+        background-color: #5a4ec9;
         margin-bottom: 0;
+        width: 100%;
       }
 
-      .invoice-meta {
+      /* Use table for invoice meta instead of flexbox */
+      .invoice-meta-table {
+        width: 100%;
         background-color: #e7e7e7;
-        display: flex;
-        justify-content: space-around;
-        padding: 15px 0;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      .invoice-meta-table td {
+        padding: 15px;
+        text-align: center;
         font-size: 18px;
         font-weight: bold;
+        width: 33.33%;
       }
 
-      .invoice-meta span {
+      .invoice-meta-table span {
         font-weight: normal;
         margin-left: 5px;
       }
 
-      .bill-ship-section {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 30px;
+      /* Use table for bill/ship section */
+      .bill-ship-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 30px 0;
       }
 
-      .bill,
-      .ship {
-        width: 48%;
+      .bill-ship-table td {
+        width: 50%;
+        vertical-align: top;
+        padding: 0 10px;
       }
 
       .bill-title,
       .ship-title {
         font-size: 16px;
         margin-bottom: 8px;
+        font-weight: bold;
       }
 
       .client-name {
@@ -122,32 +138,51 @@
         font-size: 16px;
       }
 
-      table {
+      /* Items table */
+      .items-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 20px;
+        margin: 20px 0;
       }
 
-      thead {
+      .items-table thead {
         border-top: 4px solid #5a4ec9;
         border-bottom: 4px solid #5a4ec9;
       }
 
-      th {
-        text-align: left;
+      .items-table th {
         padding: 10px 8px;
         font-size: 18px;
         font-weight: bold;
+        text-align: left;
       }
 
-      td {
+      .items-table th.center-align {
+        text-align: center;
+      }
+
+      .items-table th.right-align {
+        text-align: right;
+      }
+
+      .items-table td {
         padding: 10px 8px;
         font-size: 17px;
         vertical-align: top;
+        border-bottom: 1px solid #ddd;
       }
 
-      #item-table tbody tr:not(:last-child) {
-        border-bottom: 1px solid #ddd;
+      .items-table td.center-align {
+        text-align: center;
+      }
+
+      .items-table td.right-align {
+        text-align: right;
+        font-weight: bold;
+      }
+
+      .items-table tbody tr:last-child td {
+        border-bottom: none;
       }
 
       .description {
@@ -160,69 +195,90 @@
         color: #666;
       }
 
-      td.amount {
-        text-align: right;
-        font-weight: bold;
+      /* Subtotal section */
+      .subtotal-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
       }
 
-      .section-border {
+      .subtotal-table .section-border {
         border-top: 4px solid #5a4ec9;
         border-bottom: 4px solid #5a4ec9;
-        margin: 30px 0 20px;
         font-weight: bold;
-      }
-
-      .subtotal-values {
-        display: flex;
-        justify-content: flex-end;
-        gap: 40px;
-      }
-
-      .subtotal-values span {
-        text-align: right;
-        min-width: 80px;
-      }
-
-      .summary-table {
-        width: 100%;
         font-size: 18px;
-        margin-bottom: 10px;
       }
 
-      .summary-table td {
+      .subtotal-table td {
         padding: 10px;
-        vertical-align: top;
       }
 
-      .summary-table td:last-child {
+      .subtotal-values-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .subtotal-values-table td {
         text-align: right;
+        padding: 0 20px;
         font-weight: bold;
       }
 
-      .details-container {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
+      /* Details section using table layout */
+      .details-main-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
       }
 
-      .bank-details,
-      .tax-summary {
-        width: 40%;
+      .details-main-table td {
+        vertical-align: top;
+        padding: 0 10px;
+      }
+
+      .bank-details-cell {
+        width: 45%;
+      }
+
+      .tax-summary-cell {
+        width: 45%;
       }
 
       .bank-details h3,
-      .payment-qr h3 {
+      .payment-qr h4 {
         font-size: 20px;
         margin-bottom: 10px;
       }
 
-      .bank-details table {
+      .bank-details-table {
+        width: 100%;
+        border-collapse: collapse;
         font-size: 16px;
+        margin-bottom: 20px;
       }
 
-      .bank-details td {
+      .bank-details-table td {
         padding: 4px 8px;
+      }
+
+      .payment-qr-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .payment-qr-table td {
+        vertical-align: top;
+        padding: 5px;
+      }
+
+      .qr-image {
+        width: 100px;
+        height: 100px;
+      }
+
+      .upi-icons img {
+        height: 22px;
+        margin-right: 10px;
       }
 
       .tax-summary {
@@ -237,34 +293,6 @@
         margin-top: 8px;
       }
 
-      .payment-qr {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 30px;
-        margin-top: 20px;
-      }
-
-      .payment-qr > div {
-        flex: 1;
-      }
-
-      .qr-image {
-        width: 100px;
-        height: 100px;
-        object-fit: contain;
-      }
-
-      .qr-section img {
-        width: 100px;
-        height: 100px;
-      }
-
-      .upi-icons img {
-        height: 22px;
-        margin-right: 10px;
-      }
-
       .amount-words {
         text-align: right;
         margin-top: 30px;
@@ -273,23 +301,32 @@
       .amount-words h3 {
         font-size: 18px;
         font-weight: bold;
-        margin-bottom: 0;
+        margin-bottom: 5px;
       }
 
       .amount-words div {
         font-size: 18px;
       }
 
-      .terms-signature {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+      /* Terms and signature section */
+      .terms-signature-table {
+        width: 100%;
+        border-collapse: collapse;
         margin-top: 40px;
-        font-family: Arial, sans-serif;
       }
 
-      .terms {
-        width: 55%;
+      .terms-signature-table td {
+        vertical-align: top;
+        padding: 0 10px;
+      }
+
+      .terms-cell {
+        width: 60%;
+      }
+
+      .signature-cell {
+        width: 40%;
+        text-align: center;
       }
 
       .terms h3 {
@@ -300,17 +337,16 @@
 
       .terms ol {
         font-size: 16px;
-      }
-
-      .signature-block {
-        width: 40%;
-        text-align: center;
+        padding-left: 20px;
       }
 
       .signature-box {
         height: 120px;
         border: 2px solid #000;
         margin-bottom: 10px;
+        width: 200px;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       .signature-label {
@@ -322,219 +358,207 @@
         font-size: 15px;
         margin-top: 2px;
       }
+
+      /* Ensure proper spacing and alignment for PDF */
+      .float-right {
+        float: right;
+      }
+
+      .clear-both {
+        clear: both;
+      }
     </style>
   </head>
   <body>
     <div class="invoice-container">
-      <div>
-        <span class="tax-label">TAX INVOICE</span>
+      <!-- Tax label and original recipient -->
+      <div class="tax-label-container">
+        <span class="tax-label">BILL OF SUPPLY</span>
         <span class="original-recipient">ORIGINAL FOR RECIPIENT</span>
       </div>
-      <div class="invoice-header">
-        <div class="left-section">
-          <img class="logo" src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhir Farm Logo" />
-        </div>
-        <div class="right-section">
-          <div class="company-name">Atma Nirbhir Farm</div>
-          <div class="address">
-            #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi,
-            Bangalore, Karnataka, 560072
-          </div>
-          <div class="contact">
-            <span class="highlight">Mobile:</span> 9972808044 &nbsp;&nbsp;
-            <span class="highlight">GSTIN:</span> 29AOIPT8113K1ZC &nbsp;&nbsp;
-            <span class="highlight">PAN Number:</span> AOIPT8113K <br />
-            <span class="highlight">Email:</span> atmanirbharfarm@gmail.com
-          </div>
-        </div>
-      </div>
 
-      <div class="top-bar"></div>
-      <div class="invoice-meta">
-        <div>Invoice No.: <span>2928</span></div>
-        <div>Invoice Date: <span>08/06/2025</span></div>
-        <div>Due Date: <span>15/06/2025</span></div>
-      </div>
-
-      <div class="bill-ship-section">
-        <div class="bill">
-          <div class="bill-title">BILL TO</div>
-          <div class="client-name">Nagaraj D Group Milk C</div>
-          <div class="mobile">Mobile: 9620194177</div>
-        </div>
-        <div class="ship">
-          <div class="ship-title">SHIP TO</div>
-          <div class="client-name">Nagaraj D Group Milk C</div>
-        </div>
-      </div>
-
-      <!-- Items Table -->
-      <table id="item-table">
-        <thead>
-          <tr>
-            <th>ITEMS</th>
-            <th>HSN</th>
-            <th>QTY.</th>
-            <th>RATE</th>
-            <th>TAX</th>
-            <th>AMOUNT</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div>A2 GHEE 500ML</div>
-              <div class="description">Bottele</div>
-            </td>
-            <td>04059020</td>
-            <td>0.5 LTR</td>
-            <td>2,232.14</td>
-            <td>
-              133.93<br />
-              <span class="tax-rate">(12%)</span>
-            </td>
-            <td class="amount">1,250</td>
-          </tr>
-          <tr>
-            <td>
-              <div>GROUNDNOT OIL 1LITER</div>
-              <div class="description">Bottele</div>
-            </td>
-            <td>1508</td>
-            <td>1 BTL</td>
-            <td>333.33</td>
-            <td>
-              16.67<br />
-              <span class="tax-rate">(5%)</span>
-            </td>
-            <td class="amount">350</td>
-          </tr>
-          <tr>
-            <td>
-              <div>COCONUT OIL 1 LITER</div>
-              <div class="description">Bottele</div>
-            </td>
-            <td>151319</td>
-            <td>1 BTL</td>
-            <td>409.52</td>
-            <td>
-              20.48<br />
-              <span class="tax-rate">(5%)</span>
-            </td>
-            <td class="amount">430</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <table class="summary-table">
-        <tr class="section-border">
-          <td>SUBTOTAL</td>
-          <td>-</td>
-          <td colspan="2">
-            <div class="subtotal-values">
-              <span>₹ 171.07</span>
-              <span>₹ 2,030</span>
+      <!-- Header section using table layout -->
+      <table class="invoice-header-table">
+        <tr>
+          <td class="logo-cell">
+            <img class="logo" src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhir Farm Logo" />
+          </td>
+          <td class="company-info-cell">
+            <div class="company-name">Atma Nirbhir Farm</div>
+            <div class="address">
+              #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi,
+              Bangalore, Karnataka, 560072
+            </div>
+            <div class="contact">
+              <span class="highlight">Mobile:</span> 9972808044 &nbsp;&nbsp;
+              <span class="highlight">GSTIN:</span> 29AOIPT8113K1ZC &nbsp;&nbsp;
+              <span class="highlight">PAN Number:</span> AOIPT8113K <br />
+              <span class="highlight">Email:</span> atmanirbharfarm@gmail.com
             </div>
           </td>
         </tr>
       </table>
 
-      <div class="details-container">
-        <div class="bank-details">
-          <h3>BANK DETAILS</h3>
-          <table>
-            <tr>
-              <td>Name:</td>
-              <td>Atma Nirbhar Farm</td>
-            </tr>
-            <tr>
-              <td>IFSC Code:</td>
-              <td>CNRB0003194</td>
-            </tr>
-            <tr>
-              <td>Account No:</td>
-              <td>3194201000718</td>
-            </tr>
-            <tr>
-              <td>Bank:</td>
-              <td>Canara Bank</td>
-            </tr>
-          </table>
+      <!-- Top bar -->
+      <div class="top-bar"></div>
 
-          <div class="payment-qr">
-            <div>
+      <!-- Invoice meta information -->
+      <table class="invoice-meta-table">
+        <tr>
+          <td>Invoice No.: <span>INV-000001</span></td>
+          <td>Invoice Date: <span>01/07/2025</span></td>
+          <td>Due Date: <span>11/07/2025</span></td>
+        </tr>
+      </table>
+
+      <!-- Bill to and Ship to section -->
+      <table class="bill-ship-table">
+        <tr>
+          <td>
+            <div class="bill-title">BILL TO</div>
+            <div class="client-name">test1</div>
+            <div>girinagr</div>
+            <div class="mobile">Mobile: 9620194177</div>
+          </td>
+          <td>
+            <div class="ship-title">SHIP TO</div>
+            <div class="client-name">test1</div>
+            <div>girinagr</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>ITEMS</th>
+            <th class="center-align">HSN</th>
+            <th class="center-align">QTY.</th>
+            <th class="right-align">RATE</th>
+            <th class="right-align">TAX</th>
+            <th class="right-align">AMOUNT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div>qwq</div>
+              <div class="description">wq</div>
+            </td>
+            <td class="center-align">-</td>
+            <td class="center-align">1.0 liters</td>
+            <td class="right-align">₹12.0</td>
+            <td class="right-align">
+              ₹0.0<br />
+              <span class="tax-rate">(0%)</span>
+            </td>
+            <td class="right-align">₹12.0</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Subtotal section -->
+      <table class="subtotal-table">
+        <tr class="section-border">
+          <td>SUBTOTAL</td>
+          <td>-</td>
+          <td style="width: 40%;">
+            <table class="subtotal-values-table">
+              <tr>
+                <td>₹ 1.0</td>
+                <td>₹ 12.0</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Details section -->
+      <table class="details-main-table">
+        <tr>
+          <td class="bank-details-cell">
+            <div class="bank-details">
+              <h3>BANK DETAILS</h3>
+              <table class="bank-details-table">
+                <tr>
+                  <td>Name:</td>
+                  <td>Atma Nirbhar Farm</td>
+                </tr>
+                <tr>
+                  <td>IFSC Code:</td>
+                  <td>CNRB0003194</td>
+                </tr>
+                <tr>
+                  <td>Account No:</td>
+                  <td>3194201000718</td>
+                </tr>
+                <tr>
+                  <td>Bank:</td>
+                  <td>Canara Bank</td>
+                </tr>
+              </table>
+
               <h4>PAYMENT QR CODE</h4>
-              <p>UPI ID:<br />9972808044@ybl</p>
-              <div class="qr-section">
-                <div class="upi-icons">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/PhonePe_Logo.svg/1280px-PhonePe_Logo.svg.png"
-                    alt="PhonePe"
-                  />
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png"
-                    alt="GPay"
-                  />
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Paytm_logo.png"
-                    alt="Paytm"
-                  />
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Unified_Payments_Interface_logo.svg/1920px-Unified_Payments_Interface_logo.svg.png"
-                    alt="UPI"
-                  />
-                </div>
+              <table class="payment-qr-table">
+                <tr>
+                  <td>
+                    <p>UPI ID:<br />9972808044@ybl</p>
+                    <div class="upi-icons">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/PhonePe_Logo.svg/1280px-PhonePe_Logo.svg.png" alt="PhonePe" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="GPay" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Paytm_logo.png" alt="Paytm" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Unified_Payments_Interface_logo.svg/1920px-Unified_Payments_Interface_logo.svg.png" alt="UPI" />
+                    </div>
+                  </td>
+                  <td style="text-align: center;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=9972808044@ybl" alt="QR Code" class="qr-image" />
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td>
+          <td class="tax-summary-cell">
+            <div class="tax-summary">
+              <div>
+                TAXABLE AMOUNT <span class="float-right">₹ 12.0</span>
+                <div class="clear-both"></div>
+              </div>
+              <div class="total">
+                TOTAL AMOUNT <span class="float-right">₹ 12.0</span>
+                <div class="clear-both"></div>
+                <span style="font-weight: normal">Received Amount</span>
+                <span class="float-right">₹ 0</span>
+                <div class="clear-both"></div>
+              </div>
+              <div class="amount-words">
+                <h3>Total Amount (in words)</h3>
+                <div>Twelve Rupees</div>
               </div>
             </div>
-            <img
-              src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=9972808044@ybl"
-              alt="QR Code"
-              class="qr-image"
-            />
-          </div>
-        </div>
+          </td>
+        </tr>
+      </table>
 
-        <div class="tax-summary">
-          <div>
-            TAXABLE AMOUNT <span style="float: right">₹ 1,858.93</span><br />
-            CGST @2.5% <span style="float: right">₹ 18.57</span><br />
-            SGST @2.5% <span style="float: right">₹ 18.57</span><br />
-            CGST @6% <span style="float: right">₹ 66.96</span><br />
-            SGST @6% <span style="float: right">₹ 66.96</span>
-          </div>
-          <div class="total">
-            TOTAL AMOUNT <span style="float: right">₹ 2,030</span><br />
-            <span style="font-weight: normal">Received Amount</span>
-            <span style="float: right">₹ 0</span>
-          </div>
-          <div class="amount-words">
-            <h3>Total Amount (in words)</h3>
-            <div>Two Thousand Thirty Rupees</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="terms-signature">
-        <div class="terms">
-          <h3>TERMS AND CONDITIONS</h3>
-          <ol style="padding-left: 20px;">
-            <li>
-              Kindly Do Make Every Month Payment on or Before the 10th of The
-              Month
-            </li>
-            <li>
-              Kindly Share the Screenshot Immediately Once the Payment is Done
-              to Confirm Your Payment
-            </li>
-          </ol>
-        </div>
-
-        <div class="signature-block">
-          <div class="signature-box"></div>
-          <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
-          <div class="signature-name">Atma Nirbhar Farm</div>
-        </div>
-      </div>
+      <!-- Terms and signature section -->
+      <table class="terms-signature-table">
+        <tr>
+          <td class="terms-cell">
+            <div class="terms">
+              <h3>TERMS AND CONDITIONS</h3>
+              <ol>
+                <li>Kindly Do Make Every Month Payment on or Before the 10th of The Month</li>
+                <li>Kindly Share the Screenshot Immediately Once the Payment is Done to Confirm Your Payment</li>
+              </ol>
+            </div>
+          </td>
+          <td class="signature-cell">
+            <div class="signature-box"></div>
+            <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
+            <div class="signature-name">Atma Nirbhar Farm</div>
+          </td>
+        </tr>
+      </table>
     </div>
   </body>
 </html>

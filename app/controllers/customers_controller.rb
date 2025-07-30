@@ -141,6 +141,85 @@ class CustomersController < ApplicationController
     end
   end
   
+  # Enhanced bulk import form
+  def enhanced_bulk_import
+    @csv_template = Customer.enhanced_csv_template
+    @delivery_people = User.delivery_people.order(:name)
+    @products = Product.order(:name)
+  end
+  
+  # Process enhanced bulk import
+  def process_enhanced_bulk_import
+    csv_data = params[:csv_data]
+    
+    if csv_data.blank?
+      render json: { 
+        success: false, 
+        message: "Please paste CSV data" 
+      }
+      return
+    end
+    
+    result = Customer.enhanced_bulk_import(csv_data, current_user)
+    
+    render json: result
+  end
+  
+  # AJAX validation for enhanced CSV
+  def validate_enhanced_csv
+    csv_data = params[:csv_data]
+    
+    if csv_data.blank?
+      render json: { valid: false, message: "Please paste CSV data" }
+      return
+    end
+    
+    begin
+      require 'csv'
+      csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
+      
+      required_headers = [:name, :phone_number, :address, :email, :gst_number, :pan_number, :delivery_person_id, :product_id, :quality, :start_date, :end_date]
+      missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
+      
+      if missing_headers.any?
+        render json: { 
+          valid: false, 
+          message: "Missing required columns: #{missing_headers.join(', ')}" 
+        }
+      elsif csv.count > 50
+        render json: { 
+          valid: false, 
+          message: "Maximum 50 customers allowed per bulk import. Your file contains #{csv.count} rows." 
+        }
+      else
+        render json: { 
+          valid: true, 
+          message: "CSV format is valid. Found #{csv.count} rows ready for enhanced import with delivery assignments.",
+          row_count: csv.count,
+          headers: csv.headers
+        }
+      end
+    rescue CSV::MalformedCSVError => e
+      render json: { valid: false, message: "Invalid CSV format: #{e.message}" }
+    rescue => e
+      render json: { valid: false, message: "Error validating CSV: #{e.message}" }
+    end
+  end
+  
+  # Download enhanced CSV template
+  def download_enhanced_template
+    template_content = Customer.enhanced_csv_template
+    
+    respond_to do |format|
+      format.csv do
+        send_data template_content,
+                  filename: 'customers_enhanced_template.csv',
+                  type: 'text/csv',
+                  disposition: 'attachment'
+      end
+    end
+  end
+  
   private
   
   def set_customer

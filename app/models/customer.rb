@@ -168,6 +168,200 @@ class Customer < ApplicationRecord
     result
   end
   
+  # Enhanced bulk import with delivery assignments and schedules
+  def self.enhanced_bulk_import(csv_data, current_user)
+    require 'csv'
+    
+    result = {
+      success: false,
+      imported_count: 0,
+      errors: [],
+      skipped_rows: [],
+      message: '',
+      delivery_assignments_created: 0,
+      delivery_schedules_created: 0
+    }
+    
+    begin
+      # Parse CSV data
+      csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
+      
+      if csv.empty?
+        result[:message] = "CSV file is empty"
+        return result
+      end
+      
+      # Validate required headers for enhanced format
+      required_headers = [:name, :phone_number, :address, :email, :gst_number, :pan_number, :delivery_person_id, :product_id, :quality, :start_date, :end_date]
+      missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
+      
+      if missing_headers.any?
+        result[:message] = "Missing required columns: #{missing_headers.join(', ')}"
+        return result
+      end
+      
+      # Check user limit (maximum 50 customers)
+      if csv.length > 50
+        result[:message] = "Maximum 50 customers allowed per bulk import. Your file contains #{csv.length} rows."
+        return result
+      end
+      
+      imported_count = 0
+      delivery_assignments_created = 0
+      delivery_schedules_created = 0
+      
+      ActiveRecord::Base.transaction do
+        csv.each_with_index do |row, index|
+          row_number = index + 2 # +2 because index starts at 0 and we have headers
+          
+          # Skip empty rows
+          if row[:name].blank? && row[:phone_number].blank? && row[:address].blank?
+            result[:skipped_rows] << "Row #{row_number}: Empty row"
+            next
+          end
+          
+          # Validate required fields
+          if row[:name].blank?
+            result[:errors] << "Row #{row_number}: Name is required"
+            next
+          end
+          
+          if row[:phone_number].blank?
+            result[:errors] << "Row #{row_number}: Phone number is required"
+            next
+          end
+          
+          if row[:address].blank?
+            result[:errors] << "Row #{row_number}: Address is required"
+            next
+          end
+          
+          # Validate delivery person exists
+          delivery_person = User.find_by(id: row[:delivery_person_id], role: 'delivery_person')
+          if row[:delivery_person_id].present? && delivery_person.nil?
+            result[:errors] << "Row #{row_number}: Invalid delivery person ID #{row[:delivery_person_id]}"
+            next
+          end
+          
+          # Validate product exists
+          product = Product.find_by(id: row[:product_id])
+          if row[:product_id].present? && product.nil?
+            result[:errors] << "Row #{row_number}: Invalid product ID #{row[:product_id]}"
+            next
+          end
+          
+          # Validate dates
+          begin
+            start_date = Date.parse(row[:start_date].to_s) if row[:start_date].present?
+            end_date = Date.parse(row[:end_date].to_s) if row[:end_date].present?
+            
+            if start_date && end_date && start_date > end_date
+              result[:errors] << "Row #{row_number}: Start date cannot be after end date"
+              next
+            end
+          rescue ArgumentError
+            result[:errors] << "Row #{row_number}: Invalid date format. Use YYYY-MM-DD format"
+            next
+          end
+          
+          # Check if customer already exists
+          existing_customer = Customer.find_by(
+            name: row[:name].to_s.strip,
+            phone_number: row[:phone_number].to_s.strip
+          )
+          
+          if existing_customer
+            result[:errors] << "Row #{row_number}: Customer '#{row[:name]}' with phone '#{row[:phone_number]}' already exists"
+            next
+          end
+          
+          # Create customer (columns 1-6)
+          customer = Customer.new(
+            name: row[:name].to_s.strip,
+            phone_number: row[:phone_number].to_s.strip,
+            address: row[:address].to_s.strip,
+            email: row[:email].to_s.strip.presence,
+            gst_number: row[:gst_number].to_s.strip.presence,
+            pan_number: row[:pan_number].to_s.strip.presence,
+            delivery_person_id: delivery_person&.id,
+            user: current_user
+          )
+          
+          # Set default password
+          customer.password = "customer@123"
+          customer.password_confirmation = "customer@123"
+          
+          if customer.save
+            imported_count += 1
+            
+            # Create delivery schedule if product and dates are provided
+            if product && start_date && end_date
+              # Ensure quantity is at least 1 (validation requires > 0)
+              quantity = row[:quantity].present? ? row[:quantity].to_i : 1
+              quantity = 1 if quantity <= 0 # Ensure it's greater than 0
+              
+              delivery_schedule = DeliverySchedule.new(
+                customer: customer,
+                user: delivery_person || current_user,
+                product: product,
+                frequency: 'daily', # Default frequency
+                start_date: start_date,
+                end_date: end_date,
+                default_quantity: quantity,
+                default_unit: 'pieces',
+                status: 'active'
+              )
+              
+              if delivery_schedule.save
+                delivery_schedules_created += 1
+                
+                # Generate delivery assignments for the schedule
+                assignments_created = generate_delivery_assignments_for_schedule(delivery_schedule)
+                delivery_assignments_created += assignments_created
+              else
+                result[:errors] << "Row #{row_number}: Failed to create delivery schedule - #{delivery_schedule.errors.full_messages.join(', ')}"
+              end
+            end
+            
+          else
+            error_messages = customer.errors.full_messages.join(', ')
+            result[:errors] << "Row #{row_number}: #{error_messages}"
+          end
+        end
+        
+        # If there are errors, rollback the transaction
+        if result[:errors].any?
+          raise ActiveRecord::Rollback
+        end
+      end
+      
+      result[:success] = result[:errors].empty?
+      result[:imported_count] = imported_count
+      result[:delivery_assignments_created] = delivery_assignments_created
+      result[:delivery_schedules_created] = delivery_schedules_created
+      
+      if result[:success]
+        result[:message] = "Enhanced bulk import completed successfully"
+      else
+        result[:message] = "Import failed with errors"
+      end
+      
+    rescue CSV::MalformedCSVError => e
+      result[:message] = "Invalid CSV format: #{e.message}"
+    rescue => e
+      result[:message] = "Error processing CSV: #{e.message}"
+    end
+    
+    result
+  end
+
+  # Enhanced CSV template for bulk import with delivery assignments
+  def self.enhanced_csv_template
+    "name,phone_number,address,email,gst_number,pan_number,delivery_person_id,product_id,quality,start_date,end_date\n" +
+    "John Doe,9999999999,123 Main St Delhi,john@example.com,GST123,PAN123,1,1,5,2024-01-01,2024-01-31\n" +
+    "Jane Smith,8888888888,456 Oak Ave Mumbai,jane@example.com,GST456,PAN456,2,2,3,2024-01-01,2024-01-31\n"
+  end
+  
   # Instance methods
   def assigned?
     delivery_person.present?
@@ -386,5 +580,33 @@ class Customer < ApplicationRecord
     else
       true # Default to daily
     end
+  end
+
+  # Helper method to generate delivery assignments for a schedule
+  def self.generate_delivery_assignments_for_schedule(schedule)
+    assignments = []
+    current_date = schedule.start_date
+    assignments_created = 0
+    
+    while current_date <= schedule.end_date
+      assignment = DeliveryAssignment.new(
+        delivery_schedule: schedule,
+        customer: schedule.customer,
+        user: schedule.user,
+        product: schedule.product,
+        scheduled_date: current_date,
+        status: 'pending',
+        quantity: schedule.default_quantity,
+        unit: schedule.default_unit || 'pieces'
+      )
+      
+      if assignment.save
+        assignments_created += 1
+      end
+      
+      current_date += 1.day
+    end
+    
+    assignments_created
   end
 end
