@@ -384,6 +384,19 @@ body .page-header .btn:hover {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
 
+/* Product ID Badge */
+.product-id-badge {
+  font-family: 'Courier New', monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  padding: 0.4rem 0.8rem !important;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  text-transform: none !important;
+  letter-spacing: 1px !important;
+}
+
 /* Enhanced Action Buttons */
 .btn-group .btn {
   border-radius: 12px !important;
