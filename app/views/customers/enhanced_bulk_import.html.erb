@@ -1,0 +1,1321 @@
+<!-- app/views/customers/enhanced_bulk_import.html.erb -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-rocket me-3"></i>Enhanced Bulk Customer Import
+      </h1>
+      <p class="text-muted mb-0">Import customers with automatic delivery assignments and schedules</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to customers_path, class: "btn btn-outline-light" do %>
+        <i class="fas fa-arrow-left me-2"></i>Back to Customers
+      <% end %>
+      <%= link_to bulk_import_customers_path, class: "btn btn-outline-light" do %>
+        <i class="fas fa-upload me-2"></i>Standard Import
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-primary">
+      <div class="stats-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stats-number">50</div>
+      <div class="stats-label">Max Customers</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-truck"></i>
+      </div>
+      <div class="stats-number"><%= @delivery_people.count %></div>
+      <div class="stats-label">Delivery People</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-box"></i>
+      </div>
+      <div class="stats-number"><%= @products.count %></div>
+      <div class="stats-label">Products Available</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <div class="stats-number">Auto</div>
+      <div class="stats-label">Schedule Creation</div>
+    </div>
+  </div>
+</div>
+
+<!-- Instructions Card -->
+<div class="card mb-4">
+  <div class="card-header bg-info text-white py-3">
+    <h6 class="m-0 font-weight-bold">
+      <i class="fas fa-info-circle me-2"></i>Enhanced Import Features
+    </h6>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-primary mb-3">What this import does:</h6>
+        <ul class="list-unstyled">
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Creates customers from columns 1-6 (name, phone, address, email, GST, PAN)
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Assigns delivery person and creates delivery assignments
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Creates delivery schedules from start date to end date
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            Maximum 50 customers per import for optimal performance
+          </li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-primary mb-3">Required CSV Format:</h6>
+        <div class="row">
+          <div class="col-12">
+            <span class="badge bg-danger mb-2">Required Columns (11 total)</span>
+            <div class="small text-muted">
+              <strong>Columns 1-6 (Customer Info):</strong><br>
+              • name, phone_number, address, email, gst_number, pan_number<br><br>
+              <strong>Column 7 (Delivery Person):</strong><br>
+              • delivery_person_id (ID from system)<br><br>
+              <strong>Columns 8-9 (Product & Quantity):</strong><br>
+              • product_id (ID from system), quality<br><br>
+              <strong>Columns 10-11 (Schedule Dates):</strong><br>
+              • start_date, end_date (YYYY-MM-DD format)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reference Data Cards -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h6 class="m-0">
+          <i class="fas fa-truck me-2"></i>Available Delivery People
+        </h6>
+      </div>
+      <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+        <% if @delivery_people.any? %>
+          <div class="row">
+            <% @delivery_people.each do |dp| %>
+              <div class="col-md-6 mb-2">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-success me-2"><%= dp.id %></span>
+                  <small><%= dp.name %></small>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-muted mb-0">No delivery people available. Please add delivery people first.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h6 class="m-0">
+          <i class="fas fa-box me-2"></i>Available Products
+        </h6>
+      </div>
+      <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+        <% if @products.any? %>
+          <div class="row">
+            <% @products.each do |product| %>
+              <div class="col-md-6 mb-2">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-warning text-dark me-2"><%= product.id %></span>
+                  <small><%= product.name %></small>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-muted mb-0">No products available. Please add products first.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Format Selection -->
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white py-3">
+    <h6 class="m-0 font-weight-bold">
+      <i class="fas fa-cog me-2"></i>Select Upload Method
+    </h6>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="upload-option">
+          <input type="radio" class="btn-check" name="uploadFormat" id="csvFileOption" value="file" checked>
+          <label class="btn btn-outline-primary w-100 p-4" for="csvFileOption">
+            <i class="fas fa-file-csv fa-3x mb-3 d-block"></i>
+            <strong>CSV File Upload</strong>
+            <small class="d-block text-muted mt-2">Upload a .csv file from your computer</small>
+          </label>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="upload-option">
+          <input type="radio" class="btn-check" name="uploadFormat" id="csvTextOption" value="text">
+          <label class="btn btn-outline-secondary w-100 p-4" for="csvTextOption">
+            <i class="fas fa-edit fa-3x mb-3 d-block"></i>
+            <strong>Direct CSV Input</strong>
+            <small class="d-block text-muted mt-2">Copy and paste CSV data directly</small>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSV File Upload Card -->
+<div class="card mb-4" id="fileUploadCard">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-cloud-upload-alt me-2"></i>Enhanced CSV File Upload
+    </h6>
+    <div class="card-header-actions">
+      <button type="button" class="btn btn-sm btn-outline-danger" id="clearFileBtn">
+        <i class="fas fa-trash me-1"></i>Clear
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- File Upload Area -->
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-content">
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <h5 class="upload-title">Choose Enhanced CSV File or Drag & Drop</h5>
+        <p class="upload-subtitle text-muted">Select a CSV file with customer and delivery data</p>
+        <input type="file" id="csvFile" accept=".csv" class="file-input" hidden>
+        <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('csvFile').click()">
+          <i class="fas fa-folder-open me-2"></i>Browse Files
+        </button>
+        <p class="file-requirements mt-3">
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Supported format: CSV (.csv) • Maximum file size: 5MB • Maximum 50 customers
+          </small>
+        </p>
+      </div>
+    </div>
+
+    <!-- File Info Display -->
+    <div id="fileInfo" class="file-info" style="display: none;">
+      <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-file-csv text-success me-3 fa-2x"></i>
+          <div>
+            <h6 class="mb-1" id="fileName">filename.csv</h6>
+            <small class="text-muted">
+              <span id="fileSize">0 KB</span> • 
+              <span id="fileRows">0 rows</span>
+            </small>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger" id="removeFileBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- File Validation Status -->
+    <div id="fileValidationStatus" class="alert" style="display: none;"></div>
+
+    <!-- File Preview -->
+    <div id="filePreview" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">
+          <i class="fas fa-table me-2"></i>File Preview 
+          <span class="badge bg-primary" id="filePreviewCount">0</span>
+        </h6>
+        <small class="text-muted">Showing first 10 rows</small>
+      </div>
+      <div class="table-responsive preview-table-container">
+        <table class="table table-sm table-bordered table-hover" id="filePreviewTable">
+          <thead class="table-light">
+            <tr id="filePreviewHeaders">
+              <!-- Headers will be populated dynamically -->
+            </tr>
+          </thead>
+          <tbody id="filePreviewBody">
+            <!-- Rows will be populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- File Action Buttons -->
+    <div class="d-flex justify-content-between align-items-center mt-4" id="fileActions" style="display: none;">
+      <div class="btn-group">
+        <button type="button" class="btn btn-outline-primary" id="validateFileBtn">
+          <i class="fas fa-check-circle me-2"></i>Validate Enhanced CSV
+        </button>
+      </div>
+      <div>
+        <button type="button" class="btn btn-success btn-lg" id="importFileBtn" style="display: none;">
+          <i class="fas fa-rocket me-2"></i>Import with Delivery Setup
+          <span class="badge bg-light text-success ms-2" id="fileImportCount">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Text Input Card -->
+<div class="card mb-4" id="textInputCard" style="display: none;">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-edit me-2"></i>Direct Enhanced CSV Input
+    </h6>
+    <div class="card-header-actions">
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="loadSampleBtn">
+        <i class="fas fa-copy me-1"></i>Load Sample
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-danger" id="clearTextBtn">
+        <i class="fas fa-trash me-1"></i>Clear
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- CSV Input Form -->
+    <form id="csvImportForm">
+      <!-- CSV Textarea -->
+      <div class="mb-4">
+        <div class="csv-input-container">
+          <textarea 
+            class="form-control csv-textarea" 
+            id="csvData" 
+            name="csv_data"
+            rows="15" 
+            placeholder="Paste your enhanced CSV data here...&#10;&#10;Format: name,phone_number,address,email,gst_number,pan_number,delivery_person_id,product_id,quality,start_date,end_date&#10;&#10;Example:&#10;John Doe,9999999999,123 Main St Delhi,john@example.com,GST123,PAN123,1,1,5,2024-01-01,2024-01-31&#10;Jane Smith,8888888888,456 Oak Ave Mumbai,jane@example.com,GST456,PAN456,2,2,3,2024-01-01,2024-01-31"></textarea>
+          <div class="csv-counter">
+            <small class="text-muted">
+              <span id="lineCount">0</span> lines • 
+              <span id="charCount">0</span> characters
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Validation Status -->
+      <div id="textValidationStatus" class="alert" style="display: none;"></div>
+
+      <!-- CSV Preview -->
+      <div id="csvPreview" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">
+            <i class="fas fa-table me-2"></i>Preview 
+            <span class="badge bg-primary" id="previewCount">0</span>
+          </h6>
+          <small class="text-muted">Showing first 10 rows</small>
+        </div>
+        <div class="table-responsive preview-table-container">
+          <table class="table table-sm table-bordered table-hover" id="csvPreviewTable">
+            <thead class="table-light">
+              <tr id="previewHeaders">
+                <!-- Headers will be populated dynamically -->
+              </tr>
+            </thead>
+            <tbody id="csvPreviewBody">
+              <!-- Rows will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Text Action Buttons -->
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-primary" id="validateTextBtn">
+            <i class="fas fa-check-circle me-2"></i>Validate Enhanced CSV
+          </button>
+        </div>
+        <div>
+          <button type="button" class="btn btn-success btn-lg" id="importTextBtn" style="display: none;">
+            <i class="fas fa-rocket me-2"></i>Import with Delivery Setup
+            <span class="badge bg-light text-success ms-2" id="textImportCount">0</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Progress Indicator -->
+<div id="importProgress" style="display: none;" class="card mb-4">
+  <div class="card-body">
+    <div class="progress-container">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted">
+          <i class="fas fa-spinner fa-spin me-2"></i>Enhanced import in progress...
+        </span>
+        <span class="text-muted">Creating customers, delivery assignments, and schedules</span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+             role="progressbar" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Template Card -->
+<div class="card mt-4">
+  <div class="card-header bg-secondary text-white py-3">
+    <h6 class="m-0">
+      <i class="fas fa-download me-2"></i>Enhanced CSV Template
+    </h6>
+  </div>
+  <div class="card-body">
+    <p class="mb-3 text-muted">Use this enhanced template format for your CSV data with delivery assignments:</p>
+    <div class="template-container">
+      <pre class="csv-template"><%= @csv_template %></pre>
+    </div>
+    <div class="mt-3">
+      <button type="button" class="btn btn-outline-primary btn-sm" id="downloadTemplateBtn">
+        <i class="fas fa-download me-2"></i>Download Enhanced Template
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-body text-center py-5">
+        <div class="success-icon mb-4">
+          <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+        </div>
+        <h4 class="modal-title mb-3">Enhanced Import Successful!</h4>
+        <div id="importResults" class="mb-4">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="import-stat">
+                <div class="stat-number text-success" id="customersCreated">0</div>
+                <div class="stat-label">Customers Created</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="import-stat">
+                <div class="stat-number text-primary" id="schedulesCreated">0</div>
+                <div class="stat-label">Schedules Created</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="import-stat">
+                <div class="stat-number text-warning" id="assignmentsCreated">0</div>
+                <div class="stat-label">Assignments Created</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="text-muted mb-4" id="successMessage">Enhanced import completed successfully!</p>
+        <div class="d-flex justify-content-center gap-3">
+          <button type="button" class="btn btn-primary" id="goToCustomersBtn">
+            <i class="fas fa-users me-2"></i>View Customers
+          </button>
+          <button type="button" class="btn btn-outline-secondary" id="goToSchedulesBtn">
+            <i class="fas fa-calendar me-2"></i>View Schedules
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Elements
+  const csvData = document.getElementById('csvData');
+  const csvFile = document.getElementById('csvFile');
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInfo = document.getElementById('fileInfo');
+  const fileActions = document.getElementById('fileActions');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  const fileRows = document.getElementById('fileRows');
+  
+  // Cards
+  const fileUploadCard = document.getElementById('fileUploadCard');
+  const textInputCard = document.getElementById('textInputCard');
+  
+  // Buttons
+  const validateTextBtn = document.getElementById('validateTextBtn');
+  const validateFileBtn = document.getElementById('validateFileBtn');
+  const clearTextBtn = document.getElementById('clearTextBtn');
+  const clearFileBtn = document.getElementById('clearFileBtn');
+  const importTextBtn = document.getElementById('importTextBtn');
+  const importFileBtn = document.getElementById('importFileBtn');
+  const loadSampleBtn = document.getElementById('loadSampleBtn');
+  const removeFileBtn = document.getElementById('removeFileBtn');
+  const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+  
+  // Status and preview elements
+  const textValidationStatus = document.getElementById('textValidationStatus');
+  const fileValidationStatus = document.getElementById('fileValidationStatus');
+  const csvPreview = document.getElementById('csvPreview');
+  const filePreview = document.getElementById('filePreview');
+  const csvPreviewBody = document.getElementById('csvPreviewBody');
+  const filePreviewBody = document.getElementById('filePreviewBody');
+  const previewHeaders = document.getElementById('previewHeaders');
+  const filePreviewHeaders = document.getElementById('filePreviewHeaders');
+  const importProgress = document.getElementById('importProgress');
+  
+  // Counters
+  const lineCount = document.getElementById('lineCount');
+  const charCount = document.getElementById('charCount');
+  const previewCount = document.getElementById('previewCount');
+  const filePreviewCount = document.getElementById('filePreviewCount');
+  const textImportCount = document.getElementById('textImportCount');
+  const fileImportCount = document.getElementById('fileImportCount');
+  
+  // Modal
+  const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+  const goToCustomersBtn = document.getElementById('goToCustomersBtn');
+  const goToSchedulesBtn = document.getElementById('goToSchedulesBtn');
+  
+  // State
+  let isValidTextCSV = false;
+  let isValidFileCSV = false;
+  let validationTimeout;
+  let currentFileData = null;
+
+  // Upload format selection
+  document.querySelectorAll('input[name="uploadFormat"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      if (this.value === 'file') {
+        fileUploadCard.style.display = 'block';
+        textInputCard.style.display = 'none';
+      } else if (this.value === 'text') {
+        fileUploadCard.style.display = 'none';
+        textInputCard.style.display = 'block';
+      }
+    });
+  });
+
+  // File upload handling
+  csvFile.addEventListener('change', handleFileSelect);
+  
+  // Drag and drop
+  uploadArea.addEventListener('dragover', handleDragOver);
+  uploadArea.addEventListener('drop', handleFileDrop);
+  uploadArea.addEventListener('dragleave', handleDragLeave);
+
+  // Character and line counter for text input
+  function updateCounters() {
+    const text = csvData.value;
+    const lines = text.split('\n').filter(line => line.trim()).length;
+    charCount.textContent = text.length.toLocaleString();
+    lineCount.textContent = lines.toLocaleString();
+  }
+
+  // Auto-validate text input on change
+  csvData.addEventListener('input', function() {
+    updateCounters();
+    clearTimeout(validationTimeout);
+    validationTimeout = setTimeout(() => {
+      if (csvData.value.trim()) {
+        validateTextCSV();
+      } else {
+        hideTextPreview();
+      }
+    }, 1000);
+  });
+
+  // Initialize counters
+  updateCounters();
+
+  // Button event listeners
+  validateTextBtn.addEventListener('click', validateTextCSV);
+  validateFileBtn.addEventListener('click', validateFileCSV);
+  clearTextBtn.addEventListener('click', clearTextInput);
+  clearFileBtn.addEventListener('click', clearFileInput);
+  importTextBtn.addEventListener('click', () => importCustomers('text'));
+  importFileBtn.addEventListener('click', () => importCustomers('file'));
+  loadSampleBtn.addEventListener('click', loadSampleData);
+  removeFileBtn.addEventListener('click', clearFileInput);
+  downloadTemplateBtn.addEventListener('click', downloadTemplate);
+  goToCustomersBtn.addEventListener('click', () => window.location.href = '<%= customers_path %>');
+  goToSchedulesBtn.addEventListener('click', () => window.location.href = '<%= delivery_schedules_path %>');
+
+  // File handling functions
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      processFile(file);
+    }
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    uploadArea.classList.add('drag-over');
+  }
+
+  function handleDragLeave(event) {
+    event.preventDefault();
+    uploadArea.classList.remove('drag-over');
+  }
+
+  function handleFileDrop(event) {
+    event.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        processFile(file);
+      } else {
+        showFileValidationMessage('Please select a valid CSV file.', 'danger');
+      }
+    }
+  }
+
+  function processFile(file) {
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      showFileValidationMessage('File size too large. Maximum allowed size is 5MB.', 'danger');
+      return;
+    }
+
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      currentFileData = e.target.result;
+      const lines = currentFileData.split('\n').filter(line => line.trim()).length;
+      fileRows.textContent = lines > 0 ? (lines - 1) + ' data rows' : '0 rows'; // -1 for header
+      
+      uploadArea.style.display = 'none';
+      fileInfo.style.display = 'block';
+      fileActions.style.display = 'flex';
+      
+      // Auto-validate
+      validateFileCSV();
+    };
+    reader.readAsText(file);
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function clearFileInput() {
+    csvFile.value = '';
+    currentFileData = null;
+    uploadArea.style.display = 'block';
+    fileInfo.style.display = 'none';
+    fileActions.style.display = 'none';
+    hideFilePreview();
+    isValidFileCSV = false;
+  }
+
+  function clearTextInput() {
+    csvData.value = '';
+    hideTextPreview();
+    isValidTextCSV = false;
+    updateCounters();
+  }
+
+  function loadSampleData() {
+    csvData.value = `name,phone_number,address,email,gst_number,pan_number,delivery_person_id,product_id,quality,start_date,end_date
+John Doe,9999999999,123 Main St Delhi,john@example.com,GST123,PAN123,1,1,5,2024-01-01,2024-01-31
+Jane Smith,8888888888,456 Oak Ave Mumbai,jane@example.com,GST456,PAN456,2,2,3,2024-01-01,2024-01-31
+Sample Customer,7777777777,789 Pine St Bangalore,sample@example.com,GST789,PAN789,1,2,2,2024-01-15,2024-02-15`;
+    updateCounters();
+    validateTextCSV();
+  }
+
+  function downloadTemplate() {
+    window.location.href = '<%= download_enhanced_template_customers_path(format: :csv) %>';
+  }
+
+  // Validation functions
+  function validateTextCSV() {
+    const csvText = csvData.value.trim();
+    
+    if (!csvText) {
+      showTextValidationMessage('Please paste CSV data', 'danger');
+      hideTextPreview();
+      return;
+    }
+
+    validateCSVData(csvText, 'text');
+  }
+
+  function validateFileCSV() {
+    if (!currentFileData) {
+      showFileValidationMessage('Please select a CSV file', 'danger');
+      hideFilePreview();
+      return;
+    }
+
+    validateCSVData(currentFileData, 'file');
+  }
+
+  function validateCSVData(csvText, type) {
+    const validateBtn = type === 'text' ? validateTextBtn : validateFileBtn;
+    
+    // Show loading state
+    validateBtn.disabled = true;
+    validateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validating...';
+
+    fetch('<%= validate_enhanced_csv_customers_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ csv_data: csvText })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valid) {
+        if (type === 'text') {
+          showTextValidationMessage(`✓ Enhanced CSV is valid! Found ${data.row_count} customers ready for import with delivery setup.`, 'success');
+          showTextPreview(csvText, data.row_count);
+          isValidTextCSV = true;
+        } else {
+          showFileValidationMessage(`✓ Enhanced CSV file is valid! Found ${data.row_count} customers ready for import with delivery setup.`, 'success');
+          showFilePreview(csvText, data.row_count);
+          isValidFileCSV = true;
+        }
+      } else {
+        if (type === 'text') {
+          showTextValidationMessage(data.message, 'danger');
+          hideTextPreview();
+          isValidTextCSV = false;
+        } else {
+          showFileValidationMessage(data.message, 'danger');
+          hideFilePreview();
+          isValidFileCSV = false;
+        }
+      }
+    })
+    .catch(error => {
+      const message = 'Error validating CSV: ' + error.message;
+      if (type === 'text') {
+        showTextValidationMessage(message, 'danger');
+        hideTextPreview();
+        isValidTextCSV = false;
+      } else {
+        showFileValidationMessage(message, 'danger');
+        hideFilePreview();
+        isValidFileCSV = false;
+      }
+    })
+    .finally(() => {
+      validateBtn.disabled = false;
+      validateBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Validate Enhanced CSV';
+    });
+  }
+
+  // Message display functions
+  function showTextValidationMessage(message, type) {
+    textValidationStatus.className = `alert alert-${type}`;
+    textValidationStatus.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+    textValidationStatus.style.display = 'block';
+  }
+
+  function showFileValidationMessage(message, type) {
+    fileValidationStatus.className = `alert alert-${type}`;
+    fileValidationStatus.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+    fileValidationStatus.style.display = 'block';
+  }
+
+  // Preview functions
+  function showTextPreview(csvText, rowCount) {
+    showPreview(csvText, rowCount, 'text');
+  }
+
+  function showFilePreview(csvText, rowCount) {
+    showPreview(csvText, rowCount, 'file');
+  }
+
+  function showPreview(csvText, rowCount, type) {
+    try {
+      const lines = csvText.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+      
+      const previewElement = type === 'text' ? csvPreview : filePreview;
+      const headersElement = type === 'text' ? previewHeaders : filePreviewHeaders;
+      const bodyElement = type === 'text' ? csvPreviewBody : filePreviewBody;
+      const countElement = type === 'text' ? previewCount : filePreviewCount;
+      const importCountElement = type === 'text' ? textImportCount : fileImportCount;
+      const importBtn = type === 'text' ? importTextBtn : importFileBtn;
+      
+      // Clear previous preview
+      headersElement.innerHTML = '';
+      bodyElement.innerHTML = '';
+      
+      // Add headers
+      headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        th.className = 'text-nowrap small';
+        headersElement.appendChild(th);
+      });
+      
+      // Show first 10 data rows
+      for (let i = 1; i < Math.min(lines.length, 11); i++) {
+        if (lines[i].trim()) {
+          const values = lines[i].split(',').map(v => v.trim());
+          const row = document.createElement('tr');
+          
+          values.forEach((value, index) => {
+            const cell = document.createElement('td');
+            cell.textContent = value || '-';
+            cell.className = 'text-nowrap small';
+            if (index < 3) cell.className += ' fw-medium'; // Bold first 3 columns
+            row.appendChild(cell);
+          });
+          
+          // Fill empty cells if needed
+          while (row.children.length < headers.length) {
+            const cell = document.createElement('td');
+            cell.textContent = '-';
+            cell.className = 'text-muted small';
+            row.appendChild(cell);
+          }
+          
+          bodyElement.appendChild(row);
+        }
+      }
+      
+      countElement.textContent = rowCount;
+      importCountElement.textContent = rowCount;
+      previewElement.style.display = 'block';
+      importBtn.style.display = 'inline-block';
+    } catch (error) {
+      console.error('Error showing preview:', error);
+    }
+  }
+
+  function hideTextPreview() {
+    csvPreview.style.display = 'none';
+    importTextBtn.style.display = 'none';
+    textValidationStatus.style.display = 'none';
+  }
+
+  function hideFilePreview() {
+    filePreview.style.display = 'none';
+    importFileBtn.style.display = 'none';
+    fileValidationStatus.style.display = 'none';
+  }
+
+  // Import function
+  function importCustomers(type) {
+    const isValid = type === 'text' ? isValidTextCSV : isValidFileCSV;
+    const dataSource = type === 'text' ? csvData.value : currentFileData;
+    const importBtn = type === 'text' ? importTextBtn : importFileBtn;
+    const importCountElement = type === 'text' ? textImportCount : fileImportCount;
+
+    if (!isValid) {
+      alert('Please validate CSV data first');
+      return;
+    }
+
+    if (!dataSource || !dataSource.trim()) {
+      alert('No data to import');
+      return;
+    }
+
+    // Show progress
+    importBtn.disabled = true;
+    importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    importProgress.style.display = 'block';
+
+    // Simulate progress
+    let progress = 0;
+    const progressBar = importProgress.querySelector('.progress-bar');
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 20;
+      if (progress > 90) progress = 90;
+      progressBar.style.width = progress + '%';
+    }, 300);
+
+    fetch('<%= process_enhanced_bulk_import_customers_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ csv_data: dataSource })
+    })
+    .then(response => response.json())
+    .then(data => {
+      clearInterval(progressInterval);
+      progressBar.style.width = '100%';
+      
+      setTimeout(() => {
+        if (data.success) {
+          // Update success modal with detailed results
+          document.getElementById('customersCreated').textContent = data.imported_count || 0;
+          document.getElementById('schedulesCreated').textContent = data.delivery_schedules_created || 0;
+          document.getElementById('assignmentsCreated').textContent = data.delivery_assignments_created || 0;
+          
+          let message = `Successfully imported ${data.imported_count} customers`;
+          if (data.delivery_schedules_created > 0) {
+            message += `, created ${data.delivery_schedules_created} delivery schedules`;
+          }
+          if (data.delivery_assignments_created > 0) {
+            message += `, and generated ${data.delivery_assignments_created} delivery assignments`;
+          }
+          message += '!';
+          
+          document.getElementById('successMessage').textContent = message;
+          successModal.show();
+        } else {
+          // Show detailed error information
+          let errorMessage = data.message;
+          if (data.errors && data.errors.length > 0) {
+            errorMessage += '\n\nDetails:\n' + data.errors.slice(0, 5).join('\n');
+            if (data.errors.length > 5) {
+              errorMessage += `\n... and ${data.errors.length - 5} more errors`;
+            }
+          }
+          
+          if (type === 'text') {
+            showTextValidationMessage(errorMessage, 'danger');
+          } else {
+            showFileValidationMessage(errorMessage, 'danger');
+          }
+        }
+      }, 500);
+    })
+    .catch(error => {
+      clearInterval(progressInterval);
+      const message = 'Error importing customers: ' + error.message;
+      if (type === 'text') {
+        showTextValidationMessage(message, 'danger');
+      } else {
+        showFileValidationMessage(message, 'danger');
+      }
+    })
+    .finally(() => {
+      importBtn.disabled = false;
+      importBtn.innerHTML = '<i class="fas fa-rocket me-2"></i>Import with Delivery Setup <span class="badge bg-light text-success ms-2">' + importCountElement.textContent + '</span>';
+      setTimeout(() => {
+        importProgress.style.display = 'none';
+      }, 500);
+    });
+  }
+});
+</script>
+
+<style>
+/* Enhanced styles for the new bulk import page */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1, .page-header p {
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+}
+
+.stats-card:hover {
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.stats-card .stats-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stats-card .stats-label {
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+}
+
+.stats-card-primary::before {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stats-card-success::before {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stats-card-warning::before {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stats-card-info::before {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.stats-card-success .stats-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stats-card-warning .stats-icon {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stats-card-info .stats-icon {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+/* Card styles */
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  border-bottom: 1px solid #e3e6f0;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+/* Upload option styles */
+.upload-option {
+  margin-bottom: 1rem;
+}
+
+.upload-option .btn {
+  transition: all 0.3s ease;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-option .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.upload-option .btn-check:checked + .btn {
+  background-color: #4e73df;
+  border-color: #4e73df;
+  color: white;
+}
+
+/* File upload area styles */
+.upload-area {
+  border: 2px dashed #e3e6f0;
+  border-radius: 0.5rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #f8f9fc;
+}
+
+.upload-area:hover {
+  border-color: #4e73df;
+  background: #f0f4ff;
+}
+
+.upload-area.drag-over {
+  border-color: #4e73df;
+  background: #e3f2fd;
+  transform: scale(1.02);
+}
+
+.upload-icon {
+  font-size: 3rem;
+  color: #4e73df;
+  margin-bottom: 1rem;
+}
+
+.upload-title {
+  color: #5a5c69;
+  margin-bottom: 0.5rem;
+}
+
+.upload-subtitle {
+  margin-bottom: 1.5rem;
+}
+
+/* CSV input styles */
+.csv-input-container {
+  position: relative;
+}
+
+.csv-textarea {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  border: 2px solid #e3e6f0;
+  border-radius: 0.5rem;
+  resize: vertical;
+  min-height: 300px;
+}
+
+.csv-textarea:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.csv-counter {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* Preview table styles */
+.preview-table-container {
+  max-height: 400px;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.5rem;
+}
+
+.table th {
+  background-color: #f8f9fc;
+  border-top: none;
+  font-weight: 600;
+  color: #5a5c69;
+  font-size: 0.8rem;
+  padding: 0.75rem 0.5rem;
+}
+
+.table td {
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Template styles */
+.csv-template {
+  background: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #5a5c69;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* Progress styles */
+.progress-container {
+  background: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e3e6f0;
+}
+
+/* Import results styles */
+.import-stat {
+  text-align: center;
+  padding: 1rem;
+}
+
+.import-stat .stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.import-stat .stat-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+/* Alert styles */
+.alert {
+  border-radius: 0.5rem;
+  border: none;
+}
+
+.alert-success {
+  background-color: #d1edff;
+  color: #0c5460;
+  border-left: 4px solid #0ea5e9;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+/* Success animation */
+.success-icon {
+  animation: successPulse 0.6s ease-in-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+  
+  .stats-card {
+    margin-bottom: 1.5rem;
+  }
+  
+  .upload-area {
+    padding: 2rem 1rem;
+  }
+  
+  .upload-icon {
+    font-size: 2rem;
+  }
+  
+  .csv-textarea {
+    min-height: 250px;
+    font-size: 0.8rem;
+  }
+  
+  .table td {
+    font-size: 0.75rem;
+    padding: 0.4rem;
+    max-width: 80px;
+  }
+}
+</style>
