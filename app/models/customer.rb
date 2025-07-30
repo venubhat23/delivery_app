@@ -308,7 +308,7 @@ class Customer < ApplicationRecord
                 start_date: start_date,
                 end_date: end_date,
                 default_quantity: quantity,
-                default_unit: 'pieces',
+                default_unit: 'liters',
                 status: 'active'
               )
               
