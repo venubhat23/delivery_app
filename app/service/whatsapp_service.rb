@@ -28,9 +28,20 @@ class WhatsappService
   # Send a PDF (or other media) via WhatsApp
   def send_pdf(to_number, pdf_url, message = 'Please find the attached PDF')
     formatted_number = format_phone_number(to_number)
-    @client.messages.create(from: FROM_NUMBER,to: "whatsapp:#{formatted_number}",body: message,media_url: [pdf_url])
+    
+    Rails.logger.info "Sending WhatsApp PDF to #{formatted_number}: #{message[0..50]}..."
+    
+    response = @client.messages.create(
+      from: FROM_NUMBER,
+      to: "whatsapp:#{formatted_number}",
+      body: message,
+      media_url: [pdf_url]
+    )
+    
+    Rails.logger.info "WhatsApp PDF sent successfully. Message SID: #{response.sid}"
+    response
   rescue Twilio::REST::RestError => e
-    Rails.logger.error "WhatsApp PDF sending failed: #{e.message}"
+    Rails.logger.error "WhatsApp PDF sending failed to #{formatted_number}: #{e.message}"
     raise e
   end
   
