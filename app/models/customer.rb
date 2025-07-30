@@ -297,8 +297,7 @@ class Customer < ApplicationRecord
             # Create delivery schedule if product and dates are provided
             if product && start_date && end_date
               # Handle quantity for milk liters (can be 0.5)
-              quantity = row[:quantity].present? ? row[:quantity].to_f : 1.0
-              quantity = 0.5 if quantity <= 0 # Set to 0.5 for milk liters if invalid
+              quantity = row[:quality].present? ? row[:quality].to_f : 1.0
               
               delivery_schedule = DeliverySchedule.new(
                 customer: customer,
@@ -604,7 +603,6 @@ class Customer < ApplicationRecord
         quantity: schedule.default_quantity,
         unit: schedule.default_unit || 'pieces'
       )
-      debugger
       assignments_created += 1 if assignment.save
 
       current_date += 1.day
