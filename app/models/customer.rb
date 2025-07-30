@@ -591,7 +591,6 @@ class Customer < ApplicationRecord
   def self.generate_delivery_assignments_for_schedule(schedule)
     assignments_created = 0
     current_date = schedule.start_date
-
     while current_date <= schedule.end_date
       # Determine status based on whether the date is in the past
 
@@ -605,7 +604,7 @@ class Customer < ApplicationRecord
         quantity: schedule.default_quantity,
         unit: schedule.default_unit || 'pieces'
       )
-
+      debugger
       assignments_created += 1 if assignment.save
 
       current_date += 1.day
