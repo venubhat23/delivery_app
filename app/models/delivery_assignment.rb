@@ -11,7 +11,6 @@ class DeliveryAssignment < ApplicationRecord
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending in_progress completed cancelled] }
 
-  validate :delivery_date_not_in_past, on: :create
   validate :delivery_person_is_valid
 
   # SCOPES
