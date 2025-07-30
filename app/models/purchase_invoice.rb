@@ -132,15 +132,15 @@ class PurchaseInvoice < ApplicationRecord
   def status_badge_class
     case status
     when 'paid'
-      'badge-success'
+      'bg-success text-white'
     when 'partial'
-      'badge-warning'
+      'bg-warning text-dark'
     when 'overdue'
-      'badge-danger'
+      'bg-danger text-white'
     when 'cancelled'
-      'badge-secondary'
+      'bg-secondary text-white'
     else
-      'badge-primary'
+      'bg-primary text-white'
     end
   end
   
