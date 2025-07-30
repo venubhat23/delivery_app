@@ -64,8 +64,9 @@
                 <%= link_to edit_category_path(category), class: "btn btn-outline-warning btn-sm" do %>
                   <i class="fas fa-edit"></i>
                 <% end %>
-                <%= link_to category_path(category), method: :delete, 
-                    confirm: "Are you sure you want to delete this category? All associated products will be uncategorized.", 
+                <%= button_to category_path(category), 
+                    method: :delete,
+                    form: { "data-turbo-confirm": "Are you sure you want to delete this category? All associated products will be uncategorized.", class: "d-inline" },
                     class: "btn btn-outline-danger btn-sm" do %>
                   <i class="fas fa-trash"></i>
                 <% end %>
