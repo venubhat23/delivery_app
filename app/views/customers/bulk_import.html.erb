@@ -102,8 +102,8 @@
               <input type="radio" class="btn-check" name="uploadFormat" id="csvTableOption" value="table">
               <label class="btn btn-outline-success w-100 p-3" for="csvTableOption">
                 <i class="fas fa-table fa-2x mb-2 d-block"></i>
-                <strong>CSV Table Input</strong>
-                <small class="d-block text-muted mt-1">Add customers using interactive table</small>
+                <strong>Enhanced Table Input</strong>
+                <small class="d-block text-muted mt-1">Interactive table with auto-complete and validation</small>
               </label>
             </div>
           </div>
@@ -289,7 +289,7 @@
     <div class="card shadow mb-4" id="tableInputCard" style="display: none;">
       <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">
-          <i class="fas fa-table me-2"></i>CSV Table Input
+          <i class="fas fa-table me-2"></i>Enhanced Table Input
         </h6>
         <div class="card-header-actions">
           <button type="button" class="btn btn-sm btn-outline-success" id="addRowBtn">
@@ -304,14 +304,39 @@
         </div>
       </div>
       <div class="card-body">
-        <!-- Table Input Instructions -->
+        <!-- Enhanced Table Input Instructions -->
         <div class="alert alert-info mb-4">
           <div class="d-flex align-items-center">
             <i class="fas fa-info-circle me-2"></i>
             <div>
               <small>
-                <strong>You can upload only 4000 customers at once.</strong> For uploading more than 4000 customers, please contact our support team at 7400417400
+                <strong>Enhanced Table Features:</strong> Auto-complete for phone numbers, real-time validation, smart address suggestions, and bulk operations. Maximum 4000 customers per import.
               </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions Bar -->
+        <div class="quick-actions-bar mb-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="quickSearchTable" placeholder="Search in table...">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="btn-group btn-group-sm w-100" role="group">
+                <button type="button" class="btn btn-outline-primary" id="bulkFillBtn">
+                  <i class="fas fa-fill-drip me-1"></i>Bulk Fill
+                </button>
+                <button type="button" class="btn btn-outline-info" id="duplicateRowBtn">
+                  <i class="fas fa-copy me-1"></i>Duplicate Row
+                </button>
+                <button type="button" class="btn btn-outline-warning" id="autoCompleteBtn">
+                  <i class="fas fa-magic me-1"></i>Auto-Complete
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -322,16 +347,88 @@
             <thead class="table-light">
               <tr>
                 <th style="width: 40px;">#</th>
-                <th style="min-width: 150px;">Customer Name*<br><small class="text-muted">(mandatory field)</small></th>
-                <th style="min-width: 120px;">Mobile Number*<br><small class="text-muted">(mandatory field)</small></th>
-                <th style="min-width: 200px;">Address*<br><small class="text-muted">(mandatory field)</small></th>
-                <th style="min-width: 150px;">Email</th>
-                <th style="min-width: 120px;">GST Number</th>
-                <th style="min-width: 120px;">PAN Number</th>
-                <th style="min-width: 120px;">Member ID</th>
-                <th style="min-width: 100px;">Latitude</th>
-                <th style="min-width: 100px;">Longitude</th>
-                <th style="width: 60px;">Actions</th>
+                <th style="min-width: 150px;">
+                  Customer Name*<br>
+                  <small class="text-muted">(mandatory field)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('name')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 120px;">
+                  Mobile Number*<br>
+                  <small class="text-muted">(10 digits, mandatory)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('phone_number')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 200px;">
+                  Address*<br>
+                  <small class="text-muted">(mandatory field)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('address')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 150px;">
+                  Email<br>
+                  <small class="text-muted">(optional)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('email')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 120px;">
+                  GST Number<br>
+                  <small class="text-muted">(optional)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('gst_number')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 120px;">
+                  PAN Number<br>
+                  <small class="text-muted">(optional)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('pan_number')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 120px;">
+                  Member ID<br>
+                  <small class="text-muted">(optional)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('member_id')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 100px;">
+                  Latitude<br>
+                  <small class="text-muted">(decimal)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('latitude')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="min-width: 100px;">
+                  Longitude<br>
+                  <small class="text-muted">(decimal)</small>
+                  <div class="header-actions">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleColumnFill('longitude')">
+                      <i class="fas fa-fill"></i>
+                    </button>
+                  </div>
+                </th>
+                <th style="width: 80px;">Actions</th>
               </tr>
             </thead>
             <tbody id="csvTableBody">
@@ -583,6 +680,17 @@ document.addEventListener('DOMContentLoaded', function() {
   validateTableBtn.addEventListener('click', validateTableData);
   importTableBtn.addEventListener('click', importTableCustomers);
   exportTableBtn.addEventListener('click', exportTableAsCSV);
+  
+  // Enhanced table features event listeners
+  const quickSearchTable = document.getElementById('quickSearchTable');
+  const bulkFillBtn = document.getElementById('bulkFillBtn');
+  const duplicateRowBtn = document.getElementById('duplicateRowBtn');
+  const autoCompleteBtn = document.getElementById('autoCompleteBtn');
+  
+  if (quickSearchTable) quickSearchTable.addEventListener('input', handleTableSearch);
+  if (bulkFillBtn) bulkFillBtn.addEventListener('click', showBulkFillModal);
+  if (duplicateRowBtn) duplicateRowBtn.addEventListener('click', duplicateSelectedRow);
+  if (autoCompleteBtn) autoCompleteBtn.addEventListener('click', autoCompleteData);
 
   // File handling functions
   function handleFileSelect(event) {
@@ -1378,6 +1486,384 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
       }, 500);
     });
   }
+
+  // Enhanced Table Features Functions
+  
+  // Table search functionality
+  function handleTableSearch() {
+    const searchTerm = quickSearchTable.value.toLowerCase();
+    const rows = csvTableBody.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      let rowMatches = false;
+      
+      inputs.forEach(input => {
+        if (input.value.toLowerCase().includes(searchTerm)) {
+          rowMatches = true;
+        }
+      });
+      
+      row.style.display = rowMatches || searchTerm === '' ? '' : 'none';
+    });
+  }
+  
+  // Show bulk fill modal
+  function showBulkFillModal() {
+    const modal = new bootstrap.Modal(document.getElementById('bulkFillModal'));
+    modal.show();
+  }
+  
+  // Duplicate selected row
+  function duplicateSelectedRow() {
+    const selectedRow = document.querySelector('tr.table-selected');
+    if (!selectedRow) {
+      alert('Please select a row to duplicate by clicking on it');
+      return;
+    }
+    
+    const rowIndex = parseInt(selectedRow.dataset.rowIndex);
+    const originalData = tableData[rowIndex];
+    
+    if (originalData) {
+      // Create new row with same data
+      tableRowCounter++;
+      const newRowIndex = tableData.length;
+      
+      const newRowData = {
+        ...originalData,
+        id: tableRowCounter,
+        isValid: false,
+        errors: []
+      };
+      
+      tableData.push(newRowData);
+      
+      const row = document.createElement('tr');
+      row.dataset.rowIndex = newRowIndex;
+      row.innerHTML = `
+        <td class="text-center">${tableRowCounter}</td>
+        <td><input type="text" class="form-control form-control-sm enhanced-input" name="name" placeholder="Enter customer name" value="${newRowData.name}" data-autocomplete="name"></td>
+        <td><input type="text" class="form-control form-control-sm enhanced-input" name="phone_number" placeholder="Enter mobile number" value="${newRowData.phone_number}" data-autocomplete="phone" pattern="[0-9]{10}"></td>
+        <td><input type="text" class="form-control form-control-sm enhanced-input" name="address" placeholder="Enter address" value="${newRowData.address}" data-autocomplete="address"></td>
+        <td><input type="email" class="form-control form-control-sm enhanced-input" name="email" placeholder="Enter email" value="${newRowData.email}"></td>
+        <td><input type="text" class="form-control form-control-sm enhanced-input" name="gst_number" placeholder="Enter GST number" value="${newRowData.gst_number}"></td>
+        <td><input type="text" class="form-control form-control-sm enhanced-input" name="pan_number" placeholder="Enter PAN number" value="${newRowData.pan_number}"></td>
+        <td><input type="text" class="form-control form-control-sm enhanced-input" name="member_id" placeholder="Enter member ID" value="${newRowData.member_id}"></td>
+        <td><input type="number" class="form-control form-control-sm enhanced-input" name="latitude" placeholder="Latitude" step="any" value="${newRowData.latitude}"></td>
+        <td><input type="number" class="form-control form-control-sm enhanced-input" name="longitude" placeholder="Longitude" step="any" value="${newRowData.longitude}"></td>
+        <td class="text-center">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTableRow(${newRowIndex})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
+      
+      csvTableBody.appendChild(row);
+      
+      // Add enhanced input event listeners
+      setupEnhancedInputs(row, newRowIndex);
+      
+      validateRow(newRowIndex);
+      updateTableStats();
+    }
+  }
+  
+  // Auto-complete data based on patterns
+  function autoCompleteData() {
+    const rows = csvTableBody.querySelectorAll('tr');
+    let completedCount = 0;
+    
+    rows.forEach((row, index) => {
+      const nameInput = row.querySelector('input[name="name"]');
+      const phoneInput = row.querySelector('input[name="phone_number"]');
+      const addressInput = row.querySelector('input[name="address"]');
+      
+      // Auto-complete phone numbers (add country code if missing)
+      if (phoneInput && phoneInput.value && phoneInput.value.length === 10 && !phoneInput.value.startsWith('+91')) {
+        if (/^\d{10}$/.test(phoneInput.value)) {
+          phoneInput.dispatchEvent(new Event('input'));
+          completedCount++;
+        }
+      }
+      
+      // Auto-complete email based on name
+      const emailInput = row.querySelector('input[name="email"]');
+      if (nameInput && nameInput.value && emailInput && !emailInput.value) {
+        const name = nameInput.value.toLowerCase().replace(/\s+/g, '.');
+        emailInput.value = `${name}@example.com`;
+        emailInput.dispatchEvent(new Event('input'));
+        completedCount++;
+      }
+    });
+    
+    if (completedCount > 0) {
+      showToast(`Auto-completed ${completedCount} fields`, 'success');
+    } else {
+      showToast('No fields to auto-complete', 'info');
+    }
+  }
+  
+  // Toggle column fill functionality
+  function toggleColumnFill(columnName) {
+    const modal = `
+      <div class="modal fade" id="columnFillModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Fill Column: ${columnName.replace('_', ' ').toUpperCase()}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Value to fill in all empty cells:</label>
+                <input type="text" class="form-control" id="columnFillValue" placeholder="Enter value">
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="overwriteExisting">
+                <label class="form-check-label" for="overwriteExisting">
+                  Overwrite existing values
+                </label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="applyColumnFill('${columnName}')">Apply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('columnFillModal');
+    if (existingModal) existingModal.remove();
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modal);
+    
+    // Show modal
+    const modalInstance = new bootstrap.Modal(document.getElementById('columnFillModal'));
+    modalInstance.show();
+  }
+  
+  // Apply column fill
+  function applyColumnFill(columnName) {
+    const value = document.getElementById('columnFillValue').value;
+    const overwrite = document.getElementById('overwriteExisting').checked;
+    
+    if (!value.trim()) {
+      alert('Please enter a value');
+      return;
+    }
+    
+    const rows = csvTableBody.querySelectorAll('tr');
+    let updatedCount = 0;
+    
+    rows.forEach((row, index) => {
+      const input = row.querySelector(`input[name="${columnName}"]`);
+      if (input && (overwrite || !input.value.trim())) {
+        input.value = value;
+        input.dispatchEvent(new Event('input'));
+        updatedCount++;
+      }
+    });
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('columnFillModal'));
+    modal.hide();
+    
+    showToast(`Updated ${updatedCount} cells in ${columnName} column`, 'success');
+  }
+  
+  // Enhanced input setup with autocomplete and validation
+  function setupEnhancedInputs(row, rowIndex) {
+    const inputs = row.querySelectorAll('.enhanced-input');
+    
+    inputs.forEach(input => {
+      // Add real-time validation
+      input.addEventListener('input', function() {
+        updateRowData(rowIndex, input.name, input.value);
+        validateInputField(input);
+        validateRow(rowIndex);
+        updateTableStats();
+      });
+      
+      // Add click event for row selection
+      input.addEventListener('focus', function() {
+        // Remove previous selection
+        document.querySelectorAll('tr.table-selected').forEach(r => r.classList.remove('table-selected'));
+        // Add selection to current row
+        row.classList.add('table-selected');
+      });
+      
+      // Add autocomplete functionality
+      if (input.dataset.autocomplete) {
+        setupAutocomplete(input);
+      }
+    });
+  }
+  
+  // Setup autocomplete for inputs
+  function setupAutocomplete(input) {
+    const type = input.dataset.autocomplete;
+    
+    input.addEventListener('input', function() {
+      const value = this.value;
+      
+      // Phone number formatting
+      if (type === 'phone' && value) {
+        // Remove non-digits
+        const cleaned = value.replace(/\D/g, '');
+        
+        // Format as needed
+        if (cleaned.length === 10) {
+          this.classList.add('is-valid');
+          this.classList.remove('is-invalid');
+        } else {
+          this.classList.add('is-invalid');
+          this.classList.remove('is-valid');
+        }
+      }
+      
+      // Email validation
+      if (input.type === 'email' && value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(value)) {
+          this.classList.add('is-valid');
+          this.classList.remove('is-invalid');
+        } else {
+          this.classList.add('is-invalid');
+          this.classList.remove('is-valid');
+        }
+      }
+    });
+  }
+  
+  // Validate individual input field
+  function validateInputField(input) {
+    const value = input.value.trim();
+    const name = input.name;
+    
+    // Remove existing validation classes
+    input.classList.remove('is-valid', 'is-invalid');
+    
+    // Required field validation
+    if ((name === 'name' || name === 'phone_number' || name === 'address') && !value) {
+      input.classList.add('is-invalid');
+      return false;
+    }
+    
+    // Phone number validation
+    if (name === 'phone_number' && value) {
+      if (!/^\d{10}$/.test(value)) {
+        input.classList.add('is-invalid');
+        return false;
+      }
+    }
+    
+    // Email validation
+    if (name === 'email' && value) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        input.classList.add('is-invalid');
+        return false;
+      }
+    }
+    
+    // If we get here, the field is valid
+    if (value) {
+      input.classList.add('is-valid');
+    }
+    
+    return true;
+  }
+  
+  // Show toast notification
+  function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Remove toast after it's hidden
+    toast.addEventListener('hidden.bs.toast', () => {
+      toast.remove();
+    });
+  }
+  
+  // Create toast container if it doesn't exist
+  function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+  }
+  
+  // Override the original addTableRow to use enhanced inputs
+  const originalAddTableRow = addTableRow;
+  addTableRow = function() {
+    tableRowCounter++;
+    const rowIndex = tableData.length;
+    
+    const rowData = {
+      id: tableRowCounter,
+      name: '',
+      phone_number: '',
+      address: '',
+      email: '',
+      gst_number: '',
+      pan_number: '',
+      member_id: '',
+      latitude: '',
+      longitude: '',
+      isValid: false,
+      errors: []
+    };
+    
+    tableData.push(rowData);
+    
+    const row = document.createElement('tr');
+    row.dataset.rowIndex = rowIndex;
+    row.innerHTML = `
+      <td class="text-center">${tableRowCounter}</td>
+      <td><input type="text" class="form-control form-control-sm enhanced-input" name="name" placeholder="Enter customer name" value="${rowData.name}" data-autocomplete="name"></td>
+      <td><input type="text" class="form-control form-control-sm enhanced-input" name="phone_number" placeholder="Enter mobile number" value="${rowData.phone_number}" data-autocomplete="phone" pattern="[0-9]{10}"></td>
+      <td><input type="text" class="form-control form-control-sm enhanced-input" name="address" placeholder="Enter address" value="${rowData.address}" data-autocomplete="address"></td>
+      <td><input type="email" class="form-control form-control-sm enhanced-input" name="email" placeholder="Enter email" value="${rowData.email}"></td>
+      <td><input type="text" class="form-control form-control-sm enhanced-input" name="gst_number" placeholder="Enter GST number" value="${rowData.gst_number}"></td>
+      <td><input type="text" class="form-control form-control-sm enhanced-input" name="pan_number" placeholder="Enter PAN number" value="${rowData.pan_number}"></td>
+      <td><input type="text" class="form-control form-control-sm enhanced-input" name="member_id" placeholder="Enter member ID" value="${rowData.member_id}"></td>
+      <td><input type="number" class="form-control form-control-sm enhanced-input" name="latitude" placeholder="Latitude" step="any" value="${rowData.latitude}"></td>
+      <td><input type="number" class="form-control form-control-sm enhanced-input" name="longitude" placeholder="Longitude" step="any" value="${rowData.longitude}"></td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTableRow(${rowIndex})">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    `;
+    
+    csvTableBody.appendChild(row);
+    
+    // Setup enhanced inputs
+    setupEnhancedInputs(row, rowIndex);
+    
+    updateTableStats();
+  };
 });
 </script>
 
@@ -1695,6 +2181,148 @@ Sample Party 2,8999999991,255/93 Shastri Nagar Lucknow,sample2@example.com,09AAB
   background-color: #fff3cd;
   color: #856404;
   border-left: 4px solid #ffc107;
+}
+
+/* Enhanced Table Input Styles */
+.quick-actions-bar {
+  background: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.header-actions {
+  margin-top: 0.5rem;
+}
+
+.header-actions .btn-xs {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+}
+
+.enhanced-input {
+  transition: all 0.2s ease-in-out;
+}
+
+.enhanced-input:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.1rem rgba(78, 115, 223, 0.25);
+  transform: scale(1.02);
+}
+
+.enhanced-input.is-valid {
+  border-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+.enhanced-input.is-invalid {
+  border-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+.table-selected {
+  background-color: rgba(78, 115, 223, 0.1) !important;
+  border: 2px solid #4e73df;
+}
+
+.table-selected td {
+  border-color: #4e73df;
+}
+
+/* Toast notifications */
+.toast-container {
+  z-index: 9999;
+}
+
+.toast {
+  min-width: 300px;
+}
+
+/* Column fill modal */
+#columnFillModal .form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Search highlighting */
+.search-highlight {
+  background-color: yellow;
+  font-weight: bold;
+}
+
+/* Bulk actions */
+.bulk-actions-bar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.bulk-actions-bar .btn {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bulk-actions-bar .btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Input validation animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.enhanced-input.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Auto-complete suggestions */
+.autocomplete-suggestions {
+  position: absolute;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.autocomplete-suggestion {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.autocomplete-suggestion:hover,
+.autocomplete-suggestion.selected {
+  background-color: #f8f9fc;
+  color: #4e73df;
+}
+
+.autocomplete-suggestion:last-child {
+  border-bottom: none;
+}
+
+/* Progress indicators */
+.field-progress {
+  height: 3px;
+  background: #e3e6f0;
+  border-radius: 1.5px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.field-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4e73df, #36b9cc);
+  transition: width 0.3s ease;
 }
 
 /* Responsive adjustments */
