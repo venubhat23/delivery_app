@@ -4,6 +4,9 @@ class DeliverySchedule < ApplicationRecord
   belongs_to :product, optional: true
   has_many :delivery_assignments, dependent: :destroy
 
+  # Attribute to track if this is being created during bulk import
+  attr_accessor :skip_past_date_validation
+
   validates :frequency, presence: true, inclusion: { in: %w[daily weekly bi_weekly monthly] }
   validates :start_date, presence: true
   validates :end_date, presence: true
@@ -133,6 +136,7 @@ class DeliverySchedule < ApplicationRecord
 
   def start_date_not_in_past
     return unless start_date
+    return if skip_past_date_validation
     
     if start_date < Date.current
       errors.add(:start_date, 'cannot be in the past')

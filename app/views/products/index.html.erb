@@ -112,6 +112,7 @@
           <thead>
             <tr>
               <th><i class="fas fa-image me-1"></i>Image</th>
+              <th><i class="fas fa-hashtag me-1"></i>ID</th>
               <th><i class="fas fa-tag me-1"></i>Product</th>
               <th><i class="fas fa-layer-group me-1"></i>Category</th>
               <th><i class="fas fa-balance-scale me-1"></i>Unit</th>
@@ -133,6 +134,9 @@
                       <i class="fas fa-image text-muted"></i>
                     </div>
                   <% end %>
+                </td>
+                <td>
+                  <span class="badge bg-secondary product-id-badge">#<%= product.id %></span>
                 </td>
                 <td>
                   <div class="d-flex align-items-center">
@@ -649,6 +653,19 @@
   letter-spacing: 0.5px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+}
+
+/* Product ID Badge */
+.product-id-badge {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-transform: none;
+  letter-spacing: 1px;
 }
 
 .badge:hover {
