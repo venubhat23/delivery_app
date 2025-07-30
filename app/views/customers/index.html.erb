@@ -1077,6 +1077,12 @@ document.addEventListener('DOMContentLoaded', function() {
       cardView.classList.remove('active');
       tableContent.classList.remove('d-none');
       cardContent.classList.add('d-none');
+      // Re-initialize image zoom functionality after view change
+      setTimeout(() => {
+        if (window.makeImagesZoomable) {
+          window.makeImagesZoomable();
+        }
+      }, 100);
     });
     
     cardView.addEventListener('click', function() {
@@ -1084,7 +1090,25 @@ document.addEventListener('DOMContentLoaded', function() {
       tableView.classList.remove('active');
       cardContent.classList.remove('d-none');
       tableContent.classList.add('d-none');
+      // Re-initialize image zoom functionality after view change
+      setTimeout(() => {
+        if (window.makeImagesZoomable) {
+          window.makeImagesZoomable();
+        }
+      }, 100);
     });
+  }
+  
+  // Initialize image zoom functionality for customers page
+  if (window.makeImagesZoomable) {
+    window.makeImagesZoomable();
+  }
+});
+
+// Re-initialize on Turbo navigation
+document.addEventListener('turbo:load', function() {
+  if (window.makeImagesZoomable) {
+    window.makeImagesZoomable();
   }
 });
 </script>

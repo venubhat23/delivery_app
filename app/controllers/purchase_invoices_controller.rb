@@ -107,18 +107,32 @@ class PurchaseInvoicesController < ApplicationController
   def download_pdf
     respond_to do |format|
       format.html do
-        render pdf: "purchase_invoice_#{@purchase_invoice.invoice_number}",
-               template: 'purchase_invoices/pdf',
-               layout: 'pdf',
-               page_size: 'A4',
-               margin: { top: 10, bottom: 10, left: 10, right: 10 }
+        pdf = WickedPdf.new.pdf_from_string(
+          render_to_string(
+            template: 'purchase_invoices/pdf',
+            layout: 'pdf',
+            locals: { purchase_invoice: @purchase_invoice }
+          ),
+          page_size: 'A4',
+          margin: { top: 20, bottom: 20, left: 20, right: 20 }
+        )
+        
+        filename = "purchase_invoice_#{@purchase_invoice.invoice_number.gsub('/', '_')}.pdf"
+        send_data pdf, filename: filename, type: 'application/pdf', disposition: 'attachment'
       end
       format.pdf do
-        render pdf: "purchase_invoice_#{@purchase_invoice.invoice_number}",
-               template: 'purchase_invoices/pdf',
-               layout: 'pdf',
-               page_size: 'A4',
-               margin: { top: 10, bottom: 10, left: 10, right: 10 }
+        pdf = WickedPdf.new.pdf_from_string(
+          render_to_string(
+            template: 'purchase_invoices/pdf',
+            layout: 'pdf',
+            locals: { purchase_invoice: @purchase_invoice }
+          ),
+          page_size: 'A4',
+          margin: { top: 20, bottom: 20, left: 20, right: 20 }
+        )
+        
+        filename = "purchase_invoice_#{@purchase_invoice.invoice_number.gsub('/', '_')}.pdf"
+        send_data pdf, filename: filename, type: 'application/pdf', disposition: 'attachment'
       end
     end
   end
