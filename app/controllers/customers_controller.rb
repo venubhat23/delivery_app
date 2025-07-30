@@ -178,7 +178,7 @@ class CustomersController < ApplicationController
       require 'csv'
       csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
       
-      required_headers = [:name, :phone_number, :address, :email, :gst_number, :pan_number, :delivery_person_id, :product_id, :quality, :start_date, :end_date]
+      required_headers = [:name, :phone_number, :address, :email, :gst_number, :pan_number, :delivery_person_id, :product_id, :quantity, :start_date, :end_date]
       missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
       
       if missing_headers.any?
