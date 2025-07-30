@@ -296,6 +296,10 @@ class Customer < ApplicationRecord
             
             # Create delivery schedule if product and dates are provided
             if product && start_date && end_date
+              # Ensure quantity is at least 1 (validation requires > 0)
+              quantity = row[:quantity].present? ? row[:quantity].to_i : 1
+              quantity = 1 if quantity <= 0 # Ensure it's greater than 0
+              
               delivery_schedule = DeliverySchedule.new(
                 customer: customer,
                 user: delivery_person || current_user,
@@ -303,7 +307,7 @@ class Customer < ApplicationRecord
                 frequency: 'daily', # Default frequency
                 start_date: start_date,
                 end_date: end_date,
-                default_quantity: row[:quality].present? ? row[:quality].to_i : 1,
+                default_quantity: quantity,
                 default_unit: 'pieces',
                 status: 'active'
               )
