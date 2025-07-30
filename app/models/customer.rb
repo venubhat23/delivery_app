@@ -296,9 +296,9 @@ class Customer < ApplicationRecord
             
             # Create delivery schedule if product and dates are provided
             if product && start_date && end_date
-              # Ensure quantity is at least 1 (validation requires > 0)
-              quantity = row[:quantity].present? ? row[:quantity].to_i : 1
-              quantity = 1 if quantity <= 0 # Ensure it's greater than 0
+              # Handle quantity for milk liters (can be 0.5)
+              quantity = row[:quantity].present? ? row[:quantity].to_f : 1.0
+              quantity = 0.5 if quantity <= 0 # Set to 0.5 for milk liters if invalid
               
               delivery_schedule = DeliverySchedule.new(
                 customer: customer,
@@ -548,23 +548,25 @@ class Customer < ApplicationRecord
     
     assignments = []
     current_date = schedule.start_date
+    today = Date.current
     
     while current_date <= schedule.end_date
-      # Skip if frequency doesn't match (for now we'll do daily, but can be enhanced)
-      if should_create_assignment_for_date?(current_date, schedule.frequency)
-        assignments << {
-          delivery_schedule_id: schedule.id,
-          customer_id: id,
-          user_id: schedule.user_id,
-          product_id: schedule.product_id,
-          scheduled_date: current_date,
-          status: 'pending',
-          quantity: schedule.default_quantity || 1,
-          unit: schedule.default_unit || 'pieces',
-          created_at: Time.current,
-          updated_at: Time.current
-        }
-      end
+      # Create assignment for every day in the date range
+      # Determine status based on whether the date is in the past
+      assignment_status = current_date < today ? 'completed' : 'pending'
+      
+      assignments << {
+        delivery_schedule_id: schedule.id,
+        customer_id: id,
+        user_id: schedule.user_id,
+        product_id: schedule.product_id,
+        scheduled_date: current_date,
+        status: assignment_status,
+        quantity: schedule.default_quantity || 1,
+        unit: schedule.default_unit || 'pieces',
+        created_at: Time.current,
+        updated_at: Time.current
+      }
       
       current_date += 1.day
     end
@@ -590,15 +592,19 @@ class Customer < ApplicationRecord
     assignments = []
     current_date = schedule.start_date
     assignments_created = 0
+    today = Date.current
     
     while current_date <= schedule.end_date
+      # Determine status based on whether the date is in the past
+      assignment_status = current_date < today ? 'completed' : 'pending'
+      
       assignment = DeliveryAssignment.new(
         delivery_schedule: schedule,
         customer: schedule.customer,
         user: schedule.user,
         product: schedule.product,
         scheduled_date: current_date,
-        status: 'pending',
+        status: assignment_status,
         quantity: schedule.default_quantity,
         unit: schedule.default_unit || 'pieces'
       )
