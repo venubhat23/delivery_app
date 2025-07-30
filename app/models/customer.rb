@@ -312,6 +312,9 @@ class Customer < ApplicationRecord
                 status: 'active'
               )
               
+              # Allow past dates during bulk import
+              delivery_schedule.skip_past_date_validation = true
+              
               if delivery_schedule.save
                 delivery_schedules_created += 1
                 
