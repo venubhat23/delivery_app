@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,14 +67,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.string "address_landmark"
     t.string "address_type"
     t.boolean "is_active", default: true
-    t.string "password_digest"
-    t.string "pincode"
-    t.string "landmark"
-    t.string "city"
-    t.string "postal_code"
-    t.string "state"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
     t.index ["is_active"], name: "index_customers_on_is_active"
+    t.index ["member_id"], name: "index_customers_on_member_id", unique: true
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -181,6 +176,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "parties", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "mobile_number", null: false
+    t.string "gst_number"
+    t.text "shipping_address"
+    t.string "shipping_pincode"
+    t.string "shipping_city"
+    t.string "shipping_state"
+    t.text "billing_address"
+    t.string "billing_pincode"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gst_number"], name: "index_parties_on_gst_number"
+    t.index ["mobile_number"], name: "index_parties_on_mobile_number"
+    t.index ["name"], name: "index_parties_on_name"
+    t.index ["user_id"], name: "index_parties_on_user_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "name"
     t.string "description"
@@ -259,7 +273,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.string "status"
     t.index ["category"], name: "index_purchase_products_on_category"
     t.index ["name"], name: "index_purchase_products_on_name"
-    t.index ["status"], name: "index_purchase_products_on_status"
   end
 
   create_table "sales_invoice_items", force: :cascade do |t|
@@ -340,6 +353,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
     t.string "role"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "employee_id"
+    t.index ["employee_id"], name: "index_users_on_employee_id", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
 
@@ -359,6 +374,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_173805) do
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoice_items", "products"
   add_foreign_key "invoices", "customers"
+  add_foreign_key "parties", "users"
   add_foreign_key "products", "categories"
   add_foreign_key "purchase_invoice_items", "purchase_invoices"
   add_foreign_key "purchase_invoice_items", "purchase_products"
