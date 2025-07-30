@@ -20,8 +20,30 @@
             class: 'btn btn-primary' do %>
         <i class="fas fa-calendar me-2"></i>Generate Monthly for All
       <% end %>
+      
+      <!-- Voice Command Button -->
+      <div class="voice-command-container">
+        <button id="voice-command-btn" class="btn btn-info" type="button">
+          <i class="fas fa-microphone"></i> Voice Command
+        </button>
+        <div id="voice-status" class="text-center small mt-1">Ready for voice commands</div>
+      </div>
     </div>
   </div>
+</div>
+
+<!-- Voice Commands Help Section -->
+<div class="voice-commands-help">
+  <h6><i class="fas fa-microphone me-2"></i>Voice Commands Available:</h6>
+  <ul>
+    <li><strong>"Generate Monthly for All"</strong> - Generates monthly invoices for all customers and sends WhatsApp notifications</li>
+    <li><strong>"Generate Invoice"</strong> - Opens the invoice generation page</li>
+    <li><strong>"Send WhatsApp"</strong> - Information about WhatsApp notifications</li>
+  </ul>
+  <small class="text-muted">
+    <i class="fas fa-info-circle me-1"></i>
+    Click the Voice Command button and speak clearly. Make sure your browser supports speech recognition.
+  </small>
 </div>
 
 <!-- Enhanced Stats Cards -->

@@ -167,6 +167,13 @@ Rails.application.routes.draw do
     end
   end
   
+  # Voice Commands for Invoice Generation
+  resources :voice_commands, only: [] do
+    collection do
+      post :process_command
+    end
+  end
+  
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
   
