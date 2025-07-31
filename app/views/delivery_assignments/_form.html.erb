@@ -1,0 +1,117 @@
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-body">
+        <%= form_with model: @delivery_assignment, local: true, class: "row g-3" do |form| %>
+          <% if @delivery_assignment.errors.any? %>
+            <div class="col-12">
+              <div class="alert alert-danger">
+                <h5>Please fix the following errors:</h5>
+                <ul class="mb-0">
+                  <% @delivery_assignment.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="col-md-6">
+            <%= form.label :customer_id, class: "form-label" %>
+            <%= form.select :customer_id, 
+                options_for_select([['Select Customer', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
+                {}, { class: "form-select", required: true } %>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
+            <%= form.select :delivery_person_id, 
+                options_for_select([['Select Delivery Person', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, @delivery_assignment.user_id), 
+                {}, { class: "form-select", required: true } %>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :product_id, class: "form-label" %>
+            <%= form.select :product_id, 
+                options_for_select([['Select Product', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
+                {}, { class: "form-select", required: true } %>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :quantity, class: "form-label" %>
+            <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :scheduled_date, "Delivery Date", class: "form-label" %>
+            <%= form.date_field :scheduled_date, class: "form-control", required: true %>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :status, class: "form-label" %>
+            <%= form.select :status, 
+                options_for_select([
+                  ['Pending', 'pending'],
+                  ['In Progress', 'in_progress'],
+                  ['Completed', 'completed'],
+                  ['Cancelled', 'cancelled']
+                ], @delivery_assignment.status), 
+                {}, { class: "form-select", required: true } %>
+          </div>
+
+          <div class="col-12">
+            <%= form.label :special_instructions, class: "form-label" %>
+            <%= form.text_area :special_instructions, class: "form-control", rows: 3, 
+                placeholder: "Any special delivery instructions..." %>
+          </div>
+
+          <div class="col-12">
+            <div class="d-flex gap-2">
+              <%= form.submit "Update Assignment", class: "btn btn-primary" %>
+              <%= link_to "Cancel", @delivery_assignment, class: "btn btn-secondary" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Panel -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Assignment Info</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Current Status:</strong><br>
+          <span class="<%= @delivery_assignment.status_badge_class %>"><%= @delivery_assignment.status_display %></span>
+        </div>
+        
+        <div class="mb-3">
+          <strong>Assignment ID:</strong><br>
+          <code>#<%= @delivery_assignment.id %></code>
+        </div>
+        
+        <div class="mb-3">
+          <strong>Created:</strong><br>
+          <small class="text-muted"><%= @delivery_assignment.created_at.strftime("%B %d, %Y at %I:%M %p") %></small>
+        </div>
+        
+        <% if @delivery_assignment.completed_at %>
+          <div class="mb-3">
+            <strong>Completed:</strong><br>
+            <small class="text-muted"><%= @delivery_assignment.completed_at.strftime("%B %d, %Y at %I:%M %p") %></small>
+          </div>
+        <% end %>
+
+        <% if @delivery_assignment.overdue? %>
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            This assignment is overdue!
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
