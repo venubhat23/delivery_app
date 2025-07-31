@@ -3,7 +3,11 @@ class DeliveryAssignmentsController < ApplicationController
   before_action :set_delivery_assignment, only: [:show, :edit, :update, :destroy, :complete, :cancel]
 
   def index
-    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product).where(scheduled_date: Date.today)
+    # Date filtering - default to today, but allow viewing other dates
+    filter_date = params[:date].present? ? Date.parse(params[:date]) : Date.today
+    
+    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product)
+                                             .where(scheduled_date: filter_date)
                                              .order(created_at: :desc)
     
     # Filter by status if provided
@@ -19,6 +23,7 @@ class DeliveryAssignmentsController < ApplicationController
 
     @delivery_people = User.delivery_people.all
     @statuses = DeliveryAssignment.distinct.pluck(:status).compact
+    @current_date = filter_date
   end
 
   def show
@@ -93,6 +98,38 @@ class DeliveryAssignmentsController < ApplicationController
       redirect_to @delivery_assignment, notice: 'Delivery assignment cancelled.'
     else
       redirect_to @delivery_assignment, alert: 'Failed to cancel delivery assignment.'
+    end
+  end
+
+  def bulk_complete
+    pending_assignments = DeliveryAssignment.where(status: 'pending')
+    
+    # Apply filters if they exist
+    if params[:delivery_person_id].present?
+      pending_assignments = pending_assignments.where(user_id: params[:delivery_person_id])
+    end
+    
+    # Only complete assignments for today or past dates to avoid completing future assignments
+    pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
+    
+    completed_count = 0
+    failed_count = 0
+    
+    pending_assignments.find_each do |assignment|
+      if assignment.update(status: 'completed', completed_at: Time.current)
+        create_invoice_for_assignment(assignment)
+        completed_count += 1
+      else
+        failed_count += 1
+      end
+    end
+    
+    if completed_count > 0
+      message = "Successfully completed #{completed_count} delivery assignment(s)."
+      message += " #{failed_count} failed to update." if failed_count > 0
+      redirect_to delivery_assignments_path, notice: message
+    else
+      redirect_to delivery_assignments_path, alert: 'No pending assignments found to complete.'
     end
   end
 
@@ -227,6 +264,24 @@ class DeliveryAssignmentsController < ApplicationController
       @delivery_assignment.update(invoice: invoice)
     rescue => e
       Rails.logger.error "Failed to create invoice: #{e.message}"
+    end
+  end
+
+  def create_invoice_for_assignment(assignment)
+    return if assignment.invoice.present?
+    
+    begin
+      invoice = Invoice.create!(
+        customer: assignment.customer,
+        delivery_assignment: assignment,
+        amount: (assignment.product&.price || 0) * (assignment.quantity || 1),
+        due_date: 30.days.from_now,
+        status: 'pending'
+      )
+      
+      assignment.update(invoice: invoice)
+    rescue => e
+      Rails.logger.error "Failed to create invoice for assignment #{assignment.id}: #{e.message}"
     end
   end
 

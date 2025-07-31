@@ -130,6 +130,7 @@ Rails.application.routes.draw do
     collection do
       get :bulk, path: 'bulk-automate'
       post :process_bulk_assignments, path: 'bulk-process', as: 'process_bulk_assignments'
+      post :bulk_complete, path: 'bulk-complete'
     end
   end
   

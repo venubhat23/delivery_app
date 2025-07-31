@@ -4,8 +4,25 @@
     <div>
       <h1 class="h2 mb-2">
         <i class="fas fa-truck me-3"></i>Delivery Assignments
+        <% if @current_date != Date.today %>
+          <span class="badge bg-info fs-6">
+            <%= @current_date.strftime("%B %d, %Y") %>
+            <% if @current_date < Date.today %>
+              <i class="fas fa-history ms-1" title="Past date"></i>
+            <% elsif @current_date > Date.today %>
+              <i class="fas fa-clock ms-1" title="Future date"></i>
+            <% end %>
+          </span>
+        <% else %>
+          <span class="badge bg-success fs-6">Today</span>
+        <% end %>
       </h1>
-      <p class="text-muted mb-0">Manage delivery assignments and track delivery progress</p>
+      <p class="text-muted mb-0">
+        Manage delivery assignments and track delivery progress
+        <% unless @current_date == Date.today %>
+          - Viewing assignments for <%= @current_date.strftime("%A, %B %d, %Y") %>
+        <% end %>
+      </p>
     </div>
     <div class="d-flex gap-2">
       <%= link_to new_delivery_assignment_path, class: "btn btn-primary" do %>
@@ -76,34 +93,76 @@
     <div class="row align-items-center">
       <div class="col-md-8">
         <div class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-3">
+            <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
+              <%= form.date_field :date, value: @current_date, 
+                                  class: "form-control", 
+                                  onchange: "this.form.submit();",
+                                  title: "Select date to view assignments" %>
+              <%= form.hidden_field :status, value: params[:status] %>
+              <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
+            <% end %>
+          </div>
+          <div class="col-md-3">
             <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
               <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
                               { include_blank: false },
                               { class: "form-select", onchange: "this.form.submit();" } %>
               <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
+              <%= form.hidden_field :date, value: params[:date] %>
             <% end %>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
               <%= form.select :delivery_person_id,
                               options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
                               { include_blank: false },
                               { class: "form-select", onchange: "this.form.submit();" } %>
               <%= form.hidden_field :status, value: params[:status] %>
+              <%= form.hidden_field :date, value: params[:date] %>
             <% end %>
           </div>
-          <div class="col-md-4">
-            <% if params[:status].present? || params[:delivery_person_id].present? %>
-              <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary" do %>
-                <i class="fas fa-times me-2"></i>Clear Filters
+          <div class="col-md-3">
+            <div class="d-flex gap-2">
+              <% if params[:status].present? || params[:delivery_person_id].present? || (params[:date].present? && params[:date] != Date.today.to_s) %>
+                <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary" do %>
+                  <i class="fas fa-times me-2"></i>Clear Filters
+                <% end %>
               <% end %>
-            <% end %>
+              <div class="btn-group" role="group">
+                <%= link_to delivery_assignments_path(date: Date.yesterday), 
+                    class: "btn btn-outline-primary btn-sm", 
+                    title: "Yesterday" do %>
+                  <i class="fas fa-chevron-left"></i>
+                <% end %>
+                <%= link_to delivery_assignments_path, 
+                    class: "btn btn-outline-primary btn-sm", 
+                    title: "Today" do %>
+                  <i class="fas fa-home"></i>
+                <% end %>
+                <%= link_to delivery_assignments_path(date: Date.tomorrow), 
+                    class: "btn btn-outline-primary btn-sm", 
+                    title: "Tomorrow" do %>
+                  <i class="fas fa-chevron-right"></i>
+                <% end %>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       <div class="col-md-4 text-end">
-        <div class="d-flex align-items-center justify-content-end">
+        <div class="d-flex align-items-center justify-content-end gap-2">
+          <% pending_count = @delivery_assignments.count { |a| a.status == 'pending' && a.scheduled_date <= Date.current } %>
+          <% if pending_count > 0 %>
+            <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline" do |form| %>
+              <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
+              <%= form.submit "Complete All Pending (#{pending_count})", 
+                  class: "btn btn-success btn-sm", 
+                  data: { 
+                    confirm: "Are you sure you want to mark all #{pending_count} pending assignments as completed? This action cannot be undone." 
+                  } %>
+            <% end %>
+          <% end %>
           <span class="badge bg-primary me-2"><%= @delivery_assignments.count %> assignments</span>
           <div class="btn-group btn-group-sm" role="group">
             <button type="button" class="btn btn-outline-secondary active" id="tableView">
