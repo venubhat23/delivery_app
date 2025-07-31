@@ -11,7 +11,6 @@ class DeliverySchedule < ApplicationRecord
   validates :start_date, presence: true
   validates :end_date, presence: true
   validates :status, presence: true, inclusion: { in: %w[active inactive completed cancelled] }
-  validates :default_quantity, presence: true, numericality: { greater_than: 0 }
   
   validate :end_date_after_start_date
   validate :start_date_not_in_past
