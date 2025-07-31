@@ -297,7 +297,7 @@ class Customer < ApplicationRecord
             # Create delivery schedule if product and dates are provided
             if product && start_date && end_date
               # Handle quantity for milk liters (can be 0.5)
-              quantity = row[:quality].present? ? row[:quality].to_f : 1.0
+              quantity = row[:quantity].present? ? row[:quantity].to_f : 1.0
               
               delivery_schedule = DeliverySchedule.new(
                 customer: customer,
