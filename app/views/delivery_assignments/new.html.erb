@@ -44,7 +44,7 @@
 
           <div class="col-md-6">
             <%= form.label :quantity, class: "form-label" %>
-            <%= form.number_field :quantity, class: "form-control", min: 1, required: true %>
+            <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
           </div>
 
           <!-- Scheduled Delivery Fields (always visible) -->
