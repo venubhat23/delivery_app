@@ -529,9 +529,6 @@ class Customer < ApplicationRecord
     # Check capacity (excluding current customer if updating)
     current_count = dp.assigned_customers.where.not(id: self.id).count
     
-    if current_count >= 50
-      errors.add(:delivery_person, "has reached maximum capacity of 50 customers")
-    end
   end
 
   def coordinates_presence
