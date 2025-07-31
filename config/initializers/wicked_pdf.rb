@@ -3,7 +3,7 @@
 WickedPdf.config = {
   # Path to the wkhtmltopdf executable
   # Leave this blank if wkhtmltopdf is in your PATH
-  # exe_path: '/usr/local/bin/wkhtmltopdf',
+  exe_path: '/usr/local/bin/wkhtmltopdf',
   
   # Global PDF options
   # These will be applied to all PDFs unless overridden
