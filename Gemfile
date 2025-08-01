@@ -19,6 +19,12 @@ gem "jbuilder"
 gem 'bcrypt', '~> 3.1.7'
 gem 'jwt'
 gem 'twilio-ruby'
+
+# PDF to WhatsApp integration gems
+gem 'httparty'
+gem 'prawn'
+gem 'prawn-table'
+
 # UI and Styling
 gem 'bootstrap', '~> 5.2'
 gem 'jquery-rails'
