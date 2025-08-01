@@ -788,19 +788,28 @@
                 end
               %>
               
-              <% cgst_groups.sort.each do |rate, amount| %>
+              <% 
+                # Get all unique tax rates and display CGST/SGST alternately for each rate
+                all_rates = (cgst_groups.keys + sgst_groups.keys).uniq.sort
+                all_rates.each do |rate|
+                  if cgst_groups[rate] && cgst_groups[rate] > 0
+              %>
                 <div class="tax-line">
                   <span>CGST @<%= rate.to_i == rate ? rate.to_i : rate %>%</span>
-                  <span>₹ <%= number_with_delimiter(amount.round(2), delimiter: ',') %></span>
+                  <span>₹ <%= number_with_delimiter(cgst_groups[rate].round(2), delimiter: ',') %></span>
                 </div>
-              <% end %>
-              
-              <% sgst_groups.sort.each do |rate, amount| %>
+              <% 
+                  end
+                  if sgst_groups[rate] && sgst_groups[rate] > 0
+              %>
                 <div class="tax-line">
                   <span>SGST @<%= rate.to_i == rate ? rate.to_i : rate %>%</span>
-                  <span>₹ <%= number_with_delimiter(amount.round(2), delimiter: ',') %></span>
+                  <span>₹ <%= number_with_delimiter(sgst_groups[rate].round(2), delimiter: ',') %></span>
                 </div>
-              <% end %>
+              <% 
+                  end
+                end 
+              %>
               <% if total_igst > 0 %>
                 <% igst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_igst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
                 <div class="tax-line">
