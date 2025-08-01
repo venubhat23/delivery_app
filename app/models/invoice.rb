@@ -1,4 +1,6 @@
 # app/models/invoice.rb
+require 'securerandom'
+
 class Invoice < ApplicationRecord
   belongs_to :customer
   has_many :invoice_items, dependent: :destroy
@@ -44,6 +46,7 @@ class Invoice < ApplicationRecord
   
   # Callbacks
   before_create :generate_invoice_number, if: -> { invoice_number.blank? }
+  before_create :generate_share_token
   before_save :calculate_total_amount
   after_create :mark_delivery_assignments_as_invoiced
   
@@ -73,6 +76,22 @@ class Invoice < ApplicationRecord
   def days_overdue
     return 0 unless overdue?
     (Date.current - due_date).to_i
+  end
+
+  def generate_share_token
+    self.share_token = SecureRandom.urlsafe_base64(32) if share_token.blank?
+  end
+
+  def mark_as_shared!
+    update!(shared_at: Time.current)
+  end
+
+  def public_url(host: nil, port: nil)
+    url_options = { token: share_token }
+    url_options[:host] = host if host.present?
+    url_options[:port] = port if port.present?
+    
+    Rails.application.routes.url_helpers.public_invoice_url(url_options)
   end
   
   def profit_amount

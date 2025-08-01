@@ -1,7 +1,8 @@
 # app/controllers/invoices_controller.rb
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :share_whatsapp]
   before_action :set_customers, only: [:index, :new, :create, :generate]
+  skip_before_action :require_login, only: [:public_view]
   
   def index
     @invoices = Invoice.includes(:customer)
@@ -44,11 +45,11 @@ def show
   @customer = @invoice.customer
   
   respond_to do |format|
-    format.html
+    format.html { render 'show_html' }  # Use new HTML template with actions
     format.pdf do
       begin
         render pdf: "invoice_#{@invoice.id}",
-               template: 'invoices/show',  # Don't specify .html.erb or .pdf.erb
+               template: 'invoices/show',  # Keep existing template for PDF
                layout: false,
                page_size: 'A4',
                margin: { top: 5, bottom: 5, left: 5, right: 5 },
@@ -213,10 +214,93 @@ end
     redirect_to invoices_path, notice: 'Invoice marked as paid.'
   end
   
+  # WhatsApp sharing action
+  def share_whatsapp
+    phone_number = params[:phone_number]
+    
+    # Validate phone number
+    if phone_number.blank?
+      render json: { error: 'Phone number is required' }, status: 400
+      return
+    end
+    
+    # Sanitize phone number - remove non-digits
+    sanitized_phone = phone_number.gsub(/\D/, '')
+    
+    # Validate phone format (10-15 digits)
+    unless sanitized_phone.match?(/^\d{10,15}$/)
+      render json: { error: 'Invalid phone number format' }, status: 400
+      return
+    end
+    
+    # Ensure share token exists
+    @invoice.generate_share_token if @invoice.share_token.blank?
+    @invoice.save! if @invoice.changed?
+    
+    # Generate public URL
+    public_url = @invoice.public_url
+    
+    # Build WhatsApp message
+    message = build_whatsapp_message(@invoice, public_url)
+    
+    # Create WhatsApp URL - using web.whatsapp.com for direct WhatsApp Web access
+    whatsapp_url = "https://web.whatsapp.com/send?phone=#{sanitized_phone}&text=#{CGI.escape(message)}"
+    
+    # Mark invoice as shared
+    @invoice.mark_as_shared!
+    
+    render json: { 
+      success: true, 
+      whatsapp_url: whatsapp_url,
+      message: 'WhatsApp link generated successfully'
+    }
+  rescue => e
+    Rails.logger.error "WhatsApp sharing error: #{e.message}"
+    render json: { error: 'Failed to generate WhatsApp link' }, status: 500
+  end
+  
+  # Public invoice view (no authentication required)
+  def public_view
+    @invoice = Invoice.find_by(share_token: params[:token])
+    
+    if @invoice.nil?
+      render file: "#{Rails.root}/public/404.html", layout: false, status: 404
+      return
+    end
+    
+    # Mark as shared if first view
+    @invoice.mark_as_shared! if @invoice.shared_at.nil?
+    
+    @invoice_items = @invoice.invoice_items.includes(:product)
+    @customer = @invoice.customer
+    
+    render layout: 'public'
+  end
+  
   private
   
   def set_invoice
     @invoice = Invoice.find(params[:id])
+  end
+  
+  def build_whatsapp_message(invoice, public_url)
+    company_name = "Your Company" # You can make this configurable
+    
+    message = <<~MSG
+      Hi! 👋
+
+      Your invoice has been generated:
+      📄 Invoice ##{invoice.formatted_number}
+      💰 Amount: ₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}
+      📅 Date: #{invoice.invoice_date.strftime('%d %B %Y')}
+
+      View your invoice: #{public_url}
+
+      Thank you for your business! 🙏
+      - #{company_name}
+    MSG
+    
+    message.strip
   end
   
   def set_customers

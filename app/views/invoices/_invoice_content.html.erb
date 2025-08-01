@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Invoice #<%= @invoice.invoice_number || @invoice.id %></title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 15px;
+        background-color: #f5f5f5;
+        font-size: 12px;
+      }
+
+      .invoice-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+
+      /* Header section */
+      .invoice-header-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
+
+      .invoice-header-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .logo-cell {
+        width: 180px;
+        padding-right: 15px;
+      }
+
+      .logo {
+        width: 120px;
+        height: auto;
+        border-radius: 50%;
+        border: 3px solid #5a4ec9;
+      }
+
+      .company-info-cell {
+        width: auto;
+      }
+
+      .company-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #5a4ec9;
+        margin: 0 0 5px 0;
+      }
+
+      .company-details {
+        font-size: 11px;
+        line-height: 1.4;
+        color: #666;
+        margin: 0;
+      }
+
+      .invoice-info-cell {
+        width: 200px;
+        text-align: right;
+        padding-left: 15px;
+      }
+
+      .invoice-title {
+        font-size: 28px;
+        font-weight: bold;
+        color: #5a4ec9;
+        margin: 0 0 8px 0;
+      }
+
+      .invoice-number {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        margin: 0 0 4px 0;
+      }
+
+      .invoice-date {
+        font-size: 11px;
+        color: #666;
+        margin: 0;
+      }
+
+      /* Bill to section */
+      .bill-to-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+
+      .bill-to-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .bill-to-cell {
+        width: 50%;
+        padding-right: 20px;
+      }
+
+      .bill-to-title {
+        font-size: 14px;
+        font-weight: bold;
+        color: #5a4ec9;
+        margin: 0 0 8px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .customer-info {
+        font-size: 11px;
+        line-height: 1.5;
+        color: #333;
+        margin: 0;
+      }
+
+      .customer-info strong {
+        font-size: 13px;
+        color: #333;
+      }
+
+      /* Items table */
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 11px;
+      }
+
+      .items-table th {
+        background-color: #5a4ec9;
+        color: white;
+        padding: 10px 8px;
+        text-align: left;
+        font-weight: bold;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .items-table th:nth-child(1) { width: 5%; text-align: center; }
+      .items-table th:nth-child(2) { width: 45%; }
+      .items-table th:nth-child(3) { width: 15%; text-align: center; }
+      .items-table th:nth-child(4) { width: 15%; text-align: right; }
+      .items-table th:nth-child(5) { width: 20%; text-align: right; }
+
+      .items-table td {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: top;
+      }
+
+      .items-table td:nth-child(1) { text-align: center; font-weight: bold; }
+      .items-table td:nth-child(3) { text-align: center; }
+      .items-table td:nth-child(4) { text-align: right; }
+      .items-table td:nth-child(5) { text-align: right; font-weight: bold; }
+
+      .item-name {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 2px;
+      }
+
+      .item-description {
+        font-size: 10px;
+        color: #666;
+        font-style: italic;
+      }
+
+      /* Total section */
+      .total-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+
+      .total-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .total-left-cell {
+        width: 60%;
+        padding-right: 20px;
+      }
+
+      .total-right-cell {
+        width: 40%;
+      }
+
+      .amount-in-words {
+        font-size: 11px;
+        color: #333;
+        margin: 0 0 10px 0;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-left: 3px solid #5a4ec9;
+      }
+
+      .amount-in-words strong {
+        color: #5a4ec9;
+      }
+
+      .totals-section {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+      }
+
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        font-size: 11px;
+      }
+
+      .total-row:last-child {
+        margin-bottom: 0;
+        font-size: 14px;
+        font-weight: bold;
+        color: #5a4ec9;
+        border-top: 1px solid #ddd;
+        padding-top: 8px;
+        margin-top: 8px;
+      }
+
+      /* Terms and signature section */
+      .terms-signature-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0 0 0;
+      }
+
+      .terms-signature-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .terms-cell {
+        width: 60%;
+        padding-right: 20px;
+      }
+
+      .signature-cell {
+        width: 40%;
+        text-align: center;
+      }
+
+      .terms {
+        font-size: 10px;
+        color: #333;
+      }
+
+      .terms h3 {
+        font-size: 12px;
+        color: #5a4ec9;
+        margin: 0 0 8px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .terms ol {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .terms li {
+        margin-bottom: 4px;
+        line-height: 1.4;
+      }
+
+      .signature-box {
+        width: 150px;
+        height: 60px;
+        border: 1px solid #ddd;
+        margin: 0 auto 10px auto;
+      }
+
+      .signature-label {
+        font-size: 10px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .signature-name {
+        font-size: 12px;
+        font-weight: bold;
+        color: #5a4ec9;
+      }
+
+      /* Status badge */
+      .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-left: 10px;
+      }
+
+      .status-paid {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+
+      .status-overdue {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      /* Print styles */
+      @media print {
+        body {
+          background-color: white;
+        }
+        
+        .invoice-container {
+          box-shadow: none;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invoice-container">
+      <!-- Header with logo, company info, and invoice details -->
+      <table class="invoice-header-table">
+        <tr>
+          <td class="logo-cell">
+            <!-- You can add your company logo here -->
+            <!-- <img src="path-to-your-logo.png" alt="Company Logo" class="logo"> -->
+          </td>
+          <td class="company-info-cell">
+            <h1 class="company-name">Atma Nirbhar Farm</h1>
+            <div class="company-details">
+              Atma Nirbhar Farm, Opp. Kiran Hospital,<br>
+              Near Kiran Hospital, Kiran Hospital Road,<br>
+              Rajkot - 360001, Gujarat, India<br>
+              Phone: +91-9876543210 | Email: info@atmanirfarm.com<br>
+              GST: 24AAAAA0000A1Z5
+            </div>
+          </td>
+          <td class="invoice-info-cell">
+            <h2 class="invoice-title">INVOICE</h2>
+            <div class="invoice-number">Invoice #: <%= @invoice.invoice_number || @invoice.id %></div>
+            <div class="invoice-date">Date: <%= @invoice.invoice_date.strftime('%d/%m/%Y') %></div>
+            <div class="invoice-date">Due Date: <%= @invoice.due_date.strftime('%d/%m/%Y') %></div>
+            <span class="status-badge status-<%= @invoice.status %>">
+              <%= @invoice.status.upcase %>
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Bill To section -->
+      <table class="bill-to-table">
+        <tr>
+          <td class="bill-to-cell">
+            <h3 class="bill-to-title">Bill To:</h3>
+            <div class="customer-info">
+              <strong><%= @customer.name %></strong><br>
+              <%= @customer.address %><br>
+              <% if @customer.phone_number.present? %>
+                Phone: <%= @customer.phone_number %><br>
+              <% end %>
+              <% if @customer.email.present? %>
+                Email: <%= @customer.email %><br>
+              <% end %>
+              <% if @customer.gst_number.present? %>
+                GST: <%= @customer.gst_number %>
+              <% end %>
+            </div>
+          </td>
+          <td class="bill-to-cell">
+            <!-- Additional invoice info can go here -->
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoice_items.each_with_index do |item, index| %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td>
+                <div class="item-name"><%= item.product&.name || 'Product' %></div>
+                <% if item.product&.description.present? %>
+                  <div class="item-description"><%= item.product.description %></div>
+                <% end %>
+              </td>
+              <td>
+                <%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %>
+                <%= item.product&.unit_type || 'pcs' %>
+              </td>
+              <td>₹<%= number_with_delimiter(item.unit_price, precision: 2) %></td>
+              <td>₹<%= number_with_delimiter(item.quantity * item.unit_price, precision: 2) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <!-- Total section with amount in words and totals -->
+      <table class="total-table">
+        <tr>
+          <td class="total-left-cell">
+            <!-- Amount in words -->
+            <div class="amount-in-words">
+              <strong>Amount in Words:</strong><br>
+              <%
+                # Convert amount to words (simplified version)
+                total_amount_int = @invoice.total_amount.to_i
+                ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+                tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+                teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+                
+                def convert_hundreds(num, ones, teens, tens)
+                  result = ""
+                  if num >= 100
+                    result += ones[num / 100] + " Hundred "
+                    num %= 100
+                  end
+                  if num >= 20
+                    result += tens[num / 10] + " "
+                    num %= 10
+                  elsif num >= 10
+                    result += teens[num - 10] + " "
+                    num = 0
+                  end
+                  if num > 0
+                    result += ones[num] + " "
+                  end
+                  result
+                end
+                
+                words = ""
+                if total_amount_int >= 10000000  # Crore
+                  crores = total_amount_int / 10000000
+                  words += convert_hundreds(crores, ones, teens, tens) + " Crore "
+                  total_amount_int %= 10000000
+                end
+                if total_amount_int >= 100000  # Lakh
+                  lakhs = total_amount_int / 100000
+                  words += convert_hundreds(lakhs, ones, teens, tens) + " Lakh "
+                  total_amount_int %= 100000
+                end
+                if total_amount_int >= 1000  # Thousand
+                  thousands = total_amount_int / 1000
+                  words += convert_hundreds(thousands, ones, teens, tens) + " Thousand "
+                  total_amount_int %= 1000
+                end
+                if total_amount_int > 0
+                  words += convert_hundreds(total_amount_int, ones, teens, tens)
+                end
+                words = words.strip
+                words = "Zero" if words.empty?
+              %>
+              <div><%= words %> Rupees Only</div>
+            </div>
+          </td>
+          <td class="total-right-cell">
+            <div class="totals-section">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>₹<%= number_with_delimiter(@invoice_items.sum { |item| item.quantity * item.unit_price }, precision: 2) %></span>
+              </div>
+              
+              <!-- Tax calculation if applicable -->
+              <% tax_amount = @invoice.total_amount - @invoice_items.sum { |item| item.quantity * item.unit_price } %>
+              <% if tax_amount > 0 %>
+                <div class="total-row">
+                  <span>Tax:</span>
+                  <span>₹<%= number_with_delimiter(tax_amount, precision: 2) %></span>
+                </div>
+              <% end %>
+              
+              <div class="total-row">
+                <span>Total:</span>
+                <span>₹<%= number_with_delimiter(@invoice.total_amount, precision: 2) %></span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Terms and signature section -->
+      <table class="terms-signature-table">
+        <tr>
+          <td class="terms-cell">
+            <div class="terms">
+              <h3>TERMS AND CONDITIONS</h3>
+              <% if @invoice.notes.present? %>
+                <div style="padding-left: 18px; font-size: 11px;"><%= simple_format(@invoice.notes) %></div>
+              <% else %>
+                <ol>
+                  <li>Kindly Do Make Every Month Payment on or Before the 10th of The Month</li>
+                  <li>Kindly Share the Screenshot Immediately Once the Payment is Done to Confirm Your Payment</li>
+                </ol>
+              <% end %>
+            </div>
+          </td>
+          <td class="signature-cell">
+            <div class="signature-box"></div>
+            <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
+            <div class="signature-name">Atma Nirbhar Farm</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,204 @@
+<div class="invoice-container">
+  <!-- Invoice Header -->
+  <div class="invoice-header">
+    <div class="row">
+      <div class="col-md-6">
+        <h1 class="mb-0">
+          <i class="fas fa-file-invoice me-2"></i>
+          Invoice
+        </h1>
+        <h4 class="mt-2 mb-0">#<%= @invoice.formatted_number %></h4>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <h5 class="mb-1">Date: <%= @invoice.invoice_date.strftime('%d %B %Y') %></h5>
+        <h5 class="mb-1">Due Date: <%= @invoice.due_date.strftime('%d %B %Y') %></h5>
+        <span class="badge bg-<%= @invoice.status == 'paid' ? 'success' : @invoice.status == 'overdue' ? 'danger' : 'warning' %> fs-6">
+          <%= @invoice.status.capitalize %>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Body -->
+  <div class="invoice-body">
+    <!-- Customer Details -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <h5 class="text-primary mb-3">
+          <i class="fas fa-building me-2"></i>
+          From
+        </h5>
+        <address>
+          <strong>Your Company Name</strong><br>
+          Your Company Address<br>
+          City, State - PIN<br>
+          Phone: +91-XXXXXXXXXX<br>
+          Email: info@yourcompany.com
+        </address>
+      </div>
+      <div class="col-md-6">
+        <h5 class="text-primary mb-3">
+          <i class="fas fa-user me-2"></i>
+          Bill To
+        </h5>
+        <address>
+          <strong><%= @customer.name %></strong><br>
+          <%= @customer.address %><br>
+          <% if @customer.phone_number.present? %>
+            Phone: <%= @customer.phone_number %><br>
+          <% end %>
+          <% if @customer.email.present? %>
+            Email: <%= @customer.email %><br>
+          <% end %>
+          <% if @customer.gst_number.present? %>
+            GST: <%= @customer.gst_number %>
+          <% end %>
+        </address>
+      </div>
+    </div>
+
+    <!-- Invoice Items -->
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th style="width: 5%">#</th>
+            <th style="width: 40%">Product/Service</th>
+            <th style="width: 15%" class="text-center">Quantity</th>
+            <th style="width: 20%" class="text-end">Rate (₹)</th>
+            <th style="width: 20%" class="text-end">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoice_items.each_with_index do |item, index| %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td>
+                <strong><%= item.product&.name || 'Product' %></strong>
+                <% if item.product&.description.present? %>
+                  <br><small class="text-muted"><%= item.product.description %></small>
+                <% end %>
+              </td>
+              <td class="text-center">
+                <%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %>
+                <%= item.product&.unit || 'pcs' %>
+              </td>
+              <td class="text-end">
+                ₹<%= number_with_delimiter(item.unit_price, precision: 2) %>
+              </td>
+              <td class="text-end">
+                ₹<%= number_with_delimiter(item.quantity * item.unit_price, precision: 2) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals -->
+    <div class="row">
+      <div class="col-md-6">
+        <!-- Payment Instructions or Notes -->
+        <% if @invoice.notes.present? %>
+          <div class="mb-3">
+            <h6 class="text-primary">Notes:</h6>
+            <p class="text-muted"><%= simple_format(@invoice.notes) %></p>
+          </div>
+        <% end %>
+      </div>
+      <div class="col-md-6">
+        <div class="total-section">
+          <div class="row mb-2">
+            <div class="col-6">
+              <strong>Subtotal:</strong>
+            </div>
+            <div class="col-6 text-end">
+              ₹<%= number_with_delimiter(@invoice_items.sum { |item| item.quantity * item.unit_price }, precision: 2) %>
+            </div>
+          </div>
+          
+          <!-- Tax calculation if applicable -->
+          <% tax_amount = @invoice.total_amount - @invoice_items.sum { |item| item.quantity * item.unit_price } %>
+          <% if tax_amount > 0 %>
+            <div class="row mb-2">
+              <div class="col-6">
+                <strong>Tax:</strong>
+              </div>
+              <div class="col-6 text-end">
+                ₹<%= number_with_delimiter(tax_amount, precision: 2) %>
+              </div>
+            </div>
+          <% end %>
+          
+          <hr>
+          <div class="row">
+            <div class="col-6">
+              <h5 class="text-primary"><strong>Total:</strong></h5>
+            </div>
+            <div class="col-6 text-end">
+              <h5 class="text-primary"><strong>₹<%= number_with_delimiter(@invoice.total_amount, precision: 2) %></strong></h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-5 pt-4 border-top text-center text-muted">
+      <div class="row">
+        <div class="col-md-12">
+          <p class="mb-1">
+            <i class="fas fa-info-circle me-1"></i>
+            This is a computer-generated invoice and does not require a signature.
+          </p>
+          <p class="mb-0">
+            <small>Generated on <%= Time.current.strftime('%d %B %Y at %I:%M %p') %></small>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Again Section (visible only on screen) -->
+<div class="text-center mt-4 no-print">
+  <div class="card">
+    <div class="card-body">
+      <h6 class="card-title">
+        <i class="fab fa-whatsapp text-success me-2"></i>
+        Share this invoice
+      </h6>
+      <p class="card-text text-muted">
+        You can share this invoice link with others or save it for your records.
+      </p>
+      <div class="btn-group" role="group">
+        <button class="btn btn-outline-success" onclick="copyToClipboard()">
+          <i class="fas fa-copy me-2"></i>Copy Link
+        </button>
+        <button class="btn btn-outline-primary" onclick="shareInvoice()">
+          <i class="fas fa-share me-2"></i>Share
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function copyToClipboard() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+      alert('Invoice link copied to clipboard!');
+    });
+  }
+  
+  function shareInvoice() {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Invoice #<%= @invoice.formatted_number %>',
+        text: 'Please find your invoice details',
+        url: window.location.href
+      });
+    } else {
+      copyToClipboard();
+    }
+  }
+</script>
