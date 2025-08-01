@@ -19,6 +19,11 @@ module DeliveryManagement
     # Allow HTTPS origin from external tunneling tools like ngrok
     # config.action_controller.forgery_protection_origin_check = true
 
+    # Set default URL options for all environments
+    # This can be overridden in specific environment files
+    config.action_controller.default_url_options = { host: "localhost", port: 3000 }
+    config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

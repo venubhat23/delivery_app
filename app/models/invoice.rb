@@ -86,8 +86,12 @@ class Invoice < ApplicationRecord
     update!(shared_at: Time.current)
   end
 
-  def public_url
-    Rails.application.routes.url_helpers.public_invoice_url(token: share_token)
+  def public_url(host: nil, port: nil)
+    url_options = { token: share_token }
+    url_options[:host] = host if host.present?
+    url_options[:port] = port if port.present?
+    
+    Rails.application.routes.url_helpers.public_invoice_url(url_options)
   end
   
   def profit_amount
