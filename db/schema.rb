@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_26_120004) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,9 +84,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_26_120004) do
     t.string "address_type"
     t.boolean "is_active", default: true
     t.string "password_digest"
+    t.string "pincode"
+    t.string "landmark"
+    t.string "city"
+    t.string "postal_code"
+    t.string "state"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
     t.index ["is_active"], name: "index_customers_on_is_active"
-    t.index ["member_id"], name: "index_customers_on_member_id", unique: true
+    t.index ["member_id"], name: "index_customers_on_member_id", unique: true, where: "(member_id IS NOT NULL)"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -115,6 +120,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_26_120004) do
     t.boolean "invoice_generated", default: false
     t.bigint "invoice_id"
     t.integer "delivery_person_id"
+    t.text "special_instructions"
     t.index ["customer_id"], name: "index_delivery_assignments_on_customer_id"
     t.index ["delivery_schedule_id"], name: "index_delivery_assignments_on_delivery_schedule_id"
     t.index ["invoice_generated"], name: "index_delivery_assignments_on_invoice_generated"
@@ -231,6 +237,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_26_120004) do
     t.integer "stock_alert_threshold"
     t.boolean "is_subscription_eligible", default: false
     t.boolean "is_active", default: true
+    t.string "hsn_sac"
     t.index ["category_id"], name: "index_products_on_category_id"
     t.index ["is_active"], name: "index_products_on_is_active"
     t.index ["is_subscription_eligible"], name: "index_products_on_is_subscription_eligible"
@@ -325,6 +332,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_26_120004) do
     t.index ["category"], name: "index_purchase_products_on_category"
     t.index ["hsn_sac"], name: "index_purchase_products_on_hsn_sac"
     t.index ["name"], name: "index_purchase_products_on_name"
+  end
+
+  create_table "reports", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "report_type", null: false
+    t.date "from_date", null: false
+    t.date "to_date", null: false
+    t.bigint "user_id", null: false
+    t.text "content"
+    t.string "file_path"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["from_date", "to_date"], name: "index_reports_on_from_date_and_to_date"
+    t.index ["report_type"], name: "index_reports_on_report_type"
+    t.index ["user_id", "created_at"], name: "index_reports_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_reports_on_user_id"
   end
 
   create_table "sales_customers", force: :cascade do |t|
@@ -458,6 +481,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_26_120004) do
   add_foreign_key "products", "categories"
   add_foreign_key "purchase_invoice_items", "purchase_invoices"
   add_foreign_key "purchase_invoice_items", "purchase_products"
+  add_foreign_key "reports", "users"
   add_foreign_key "sales_invoice_items", "products"
   add_foreign_key "sales_invoices", "customers"
   add_foreign_key "sales_invoices", "sales_customers"
