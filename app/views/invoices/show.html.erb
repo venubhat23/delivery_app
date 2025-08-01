@@ -525,19 +525,18 @@
       @invoice_items.each do |item|
         # Base amount (quantity × unit_price)
         base_amount = item.quantity * (item.unit_price || 0)
-        
         if item.product&.is_gst_applicable
           # For GST applicable items, the unit_price is assumed to be tax-inclusive
           # We need to extract the base amount (before tax) and calculate tax
+
           total_gst_rate = (item.product.total_cgst_percentage || 0) + (item.product.total_sgst_percentage || 0) + (item.product.total_igst_percentage || 0)
-          
           # Calculate base amount before tax (from tax-inclusive amount)
           base_amount_before_tax = base_amount
           # Calculate individual tax components based on base amount before tax
           cgst_rate = item.product.total_cgst_percentage || 0
           sgst_rate = item.product.total_sgst_percentage || 0
           igst_rate = item.product.total_igst_percentage || 0
-          
+         
           cgst_amount = (base_amount_before_tax * cgst_rate / 100).round(2)
           sgst_amount = (base_amount_before_tax * sgst_rate / 100).round(2)
           igst_amount = (base_amount_before_tax * igst_rate / 100).round(2)
@@ -547,7 +546,7 @@
           total_igst += igst_amount
           
           # For taxable amount calculation, use base amount (before tax)
-          taxable_amount += (base_amount_before_tax - total_cgst - total_sgst - total_igst)
+          taxable_amount += (base_amount_before_tax - cgst_amount - cgst_amount - cgst_amount)
         else
           # For non-GST items, the full amount is considered taxable for display purposes
           # but no GST is calculated
