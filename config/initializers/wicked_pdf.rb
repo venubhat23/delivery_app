@@ -1,9 +1,9 @@
 # config/initializers/wicked_pdf.rb
 
-WickedPdf.config = {
+# Base configuration
+base_config = {
   # Path to the wkhtmltopdf executable
   # Leave this blank if wkhtmltopdf is in your PATH
-  
   exe_path: Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf'),
 
   # Global PDF options
@@ -28,13 +28,35 @@ WickedPdf.config = {
   # Print media type (use print CSS instead of screen CSS)
   print_media_type: true,
   
-  # Additional options
+  # Additional options for production stability
   lowquality: false,
   dpi: 75,
   
   # For debugging - set to true to see HTML instead of PDF
   show_as_html: Rails.env.development? && ENV['DEBUG_PDF'] == 'true'
 }
+
+# Production-specific options for headless environments
+production_config = {
+  # Use Xvfb for headless PDF generation
+  use_xvfb: true,
+  # Disable JavaScript execution for faster rendering
+  disable_javascript: true,
+  # Disable external links
+  disable_external_links: true,
+  # Set timeout to prevent hanging
+  javascript_delay: 1000,
+  # Additional stability options
+  no_stop_slow_scripts: true,
+  quiet: true
+}
+
+# Merge configurations based on environment
+WickedPdf.config = if Rails.env.production?
+  base_config.merge(production_config)
+else
+  base_config
+end
 
 # MIME type registration
 Mime::Type.register "application/pdf", :pdf unless Mime::Type.lookup_by_extension(:pdf)

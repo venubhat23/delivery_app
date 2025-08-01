@@ -46,12 +46,21 @@ def show
   respond_to do |format|
     format.html
     format.pdf do
-      render pdf: "invoice_#{@invoice.id}",
-             template: 'invoices/show',  # Don't specify .html.erb or .pdf.erb
-             layout: false,
-             page_size: 'A4',
-             margin: { top: 5, bottom: 5, left: 5, right: 5 },
-             encoding: 'UTF-8'
+      begin
+        render pdf: "invoice_#{@invoice.id}",
+               template: 'invoices/show',  # Don't specify .html.erb or .pdf.erb
+               layout: false,
+               page_size: 'A4',
+               margin: { top: 5, bottom: 5, left: 5, right: 5 },
+               encoding: 'UTF-8'
+      rescue => e
+        Rails.logger.error "PDF generation failed: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        
+        # Fallback to HTML with print-friendly styling
+        flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."
+        render template: 'invoices/show_print', layout: false, content_type: 'text/html'
+      end
     end
   end
 end
