@@ -235,16 +235,10 @@
                           target: '_blank' do %>
                       <i class="fas fa-file-pdf"></i>
                     <% end %>
-                    <button type="button" 
-                            class="btn btn-sm btn-outline-success" 
-                            title="Share via WhatsApp"
-                            onclick="shareViaWhatsApp('<%= invoice.id %>', '<%= invoice.customer.name %>', '<%= invoice.formatted_number %>')">
-                      <i class="fab fa-whatsapp"></i>
-                    </button>
                     <% if invoice.status != 'paid' %>
                       <%= button_to mark_as_paid_invoice_path(invoice), 
                             method: :patch, 
-                            class: 'btn btn-sm btn-outline-warning', 
+                            class: 'btn btn-sm btn-outline-success', 
                             data: { confirm: 'Are you sure you want to mark this invoice as paid?' }, 
                             title: 'Mark as Paid' do %>
                         <i class="fas fa-check-circle"></i>
@@ -310,16 +304,10 @@
                           target: '_blank' do %>
                       <i class="fas fa-file-pdf me-1"></i>PDF
                     <% end %>
-                    <button type="button" 
-                            class="btn btn-sm btn-outline-success me-1" 
-                            title="Share via WhatsApp"
-                            onclick="shareViaWhatsApp('<%= invoice.id %>', '<%= invoice.customer.name %>', '<%= invoice.formatted_number %>')">
-                      <i class="fab fa-whatsapp me-1"></i>Share
-                    </button>
                     <% if invoice.status != 'paid' %>
                       <%= button_to mark_as_paid_invoice_path(invoice), 
                             method: :patch, 
-                            class: 'btn btn-sm btn-outline-warning', 
+                            class: 'btn btn-sm btn-outline-success', 
                             data: { confirm: 'Mark as paid?' } do %>
                         <i class="fas fa-check me-1"></i>Paid
                       <% end %>
@@ -818,23 +806,6 @@
   border-color: #06b6d4;
 }
 
-/* WhatsApp Button Styling */
-.btn-outline-success {
-  border: 2px solid #25d366;
-  color: #25d366;
-  background: transparent;
-}
-
-.btn-outline-success:hover {
-  background: #25d366;
-  color: white;
-  border-color: #25d366;
-}
-
-.btn-outline-success .fab.fa-whatsapp {
-  font-size: 1.1em;
-}
-
 /* Enhanced View Toggle Buttons */
 #cardView, #tableView {
   transition: all 0.3s ease;
@@ -966,24 +937,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
-
-// WhatsApp Share Function
-function shareViaWhatsApp(invoiceId, customerName, invoiceNumber) {
-  // Construct the PDF URL
-  const pdfUrl = `${window.location.origin}/invoices/${invoiceId}.pdf`;
-  
-  // Create the message text
-  const message = `Hi ${customerName},\n\nYour invoice ${invoiceNumber} is ready. Please find the PDF here: ${pdfUrl}\n\nThank you for your business!`;
-  
-  // Encode the message for URL
-  const encodedMessage = encodeURIComponent(message);
-  
-  // Create WhatsApp URL
-  const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-  
-  // Open WhatsApp in a new window/tab
-  window.open(whatsappUrl, '_blank', 'width=600,height=400');
-}
 </script>
 
 <!-- Generate Monthly for All Modal -->
