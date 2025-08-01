@@ -58,10 +58,12 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "atmanirbharfarm.work.gd" }
+  # Use environment variable if available, otherwise default to the main domain
+  default_host = ENV.fetch('APP_HOST', 'atmanirbharfarm.work.gd')
+  config.action_mailer.default_url_options = { host: default_host }
 
   # Set default URL options for the main application routes
-  config.action_controller.default_url_options = { host: "atmanirbharfarm.work.gd" }
+  config.action_controller.default_url_options = { host: default_host }
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
   # config.action_mailer.smtp_settings = {
@@ -83,11 +85,12 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
+  config.hosts = [
+    "atmanirbharfarm.work.gd",     # Allow requests from main domain
+    /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
+    ENV['APP_HOST']                 # Allow requests from environment-specific host
+  ].compact
+  
   # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

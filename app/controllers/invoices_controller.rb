@@ -237,8 +237,9 @@ end
     @invoice.generate_share_token if @invoice.share_token.blank?
     @invoice.save! if @invoice.changed?
     
-    # Generate public URL
-    public_url = @invoice.public_url
+    # Generate public URL with explicit host
+    host = request.host_with_port || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarm.work.gd'
+    public_url = @invoice.public_url(host: host)
     
     # Build WhatsApp message
     message = build_whatsapp_message(@invoice, public_url)
