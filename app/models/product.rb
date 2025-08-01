@@ -75,6 +75,36 @@ class Product < ApplicationRecord
     category&.color || '#6c757d'
   end
 
+  # GST calculation methods
+  def total_gst_percentage
+    return 0 unless is_gst_applicable
+    (total_cgst_percentage || 0) + (total_sgst_percentage || 0) + (total_igst_percentage || 0)
+  end
+
+  def cgst_amount_for(base_amount)
+    return 0 unless is_gst_applicable
+    (base_amount * (total_cgst_percentage || 0) / 100).round(2)
+  end
+
+  def sgst_amount_for(base_amount)
+    return 0 unless is_gst_applicable
+    (base_amount * (total_sgst_percentage || 0) / 100).round(2)
+  end
+
+  def igst_amount_for(base_amount)
+    return 0 unless is_gst_applicable
+    (base_amount * (total_igst_percentage || 0) / 100).round(2)
+  end
+
+  def total_tax_amount_for(base_amount)
+    return 0 unless is_gst_applicable
+    cgst_amount_for(base_amount) + sgst_amount_for(base_amount) + igst_amount_for(base_amount)
+  end
+
+  def amount_with_tax_for(base_amount)
+    base_amount + total_tax_amount_for(base_amount)
+  end
+
   # Class methods
   def self.total_value
     sum { |product| product.total_value }
