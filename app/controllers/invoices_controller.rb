@@ -243,8 +243,8 @@ end
     # Build WhatsApp message
     message = build_whatsapp_message(@invoice, public_url)
     
-    # Create WhatsApp URL
-    whatsapp_url = "https://wa.me/#{sanitized_phone}?text=#{CGI.escape(message)}"
+    # Create WhatsApp URL - using web.whatsapp.com for direct WhatsApp Web access
+    whatsapp_url = "https://web.whatsapp.com/send?phone=#{sanitized_phone}&text=#{CGI.escape(message)}"
     
     # Mark invoice as shared
     @invoice.mark_as_shared!
