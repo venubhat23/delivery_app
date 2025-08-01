@@ -763,18 +763,42 @@
                 <span>TAXABLE AMOUNT</span>
                 <span>₹ <%= number_with_delimiter(taxable_amount.round(2), delimiter: ',') %></span>
               </div>
-              <% if total_cgst > 0 %>
-                <% cgst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_cgst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
+              <%
+                # Group tax amounts by individual tax rates
+                cgst_groups = {}
+                sgst_groups = {}
+                
+                @invoice_items.each do |item|
+                  if item.product&.is_gst_applicable
+                    base_amount = item.quantity * (item.unit_price || 0)
+                    
+                    cgst_rate = item.product.total_cgst_percentage || 0
+                    sgst_rate = item.product.total_sgst_percentage || 0
+                    
+                    if cgst_rate > 0
+                      cgst_amount = (base_amount * cgst_rate / 100).round(2)
+                      cgst_groups[cgst_rate] = (cgst_groups[cgst_rate] || 0) + cgst_amount
+                    end
+                    
+                    if sgst_rate > 0
+                      sgst_amount = (base_amount * sgst_rate / 100).round(2)
+                      sgst_groups[sgst_rate] = (sgst_groups[sgst_rate] || 0) + sgst_amount
+                    end
+                  end
+                end
+              %>
+              
+              <% cgst_groups.sort.each do |rate, amount| %>
                 <div class="tax-line">
-                  <span>CGST @<%= cgst_rate %>%</span>
-                  <span>₹ <%= number_with_delimiter(total_cgst.round(2), delimiter: ',') %></span>
+                  <span>CGST @<%= rate.to_i == rate ? rate.to_i : rate %>%</span>
+                  <span>₹ <%= number_with_delimiter(amount.round(2), delimiter: ',') %></span>
                 </div>
               <% end %>
-              <% if total_sgst > 0 %>
-                <% sgst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_sgst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
+              
+              <% sgst_groups.sort.each do |rate, amount| %>
                 <div class="tax-line">
-                  <span>SGST @<%= sgst_rate %>%</span>
-                  <span>₹ <%= number_with_delimiter(total_sgst.round(2), delimiter: ',') %></span>
+                  <span>SGST @<%= rate.to_i == rate ? rate.to_i : rate %>%</span>
+                  <span>₹ <%= number_with_delimiter(amount.round(2), delimiter: ',') %></span>
                 </div>
               <% end %>
               <% if total_igst > 0 %>
