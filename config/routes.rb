@@ -157,6 +157,7 @@ Rails.application.routes.draw do
   resources :invoices do
     member do
       patch :mark_as_paid
+      post :share_whatsapp
     end
     
     collection do
@@ -167,6 +168,9 @@ Rails.application.routes.draw do
       post :generate_monthly_for_all
     end
   end
+  
+  # Public invoice view (no authentication required)
+  get '/invoice/:token', to: 'invoices#public_view', as: 'public_invoice'
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
