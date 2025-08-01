@@ -17,7 +17,7 @@
         margin: 0 auto;
         background-color: white;
         padding: 20px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
       }
 
       /* Header section */
@@ -50,14 +50,14 @@
 
       .tax-label-container {
         margin-bottom: 15px;
-        display: flex;
-        align-items: center;
+        position: relative;
       }
 
       .tax-label {
         font-weight: bold;
         font-size: 16px;
         color: #333;
+        display: inline-block;
       }
 
       .original-recipient {
@@ -91,15 +91,15 @@
 
       .top-bar {
         height: 8px;
-        background: linear-gradient(90deg, #5a4ec9 0%, #7c6fd4 100%);
+        background-color: #5a4ec9;
         margin-bottom: 15px;
         width: 100%;
       }
 
-      /* Add horizontal line before invoice meta - FIXED */
+      /* Add horizontal line before invoice meta */
       .invoice-divider {
         height: 3px;
-        background: linear-gradient(90deg, #5a4ec9 0%, #7c6fd4 100%);
+        background-color: #5a4ec9;
         margin: 20px 0;
         width: 100%;
         border-radius: 2px;
@@ -108,7 +108,7 @@
       /* Invoice meta */
       .invoice-meta-table {
         width: 100%;
-        background: linear-gradient(135deg, #e7e7e7 0%, #f0f0f0 100%);
+        background-color: #e7e7e7;
         border-collapse: collapse;
         margin-bottom: 15px;
         border-radius: 5px;
@@ -176,7 +176,7 @@
       .items-table thead {
         border-top: 3px solid #5a4ec9;
         border-bottom: 3px solid #5a4ec9;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background-color: #f8f9fa;
       }
 
       .items-table th {
@@ -211,7 +211,7 @@
         font-weight: bold;
       }
 
-      .items-table tbody tr:hover {
+      .items-table tbody tr:nth-child(even) {
         background-color: #f8f9fa;
       }
 
@@ -238,7 +238,7 @@
         border-bottom: 3px solid #5a4ec9;
         font-weight: bold;
         font-size: 16px;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background-color: #f8f9fa;
       }
 
       .subtotal-table td {
@@ -330,21 +330,25 @@
       }
 
       .upi-icons {
-        display: flex;
-        align-items: center;
-        gap: 8px;
         margin-top: 5px;
-        flex-wrap: wrap;
       }
 
-      .upi-icons svg {
-        height: 30px;
-        width: 30px;
+      .upi-icons span {
+        display: inline-block;
+        margin-right: 8px;
+        margin-bottom: 5px;
+        padding: 5px 8px;
+        background-color: white;
+        border: 1px solid #ddd;
         border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-        background: white;
-        padding: 3px;
+        font-size: 10px;
+        font-weight: bold;
       }
+
+      .phonepe { color: #5f2d91; }
+      .gpay { color: #4285f4; }
+      .paytm { color: #00baf2; }
+      .upi { color: #ff6600; }
 
       .upi-id {
         font-size: 11px;
@@ -352,7 +356,7 @@
         margin-bottom: 5px;
       }
 
-      /* Tax summary - FIXED ALIGNMENT */
+      /* Tax summary - Fixed for wkhtmltopdf */
       .tax-summary {
         font-size: 13px;
         line-height: 1.6;
@@ -363,28 +367,33 @@
       }
 
       .tax-summary .tax-line {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        width: 100%;
         margin-bottom: 8px;
         padding: 5px 0;
         border-bottom: 1px solid #eee;
+        position: relative;
       }
 
       .tax-summary .tax-line:last-child {
         border-bottom: none;
       }
 
-      .tax-summary .tax-line span:first-child {
-        flex: 1;
+      .tax-summary .tax-line .tax-label {
+        float: left;
         text-align: left;
       }
 
-      .tax-summary .tax-line span:last-child {
-        flex: 0 0 auto;
+      .tax-summary .tax-line .tax-amount {
+        float: right;
         text-align: right;
-        min-width: 80px;
         font-weight: bold;
+        min-width: 80px;
+      }
+
+      .tax-summary .tax-line::after {
+        content: "";
+        display: table;
+        clear: both;
       }
 
       .tax-summary .total {
@@ -465,7 +474,7 @@
         margin-left: auto;
         margin-right: auto;
         border-radius: 5px;
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        background-color: #f8f9fa;
       }
 
       .signature-label {
@@ -481,14 +490,14 @@
         font-weight: bold;
       }
 
-      /* Responsive adjustments */
+      /* Print styles */
       @media print {
         body {
           padding: 0;
           background-color: white;
         }
         .invoice-container {
-          box-shadow: none;
+          border: none;
           padding: 15px;
         }
       }
@@ -499,15 +508,6 @@
 
       .clear-both {
         clear: both;
-      }
-
-      /* Enhanced styling for modern look */
-      .modern-gradient {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      }
-
-      .card-shadow {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
     </style>
   </head>
@@ -525,19 +525,18 @@
       @invoice_items.each do |item|
         # Base amount (quantity × unit_price)
         base_amount = item.quantity * (item.unit_price || 0)
-        
         if item.product&.is_gst_applicable
           # For GST applicable items, the unit_price is assumed to be tax-inclusive
           # We need to extract the base amount (before tax) and calculate tax
+
           total_gst_rate = (item.product.total_cgst_percentage || 0) + (item.product.total_sgst_percentage || 0) + (item.product.total_igst_percentage || 0)
-          
           # Calculate base amount before tax (from tax-inclusive amount)
           base_amount_before_tax = base_amount
           # Calculate individual tax components based on base amount before tax
           cgst_rate = item.product.total_cgst_percentage || 0
           sgst_rate = item.product.total_sgst_percentage || 0
           igst_rate = item.product.total_igst_percentage || 0
-          
+         
           cgst_amount = (base_amount_before_tax * cgst_rate / 100).round(2)
           sgst_amount = (base_amount_before_tax * sgst_rate / 100).round(2)
           igst_amount = (base_amount_before_tax * igst_rate / 100).round(2)
@@ -547,7 +546,7 @@
           total_igst += igst_amount
           
           # For taxable amount calculation, use base amount (before tax)
-          taxable_amount += (base_amount_before_tax - total_cgst - total_sgst - total_igst)
+          taxable_amount += (base_amount_before_tax - cgst_amount - cgst_amount - cgst_amount)
         else
           # For non-GST items, the full amount is considered taxable for display purposes
           # but no GST is calculated
@@ -590,7 +589,6 @@
       <!-- Top bar -->
       <div class="top-bar"></div>
 
-
       <!-- Invoice meta information -->
       <table class="invoice-meta-table">
         <tr>
@@ -599,7 +597,7 @@
           <td>Due Date: <span><%= @invoice.due_date&.strftime('%d/%m/%Y') || 1.month.from_now.strftime('%d/%m/%Y') %></span></td>
         </tr>
       </table>
-      <!-- Add horizontal line before invoice meta - ENHANCED -->
+      <!-- Add horizontal line before invoice meta -->
       <div class="invoice-divider"></div>
 
       <!-- Bill to and Ship to section -->
@@ -651,7 +649,7 @@
                   base_amount = item.quantity * (item.unit_price || 0)
                   if item.product&.is_gst_applicable
                     total_gst_rate = (item.product.total_cgst_percentage || 0) + (item.product.total_sgst_percentage || 0) + (item.product.total_igst_percentage || 0)
-                    tax_amount = (base_amount * total_gst_rate) /100
+                    tax_amount = (base_amount * total_gst_rate) / 100
                   else
                     total_gst_rate = 0
                     tax_amount = 0
@@ -715,40 +713,10 @@
                   <td>
                     <p class="upi-id">UPI ID: 9972808044@ybl</p>
                     <div class="upi-icons">
-                      <!-- PhonePe SVG - Authentic Design -->
-                      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="48" height="48" fill="#5f2d91" rx="8"/>
-                        <text x="24" y="18" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">Pe</text>
-                        <circle cx="36" cy="32" r="2.5" fill="#00d4ff"/>
-                        <rect x="8" y="28" width="4" height="12" fill="white"/>
-                        <text x="24" y="32" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">Phone</text>
-                      </svg>
-                      
-                      <!-- Google Pay SVG - Authentic Design -->
-                      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="48" height="48" fill="#4285f4" rx="8"/>
-                        <path d="M12 20h4c3 0 4 2 4 4s-1 4-4 4h-2v4h-2V20zm2 6h2c1 0 2 0 2-2s-1-2-2-2h-2v4z" fill="white"/>
-                        <path d="M22 28c0-4 3-8 6-8s6 4 6 8-3 8-6 8-6-4-6-8zm2 0c0 3 2 6 4 6s4-3 4-6-2-6-4-6-4 3-4 6z" fill="white"/>
-                        <path d="M36 32v-4c0-2 1-4 3-4v2c-1 0-1 1-1 2v4h-2z" fill="white"/>
-                      </svg>
-                      
-                      <!-- Paytm SVG - Authentic Design -->
-                      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="48" height="48" fill="#00baf2" rx="8"/>
-                        <path d="M8 16h6c3 0 5 2 5 5s-2 5-5 5h-4v6h-2V16zm2 8h4c2 0 3-1 3-3s-1-3-3-3h-4v6z" fill="white"/>
-                        <path d="M20 24h4v-6h2v6h2v2h-2v4c0 1 0 2 1 2h1v2h-2c-2 0-3-1-3-3v-5h-3v-2z" fill="white"/>
-                        <path d="M30 20v12h2v-8h2v8h2v-8h2v-4h-8z" fill="white"/>
-                        <circle cx="40" cy="20" r="1.5" fill="#ff6b35"/>
-                      </svg>
-                      
-                      <!-- UPI SVG - NPCI Authentic Design -->
-                      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="48" height="48" fill="#ff6600" rx="8"/>
-                        <path d="M8 16v12c0 2 1 3 3 3h4v-2h-3c-1 0-1 0-1-1V16h-3z" fill="white"/>
-                        <path d="M16 16h6c2 0 3 1 3 3v4c0 2-1 3-3 3h-3v6h-3V16zm3 8h3c1 0 1 0 1-1v-4c0-1 0-1-1-1h-3v6z" fill="white"/>
-                        <path d="M28 16h3v16h-3z" fill="white"/>
-                        <text x="40" y="20" font-family="Arial, sans-serif" font-size="6" font-weight="bold" fill="white" text-anchor="middle">UPI</text>
-                      </svg>
+                      <span class="phonepe">PhonePe</span>
+                      <span class="gpay">Google Pay</span>
+                      <span class="paytm">Paytm</span>
+                      <span class="upi">UPI</span>
                     </div>
                   </td>
                   <td style="text-align: center;">
@@ -761,38 +729,38 @@
           <td class="tax-summary-cell">
             <div class="tax-summary">
               <div class="tax-line">
-                <span>TAXABLE AMOUNT</span>
-                <span>₹ <%= number_with_delimiter(taxable_amount.round(2), delimiter: ',') %></span>
+                <span class="tax-label">TAXABLE AMOUNT</span>
+                <span class="tax-amount">₹ <%= number_with_delimiter(taxable_amount.round(2), delimiter: ',') %></span>
               </div>
               <% if total_cgst > 0 %>
                 <% cgst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_cgst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
                 <div class="tax-line">
-                  <span>CGST @<%= cgst_rate %>%</span>
-                  <span>₹ <%= number_with_delimiter(total_cgst.round(2), delimiter: ',') %></span>
+                  <span class="tax-label">CGST @<%= cgst_rate %>%</span>
+                  <span class="tax-amount">₹ <%= number_with_delimiter(total_cgst.round(2), delimiter: ',') %></span>
                 </div>
               <% end %>
               <% if total_sgst > 0 %>
                 <% sgst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_sgst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
                 <div class="tax-line">
-                  <span>SGST @<%= sgst_rate %>%</span>
-                  <span>₹ <%= number_with_delimiter(total_sgst.round(2), delimiter: ',') %></span>
+                  <span class="tax-label">SGST @<%= sgst_rate %>%</span>
+                  <span class="tax-amount">₹ <%= number_with_delimiter(total_sgst.round(2), delimiter: ',') %></span>
                 </div>
               <% end %>
               <% if total_igst > 0 %>
                 <% igst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_igst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
                 <div class="tax-line">
-                  <span>IGST @<%= igst_rate %>%</span>
-                  <span>₹ <%= number_with_delimiter(total_igst.round(2), delimiter: ',') %></span>
+                  <span class="tax-label">IGST @<%= igst_rate %>%</span>
+                  <span class="tax-amount">₹ <%= number_with_delimiter(total_igst.round(2), delimiter: ',') %></span>
                 </div>
               <% end %>
               <div class="total">
                 <div class="tax-line">
-                  <span>TOTAL AMOUNT</span>
-                  <span>₹ <%= number_with_delimiter(final_total.round(2), delimiter: ',') %></span>
+                  <span class="tax-label">TOTAL AMOUNT</span>
+                  <span class="tax-amount">₹ <%= number_with_delimiter(final_total.round(2), delimiter: ',') %></span>
                 </div>
                 <div class="tax-line" style="font-weight: normal; font-size: 12px;">
-                  <span>Received Amount</span>
-                  <span>₹ 0</span>
+                  <span class="tax-label">Received Amount</span>
+                  <span class="tax-amount">₹ 0</span>
                 </div>
               </div>
               <div class="amount-words">
