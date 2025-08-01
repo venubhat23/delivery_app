@@ -999,6 +999,9 @@
           You can share this invoice link with others or save it for your records.
         </p>
         <div class="btn-group" role="group">
+          <a href="<%= public_invoice_download_path(@invoice.share_token) %>" class="btn btn-outline-danger">
+            <span style="margin-right: 8px;">📄</span>Download PDF
+          </a>
           <button class="btn btn-outline-success" onclick="copyToClipboard()">
             <span style="margin-right: 8px;">📋</span>Copy Link
           </button>

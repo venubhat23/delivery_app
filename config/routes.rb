@@ -158,6 +158,7 @@ Rails.application.routes.draw do
     member do
       patch :mark_as_paid
       post :share_whatsapp
+      get :download_pdf
     end
     
     collection do
@@ -171,6 +172,7 @@ Rails.application.routes.draw do
   
   # Public invoice view (no authentication required)
   get '/invoice/:token', to: 'invoices#public_view', as: 'public_invoice'
+  get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download'
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'

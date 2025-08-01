@@ -1,8 +1,8 @@
 # app/controllers/invoices_controller.rb
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :share_whatsapp]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :share_whatsapp, :download_pdf]
   before_action :set_customers, only: [:index, :new, :create, :generate]
-  skip_before_action :require_login, only: [:public_view]
+  skip_before_action :require_login, only: [:public_view, :public_download_pdf]
   
   def index
     @invoices = Invoice.includes(:customer)
@@ -276,6 +276,101 @@ end
     @customer = @invoice.customer
     
     render layout: 'public'
+  end
+  
+  # Public download PDF action (no authentication required)
+  def public_download_pdf
+    @invoice = Invoice.find_by(share_token: params[:token])
+    
+    if @invoice.nil?
+      render file: "#{Rails.root}/public/404.html", layout: false, status: 404
+      return
+    end
+    
+    @invoice_items = @invoice.invoice_items.includes(:product)
+    @customer = @invoice.customer
+    
+    respond_to do |format|
+      format.html do
+        begin
+          pdf = WickedPdf.new.pdf_from_string(
+            render_to_string(
+              template: 'invoices/show',
+              layout: false,
+              locals: { invoice: @invoice, invoice_items: @invoice_items, customer: @customer }
+            ),
+            page_size: 'A4',
+            margin: { top: 5, bottom: 5, left: 5, right: 5 },
+            encoding: 'UTF-8'
+          )
+          
+          filename = "invoice_#{@invoice.formatted_number.gsub('/', '_')}.pdf"
+          send_data pdf, filename: filename, type: 'application/pdf', disposition: 'attachment'
+        rescue => e
+          Rails.logger.error "PDF generation failed: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          
+          # Fallback to showing the invoice in the browser
+          redirect_to public_invoice_path(@invoice.share_token)
+        end
+      end
+    end
+  end
+  
+  # Download PDF action
+  def download_pdf
+    @invoice_items = @invoice.invoice_items.includes(:product)
+    @customer = @invoice.customer
+    
+    respond_to do |format|
+      format.html do
+        begin
+          pdf = WickedPdf.new.pdf_from_string(
+            render_to_string(
+              template: 'invoices/show',
+              layout: false,
+              locals: { invoice: @invoice, invoice_items: @invoice_items, customer: @customer }
+            ),
+            page_size: 'A4',
+            margin: { top: 5, bottom: 5, left: 5, right: 5 },
+            encoding: 'UTF-8'
+          )
+          
+          filename = "invoice_#{@invoice.formatted_number.gsub('/', '_')}.pdf"
+          send_data pdf, filename: filename, type: 'application/pdf', disposition: 'attachment'
+        rescue => e
+          Rails.logger.error "PDF generation failed: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          
+          # Fallback to regular PDF format
+          redirect_to invoice_path(@invoice, format: :pdf)
+        end
+      end
+      format.pdf do
+        begin
+          pdf = WickedPdf.new.pdf_from_string(
+            render_to_string(
+              template: 'invoices/show',
+              layout: false,
+              locals: { invoice: @invoice, invoice_items: @invoice_items, customer: @customer }
+            ),
+            page_size: 'A4',
+            margin: { top: 5, bottom: 5, left: 5, right: 5 },
+            encoding: 'UTF-8'
+          )
+          
+          filename = "invoice_#{@invoice.formatted_number.gsub('/', '_')}.pdf"
+          send_data pdf, filename: filename, type: 'application/pdf', disposition: 'attachment'
+        rescue => e
+          Rails.logger.error "PDF generation failed: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          
+          # Fallback to HTML with print-friendly styling
+          flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."
+          render template: 'invoices/show_print', layout: false, content_type: 'text/html'
+        end
+      end
+    end
   end
   
   private
