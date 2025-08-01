@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Setup script for wkhtmltopdf dependencies on Ubuntu/Debian systems
+# Run this script on your production server to install required libraries
+
+set -e
+
+echo "Installing wkhtmltopdf dependencies..."
+
+# Update package list
+apt-get update -qq
+
+# Install required libraries for wkhtmltopdf
+apt-get install -y --no-install-recommends \
+    xvfb \
+    libfontconfig1 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
+    libasound2 \
+    libatk1.0-0 \
+    libgtk-3-0 \
+    libdrm2 \
+    libxss1 \
+    libgconf-2-4 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxcursor1 \
+    libcairo-gobject2 \
+    libgtk2.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libx11-6
+
+# Clean up
+rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+echo "wkhtmltopdf dependencies installed successfully!"
+echo "You may need to restart your Rails application for changes to take effect."
+
+# Test wkhtmltopdf installation
+echo "Testing wkhtmltopdf installation..."
+if command -v wkhtmltopdf &> /dev/null; then
+    echo "wkhtmltopdf command found: $(which wkhtmltopdf)"
+    wkhtmltopdf --version || echo "Warning: wkhtmltopdf version check failed"
+else
+    echo "Warning: wkhtmltopdf command not found in PATH"
+fi
+
+echo "Setup complete!"
