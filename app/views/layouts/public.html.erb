@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice - <%= @invoice&.formatted_number %></title>
+  
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .invoice-container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin: 20px auto;
+      max-width: 800px;
+    }
+    .invoice-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 10px 10px 0 0;
+    }
+    .invoice-body {
+      padding: 30px;
+    }
+    .print-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    @media print {
+      .print-btn, .no-print {
+        display: none !important;
+      }
+      body {
+        background: white;
+      }
+      .invoice-container {
+        box-shadow: none;
+        margin: 0;
+        max-width: none;
+      }
+    }
+    .table th {
+      background-color: #f8f9fa;
+      border-top: none;
+    }
+    .total-section {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <%= yield %>
+  </div>
+  
+  <!-- Print Button -->
+  <button class="btn btn-primary btn-lg print-btn no-print" onclick="window.print()">
+    <i class="fas fa-print me-2"></i>Print Invoice
+  </button>
+  
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
