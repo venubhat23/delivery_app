@@ -184,9 +184,6 @@ Rails.application.routes.draw do
   # File Upload API
   post '/api/upload', to: 'uploads#create'
   
-  # Temporary PDF file serving (for testing)
-  get '/temp_pdf/:filename', to: 'temp_files#show'
-  
   # API routes
   namespace :api do
     namespace :v1 do
