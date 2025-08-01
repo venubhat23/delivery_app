@@ -590,8 +590,6 @@
       <!-- Top bar -->
       <div class="top-bar"></div>
 
-      <!-- Add horizontal line before invoice meta - ENHANCED -->
-      <div class="invoice-divider"></div>
 
       <!-- Invoice meta information -->
       <table class="invoice-meta-table">
@@ -601,6 +599,8 @@
           <td>Due Date: <span><%= @invoice.due_date&.strftime('%d/%m/%Y') || 1.month.from_now.strftime('%d/%m/%Y') %></span></td>
         </tr>
       </table>
+      <!-- Add horizontal line before invoice meta - ENHANCED -->
+      <div class="invoice-divider"></div>
 
       <!-- Bill to and Ship to section -->
       <table class="bill-ship-table">
