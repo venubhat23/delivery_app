@@ -29,9 +29,8 @@
     </button>
     
     <!-- PDF Download Button -->
-    <%= link_to invoice_path(@invoice, format: :pdf), 
-          class: "btn btn-primary", 
-          target: "_blank" do %>
+    <%= link_to download_pdf_invoice_path(@invoice), 
+          class: "btn btn-primary" do %>
       <i class="fas fa-file-pdf me-2"></i>Download PDF
     <% end %>
     
