@@ -3,8 +3,8 @@
 # Base configuration
 base_config = {
   # Path to the wkhtmltopdf executable
-  # Leave this blank if wkhtmltopdf is in your PATH
-  exe_path: Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf'),
+  # Use system-installed wkhtmltopdf
+  exe_path: '/usr/local/bin/wkhtmltopdf',
 
   # Global PDF options
   # These will be applied to all PDFs unless overridden
