@@ -88,7 +88,16 @@ class Invoice < ApplicationRecord
 
   def public_url(host: nil, port: nil)
     url_options = { token: share_token }
-    url_options[:host] = host if host.present?
+    
+    # Ensure we always have a host
+    if host.present?
+      url_options[:host] = host
+    elsif Rails.application.config.action_controller.default_url_options[:host].present?
+      url_options[:host] = Rails.application.config.action_controller.default_url_options[:host]
+    else
+      url_options[:host] = ENV.fetch('APP_HOST', 'atmanirbharfarm.work.gd')
+    end
+    
     url_options[:port] = port if port.present?
     
     Rails.application.routes.url_helpers.public_invoice_url(url_options)
