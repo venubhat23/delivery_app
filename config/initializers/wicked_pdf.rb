@@ -52,10 +52,16 @@ production_config = {
 }
 
 # Merge configurations based on environment
-WickedPdf.config = if Rails.env.production?
-  base_config.merge(production_config)
-else
-  base_config
+WickedPdf.configure do |config|
+  final_config = if Rails.env.production?
+    base_config.merge(production_config)
+  else
+    base_config
+  end
+  
+  final_config.each do |key, value|
+    config.send("#{key}=", value)
+  end
 end
 
 # MIME type registration
