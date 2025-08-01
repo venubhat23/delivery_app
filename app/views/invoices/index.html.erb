@@ -235,6 +235,18 @@
                           target: '_blank' do %>
                       <i class="fas fa-file-pdf"></i>
                     <% end %>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-warning share-whatsapp-btn" 
+                            data-invoice-id="<%= invoice.id %>"
+                            data-invoice-number="<%= invoice.formatted_number %>"
+                            data-customer-name="<%= invoice.customer.name %>"
+                            data-customer-phone="<%= invoice.customer.phone_number %>"
+                            data-amount="<%= invoice.total_amount %>"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#shareWhatsAppModal"
+                            title="Share via WhatsApp">
+                      <i class="fab fa-whatsapp"></i>
+                    </button>
                     <% if invoice.status != 'paid' %>
                       <%= button_to mark_as_paid_invoice_path(invoice), 
                             method: :patch, 
@@ -304,6 +316,17 @@
                           target: '_blank' do %>
                       <i class="fas fa-file-pdf me-1"></i>PDF
                     <% end %>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-warning me-1 share-whatsapp-btn" 
+                            data-invoice-id="<%= invoice.id %>"
+                            data-invoice-number="<%= invoice.formatted_number %>"
+                            data-customer-name="<%= invoice.customer.name %>"
+                            data-customer-phone="<%= invoice.customer.phone_number %>"
+                            data-amount="<%= invoice.total_amount %>"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#shareWhatsAppModal">
+                      <i class="fab fa-whatsapp me-1"></i>WhatsApp
+                    </button>
                     <% if invoice.status != 'paid' %>
                       <%= button_to mark_as_paid_invoice_path(invoice), 
                             method: :patch, 
@@ -884,6 +907,80 @@
 }
 
 /* Responsive Enhancements */
+/* WhatsApp Modal Styles */
+.message-preview-container {
+  background: #f0f2f5;
+  border-radius: 15px;
+  padding: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.message-preview {
+  background: #dcf8c6;
+  border-radius: 18px;
+  padding: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  margin-left: auto;
+  max-width: 85%;
+}
+
+.message-preview::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+  border-top: 8px solid #dcf8c6;
+  border-right: 0;
+}
+
+.message-header {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.message-body p {
+  margin: 0.25rem 0;
+}
+
+.message-footer {
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.btn-outline-warning {
+  border: 2px solid #25D366;
+  color: #25D366;
+  background: transparent;
+}
+
+.btn-outline-warning:hover {
+  background: #25D366;
+  color: white;
+  border-color: #25D366;
+}
+
+.share-whatsapp-btn {
+  transition: all 0.3s ease;
+}
+
+.share-whatsapp-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+#customerPhoneNumber:focus {
+  border-color: #25D366;
+  box-shadow: 0 0 0 0.2rem rgba(37, 211, 102, 0.25);
+}
+
 @media (max-width: 768px) {
   .page-header {
     padding: 2rem 1.5rem;
@@ -911,6 +1008,11 @@
     margin-right: 0;
     width: 100%;
   }
+  
+  .message-preview {
+    max-width: 100%;
+    margin-left: 0;
+  }
 }
 </style>
 
@@ -935,6 +1037,144 @@ document.addEventListener('DOMContentLoaded', function() {
       cardContent.classList.remove('d-none');
       tableContent.classList.add('d-none');
     });
+  }
+  
+  // WhatsApp Modal Functionality
+  let currentInvoiceId = null;
+  
+  // Handle WhatsApp share button clicks
+  document.querySelectorAll('.share-whatsapp-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      currentInvoiceId = this.dataset.invoiceId;
+      const invoiceNumber = this.dataset.invoiceNumber;
+      const customerName = this.dataset.customerName;
+      const customerPhone = this.dataset.customerPhone;
+      const amount = this.dataset.amount;
+      
+      // Update modal content
+      document.getElementById('previewInvoiceNumber').textContent = invoiceNumber;
+      document.getElementById('previewAmount').textContent = parseFloat(amount).toLocaleString();
+      
+      // Pre-fill phone number if available
+      const phoneInput = document.getElementById('customerPhoneNumber');
+      if (customerPhone && customerPhone !== 'null' && customerPhone !== '') {
+        phoneInput.value = customerPhone.startsWith('+') ? customerPhone : '+91' + customerPhone;
+      } else {
+        phoneInput.value = '';
+      }
+      
+      // Update current date
+      const today = new Date();
+      const dateString = today.toLocaleDateString('en-GB', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      document.getElementById('previewDate').textContent = dateString;
+      
+      // Reset send button
+      const sendBtn = document.getElementById('sendWhatsAppBtn');
+      sendBtn.disabled = phoneInput.value.length < 10;
+      sendBtn.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Send via WhatsApp';
+    });
+  });
+  
+  // Handle phone number input validation
+  const phoneInput = document.getElementById('customerPhoneNumber');
+  const sendBtn = document.getElementById('sendWhatsAppBtn');
+  
+  if (phoneInput && sendBtn) {
+    phoneInput.addEventListener('input', function() {
+      const phone = this.value.trim();
+      const isValid = phone.length >= 10 && /^\+?[\d\s\-\(\)]+$/.test(phone);
+      sendBtn.disabled = !isValid;
+      
+      if (isValid) {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+      } else if (phone.length > 0) {
+        this.classList.remove('is-valid');
+        this.classList.add('is-invalid');
+      } else {
+        this.classList.remove('is-valid', 'is-invalid');
+      }
+    });
+    
+    // Handle send WhatsApp button click
+    sendBtn.addEventListener('click', function() {
+      if (!currentInvoiceId) {
+        alert('Please select an invoice first');
+        return;
+      }
+      
+      const phoneNumber = phoneInput.value.trim();
+      if (!phoneNumber) {
+        alert('Please enter a phone number');
+        return;
+      }
+      
+      // Disable button and show loading state
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating link...';
+      
+      // Make AJAX request to share_whatsapp endpoint
+      fetch(`/invoices/${currentInvoiceId}/share_whatsapp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+          phone_number: phoneNumber
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Open WhatsApp with the generated link
+          window.open(data.whatsapp_url, '_blank');
+          
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('shareWhatsAppModal'));
+          modal.hide();
+          
+          // Show success message
+          showNotification('WhatsApp link generated successfully!', 'success');
+        } else {
+          alert('Error: ' + (data.error || 'Failed to generate WhatsApp link'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Network error. Please try again.');
+      })
+      .finally(() => {
+        // Reset button state
+        this.disabled = false;
+        this.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Send via WhatsApp';
+      });
+    });
+  }
+  
+  // Utility function to show notifications
+  function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 5000);
   }
 });
 </script>
@@ -985,6 +1225,71 @@ document.addEventListener('DOMContentLoaded', function() {
                 } %>
         </div>
       <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Share Invoice via WhatsApp Modal -->
+<div class="modal fade" id="shareWhatsAppModal" tabindex="-1" aria-labelledby="shareWhatsAppModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareWhatsAppModalLabel">
+          <i class="fab fa-whatsapp me-2"></i>Share Invoice via WhatsApp
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label for="customerPhoneNumber" class="form-label">Customer Phone Number</label>
+            <input type="text" 
+                   class="form-control" 
+                   id="customerPhoneNumber" 
+                   placeholder="Enter phone number with country code (e.g., +919844145993)"
+                   maxlength="15">
+            <div class="form-text">Enter the phone number with country code (e.g., +919876543210)</div>
+          </div>
+          
+          <div class="col-12">
+            <label for="messagePreview" class="form-label">Message Preview</label>
+            <div class="message-preview-container">
+              <div class="message-preview" id="messagePreview">
+                <div class="message-header">Hi! 👋</div>
+                <div class="message-body">
+                  <p>Your invoice has been generated:</p>
+                  <p>📄 Invoice #<span id="previewInvoiceNumber">INV-000006</span></p>
+                  <p>💰 Amount: ₹<span id="previewAmount">2,300.0</span></p>
+                  <p>📅 Date: <span id="previewDate">1 August 2025</span></p>
+                  <p>View your invoice: [Secure Link will be generated]</p>
+                </div>
+                <div class="message-footer">
+                  <p>Thank you for your business! 🙏</p>
+                  <p>- Atma Nirbhar Farm</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alert alert-info mt-3" id="howItWorks">
+          <div class="d-flex align-items-start">
+            <i class="fas fa-info-circle me-2 mt-1"></i>
+            <div>
+              <strong>How it works:</strong> We'll generate a secure link to your invoice and create a WhatsApp message. When you click "Send via WhatsApp", WhatsApp will open with the pre-filled message ready to send.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" 
+                class="btn btn-success" 
+                id="sendWhatsAppBtn" 
+                disabled>
+          <i class="fab fa-whatsapp me-2"></i>Send via WhatsApp
+        </button>
+      </div>
     </div>
   </div>
 </div>
