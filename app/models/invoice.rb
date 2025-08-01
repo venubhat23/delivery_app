@@ -180,7 +180,16 @@ def self.generate_invoice_number(type = 'manual')
   end
   
   def calculate_total_amount
-    self.total_amount = invoice_items.sum(:total_price)
+    # Calculate base amount (excluding tax)
+    taxable_amount = invoice_items.sum { |item| item.quantity * (item.unit_price || 0) }
+    
+    # Calculate total tax
+    total_tax = invoice_items.sum do |item|
+      base_amount = item.quantity * (item.unit_price || 0)
+      item.product&.total_tax_amount_for(base_amount) || 0
+    end
+    
+    self.total_amount = taxable_amount + total_tax
   end
   
   def mark_delivery_assignments_as_invoiced
@@ -240,7 +249,16 @@ def self.generate_invoice_number(type = 'manual')
   end
   
   def calculate_total_amount
-    self.total_amount = invoice_items.sum(:total_price)
+    # Calculate base amount (excluding tax)
+    taxable_amount = invoice_items.sum { |item| item.quantity * (item.unit_price || 0) }
+    
+    # Calculate total tax
+    total_tax = invoice_items.sum do |item|
+      base_amount = item.quantity * (item.unit_price || 0)
+      item.product&.total_tax_amount_for(base_amount) || 0
+    end
+    
+    self.total_amount = taxable_amount + total_tax
   end
   
   def mark_delivery_assignments_as_invoiced

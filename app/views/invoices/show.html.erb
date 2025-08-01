@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Invoice #2928</title>
+    <title>Invoice #<%= @invoice.invoice_number || @invoice.id %></title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -329,23 +329,31 @@
       # Calculate if any product has GST
       has_gst = @invoice_items.any? { |item| item.product&.is_gst_applicable }
       
-      # Calculate totals
-      subtotal = @invoice_items.sum { |item| item.total_price || (item.quantity * (item.unit_price || 0)) }
-      total_tax = 0
+      # Calculate totals with proper GST breakdown
+      taxable_amount = 0
+      total_cgst = 0
+      total_sgst = 0
+      total_igst = 0
       
-      if has_gst
-        total_tax = @invoice_items.sum do |item|
-          if item.product&.is_gst_applicable
-            base_amount = item.total_price || (item.quantity * (item.unit_price || 0))
-            tax_rate = item.product.total_gst_percentage || 0
-            (base_amount * tax_rate / 100).round(2)
-          else
-            0
-          end
+      @invoice_items.each do |item|
+        # Base amount (excluding tax)
+        base_amount = item.quantity * (item.unit_price || 0)
+        taxable_amount += base_amount
+        
+        if item.product&.is_gst_applicable
+          # Calculate individual tax components
+          cgst_rate = item.product.total_cgst_percentage || 0
+          sgst_rate = item.product.total_sgst_percentage || 0
+          igst_rate = item.product.total_igst_percentage || 0
+          
+          total_cgst += (base_amount * cgst_rate / 100).round(2)
+          total_sgst += (base_amount * sgst_rate / 100).round(2)
+          total_igst += (base_amount * igst_rate / 100).round(2)
         end
       end
       
-      final_total = subtotal + total_tax
+      total_tax = total_cgst + total_sgst + total_igst
+      final_total = taxable_amount + total_tax
     %>
     <div class="invoice-container">
       <div>
@@ -357,7 +365,7 @@
           <img class="logo" src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhir Farm Logo" />
         </div>
         <div class="right-section">
-          <div class="company-name">Atma Nirbhir Farm</div>
+          <div class="company-name">Atma Nirbhar Farm</div>
           <div class="address">
             #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi,
             Bangalore, Karnataka, 560072
@@ -385,7 +393,7 @@
           <%= @invoice.customer&.address || @customer&.address || 'Address' %><br>
           <% phone = @invoice.phone_number || @invoice.customer&.phone_number || @customer&.phone_number %>
           <% if phone.present? %>
-            <div class="mobile">Mobile: 9620194177</div>
+            <div class="mobile">Mobile: <%= phone %></div>
           <% end %>
         </div>
         <div class="ship">
@@ -417,15 +425,23 @@
                 <% end %>
               </td>
               <td><%= item.product&.hsn_sac || '' %></td>
-              <td><%= item.quantity %> <%= item.product&.unit_type || 'PCS' %></td>
-              <td><%= number_with_delimiter(item.unit_price || 0) %></td>
+              <td><%= item.quantity %> <%= item.product&.unit_type&.upcase || 'PCS' %></td>
+              <td>₹<%= number_with_delimiter(item.unit_price || 0, delimiter: ',') %></td>
               <td>
-                <% gst_rate = item.product.total_gst_percentage || 0 %>
-                <%= number_with_delimiter((item.total_price || (item.quantity * (item.unit_price || 0))) * gst_rate / 100) %><br />
-                <span class="tax-rate">(<%= gst_rate %>%)</span>
+                <% 
+                  base_amount = item.quantity * (item.unit_price || 0)
+                  if item.product&.is_gst_applicable
+                    total_gst_rate = (item.product.total_cgst_percentage || 0) + (item.product.total_sgst_percentage || 0) + (item.product.total_igst_percentage || 0)
+                    tax_amount = (base_amount * total_gst_rate / 100).round(2)
+                  else
+                    total_gst_rate = 0
+                    tax_amount = 0
+                  end
+                %>
+                ₹<%= number_with_delimiter(tax_amount, delimiter: ',') %><br />
+                <span class="tax-rate">(<%= total_gst_rate %>%)</span>
               </td>
-              <% base_amount = item.total_price || (item.quantity * (item.unit_price || 0)) %>
-              <td class="amount"><%= number_with_delimiter(base_amount) %></td>
+              <td class="amount">₹<%= number_with_delimiter(base_amount, delimiter: ',') %></td>
             </tr>
           <% end %>
         </tbody>
@@ -437,8 +453,8 @@
           <td>-</td>
           <td colspan="2">
             <div class="subtotal-values">
-              <span>₹ <%= @invoice_items.sum(&:quantity) %></span>
-              <span>₹ <%= number_with_delimiter(subtotal) %></span>
+              <span>₹ <%= number_with_delimiter(total_tax, delimiter: ',') %></span>
+              <span>₹ <%= number_with_delimiter(taxable_amount, delimiter: ',') %></span>
             </div>
           </td>
         </tr>
@@ -501,75 +517,139 @@
 
         <div class="tax-summary">
           <div>
-            <% 
-              cgst_total = 0
-              sgst_total = 0
-              igst_total = 0
-              
-              @invoice_items.each do |item|
-                if item.product&.is_gst_applicable
-                  base_amount = item.total_price || (item.quantity * (item.unit_price || 0))
-                  cgst_total += (base_amount * (item.product.total_cgst_percentage || 0) / 100).round(2)
-                  sgst_total += (base_amount * (item.product.total_sgst_percentage || 0) / 100).round(2)
-                  igst_total += (base_amount * (item.product.total_igst_percentage || 0) / 100).round(2)
-                end
-              end
-            %>
-            TAXABLE AMOUNT <span style="float: right">₹ <%= number_with_delimiter(subtotal) %></span><br />
-            <% if cgst_total > 0 %>
-              CGST @2.5% <span style="float: right">₹ <%= number_with_delimiter(cgst_total) %></span><br />
+            TAXABLE AMOUNT <span style="float: right">₹ <%= number_with_delimiter(taxable_amount, delimiter: ',') %></span><br />
+            <% if total_cgst > 0 %>
+              <% cgst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_cgst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
+              CGST @<%= cgst_rate %>% <span style="float: right">₹ <%= number_with_delimiter(total_cgst, delimiter: ',') %></span><br />
             <% end %>
-            <% if sgst_total > 0 %>
-              SGST @2.5% <span style="float: right">₹ <%= number_with_delimiter(sgst_total) %></span><br />
+            <% if total_sgst > 0 %>
+              <% sgst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_sgst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
+              SGST @<%= sgst_rate %>% <span style="float: right">₹ <%= number_with_delimiter(total_sgst, delimiter: ',') %></span><br />
             <% end %>
-            <% if igst_total > 0 %>
-              IGST @6% <span style="float: right">₹ <%= number_with_delimiter(igst_total) %></span><br />
+            <% if total_igst > 0 %>
+              <% igst_rate = @invoice_items.sum { |item| item.product&.is_gst_applicable ? (item.product.total_igst_percentage || 0) : 0 } / @invoice_items.select { |item| item.product&.is_gst_applicable }.count rescue 0 %>
+              IGST @<%= igst_rate %>% <span style="float: right">₹ <%= number_with_delimiter(total_igst, delimiter: ',') %></span><br />
             <% end %>
           </div>
           <div class="total">
-            TOTAL AMOUNT <span style="float: right">₹ <%= number_with_delimiter(@invoice.total_amount || final_total) %></span><br />
+            TOTAL AMOUNT <span style="float: right">₹ <%= number_with_delimiter(final_total, delimiter: ',') %></span><br />
             <span style="font-weight: normal">Received Amount</span>
             <span style="float: right">₹ 0</span>
           </div>
           <div class="amount-words">
             <h3>Total Amount (in words)</h3>
             <% 
-              # Convert number to words - you may need to implement this or use a gem
-              total_amount = @invoice.total_amount || final_total
-              words = case total_amount.to_i
+              # Convert number to words - basic implementation
+              total_amount_int = final_total.to_i
+              words = case total_amount_int
               when 0..20
-                %w[Zero One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen Twenty][total_amount.to_i]
+                %w[Zero One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen Twenty][total_amount_int]
+              when 21..99
+                tens = %w[Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety]
+                units = %w[One Two Three Four Five Six Seven Eight Nine]
+                tens_digit = (total_amount_int / 10) - 2
+                units_digit = total_amount_int % 10
+                if units_digit > 0
+                  "#{tens[tens_digit]} #{units[units_digit - 1]}"
+                else
+                  tens[tens_digit]
+                end
+              when 100..999
+                hundreds = (total_amount_int / 100)
+                remainder = total_amount_int % 100
+                result = %w[One Two Three Four Five Six Seven Eight Nine][hundreds - 1] + " Hundred"
+                if remainder > 0
+                  if remainder <= 20
+                    result += " " + %w[One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen Twenty][remainder - 1]
+                  else
+                    tens = %w[Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety]
+                    units = %w[One Two Three Four Five Six Seven Eight Nine]
+                    tens_digit = (remainder / 10) - 2
+                    units_digit = remainder % 10
+                    result += " " + tens[tens_digit]
+                    result += " " + units[units_digit - 1] if units_digit > 0
+                  end
+                end
+                result
+              when 1000..99999
+                thousands = (total_amount_int / 1000)
+                remainder = total_amount_int % 1000
+                
+                # Convert thousands part
+                if thousands <= 20
+                  result = %w[One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen Twenty][thousands - 1] + " Thousand"
+                else
+                  tens = %w[Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety]
+                  units = %w[One Two Three Four Five Six Seven Eight Nine]
+                  tens_digit = (thousands / 10) - 2
+                  units_digit = thousands % 10
+                  result = tens[tens_digit]
+                  result += " " + units[units_digit - 1] if units_digit > 0
+                  result += " Thousand"
+                end
+                
+                # Add remainder if present
+                if remainder > 0
+                  if remainder <= 20
+                    result += " " + %w[One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen Twenty][remainder - 1]
+                  elsif remainder < 100
+                    tens = %w[Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety]
+                    units = %w[One Two Three Four Five Six Seven Eight Nine]
+                    tens_digit = (remainder / 10) - 2
+                    units_digit = remainder % 10
+                    result += " " + tens[tens_digit]
+                    result += " " + units[units_digit - 1] if units_digit > 0
+                  else
+                    hundreds = (remainder / 100)
+                    remainder_after_hundreds = remainder % 100
+                    result += " " + %w[One Two Three Four Five Six Seven Eight Nine][hundreds - 1] + " Hundred"
+                    if remainder_after_hundreds > 0
+                      if remainder_after_hundreds <= 20
+                        result += " " + %w[One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen Twenty][remainder_after_hundreds - 1]
+                      else
+                        tens = %w[Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety]
+                        units = %w[One Two Three Four Five Six Seven Eight Nine]
+                        tens_digit = (remainder_after_hundreds / 10) - 2
+                        units_digit = remainder_after_hundreds % 10
+                        result += " " + tens[tens_digit]
+                        result += " " + units[units_digit - 1] if units_digit > 0
+                      end
+                    end
+                  end
+                end
+                result
               else
-                "Rupees #{total_amount.to_i} only"
+                "#{total_amount_int}"
               end
             %>
-            <div?><%= words %> Rupees</div>
+            <div><%= words %> Rupees</div>
           </div>
         </div>
-        <div class="terms-signature">
-          <div class="terms">
-            <h3>TERMS AND CONDITIONS</h3>
-            <% if @invoice.notes.present? %>
-              <div style="padding-left: 20px;"><%= simple_format(@invoice.notes) %></div?>
-            <% else %>
-              <ol style="padding-left: 20px;">
-                <li>
-                  Kindly Do Make Every Month Payment on or Before the 10th of The
-                  Month
-                </li>
-                <li>
-                  Kindly Share the Screenshot Immediately Once the Payment is Done
-                  to Confirm Your Payment
-                </li>
-              </ol>
-            <% end %>
-          </div>
+      </div>
+      
+      <div class="terms-signature">
+        <div class="terms">
+          <h3>TERMS AND CONDITIONS</h3>
+          <% if @invoice.notes.present? %>
+            <div style="padding-left: 20px;"><%= simple_format(@invoice.notes) %></div>
+          <% else %>
+            <ol style="padding-left: 20px;">
+              <li>
+                Kindly Do Make Every Month Payment on or Before the 10th of The
+                Month
+              </li>
+              <li>
+                Kindly Share the Screenshot Immediately Once the Payment is Done
+                to Confirm Your Payment
+              </li>
+            </ol>
+          <% end %>
+        </div>
 
-          <div class="signature-block">
-            <div class="signature-box"></div>
-            <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
-            <div class="signature-name">Atma Nirbhar Farm</div>
-          </div>
+        <div class="signature-block">
+          <div class="signature-box"></div>
+          <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
+          <div class="signature-name">Atma Nirbhar Farm</div>
         </div>
       </div>
     </div>
