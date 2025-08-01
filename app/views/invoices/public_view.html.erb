@@ -722,7 +722,7 @@
                 <% end %>
               </td>
               <td class="center-align"><%= item.product&.hsn_sac || '-' %></td>
-              <td class="center-align"><%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %> <%= item.product&.unit_price || 'PCS' %></td>
+              <td class="center-align"><%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %> <%= item.product&.unit_type || 'PCS' %></td>
               <td class="right-align">₹<%= number_with_delimiter(item.unit_price || 0, delimiter: ',') %></td>
               <td class="right-align">
                 <% 
