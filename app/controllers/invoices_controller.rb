@@ -239,7 +239,7 @@ end
     
     # Generate public URL with explicit host (without port for WhatsApp)
     host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'gnu-modern-totally.ngrok-free.app'
-    public_url = @invoice.public_url(host: host)
+    public_url = @invoice.public_url(host: host).gsub(':3000', '')
     
     # Build WhatsApp message
     message = build_whatsapp_message(@invoice, public_url)
