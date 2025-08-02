@@ -146,6 +146,14 @@ Rails.application.routes.draw do
     end
   end
   
+  # Schedule Management
+  resources :schedule_management, path: 'manage-schedules', only: [:index] do
+    collection do
+      post :replicate_schedules
+      get :month_summary
+    end
+  end
+  
   # Deliveries (for delivery person records)
   resources :deliveries do
     member do
