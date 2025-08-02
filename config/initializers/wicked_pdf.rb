@@ -49,12 +49,16 @@ def detect_wkhtmltopdf_path
   end
   
   # If all else fails, try a few more specific paths
-  fallback_paths = [
-    '/opt/wkhtmltopdf/bin/wkhtmltopdf',
-    File.join(Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf-binary')) rescue nil
-  ].compact
+  fallback_paths = ['/opt/wkhtmltopdf/bin/wkhtmltopdf']
   
-  fallback_paths.each do |path|
+  # Try to get wkhtmltopdf-binary gem path safely
+  begin
+    fallback_paths << Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf-binary')
+  rescue Gem::GemNotFoundException, StandardError
+    # Ignore if gem not found or other error
+  end
+  
+  fallback_paths.compact.each do |path|
     if path && File.executable?(path)
       Rails.logger.info "Found wkhtmltopdf at fallback path: #{path}"
       return path
