@@ -10,7 +10,10 @@ def detect_wkhtmltopdf_path
   ]
   
   system_paths.each do |path|
-    return path if File.executable?(path)
+    if File.executable?(path)
+      Rails.logger.info "Found wkhtmltopdf at: #{path}"
+      return path
+    end
   end
   
   # Try to find via which command
@@ -45,7 +48,21 @@ def detect_wkhtmltopdf_path
     # Gem not found, continue
   end
   
+  # If all else fails, try a few more specific paths
+  fallback_paths = [
+    '/opt/wkhtmltopdf/bin/wkhtmltopdf',
+    File.join(Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf-binary')) rescue nil
+  ].compact
+  
+  fallback_paths.each do |path|
+    if path && File.executable?(path)
+      Rails.logger.info "Found wkhtmltopdf at fallback path: #{path}"
+      return path
+    end
+  end
+  
   # If all else fails, let wicked_pdf try to find it
+  Rails.logger.warn "Could not find wkhtmltopdf executable, falling back to auto-detect"
   nil
 end
 
@@ -116,6 +133,20 @@ end
 # Log the detected path for debugging
 detected_path = detect_wkhtmltopdf_path
 Rails.logger.info "WickedPDF configured with wkhtmltopdf path: #{detected_path || 'auto-detect'}"
+
+# Additional debugging information
+if detected_path
+  Rails.logger.info "wkhtmltopdf executable exists: #{File.exist?(detected_path)}"
+  Rails.logger.info "wkhtmltopdf executable is executable: #{File.executable?(detected_path)}"
+  
+  # Test the executable
+  begin
+    version_output = `#{detected_path} --version 2>&1`.strip
+    Rails.logger.info "wkhtmltopdf version: #{version_output}"
+  rescue => e
+    Rails.logger.error "Error testing wkhtmltopdf: #{e.message}"
+  end
+end
 
 # In production, also log some additional debugging info
 if Rails.env.production?
