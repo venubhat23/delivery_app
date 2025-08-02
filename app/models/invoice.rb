@@ -98,7 +98,6 @@ class Invoice < ApplicationRecord
       url_options[:host] = ENV.fetch('APP_HOST', 'atmanirbharfarm.work.gd')
     end
     
-    url_options[:port] = port if port.present?
     
     Rails.application.routes.url_helpers.public_invoice_url(url_options)
   end
