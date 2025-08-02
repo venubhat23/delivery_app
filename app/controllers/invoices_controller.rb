@@ -309,6 +309,11 @@ end
           render template: 'invoices/show_print', layout: false, content_type: 'text/html'
         end
       end
+      
+      # Fallback for any other format requests - redirect to PDF
+      format.html do
+        redirect_to public_invoice_download_path(params[:token], format: :pdf)
+      end
     end
   end
   
