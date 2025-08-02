@@ -89,6 +89,7 @@ class Invoice < ApplicationRecord
   def public_url(host: nil, port: nil)
     url_options = { token: share_token }
     
+    
 
       url_options[:host] = "http://gnu-modern-totally.ngrok-free.app"
     
