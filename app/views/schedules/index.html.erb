@@ -1,0 +1,333 @@
+<% content_for :title, "Schedules Management" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-calendar-alt text-primary me-2"></i>
+            Schedules Management
+          </h1>
+          <p class="text-muted mb-0">Replicate schedules from previous months to current month</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Card -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-primary text-white">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-copy me-2"></i>
+            Create Schedule from Previous Month
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <!-- Month/Year Selection Form -->
+          <form id="scheduleForm">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="month" class="form-label fw-bold">
+                  <i class="fas fa-calendar-day me-1"></i>
+                  Select Month
+                </label>
+                <select class="form-select form-select-lg" id="month" name="month" required>
+                  <option value="">Choose Month...</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="year" class="form-label fw-bold">
+                  <i class="fas fa-calendar-year me-1"></i>
+                  Select Year
+                </label>
+                <select class="form-select form-select-lg" id="year" name="year" required>
+                  <option value="">Choose Year...</option>
+                  <% (2020..2030).each do |year| %>
+                    <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>>
+                      <%= year %>
+                    </option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
+
+            <div class="text-center mb-4">
+              <button type="submit" class="btn btn-primary btn-lg px-5" id="createScheduleBtn">
+                <i class="fas fa-plus-circle me-2"></i>
+                Create Schedule
+              </button>
+            </div>
+          </form>
+
+          <!-- Loading State -->
+          <div id="loadingState" class="text-center py-4" style="display: none;">
+            <div class="spinner-border text-primary mb-3" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted">Processing schedules and assignments...</p>
+          </div>
+
+          <!-- Summary Display -->
+          <div id="summarySection" class="mt-4" style="display: none;">
+            <div class="alert alert-success border-0 shadow-sm">
+              <h5 class="alert-heading">
+                <i class="fas fa-check-circle me-2"></i>
+                Schedule Creation Summary
+              </h5>
+              <hr>
+              <div class="row text-center">
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <h3 class="text-primary mb-0" id="schedulesCreated">0</h3>
+                    <small class="text-muted">Schedules Created</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <h3 class="text-info mb-0" id="assignmentsCreated">0</h3>
+                    <small class="text-muted">Assignments Created</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <h3 class="text-success mb-0" id="customersAffected">0</h3>
+                    <small class="text-muted">Customers Affected</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <h3 class="text-warning mb-0">Pending</h3>
+                    <small class="text-muted">Assignment Status</small>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <p class="mb-0">
+                  <strong>Source:</strong> <span id="sourceMonth"></span> →
+                  <strong>Target:</strong> <span id="targetMonth"></span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Display -->
+          <div id="errorSection" class="mt-4" style="display: none;">
+            <div class="alert alert-danger border-0 shadow-sm">
+              <h5 class="alert-heading">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error
+              </h5>
+              <p id="errorMessage" class="mb-0"></p>
+            </div>
+          </div>
+
+          <!-- Warnings Display -->
+          <div id="warningsSection" class="mt-4" style="display: none;">
+            <div class="alert alert-warning border-0 shadow-sm">
+              <h5 class="alert-heading">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Warnings
+              </h5>
+              <ul id="warningsList" class="mb-0"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Information Card -->
+  <div class="row justify-content-center mt-4">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card border-0 bg-light">
+        <div class="card-body p-4">
+          <h6 class="card-title text-primary">
+            <i class="fas fa-info-circle me-2"></i>
+            How it works
+          </h6>
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2">
+              <i class="fas fa-check text-success me-2"></i>
+              Select a previous month and year to copy schedules from
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-check text-success me-2"></i>
+              All schedules and delivery assignments will be replicated to the current month
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-check text-success me-2"></i>
+              Dates that don't exist in the current month (like 31st in February) will be skipped
+            </li>
+            <li class="mb-0">
+              <i class="fas fa-check text-success me-2"></i>
+              All new delivery assignments will be set to 'pending' status
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .summary-stat {
+    padding: 1rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1rem;
+  }
+  
+  .summary-stat h3 {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  
+  .card {
+    border-radius: 15px;
+  }
+  
+  .form-select:focus,
+  .btn:focus {
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  }
+  
+  .alert {
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    .summary-stat h3 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('scheduleForm');
+  const createBtn = document.getElementById('createScheduleBtn');
+  const loadingState = document.getElementById('loadingState');
+  const summarySection = document.getElementById('summarySection');
+  const errorSection = document.getElementById('errorSection');
+  const warningsSection = document.getElementById('warningsSection');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const month = document.getElementById('month').value;
+    const year = document.getElementById('year').value;
+    
+    if (!month || !year) {
+      showError('Please select both month and year');
+      return;
+    }
+    
+    // Hide previous results
+    hideAllSections();
+    
+    // Show loading state
+    loadingState.style.display = 'block';
+    createBtn.disabled = true;
+    
+    // Make API call
+    fetch('<%= create_schedule_schedules_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        month: month,
+        year: year
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      loadingState.style.display = 'none';
+      createBtn.disabled = false;
+      
+      if (data.success) {
+        showSummary(data.summary);
+        if (data.errors && data.errors.length > 0) {
+          showWarnings(data.errors);
+        }
+      } else {
+        showError(data.error || 'An error occurred while creating schedules');
+      }
+    })
+    .catch(error => {
+      loadingState.style.display = 'none';
+      createBtn.disabled = false;
+      showError('Network error: ' + error.message);
+    });
+  });
+  
+  function hideAllSections() {
+    summarySection.style.display = 'none';
+    errorSection.style.display = 'none';
+    warningsSection.style.display = 'none';
+  }
+  
+  function showSummary(summary) {
+    document.getElementById('schedulesCreated').textContent = summary.schedules_created;
+    document.getElementById('assignmentsCreated').textContent = summary.assignments_created;
+    document.getElementById('customersAffected').textContent = summary.customers_affected;
+    document.getElementById('sourceMonth').textContent = summary.source_month;
+    document.getElementById('targetMonth').textContent = summary.target_month;
+    
+    summarySection.style.display = 'block';
+  }
+  
+  function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    errorSection.style.display = 'block';
+  }
+  
+  function showWarnings(warnings) {
+    const warningsList = document.getElementById('warningsList');
+    warningsList.innerHTML = '';
+    
+    warnings.forEach(warning => {
+      const li = document.createElement('li');
+      li.textContent = warning;
+      warningsList.appendChild(li);
+    });
+    
+    warningsSection.style.display = 'block';
+  }
+});
+</script>
