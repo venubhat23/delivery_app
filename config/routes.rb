@@ -171,7 +171,7 @@ Rails.application.routes.draw do
   
   # Public invoice view (no authentication required)
   get '/invoice/:token', to: 'invoices#public_view', as: 'public_invoice'
-  get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download'
+  get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download', defaults: { format: :pdf }
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
