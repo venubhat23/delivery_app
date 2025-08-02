@@ -298,14 +298,14 @@ end
         generate_pdf_response
       end
       
-      # Handle default format (when no format is specified in URL)
+      # Handle HTML format - show download page
       format.html do
-        generate_pdf_response
+        render 'public_download'
       end
       
-      # Handle any other format by defaulting to PDF
+      # Handle default format (when no format is specified in URL) - show HTML download page
       format.any do
-        generate_pdf_response
+        render 'public_download'
       end
     end
   end
