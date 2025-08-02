@@ -283,38 +283,60 @@ end
     @invoice = Invoice.find_by(share_token: params[:token])
     
     if @invoice.nil?
+      Rails.logger.warn "Invoice not found for token: #{params[:token]}"
       render file: "#{Rails.root}/public/404.html", layout: false, status: 404
       return
     end
+    
+    Rails.logger.info "Generating PDF for invoice #{@invoice.id} with token #{params[:token]}"
     
     @invoice_items = @invoice.invoice_items.includes(:product)
     @customer = @invoice.customer
     
     respond_to do |format|
       format.pdf do
-        begin
-          render pdf: "invoice_#{@invoice.formatted_number || @invoice.id}",
-                 template: 'invoices/show',
-                 layout: false,
-                 page_size: 'A4',
-                 margin: { top: 5, bottom: 5, left: 5, right: 5 },
-                 encoding: 'UTF-8',
-                 disposition: 'attachment'
-        rescue => e
-          Rails.logger.error "PDF generation failed: #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          
-          # Fallback to HTML with print-friendly styling
-          flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."
-          render template: 'invoices/show_print', layout: false, content_type: 'text/html'
-        end
+        generate_pdf_response
+      end
+      
+      # Handle default format (when no format is specified in URL)
+      format.html do
+        generate_pdf_response
+      end
+      
+      # Handle any other format by defaulting to PDF
+      format.any do
+        generate_pdf_response
       end
     end
   end
   
-  private
+    private
   
-  def set_invoice
+  def generate_pdf_response
+    begin
+      Rails.logger.info "Starting PDF generation for invoice #{@invoice.id}"
+      
+      render pdf: "invoice_#{@invoice.formatted_number || @invoice.id}",
+             template: 'invoices/show',
+             layout: false,
+             page_size: 'A4',
+             margin: { top: 5, bottom: 5, left: 5, right: 5 },
+             encoding: 'UTF-8',
+             disposition: 'attachment'
+             
+      Rails.logger.info "PDF generation completed successfully for invoice #{@invoice.id}"
+    rescue => e
+      Rails.logger.error "PDF generation failed for invoice #{@invoice.id}: #{e.message}"
+      Rails.logger.error "Error class: #{e.class}"
+      Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
+      
+      # Fallback to HTML with print-friendly styling
+      flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."
+      render template: 'invoices/show_print', layout: false, content_type: 'text/html'
+    end
+  end
+   
+   def set_invoice
     @invoice = Invoice.find(params[:id])
   end
   
