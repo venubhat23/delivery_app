@@ -3,8 +3,8 @@
 # Base configuration
 base_config = {
   # Path to the wkhtmltopdf executable
-  # Use system-installed wkhtmltopdf
-  exe_path: '/usr/local/bin/wkhtmltopdf',
+  # Use the binary from wkhtmltopdf-binary gem (will be auto-detected)
+  # exe_path: nil,  # Let WickedPdf auto-detect the path
 
   # Global PDF options
   # These will be applied to all PDFs unless overridden

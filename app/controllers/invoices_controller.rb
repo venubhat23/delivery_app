@@ -290,30 +290,22 @@ end
     @invoice_items = @invoice.invoice_items.includes(:product)
     @customer = @invoice.customer
     
-    respond_to do |format|
-      format.pdf do
-        begin
-          render pdf: "invoice_#{@invoice.formatted_number || @invoice.id}",
-                 template: 'invoices/show',
-                 layout: false,
-                 page_size: 'A4',
-                 margin: { top: 5, bottom: 5, left: 5, right: 5 },
-                 encoding: 'UTF-8',
-                 disposition: 'attachment'
-        rescue => e
-          Rails.logger.error "PDF generation failed: #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          
-          # Fallback to HTML with print-friendly styling
-          flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."
-          render template: 'invoices/show_print', layout: false, content_type: 'text/html'
-        end
-      end
+    # Generate PDF directly without respond_to block to avoid format issues
+    begin
+      render pdf: "invoice_#{@invoice.formatted_number || @invoice.id}",
+             template: 'invoices/show',
+             layout: false,
+             page_size: 'A4',
+             margin: { top: 5, bottom: 5, left: 5, right: 5 },
+             encoding: 'UTF-8',
+             disposition: 'attachment'
+    rescue => e
+      Rails.logger.error "PDF generation failed: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
       
-      # Fallback for any other format requests - redirect to PDF
-      format.html do
-        redirect_to public_invoice_download_path(params[:token], format: :pdf)
-      end
+      # Fallback to HTML with print-friendly styling
+      flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."
+      render template: 'invoices/show_print', layout: false, content_type: 'text/html'
     end
   end
   
