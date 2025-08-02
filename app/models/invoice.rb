@@ -106,18 +106,6 @@ class Invoice < ApplicationRecord
     url_options = { token: share_token }
     
     # Ensure we always have a host
-    if host.present?
-      url_options[:host] = host
-    elsif Rails.application.config.action_controller.default_url_options[:host].present?
-      url_options[:host] = Rails.application.config.action_controller.default_url_options[:host]
-    else
-      url_options[:host] = ENV.fetch('APP_HOST', 'atmanirbharfarm.work.gd')
-    end
-    
-    # Only add port if explicitly provided and not using ngrok
-    if port.present? && !url_options[:host].to_s.include?('ngrok')
-      url_options[:port] = port
-    end
     
     Rails.application.routes.url_helpers.public_invoice_download_url(url_options)
   end
