@@ -341,7 +341,7 @@ end
   end
   
   def build_whatsapp_message(invoice, public_url)
-    company_name = "Your Company" # You can make this configurable
+    company_name = "Atma Nirbhar Farm" # You can make this configurable
     
     message = <<~MSG
       Hi! 👋
