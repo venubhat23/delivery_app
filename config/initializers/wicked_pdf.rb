@@ -3,8 +3,8 @@
 # Base configuration
 base_config = {
   # Path to the wkhtmltopdf executable
-  # Use system-installed wkhtmltopdf
-  exe_path: `which wkhtmltopdf`.strip,
+  # Use system-installed wkhtmltopdf instead of gem binary for Ubuntu 25.04 compatibility
+  exe_path: '/usr/local/bin/wkhtmltopdf',
 
   # Global PDF options
   # These will be applied to all PDFs unless overridden
@@ -51,11 +51,17 @@ production_config = {
   quiet: true
 }
 
-# Merge configurations based on environment
-WickedPdf.config = if Rails.env.production?
-  base_config.merge(production_config)
-else
-  base_config
+# Use the new configure method instead of deprecated config=
+WickedPdf.configure do |config|
+  if Rails.env.production?
+    base_config.merge(production_config).each do |key, value|
+      config.send("#{key}=", value)
+    end
+  else
+    base_config.each do |key, value|
+      config.send("#{key}=", value)
+    end
+  end
 end
 
 # MIME type registration
