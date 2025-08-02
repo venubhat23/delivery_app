@@ -21,8 +21,8 @@ module DeliveryManagement
 
     # Set default URL options for all environments
     # This can be overridden in specific environment files
-    config.action_controller.default_url_options = { host: "localhost", port: 3000 }
-    config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+    config.action_controller.default_url_options = { host: "localhost" }
+    config.action_mailer.default_url_options = { host: "localhost" }
 
     # Configuration for the application, engines, and railties goes here.
     #

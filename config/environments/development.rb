@@ -49,7 +49,7 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
 
-  default_host = ENV.fetch('APP_HOST', 'atmanirbharfarm.work.gd')
+  default_host = ENV.fetch('APP_HOST', 'gnu-modern-totally.ngrok-free.app')
   config.action_mailer.default_url_options = { host: default_host }
 
   # Set default URL options for the main application routes

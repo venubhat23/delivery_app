@@ -238,7 +238,7 @@ end
     @invoice.save! if @invoice.changed?
     
     # Generate public URL with explicit host (without port for WhatsApp)
-    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarm.work.gd'
+    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'gnu-modern-totally.ngrok-free.app'
     public_url = @invoice.public_pdf_url(host: host)
     
     # Build WhatsApp message
