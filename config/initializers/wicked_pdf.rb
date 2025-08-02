@@ -4,7 +4,7 @@
 base_config = {
   # Path to the wkhtmltopdf executable
   # Use system-installed wkhtmltopdf
-  exe_path: '/usr/local/bin/wkhtmltopdf',
+  exe_path: `which wkhtmltopdf`.strip,
 
   # Global PDF options
   # These will be applied to all PDFs unless overridden
