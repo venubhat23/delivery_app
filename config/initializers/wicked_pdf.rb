@@ -1,163 +1,95 @@
 # config/initializers/wicked_pdf.rb
 
-# Dynamically detect wkhtmltopdf path
+# Force clear any existing WickedPdf configuration
+if defined?(WickedPdf)
+  WickedPdf.instance_variable_set(:@config, nil)
+end
+
+# Explicit wkhtmltopdf path detection with fallbacks
 def detect_wkhtmltopdf_path
-  # Try common system paths first
-  system_paths = [
-    '/usr/local/bin/wkhtmltopdf',
-    '/usr/bin/wkhtmltopdf',
-    '/bin/wkhtmltopdf'
-  ]
+  Rails.logger.info "=== DETECTING WKHTMLTOPDF PATH ==="
+  Rails.logger.info "Rails environment: #{Rails.env}"
+  Rails.logger.info "Current user: #{`whoami`.strip}"
+  Rails.logger.info "HOME: #{ENV['HOME']}"
   
-  system_paths.each do |path|
-    if File.executable?(path)
-      Rails.logger.info "Found wkhtmltopdf at: #{path}"
-      return path
-    end
-  end
+  # Known working paths in order of preference
+  candidate_paths = [
+    '/usr/bin/wkhtmltopdf',                                    # System package
+    '/usr/local/bin/wkhtmltopdf',                             # Manual install
+    '/bin/wkhtmltopdf',                                       # Alternative system path
+    "#{ENV['HOME']}/.rvm/gems/ruby-#{RUBY_VERSION}/bin/wkhtmltopdf",  # RVM gem
+    `which wkhtmltopdf 2>/dev/null`.strip                     # System search
+  ].compact.reject(&:empty?)
   
-  # Try to find via which command
-  which_result = `which wkhtmltopdf 2>/dev/null`.strip
-  return which_result unless which_result.empty?
+  Rails.logger.info "Checking paths: #{candidate_paths.inspect}"
   
-  # Try RVM gem paths (common in production with RVM)
-  if ENV['HOME']
-    # Try current Ruby version
-    rvm_paths = [
-      "#{ENV['HOME']}/.rvm/gems/ruby-#{RUBY_VERSION}/bin/wkhtmltopdf",
-      "#{ENV['HOME']}/.rvm/gems/ruby-#{RUBY_VERSION}@global/bin/wkhtmltopdf"
-    ]
-    
-    rvm_paths.each do |path|
-      return path if File.executable?(path)
-    end
-    
-    # Try to find any Ruby version in RVM gems
-    rvm_gems_dir = "#{ENV['HOME']}/.rvm/gems"
-    if Dir.exist?(rvm_gems_dir)
-      Dir.glob("#{rvm_gems_dir}/ruby-*/bin/wkhtmltopdf").each do |path|
-        return path if File.executable?(path)
+  candidate_paths.each do |path|
+    Rails.logger.info "Checking: #{path}"
+    if File.exist?(path) && File.executable?(path)
+      Rails.logger.info "✓ Found working wkhtmltopdf at: #{path}"
+      
+      # Test the executable
+      begin
+        version_output = `#{path} --version 2>&1`.strip
+        Rails.logger.info "✓ Version check passed: #{version_output.split("\n").first}"
+        return path
+      rescue => e
+        Rails.logger.warn "✗ Version check failed for #{path}: #{e.message}"
+        next
       end
+    else
+      Rails.logger.info "✗ Not found or not executable: #{path}"
     end
   end
   
-  # Try wkhtmltopdf-binary gem path as last resort
-  begin
-    return Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf')
-  rescue Gem::GemNotFoundException
-    # Gem not found, continue
-  end
-  
-  # If all else fails, try a few more specific paths
-  fallback_paths = ['/opt/wkhtmltopdf/bin/wkhtmltopdf']
-  
-  # Try to get wkhtmltopdf-binary gem path safely
-  begin
-    fallback_paths << Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf-binary')
-  rescue Gem::GemNotFoundException, StandardError
-    # Ignore if gem not found or other error
-  end
-  
-  fallback_paths.compact.each do |path|
-    if path && File.executable?(path)
-      Rails.logger.info "Found wkhtmltopdf at fallback path: #{path}"
-      return path
-    end
-  end
-  
-  # If all else fails, let wicked_pdf try to find it
-  Rails.logger.warn "Could not find wkhtmltopdf executable, falling back to auto-detect"
+  Rails.logger.error "No working wkhtmltopdf found!"
   nil
 end
 
-# Base configuration
-base_config = {
-  # Path to the wkhtmltopdf executable
-  # Dynamically detect the correct path for the current environment
-  exe_path: detect_wkhtmltopdf_path,
-
-  # Global PDF options
-  # These will be applied to all PDFs unless overridden
-  page_size: 'A4',
-  margin: {
-    top: 5,    # mm
-    bottom: 5,
-    left: 5,
-    right: 5
-  },
-  
-  # Encoding
-  encoding: 'UTF-8',
-  
-  # Enable local file access (for images, CSS)
-  enable_local_file_access: true,
-  
-  # Disable smart shrinking
-  disable_smart_shrinking: true,
-  
-  # Print media type (use print CSS instead of screen CSS)
-  print_media_type: true,
-  
-  # Additional options for production stability
-  lowquality: false,
-  dpi: 75,
-  
-  # For debugging - set to true to see HTML instead of PDF
-  show_as_html: Rails.env.development? && ENV['DEBUG_PDF'] == 'true'
-}
-
-# Production-specific options for headless environments
-production_config = {
-  # Use Xvfb for headless PDF generation
-  use_xvfb: true,
-  # Disable JavaScript execution for faster rendering
-  disable_javascript: true,
-  # Disable external links
-  disable_external_links: true,
-  # Set timeout to prevent hanging
-  javascript_delay: 1000,
-  # Additional stability options
-  no_stop_slow_scripts: true,
-  quiet: true
-}
-
-# Use the new configure method instead of deprecated config=
-WickedPdf.configure do |config|
-  if Rails.env.production?
-    base_config.merge(production_config).each do |key, value|
-      config.send("#{key}=", value)
-    end
-  else
-    base_config.each do |key, value|
-      config.send("#{key}=", value)
-    end
-  end
-end
-
-# Log the detected path for debugging
+# Detect the correct path
 detected_path = detect_wkhtmltopdf_path
-Rails.logger.info "WickedPDF configured with wkhtmltopdf path: #{detected_path || 'auto-detect'}"
 
-# Additional debugging information
-if detected_path
-  Rails.logger.info "wkhtmltopdf executable exists: #{File.exist?(detected_path)}"
-  Rails.logger.info "wkhtmltopdf executable is executable: #{File.executable?(detected_path)}"
+# If detection fails, use explicit fallback
+if detected_path.nil? || detected_path.empty?
+  detected_path = '/usr/bin/wkhtmltopdf'  # Force to system path
+  Rails.logger.warn "Using fallback path: #{detected_path}"
+end
+
+Rails.logger.info "Final wkhtmltopdf path: #{detected_path}"
+
+# Configure WickedPDF
+WickedPdf.configure do |config|
+  config.exe_path = detected_path
+  config.page_size = 'A4'
+  config.margin = { top: 5, bottom: 5, left: 5, right: 5 }
+  config.encoding = 'UTF-8'
+  config.enable_local_file_access = true
+  config.disable_smart_shrinking = true
+  config.print_media_type = true
+  config.lowquality = false
+  config.dpi = 75
   
-  # Test the executable
-  begin
-    version_output = `#{detected_path} --version 2>&1`.strip
-    Rails.logger.info "wkhtmltopdf version: #{version_output}"
-  rescue => e
-    Rails.logger.error "Error testing wkhtmltopdf: #{e.message}"
+  # Production specific settings
+  if Rails.env.production?
+    config.use_xvfb = true
+    config.disable_javascript = true
+    config.disable_external_links = true
+    config.javascript_delay = 1000
+    config.no_stop_slow_scripts = true
+    config.quiet = true
   end
+  
+  # Debug mode
+  config.show_as_html = Rails.env.development? && ENV['DEBUG_PDF'] == 'true'
 end
 
-# In production, also log some additional debugging info
-if Rails.env.production?
-  Rails.logger.info "Ruby version: #{RUBY_VERSION}"
-  Rails.logger.info "HOME environment: #{ENV['HOME']}"
-  Rails.logger.info "PATH environment: #{ENV['PATH']}"
-end
+# Final verification
+final_path = WickedPdf.config[:exe_path]
+Rails.logger.info "=== WICKED PDF CONFIGURED ==="
+Rails.logger.info "Final exe_path in config: #{final_path}"
+Rails.logger.info "Path exists: #{File.exist?(final_path) if final_path}"
+Rails.logger.info "Path executable: #{File.executable?(final_path) if final_path}"
+Rails.logger.info "=== END CONFIGURATION ==="
 
 # MIME type registration
 Mime::Type.register "application/pdf", :pdf unless Mime::Type.lookup_by_extension(:pdf)
