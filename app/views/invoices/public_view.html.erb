@@ -20,6 +20,35 @@
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
       }
 
+      /* Top Download Button Styling */
+      .top-download-section {
+        margin-bottom: 20px;
+        text-align: right;
+      }
+
+      .download-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+      }
+
+      .download-btn:hover {
+        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(220, 53, 69, 0.4);
+      }
+
       /* Header section */
       .invoice-header-table {
         width: 100%;
@@ -571,7 +600,7 @@
           box-shadow: none;
           padding: 15px;
         }
-        .no-print {
+        .no-print, .top-download-section {
           display: none;
         }
       }
@@ -640,6 +669,14 @@
       total_tax = total_cgst + total_sgst + total_igst
       final_total = taxable_amount + total_tax
     %>
+    
+    <!-- Top Download Section (visible only on screen) -->
+    <div class="top-download-section no-print">
+      <a href="<%= public_invoice_download_path(@invoice.share_token, format: :pdf) %>" class="download-btn" target="_blank">
+        <span>📄</span>Download PDF
+      </a>
+    </div>
+
     <div class="invoice-container">
       <!-- Tax label and original recipient -->
       <div class="tax-label-container">
@@ -999,17 +1036,45 @@
       </table>
     </div>
 
-    <!-- Download Section (visible only on screen) -->
+    <!-- Share Again Section (visible only on screen) -->
     <div class="no-print">
       <div class="share-card">
-        <div style="text-align: center; margin-top: 30px;">
-          <a href="<%= public_invoice_download_path(@invoice.share_token, format: :pdf) %>" class="btn btn-primary btn-lg" style="padding: 15px 30px; font-size: 18px; background-color: #007bff; border-color: #007bff; text-decoration: none; color: white; border-radius: 8px; display: inline-block;">
-            <span style="margin-right: 8px;">📄</span>Download PDF
-          </a>
+        <h6 class="share-title">
+          <i class="fab fa-whatsapp" style="color: #25d366; margin-right: 8px;"></i>
+          Share this invoice
+        </h6>
+        <p class="share-text">
+          You can share this invoice link with others or save it for your records.
+        </p>
+        <div class="btn-group" role="group">
+          <button class="btn btn-outline-success" onclick="copyToClipboard()">
+            <span style="margin-right: 8px;">📋</span>Copy Link
+          </button>
+          <button class="btn btn-outline-primary" onclick="shareInvoice()">
+            <span style="margin-right: 8px;">📤</span>Share
+          </button>
         </div>
       </div>
     </div>
 
-
+    <script>
+      function copyToClipboard() {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+          alert('Invoice link copied to clipboard!');
+        });
+      }
+      
+      function shareInvoice() {
+        if (navigator.share) {
+          navigator.share({
+            title: 'Invoice #<%= @invoice.formatted_number || @invoice.invoice_number || @invoice.id %>',
+            text: 'Please find your invoice details',
+            url: window.location.href
+          });
+        } else {
+          copyToClipboard();
+        }
+      }
+    </script>
   </body>
 </html>
