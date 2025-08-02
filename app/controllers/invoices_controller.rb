@@ -315,6 +315,7 @@ end
   def generate_pdf_response
     begin
       Rails.logger.info "Starting PDF generation for invoice #{@invoice.id}"
+      Rails.logger.info "WickedPdf exe_path: #{WickedPdf.config[:exe_path] || 'auto-detect'}"
       
       render pdf: "invoice_#{@invoice.formatted_number || @invoice.id}",
              template: 'invoices/show',
@@ -329,6 +330,28 @@ end
       Rails.logger.error "PDF generation failed for invoice #{@invoice.id}: #{e.message}"
       Rails.logger.error "Error class: #{e.class}"
       Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
+      
+      # Log additional debugging information for wkhtmltopdf issues
+      if e.message.include?('wkhtmltopdf') || e.message.include?('Bad')
+        Rails.logger.error "wkhtmltopdf configuration debug info:"
+        Rails.logger.error "- exe_path configured: #{WickedPdf.config[:exe_path]}"
+        Rails.logger.error "- File exists: #{WickedPdf.config[:exe_path] ? File.exist?(WickedPdf.config[:exe_path]) : 'N/A'}"
+        Rails.logger.error "- File executable: #{WickedPdf.config[:exe_path] ? File.executable?(WickedPdf.config[:exe_path]) : 'N/A'}"
+        
+        # Try to find wkhtmltopdf in system
+        system_wkhtmltopdf = `which wkhtmltopdf 2>/dev/null`.strip
+        Rails.logger.error "- System wkhtmltopdf: #{system_wkhtmltopdf.empty? ? 'not found' : system_wkhtmltopdf}"
+        
+        # Check if gem is available
+        begin
+          gem_path = Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf')
+          Rails.logger.error "- Gem wkhtmltopdf path: #{gem_path}"
+          Rails.logger.error "- Gem binary exists: #{File.exist?(gem_path)}"
+          Rails.logger.error "- Gem binary executable: #{File.executable?(gem_path)}"
+        rescue Gem::GemNotFoundException
+          Rails.logger.error "- wkhtmltopdf-binary gem not found"
+        end
+      end
       
       # Fallback to HTML with print-friendly styling
       flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."

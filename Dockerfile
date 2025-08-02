@@ -17,10 +17,12 @@ WORKDIR /rails
 # Install base packages
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client \
-    # wkhtmltopdf dependencies
-    xvfb libfontconfig1 libxrender1 libxtst6 libxi6 libxrandr2 libasound2 libatk1.0-0 \
+    # wkhtmltopdf and its dependencies
+    wkhtmltopdf xvfb libfontconfig1 libxrender1 libxtst6 libxi6 libxrandr2 libasound2 libatk1.0-0 \
     libgtk-3-0 libdrm2 libxss1 libgconf-2-4 libxcomposite1 libxdamage1 libxcursor1 \
-    libcairo-gobject2 libgtk2.0-0 libgdk-pixbuf2.0-0 libx11-6 && \
+    libcairo-gobject2 libgtk2.0-0 libgdk-pixbuf2.0-0 libx11-6 \
+    # Additional fonts for better PDF rendering
+    fonts-liberation fonts-dejavu-core && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment

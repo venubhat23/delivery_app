@@ -88,7 +88,8 @@ Rails.application.configure do
   config.hosts = [
     "atmanirbharfarm.work.gd",     # Allow requests from main domain
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
-    ENV['APP_HOST']                 # Allow requests from environment-specific host
+    ENV['APP_HOST'],                 # Allow requests from environment-specific host
+    "13.232.153.224"                # Allow requests from the production server IP
   ].compact
   
   # Skip DNS rebinding protection for the default health check endpoint.

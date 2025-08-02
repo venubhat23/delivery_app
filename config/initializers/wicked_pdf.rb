@@ -1,10 +1,35 @@
 # config/initializers/wicked_pdf.rb
 
+# Determine the best wkhtmltopdf executable path
+def find_wkhtmltopdf_path
+  # Try gem-provided binary first (more reliable in containerized environments)
+  begin
+    gem_path = Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf')
+    return gem_path if File.executable?(gem_path)
+  rescue Gem::GemNotFoundException
+    Rails.logger.warn "wkhtmltopdf-binary gem not found, trying system installation"
+  end
+  
+  # Try common system installation paths
+  system_paths = [
+    '/usr/local/bin/wkhtmltopdf',
+    '/usr/bin/wkhtmltopdf',
+    `which wkhtmltopdf`.strip
+  ].compact.reject(&:empty?)
+  
+  system_paths.each do |path|
+    return path if File.executable?(path)
+  end
+  
+  # If nothing found, let wicked_pdf try to find it automatically
+  Rails.logger.warn "No wkhtmltopdf executable found, letting wicked_pdf auto-detect"
+  nil
+end
+
 # Base configuration
 base_config = {
   # Path to the wkhtmltopdf executable
-  # Use system-installed wkhtmltopdf
-  exe_path: '/usr/local/bin/wkhtmltopdf',
+  exe_path: find_wkhtmltopdf_path,
 
   # Global PDF options
   # These will be applied to all PDFs unless overridden
@@ -57,6 +82,9 @@ WickedPdf.config = if Rails.env.production?
 else
   base_config
 end
+
+# Log the configuration for debugging
+Rails.logger.info "WickedPdf configured with exe_path: #{WickedPdf.config[:exe_path] || 'auto-detect'}"
 
 # MIME type registration
 Mime::Type.register "application/pdf", :pdf unless Mime::Type.lookup_by_extension(:pdf)
