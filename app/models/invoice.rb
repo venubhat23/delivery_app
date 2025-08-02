@@ -117,7 +117,7 @@ class Invoice < ApplicationRecord
     
     url_options[:port] = port if port.present?
     
-    Rails.application.routes.url_helpers.public_invoice_download_url(url_options)
+    Rails.application.routes.url_helpers.public_invoice_url(url_options)
   end
   
   def profit_amount
