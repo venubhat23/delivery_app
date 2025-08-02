@@ -615,6 +615,16 @@
               </li>
               
               <li class="nav-item" role="none">
+                <%= link_to schedule_management_index_path, 
+                    class: "nav-link #{'active' if controller_name == 'schedule_management'}", 
+                    role: "menuitem",
+                    "aria-current": controller_name == 'schedule_management' ? "page" : nil do %>
+                  <i class="fas fa-calendar-alt nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Schedules</span>
+                <% end %>
+              </li>
+              
+              <li class="nav-item" role="none">
                 <%= link_to invoices_path, 
                     class: "nav-link #{'active' if current_page?(invoices_path) || controller_name == 'invoices'}", 
                     role: "menuitem",
