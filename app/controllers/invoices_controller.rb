@@ -239,7 +239,7 @@ end
     
     # Generate public URL with explicit host
     host = request.host_with_port || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarm.work.gd'
-    public_url = @invoice.public_url(host: host)
+    public_url = @invoice.public_pdf_url(host: host)
     
     # Build WhatsApp message
     message = build_whatsapp_message(@invoice, public_url)
@@ -329,7 +329,7 @@ end
       💰 Amount: ₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}
       📅 Date: #{invoice.invoice_date.strftime('%d %B %Y')}
 
-      View your invoice: #{public_url}
+      Download your invoice PDF: #{public_url}
 
       Thank you for your business! 🙏
       - #{company_name}
