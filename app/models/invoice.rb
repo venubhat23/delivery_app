@@ -114,9 +114,12 @@ class Invoice < ApplicationRecord
       url_options[:host] = ENV.fetch('APP_HOST', 'atmanirbharfarm.work.gd')
     end
     
-    url_options[:port] = port if port.present?
+    # Only add port if explicitly provided and not using ngrok
+    if port.present? && !url_options[:host].to_s.include?('ngrok')
+      url_options[:port] = port
+    end
     
-    Rails.application.routes.url_helpers.public_invoice_url(url_options)
+    Rails.application.routes.url_helpers.public_invoice_download_url(url_options)
   end
   
   def profit_amount

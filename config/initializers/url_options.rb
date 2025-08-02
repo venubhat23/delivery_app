@@ -7,7 +7,13 @@ Rails.application.configure do
                    when 'production'
                      { host: 'atmanirbharfarm.work.gd', protocol: 'https' }
                    when 'development'
-                     { host: 'localhost', port: 3000, protocol: 'http' }
+                     # Use ngrok host for development without port
+                     dev_host = ENV.fetch('APP_HOST', 'gnu-modern-totally.ngrok-free.app')
+                     if dev_host.include?('ngrok') || dev_host != 'localhost'
+                       { host: dev_host, protocol: 'http' }
+                     else
+                       { host: 'localhost', port: 3000, protocol: 'http' }
+                     end
                    when 'test'
                      { host: 'example.com', protocol: 'http' }
                    else
