@@ -10,7 +10,7 @@ Rails.application.configure do
     ENV['APP_HOST'],                 # Allow requests from environment-specific host
     "gnu-modern-totally.ngrok-free.app",
     "atmanirbharfarm.work.gd",
-
+    "13.232.153.224"                # Allow requests from the production server IP
   ].compact
 
 
