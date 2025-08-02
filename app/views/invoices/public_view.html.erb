@@ -550,6 +550,17 @@
         color: white;
       }
 
+      .btn-outline-danger {
+        color: #dc3545;
+        border-color: #dc3545;
+        background-color: transparent;
+      }
+
+      .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+      }
+
       /* Responsive adjustments */
       @media print {
         body {
@@ -1005,6 +1016,9 @@
           <button class="btn btn-outline-primary" onclick="shareInvoice()">
             <span style="margin-right: 8px;">📤</span>Share
           </button>
+          <a href="<%= public_invoice_download_path(@invoice.share_token, format: :pdf) %>" class="btn btn-outline-danger" target="_blank">
+            <span style="margin-right: 8px;">📄</span>Download PDF
+          </a>
         </div>
       </div>
     </div>
