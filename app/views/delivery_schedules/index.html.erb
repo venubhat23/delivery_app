@@ -1,0 +1,279 @@
+<!-- app/views/delivery_schedules/index.html.erb -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-calendar-alt me-3"></i>Delivery Schedules
+      </h1>
+      <p class="text-muted mb-0">Manage recurring delivery schedules and assignments</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_delivery_schedule_path, class: "btn btn-primary" do %>
+        <i class="fas fa-calendar-plus me-2"></i>New Schedule
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-4 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <div class="stats-number"><%= @total_schedules %></div>
+      <div class="stats-label">Total Schedules</div>
+    </div>
+  </div>
+  <div class="col-md-4 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+      <div class="stats-number"><%= @active_schedules %></div>
+      <div class="stats-label">Active Schedules</div>
+    </div>
+  </div>
+  <div class="col-md-4 mb-3">
+    <div class="stats-card stats-card-primary">
+      <div class="stats-icon">
+        <i class="fas fa-calendar-times"></i>
+      </div>
+      <div class="stats-number"><%= @completed_schedules %></div>
+      <div class="stats-label">Completed Schedules</div>
+    </div>
+  </div>
+</div>
+
+<!-- Schedules Table -->
+<div class="card shadow">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h6 class="m-0">
+      <i class="fas fa-list me-2"></i>All Delivery Schedules
+    </h6>
+    <span class="badge bg-secondary"><%= @total_schedules %> schedules</span>
+  </div>
+  <div class="card-body p-0">
+    <% if @delivery_schedules.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Customer</th>
+              <th scope="col">Product</th>
+              <th scope="col">Frequency</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Status</th>
+              <th scope="col">Created By</th>
+              <th scope="col">Created</th>
+              <th scope="col" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @delivery_schedules.each do |schedule| %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                      <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                      <div class="fw-semibold"><%= schedule.customer_name %></div>
+                      <small class="text-muted">ID: <%= schedule.customer_id %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if schedule.product %>
+                    <div class="fw-semibold"><%= schedule.product_name %></div>
+                    <% if schedule.default_quantity && schedule.default_unit %>
+                      <small class="text-muted"><%= schedule.default_quantity %> <%= schedule.default_unit %></small>
+                    <% end %>
+                  <% else %>
+                    <span class="text-muted">No product specified</span>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="badge bg-info bg-opacity-10 text-info">
+                    <%= schedule.frequency_display %>
+                  </span>
+                </td>
+                <td>
+                  <div>
+                    <div class="fw-semibold">
+                      <%= schedule.start_date.strftime("%b %d, %Y") %> - 
+                      <%= schedule.end_date.strftime("%b %d, %Y") %>
+                    </div>
+                    <small class="text-muted">
+                      <%= schedule.duration_in_days %> days
+                      <% if schedule.estimated_delivery_count > 0 %>
+                        • ~<%= schedule.estimated_delivery_count %> deliveries
+                      <% end %>
+                    </small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge <%= schedule.status_badge_class %>">
+                    <%= schedule.status.titleize %>
+                  </span>
+                </td>
+                <td>
+                  <div class="fw-semibold"><%= schedule.delivery_person_name %></div>
+                  <small class="text-muted">Delivery Person</small>
+                </td>
+                <td>
+                  <div class="fw-semibold"><%= schedule.created_at.strftime("%b %d, %Y") %></div>
+                  <small class="text-muted"><%= schedule.created_at.strftime("%I:%M %p") %></small>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group" role="group">
+                    <%= link_to schedule, class: "btn btn-sm btn-outline-primary", title: "View Schedule" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_delivery_schedule_path(schedule), class: "btn btn-sm btn-outline-secondary", title: "Edit Schedule" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <% if schedule.can_be_cancelled? %>
+                      <%= link_to cancel_schedule_delivery_schedule_path(schedule), 
+                          method: :patch,
+                          class: "btn btn-sm btn-outline-warning", 
+                          title: "Cancel Schedule",
+                          data: { 
+                            confirm: "Are you sure you want to cancel this schedule? All pending assignments will be cancelled." 
+                          } do %>
+                        <i class="fas fa-ban"></i>
+                      <% end %>
+                    <% end %>
+                    <%= link_to schedule, 
+                        method: :delete, 
+                        class: "btn btn-sm btn-outline-danger", 
+                        title: "Delete Schedule",
+                        data: { 
+                          confirm: "Are you sure you want to delete this schedule? This action cannot be undone." 
+                        } do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <div class="mb-3">
+          <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+        </div>
+        <h5 class="text-muted">No Delivery Schedules Found</h5>
+        <p class="text-muted mb-4">Get started by creating your first delivery schedule.</p>
+        <%= link_to new_delivery_schedule_path, class: "btn btn-primary" do %>
+          <i class="fas fa-calendar-plus me-2"></i>Create First Schedule
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-left: 4px solid #6c757d;
+  transition: transform 0.2s;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.stats-card-success {
+  border-left-color: #28a745;
+}
+
+.stats-card-primary {
+  border-left-color: #007bff;
+}
+
+.stats-card-warning {
+  border-left-color: #ffc107;
+}
+
+.stats-icon {
+  font-size: 2rem;
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+.stats-card-success .stats-icon {
+  color: #28a745;
+}
+
+.stats-card-primary .stats-icon {
+  color: #007bff;
+}
+
+.stats-card-warning .stats-icon {
+  color: #ffc107;
+}
+
+.stats-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stats-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.avatar-sm {
+  width: 40px;
+  height: 40px;
+  font-size: 0.875rem;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  vertical-align: middle;
+  border-color: #e9ecef;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.btn-group .btn {
+  margin-right: 0;
+}
+
+.card {
+  border: none;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+</style>
