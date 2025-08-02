@@ -146,6 +146,13 @@ Rails.application.routes.draw do
     end
   end
   
+  # Schedules Management
+  resources :schedules, only: [:index] do
+    collection do
+      post :create_schedule
+    end
+  end
+  
   # Deliveries (for delivery person records)
   resources :deliveries do
     member do
