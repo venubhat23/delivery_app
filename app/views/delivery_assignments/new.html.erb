@@ -3,11 +3,11 @@
   <%= link_to "Back to Assignments", delivery_assignments_path, class: "btn btn-secondary" %>
 </div>
 
-<div class="row">
+<div class="row" data-controller="delivery-assignment-form" data-delivery-assignment-form-delivery-type-value="scheduled">
   <div class="col-md-8">
     <div class="card">
       <div class="card-body">
-        <%= form_with model: @delivery_assignment, local: true, class: "row g-3", id: "delivery-form" do |form| %>
+        <%= form_with model: @delivery_assignment, local: true, class: "row g-3", id: "delivery-form", data: { action: "submit->delivery-assignment-form#submitForm" } do |form| %>
           <% if @delivery_assignment.errors.any? %>
             <div class="col-12">
               <div class="alert alert-danger">
@@ -21,25 +21,81 @@
             </div>
           <% end %>
 
-          <div class="col-md-6">
+          <!-- Delivery Type Selection -->
+          <div class="col-12">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-title mb-3">
+                  <i class="fas fa-cog me-2"></i>Delivery Type
+                </h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-check">
+                      <%= radio_button_tag :delivery_type, 'single', false, 
+                          class: "form-check-input", 
+                          data: { 
+                            "delivery-assignment-form-target" => "deliveryType",
+                            action: "change->delivery-assignment-form#deliveryTypeChanged"
+                          } %>
+                      <label class="form-check-label" for="delivery_type_single">
+                        <i class="fas fa-truck me-2"></i>Single Delivery
+                        <small class="d-block text-muted">One-time delivery assignment</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check">
+                      <%= radio_button_tag :delivery_type, 'scheduled', true, 
+                          class: "form-check-input", 
+                          data: { 
+                            "delivery-assignment-form-target" => "deliveryType",
+                            action: "change->delivery-assignment-form#deliveryTypeChanged"
+                          } %>
+                      <label class="form-check-label" for="delivery_type_scheduled">
+                        <i class="fas fa-calendar-alt me-2"></i>Scheduled Delivery
+                        <small class="d-block text-muted">Recurring delivery schedule</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Selection with Search -->
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_customers_path %>" data-searchable-select-placeholder-value="Search customers...">
             <%= form.label :customer_id, class: "form-label" %>
             <%= form.select :customer_id, 
                 options_for_select([['Select Customer', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
-                {}, { class: "form-select", required: true } %>
+                {}, { 
+                  class: "form-select", 
+                  required: true,
+                  data: { "searchable-select-target" => "select" }
+                } %>
           </div>
 
-          <div class="col-md-6">
+          <!-- Delivery Person Selection with Search -->
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_delivery_people_path %>" data-searchable-select-placeholder-value="Search delivery people...">
             <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
             <%= form.select :delivery_person_id, 
                 options_for_select([['Select Delivery Person', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, @delivery_assignment.user_id), 
-                {}, { class: "form-select", required: true } %>
+                {}, { 
+                  class: "form-select", 
+                  required: true,
+                  data: { "searchable-select-target" => "select" }
+                } %>
           </div>
 
-          <div class="col-md-6">
+          <!-- Product Selection with Search -->
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_products_path %>" data-searchable-select-placeholder-value="Search products...">
             <%= form.label :product_id, class: "form-label" %>
             <%= form.select :product_id, 
                 options_for_select([['Select Product', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
-                {}, { class: "form-select", required: true } %>
+                {}, { 
+                  class: "form-select", 
+                  required: true,
+                  data: { "searchable-select-target" => "select" }
+                } %>
           </div>
 
           <div class="col-md-6">
@@ -47,28 +103,72 @@
             <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
           </div>
 
-          <!-- Scheduled Delivery Fields (always visible) -->
-          <div class="col-md-6" id="start-date-field">
-            <%= form.label :start_date, "Start Date", class: "form-label" %>
-            <%= form.date_field :start_date, class: "form-control", min: Date.current, required: true %>
+          <!-- Single Delivery Date Field -->
+          <div class="col-md-6" data-delivery-assignment-form-target="singleDateField" style="display: none;" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
+            <%= form.label :delivery_date, "Delivery Date", class: "form-label" %>
+            <%= form.date_field :delivery_date, 
+                class: "form-control", 
+                data: { "date-picker-target" => "input" } %>
           </div>
 
-          <div class="col-md-6" id="end-date-field">
-            <%= form.label :end_date, "End Date", class: "form-label" %>
-            <%= form.date_field :end_date, class: "form-control", min: Date.current, required: true %>
-          </div>
+          <!-- Scheduled Delivery Fields -->
+          <div data-delivery-assignment-form-target="scheduledDateFields">
+            <div class="col-12">
+              <div class="card bg-primary bg-opacity-10">
+                <div class="card-body">
+                  <h6 class="card-title text-primary mb-3">
+                    <i class="fas fa-calendar-week me-2"></i>Schedule Configuration
+                  </h6>
+                  <div class="row g-3">
+                    <div class="col-md-4" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
+                      <%= form.label :start_date, "Start Date", class: "form-label" %>
+                      <%= form.date_field :start_date, 
+                          class: "form-control", 
+                          min: Date.current, 
+                          required: true,
+                          data: { 
+                            "date-picker-target" => "input",
+                            "delivery-assignment-form-target" => "startDate",
+                            action: "change->delivery-assignment-form#dateChanged"
+                          } %>
+                    </div>
 
-          <div class="col-md-6" id="frequency-field">
-            <%= form.label :frequency, class: "form-label" %>
-            <%= form.select :frequency, 
-                options_for_select([
-                  ['Daily', 'daily'],
-                  ['Weekly', 'weekly'],
-                  ['Bi-Weekly', 'bi_weekly'],
-                  ['Monthly', 'monthly']
-                ], 'daily'), 
-                { prompt: 'Select Frequency' }, 
-                { class: "form-select", required: true } %>
+                    <div class="col-md-4" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
+                      <%= form.label :end_date, "End Date", class: "form-label" %>
+                      <%= form.date_field :end_date, 
+                          class: "form-control", 
+                          min: Date.current, 
+                          required: true,
+                          data: { 
+                            "date-picker-target" => "input",
+                            "delivery-assignment-form-target" => "endDate",
+                            action: "change->delivery-assignment-form#dateChanged"
+                          } %>
+                    </div>
+
+                    <div class="col-md-4">
+                      <%= form.label :frequency, class: "form-label" %>
+                      <%= form.select :frequency, 
+                          options_for_select([
+                            ['Daily', 'daily'],
+                            ['Weekly', 'weekly'],
+                            ['Bi-Weekly', 'bi_weekly'],
+                            ['Monthly', 'monthly']
+                          ], 'daily'), 
+                          { prompt: 'Select Frequency' }, 
+                          { 
+                            class: "form-select", 
+                            required: true,
+                            data: { 
+                              "delivery-assignment-form-target" => "frequency",
+                              action: "change->delivery-assignment-form#frequencyChanged"
+                            }
+                          } %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="col-12">
@@ -79,7 +179,9 @@
 
           <div class="col-12">
             <div class="d-flex gap-2">
-              <%= form.submit "Create Delivery Schedule", class: "btn btn-primary", id: "submit-btn" %>
+              <%= form.submit "Create Delivery Schedule", 
+                  class: "btn btn-primary", 
+                  data: { "delivery-assignment-form-target" => "submitButton" } %>
               <%= link_to "Cancel", delivery_assignments_path, class: "btn btn-secondary" %>
             </div>
           </div>
@@ -88,37 +190,38 @@
     </div>
   </div>
 
-  <!-- Preview/Info Panel -->
+  <!-- Enhanced Preview/Info Panel -->
   <div class="col-md-4">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">Assignment Info</h5>
+        <h5 class="card-title mb-0">
+          <i class="fas fa-info-circle me-2"></i>Assignment Preview
+        </h5>
       </div>
-      <div class="card-body">
+      <div class="card-body" data-delivery-assignment-form-target="schedulePreview">
         <div class="mb-3">
           <strong>Status:</strong><br>
           <span class="badge bg-warning text-dark">Pending</span>
         </div>
         
         <div class="mb-3">
-          <strong>Available Delivery People:</strong><br>
-          <small class="text-muted"><%= @delivery_people.count %> available</small>
-        </div>
-        
-        <div class="mb-3">
-          <strong>Total Customers:</strong><br>
-          <small class="text-muted"><%= @customers.count %> customers</small>
-        </div>
-        
-        <div class="mb-3">
-          <strong>Available Products:</strong><br>
-          <small class="text-muted"><%= @products.count %> products</small>
+          <strong>Available Resources:</strong><br>
+          <small class="text-muted">
+            <i class="fas fa-users me-1"></i><%= @delivery_people.count %> delivery people<br>
+            <i class="fas fa-address-book me-1"></i><%= @customers.count %> customers<br>
+            <i class="fas fa-box me-1"></i><%= @products.count %> products
+          </small>
         </div>
 
         <div id="schedule-preview">
           <div class="alert alert-info">
-            <h6><i class="fas fa-info-circle me-1"></i>Schedule Preview</h6>
-            <small id="schedule-info">Select dates and frequency to see preview</small>
+            <h6><i class="fas fa-calendar-alt me-1"></i>Schedule Preview</h6>
+            <div data-delivery-assignment-form-target="scheduleInfo">
+              <div class="text-muted">
+                <i class="fas fa-info-circle me-2"></i>
+                Select dates and frequency to see preview
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -126,21 +229,27 @@
     
     <div class="card mt-3">
       <div class="card-header">
-        <h5 class="card-title mb-0">Quick Tips</h5>
+        <h5 class="card-title mb-0">
+          <i class="fas fa-lightbulb me-2"></i>Quick Tips
+        </h5>
       </div>
       <div class="card-body">
         <ul class="list-unstyled small">
           <li class="mb-2">
-            <i class="fas fa-repeat text-primary me-1"></i>
+            <i class="fas fa-search text-primary me-2"></i>
+            <span>Use the search boxes to quickly find customers, products, and delivery people</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-repeat text-success me-2"></i>
             <span>Scheduled deliveries create multiple assignments automatically</span>
           </li>
           <li class="mb-2">
-            <i class="fas fa-calendar text-warning me-1"></i>
+            <i class="fas fa-calendar text-warning me-2"></i>
             <span>Start and end date cannot be in the past</span>
           </li>
           <li class="mb-2">
-            <i class="fas fa-truck text-success me-1"></i>
-            <span>Delivery person assignment can be changed later</span>
+            <i class="fas fa-truck text-info me-2"></i>
+            <span>Delivery assignments can be modified later if needed</span>
           </li>
         </ul>
       </div>

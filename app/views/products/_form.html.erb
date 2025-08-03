@@ -46,8 +46,9 @@
         <%= form.label :unit_type, class: "form-label fw-bold" do %>
           <i class="fas fa-balance-scale me-1"></i>Unit Type *
         <% end %>
-        <%= form.select :unit_type, 
-            options_for_select([
+        <div data-controller="searchable-select" data-searchable-select-placeholder-value="Select unit type...">
+          <%= form.select :unit_type, 
+              options_for_select([
               ['Liters', 'liters'],
               ['Kilograms', 'kg'],
               ['Pieces', 'pieces'],
@@ -55,9 +56,10 @@
               ['Packets', 'packets']
             ], product.unit_type), 
             { prompt: 'Select unit type' }, 
-            { class: "form-select", required: true } %>
-        <div class="invalid-feedback">
-          Please select a unit type.
+            { class: "form-select", required: true, data: { "searchable-select-target" => "select" } } %>
+          <div class="invalid-feedback">
+            Please select a unit type.
+          </div>
         </div>
       </div>
     </div>
@@ -69,12 +71,14 @@
         <%= form.label :category_id, class: "form-label fw-bold" do %>
           <i class="fas fa-tags me-1"></i>Category *
         <% end %>
-        <%= form.select :category_id, 
-            options_for_select(Category.all.map { |c| [c.name, c.id] }, product.category_id), 
-            { prompt: 'Select category' }, 
-            { class: "form-select", required: true } %>
-        <div class="invalid-feedback">
-          Please select a category for your product.
+        <div data-controller="searchable-select" data-searchable-select-placeholder-value="Search categories...">
+          <%= form.select :category_id, 
+              options_for_select(Category.all.map { |c| [c.name, c.id] }, product.category_id), 
+              { prompt: 'Select category' }, 
+              { class: "form-select", required: true, data: { "searchable-select-target" => "select" } } %>
+          <div class="invalid-feedback">
+            Please select a category for your product.
+          </div>
         </div>
         <small class="form-text text-muted">Choose a category to organize your product</small>
       </div>

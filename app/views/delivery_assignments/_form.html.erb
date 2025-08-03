@@ -16,25 +16,40 @@
             </div>
           <% end %>
 
-          <div class="col-md-6">
+          <!-- Customer Selection with Search -->
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_customers_path %>" data-searchable-select-placeholder-value="Search customers...">
             <%= form.label :customer_id, class: "form-label" %>
             <%= form.select :customer_id, 
                 options_for_select([['Select Customer', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
-                {}, { class: "form-select", required: true } %>
+                {}, { 
+                  class: "form-select", 
+                  required: true,
+                  data: { "searchable-select-target" => "select" }
+                } %>
           </div>
 
-          <div class="col-md-6">
+          <!-- Delivery Person Selection with Search -->
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_delivery_people_path %>" data-searchable-select-placeholder-value="Search delivery people...">
             <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
             <%= form.select :delivery_person_id, 
                 options_for_select([['Select Delivery Person', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, @delivery_assignment.user_id), 
-                {}, { class: "form-select", required: true } %>
+                {}, { 
+                  class: "form-select", 
+                  required: true,
+                  data: { "searchable-select-target" => "select" }
+                } %>
           </div>
 
-          <div class="col-md-6">
+          <!-- Product Selection with Search -->
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_products_path %>" data-searchable-select-placeholder-value="Search products...">
             <%= form.label :product_id, class: "form-label" %>
             <%= form.select :product_id, 
                 options_for_select([['Select Product', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
-                {}, { class: "form-select", required: true } %>
+                {}, { 
+                  class: "form-select", 
+                  required: true,
+                  data: { "searchable-select-target" => "select" }
+                } %>
           </div>
 
           <div class="col-md-6">
@@ -42,9 +57,13 @@
             <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
           </div>
 
-          <div class="col-md-6">
+          <!-- Enhanced Date Picker -->
+          <div class="col-md-6" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
             <%= form.label :scheduled_date, "Delivery Date", class: "form-label" %>
-            <%= form.date_field :scheduled_date, class: "form-control", required: true %>
+            <%= form.date_field :scheduled_date, 
+                class: "form-control", 
+                required: true,
+                data: { "date-picker-target" => "input" } %>
           </div>
 
           <div class="col-md-6">
@@ -76,11 +95,13 @@
     </div>
   </div>
 
-  <!-- Info Panel -->
+  <!-- Enhanced Info Panel -->
   <div class="col-md-4">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">Assignment Info</h5>
+        <h5 class="card-title mb-0">
+          <i class="fas fa-info-circle me-2"></i>Assignment Info
+        </h5>
       </div>
       <div class="card-body">
         <div class="mb-3">
@@ -111,6 +132,29 @@
             This assignment is overdue!
           </div>
         <% end %>
+
+        <!-- Assignment History -->
+        <div class="mt-4">
+          <h6 class="text-muted">
+            <i class="fas fa-history me-2"></i>Quick Actions
+          </h6>
+          <div class="d-grid gap-2">
+            <% if @delivery_assignment.pending? %>
+              <%= link_to complete_delivery_assignment_path(@delivery_assignment), 
+                  method: :patch, 
+                  class: "btn btn-success btn-sm",
+                  data: { 
+                    confirm: "Mark this delivery as completed?" 
+                  } do %>
+                <i class="fas fa-check me-1"></i>Mark Complete
+              <% end %>
+            <% end %>
+            
+            <% if @delivery_assignment.can_generate_invoice? %>
+              <%= link_to "Generate Invoice", "#", class: "btn btn-info btn-sm" %>
+            <% end %>
+          </div>
+        </div>
       </div>
     </div>
   </div>

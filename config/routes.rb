@@ -8,6 +8,25 @@ Rails.application.routes.draw do
   
   get '/signup', to: 'users#new'
   post '/signup', to: 'users#create'
+
+  # API routes for searchable dropdowns
+  namespace :api do
+    resources :customers, only: [:index] do
+      collection do
+        get :search
+      end
+    end
+    resources :products, only: [:index] do
+      collection do
+        get :search
+      end
+    end
+    resources :delivery_people, only: [:index] do
+      collection do
+        get :search
+      end
+    end
+  end
   
   # Main application routes with full CRUD
   resources :products do
