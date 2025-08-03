@@ -173,6 +173,7 @@ Rails.application.routes.draw do
       get :monthly_preview
       get :generate_monthly_for_all
       post :generate_monthly_for_all
+      get :search_suggestions
     end
   end
   

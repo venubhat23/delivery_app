@@ -31,7 +31,25 @@ class InvoicesController < ApplicationController
     
     respond_to do |format|
       format.html
-      format.json { render json: @invoices }
+      format.json { 
+        render json: @invoices.map { |invoice| 
+          {
+            id: invoice.id,
+            invoice_number: invoice.formatted_number,
+            customer_name: invoice.customer.name,
+            customer_phone: invoice.customer.phone_number,
+            invoice_date: invoice.invoice_date.strftime('%d %b %Y'),
+            due_date: invoice.due_date.strftime('%d %b %Y'),
+            total_amount: invoice.total_amount,
+            status: invoice.status,
+            invoice_type: invoice.invoice_type&.humanize || 'Manual',
+            overdue: invoice.overdue?,
+            days_overdue: invoice.days_overdue,
+            url: invoice_path(invoice),
+            pdf_url: invoice_path(invoice, format: :pdf)
+          }
+        }
+      }
     end
   end
   
@@ -205,6 +223,53 @@ end
       render partial: 'monthly_preview', locals: { preview_data: @preview_data }
     else
       render json: { error: 'Invalid parameters' }, status: 400
+    end
+  end
+  
+  # AJAX action for search suggestions
+  def search_suggestions
+    query = params[:q].to_s.strip
+    
+    if query.present? && query.length >= 1
+      # Get customers starting with the query
+      customers = Customer.where("name ILIKE ?", "#{query}%")
+                         .limit(10)
+                         .order(:name)
+      
+      # Get invoices matching the query
+      invoices = Invoice.includes(:customer)
+                       .search_by_number_or_customer(query)
+                       .limit(5)
+                       .order(created_at: :desc)
+      
+      suggestions = []
+      
+      # Add customer suggestions
+      customers.each do |customer|
+        suggestions << {
+          type: 'customer',
+          label: customer.name,
+          value: customer.name,
+          phone: customer.phone_number,
+          id: customer.id
+        }
+      end
+      
+      # Add invoice suggestions
+      invoices.each do |invoice|
+        suggestions << {
+          type: 'invoice',
+          label: "#{invoice.formatted_number} - #{invoice.customer.name}",
+          value: invoice.formatted_number,
+          customer_name: invoice.customer.name,
+          amount: invoice.total_amount,
+          id: invoice.id
+        }
+      end
+      
+      render json: { suggestions: suggestions }
+    else
+      render json: { suggestions: [] }
     end
   end
   

@@ -39,9 +39,15 @@ class Invoice < ApplicationRecord
   scope :search_by_number_or_customer, ->(query) {
     return all if query.blank?
     joins(:customer).where(
-      "invoices.invoice_number ILIKE ? OR customers.name ILIKE ?", 
-      "%#{query}%", "%#{query}%"
+      "invoices.invoice_number ILIKE ? OR customers.name ILIKE ? OR customers.phone_number ILIKE ?", 
+      "%#{query}%", "%#{query}%", "%#{query}%"
     )
+  }
+  
+  # Enhanced search scope for better user experience
+  scope :search_customers_starting_with, ->(query) {
+    return all if query.blank?
+    joins(:customer).where("customers.name ILIKE ?", "#{query}%")
   }
   
   # Callbacks

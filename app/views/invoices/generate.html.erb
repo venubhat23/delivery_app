@@ -16,10 +16,32 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <%= form.label :customer_id, 'Select Customer', class: 'form-label' %>
-                <%= form.select :customer_id, 
-                      options_from_collection_for_select(@customers, :id, :name, params[:customer_id]),
-                      { prompt: 'Choose Customer...' },
-                      { class: 'form-select', required: true, id: 'customer-select' } %>
+                <div class="customer-search-container position-relative">
+                  <input type="text" 
+                         class="form-control customer-search-input" 
+                         id="customer-search-input"
+                         placeholder="Search customers by name..."
+                         autocomplete="off">
+                  <div class="search-icon">
+                    <i class="fas fa-search"></i>
+                  </div>
+                  <%= form.hidden_field :customer_id, id: 'customer-select' %>
+                  <div class="customer-suggestions" id="customer-suggestions" style="display: none;">
+                    <!-- Customer suggestions will be populated here -->
+                  </div>
+                  <div class="customer-loading" id="customer-loading" style="display: none;">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
+                  </div>
+                  <div class="selected-customer" id="selected-customer" style="display: none;">
+                    <div class="selected-customer-info">
+                      <div class="selected-customer-name"></div>
+                      <div class="selected-customer-phone"></div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary clear-customer">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
               
               <div class="col-md-4">
@@ -82,6 +104,136 @@
   </div>
 </div>
 
+<style>
+/* Customer Search Styles for Generate Page */
+.customer-search-container {
+  position: relative;
+}
+
+.customer-search-input {
+  padding-right: 2.5rem !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(102, 126, 234, 0.2) !important;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.customer-search-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.customer-search-container .search-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #667eea;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.customer-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.customer-suggestion-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.customer-suggestion-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.customer-suggestion-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.customer-suggestion-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.customer-suggestion-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.customer-suggestion-phone {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.customer-loading {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 1rem 1.5rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.selected-customer {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selected-customer-info {
+  flex: 1;
+}
+
+.selected-customer-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.selected-customer-phone {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.clear-customer {
+  border-radius: 8px !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+.search-highlight {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const customerSelect = document.getElementById('customer-select');
@@ -91,6 +243,200 @@ document.addEventListener('DOMContentLoaded', function() {
   const generateBtn = document.getElementById('generate-btn');
   const previewSection = document.getElementById('invoice-preview');
   const previewContent = document.getElementById('preview-content');
+  
+  // Customer Search Functionality
+  const customerSearchInput = document.getElementById('customer-search-input');
+  const customerSuggestions = document.getElementById('customer-suggestions');
+  const customerLoading = document.getElementById('customer-loading');
+  const selectedCustomer = document.getElementById('selected-customer');
+  let customerSearchTimeout;
+  let currentCustomerSearchTerm = '';
+  
+  if (customerSearchInput) {
+    // Handle input changes
+    customerSearchInput.addEventListener('input', function() {
+      const query = this.value.trim();
+      currentCustomerSearchTerm = query;
+      
+      clearTimeout(customerSearchTimeout);
+      
+      if (query.length === 0) {
+        hideCustomerSuggestions();
+        clearSelectedCustomer();
+        return;
+      }
+      
+      if (query.length >= 1) {
+        showCustomerLoading();
+        
+        customerSearchTimeout = setTimeout(() => {
+          fetchCustomerSuggestions(query);
+        }, 300);
+      }
+    });
+    
+    // Handle focus
+    customerSearchInput.addEventListener('focus', function() {
+      if (this.value.trim().length >= 1 && !customerSelect.value) {
+        fetchCustomerSuggestions(this.value.trim());
+      }
+    });
+    
+    // Handle blur (with delay to allow clicking suggestions)
+    customerSearchInput.addEventListener('blur', function() {
+      setTimeout(() => {
+        hideCustomerSuggestions();
+      }, 200);
+    });
+    
+    // Handle keyboard navigation
+    customerSearchInput.addEventListener('keydown', function(e) {
+      const suggestions = document.querySelectorAll('.customer-suggestion-item');
+      const activeSuggestion = document.querySelector('.customer-suggestion-item.active');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (activeSuggestion) {
+          activeSuggestion.classList.remove('active');
+          const next = activeSuggestion.nextElementSibling;
+          if (next) {
+            next.classList.add('active');
+          } else {
+            suggestions[0]?.classList.add('active');
+          }
+        } else {
+          suggestions[0]?.classList.add('active');
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (activeSuggestion) {
+          activeSuggestion.classList.remove('active');
+          const prev = activeSuggestion.previousElementSibling;
+          if (prev) {
+            prev.classList.add('active');
+          } else {
+            suggestions[suggestions.length - 1]?.classList.add('active');
+          }
+        } else {
+          suggestions[suggestions.length - 1]?.classList.add('active');
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeSuggestion) {
+          activeSuggestion.click();
+        }
+      } else if (e.key === 'Escape') {
+        hideCustomerSuggestions();
+        this.blur();
+      }
+    });
+  }
+  
+  // Clear customer button
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.clear-customer')) {
+      clearSelectedCustomer();
+    }
+  });
+  
+  function fetchCustomerSuggestions(query) {
+    fetch(`/invoices/search_suggestions?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        hideCustomerLoading();
+        // Filter only customer suggestions
+        const customerSuggestionsList = data.suggestions.filter(s => s.type === 'customer');
+        displayCustomerSuggestions(customerSuggestionsList);
+      })
+      .catch(error => {
+        console.error('Customer search error:', error);
+        hideCustomerLoading();
+      });
+  }
+  
+  function displayCustomerSuggestions(suggestions) {
+    if (suggestions.length === 0) {
+      customerSuggestions.innerHTML = '<div class="customer-suggestion-item">No customers found</div>';
+      customerSuggestions.style.display = 'block';
+      return;
+    }
+    
+    const html = suggestions.map(suggestion => {
+      const highlightedName = highlightSearchTerm(suggestion.label, currentCustomerSearchTerm);
+      
+      return `
+        <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${suggestion.phone || ''}">
+          <div class="customer-suggestion-name">${highlightedName}</div>
+          ${suggestion.phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${suggestion.phone}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+    
+    customerSuggestions.innerHTML = html;
+    customerSuggestions.style.display = 'block';
+    
+    // Add click handlers
+    document.querySelectorAll('.customer-suggestion-item').forEach(item => {
+      if (item.dataset.customerId) {
+        item.addEventListener('click', function() {
+          selectCustomer(
+            this.dataset.customerId,
+            this.dataset.customerName,
+            this.dataset.customerPhone
+          );
+        });
+        
+        item.addEventListener('mouseenter', function() {
+          document.querySelectorAll('.customer-suggestion-item.active').forEach(active => {
+            active.classList.remove('active');
+          });
+          this.classList.add('active');
+        });
+      }
+    });
+  }
+  
+  function selectCustomer(id, name, phone) {
+    customerSelect.value = id;
+    customerSearchInput.style.display = 'none';
+    selectedCustomer.style.display = 'flex';
+    
+    selectedCustomer.querySelector('.selected-customer-name').textContent = name;
+    selectedCustomer.querySelector('.selected-customer-phone').textContent = phone ? phone : 'No phone number';
+    
+    hideCustomerSuggestions();
+    updatePreviewButton();
+  }
+  
+  function clearSelectedCustomer() {
+    customerSelect.value = '';
+    customerSearchInput.value = '';
+    customerSearchInput.style.display = 'block';
+    selectedCustomer.style.display = 'none';
+    hideCustomerSuggestions();
+    updatePreviewButton();
+  }
+  
+  function highlightSearchTerm(text, term) {
+    if (!term) return text;
+    
+    const regex = new RegExp(`(${term})`, 'gi');
+    return text.replace(regex, '<span class="search-highlight">$1</span>');
+  }
+  
+  function showCustomerLoading() {
+    customerLoading.style.display = 'block';
+    customerSuggestions.style.display = 'none';
+  }
+  
+  function hideCustomerLoading() {
+    customerLoading.style.display = 'none';
+  }
+  
+  function hideCustomerSuggestions() {
+    customerSuggestions.style.display = 'none';
+    customerLoading.style.display = 'none';
+  }
 
   function updatePreviewButton() {
     const hasCustomer = customerSelect.value !== '';

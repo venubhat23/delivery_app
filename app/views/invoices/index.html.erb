@@ -97,11 +97,24 @@
                   {},
                   { class: 'form-select' } %>
           </div>
-          <div class="col-md-2">
-            <%= form.text_field :search, 
-                  placeholder: 'Search invoices...',
-                  value: params[:search],
-                  class: 'form-control' %>
+          <div class="col-md-3">
+            <div class="search-container position-relative">
+              <%= form.text_field :search, 
+                    placeholder: 'Search invoices, customers...',
+                    value: params[:search],
+                    class: 'form-control search-input',
+                    autocomplete: 'off',
+                    id: 'live-search-input' %>
+              <div class="search-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <div class="search-suggestions" id="search-suggestions" style="display: none;">
+                <!-- Suggestions will be populated here -->
+              </div>
+              <div class="search-loading" id="search-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin me-2"></i>Searching...
+              </div>
+            </div>
           </div>
           <div class="col-md-1">
             <%= form.submit 'Filter', class: 'btn btn-outline-primary' %>
@@ -906,6 +919,162 @@
   --border-color: #e2e8f0;
 }
 
+/* Enhanced Search Styles */
+.search-container {
+  position: relative;
+}
+
+.search-input {
+  padding-right: 2.5rem !important;
+  border-radius: 25px !important;
+  border: 2px solid rgba(102, 126, 234, 0.2) !important;
+  transition: all 0.3s ease;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.search-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25), 0 8px 25px rgba(102, 126, 234, 0.15) !important;
+  transform: translateY(-1px);
+}
+
+.search-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #667eea;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.search-suggestion-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-suggestion-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  transform: translateX(4px);
+}
+
+.search-suggestion-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 15px 15px;
+}
+
+.search-suggestion-item:first-child {
+  border-radius: 15px 15px 0 0;
+}
+
+.suggestion-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.suggestion-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.suggestion-meta {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.suggestion-type {
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.suggestion-type.customer {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.suggestion-type.invoice {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.search-loading {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 1rem 1.5rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.search-no-results {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Search highlight */
+.search-highlight {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Live search results styling */
+.live-search-active .invoice-row {
+  transition: all 0.4s ease;
+}
+
+.live-search-active .invoice-row.search-match {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-left: 4px solid #667eea;
+  transform: translateX(4px);
+}
+
+.live-search-active .invoice-row.search-no-match {
+  opacity: 0.3;
+  transform: scale(0.98);
+}
+
 /* Responsive Enhancements */
 /* WhatsApp Modal Styles */
 .message-preview-container {
@@ -1022,6 +1191,243 @@ document.addEventListener('DOMContentLoaded', function() {
   const cardView = document.getElementById('cardView');
   const tableContent = document.getElementById('tableViewContent');
   const cardContent = document.getElementById('cardViewContent');
+  
+  // Live Search Functionality
+  const searchInput = document.getElementById('live-search-input');
+  const searchSuggestions = document.getElementById('search-suggestions');
+  const searchLoading = document.getElementById('search-loading');
+  let searchTimeout;
+  let currentSearchTerm = '';
+  
+  if (searchInput) {
+    // Handle input changes
+    searchInput.addEventListener('input', function() {
+      const query = this.value.trim();
+      currentSearchTerm = query;
+      
+      clearTimeout(searchTimeout);
+      
+      if (query.length === 0) {
+        hideSuggestions();
+        clearLiveSearch();
+        return;
+      }
+      
+      if (query.length >= 1) {
+        showLoading();
+        
+        searchTimeout = setTimeout(() => {
+          fetchSuggestions(query);
+          performLiveSearch(query);
+        }, 300);
+      }
+    });
+    
+    // Handle focus
+    searchInput.addEventListener('focus', function() {
+      if (this.value.trim().length >= 1) {
+        fetchSuggestions(this.value.trim());
+      }
+    });
+    
+    // Handle blur (with delay to allow clicking suggestions)
+    searchInput.addEventListener('blur', function() {
+      setTimeout(() => {
+        hideSuggestions();
+      }, 200);
+    });
+    
+    // Handle keyboard navigation
+    searchInput.addEventListener('keydown', function(e) {
+      const suggestions = document.querySelectorAll('.search-suggestion-item');
+      const activeSuggestion = document.querySelector('.search-suggestion-item.active');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (activeSuggestion) {
+          activeSuggestion.classList.remove('active');
+          const next = activeSuggestion.nextElementSibling;
+          if (next) {
+            next.classList.add('active');
+          } else {
+            suggestions[0]?.classList.add('active');
+          }
+        } else {
+          suggestions[0]?.classList.add('active');
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (activeSuggestion) {
+          activeSuggestion.classList.remove('active');
+          const prev = activeSuggestion.previousElementSibling;
+          if (prev) {
+            prev.classList.add('active');
+          } else {
+            suggestions[suggestions.length - 1]?.classList.add('active');
+          }
+        } else {
+          suggestions[suggestions.length - 1]?.classList.add('active');
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeSuggestion) {
+          activeSuggestion.click();
+        } else {
+          // Submit the form
+          this.closest('form').submit();
+        }
+      } else if (e.key === 'Escape') {
+        hideSuggestions();
+        this.blur();
+      }
+    });
+  }
+  
+  function fetchSuggestions(query) {
+    fetch(`/invoices/search_suggestions?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        hideLoading();
+        displaySuggestions(data.suggestions);
+      })
+      .catch(error => {
+        console.error('Search error:', error);
+        hideLoading();
+      });
+  }
+  
+  function displaySuggestions(suggestions) {
+    if (suggestions.length === 0) {
+      searchSuggestions.innerHTML = '<div class="search-no-results">No results found</div>';
+      searchSuggestions.style.display = 'block';
+      return;
+    }
+    
+    const html = suggestions.map(suggestion => {
+      const highlightedLabel = highlightSearchTerm(suggestion.label, currentSearchTerm);
+      
+      if (suggestion.type === 'customer') {
+        return `
+          <div class="search-suggestion-item" data-type="customer" data-value="${suggestion.value}" data-id="${suggestion.id}">
+            <div class="suggestion-main">
+              <div class="suggestion-label">${highlightedLabel}</div>
+              <div class="suggestion-meta">
+                ${suggestion.phone ? `<span><i class="fas fa-phone me-1"></i>${suggestion.phone}</span>` : ''}
+              </div>
+            </div>
+            <div class="suggestion-type customer">Customer</div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="search-suggestion-item" data-type="invoice" data-value="${suggestion.value}" data-id="${suggestion.id}">
+            <div class="suggestion-main">
+              <div class="suggestion-label">${highlightedLabel}</div>
+              <div class="suggestion-meta">
+                <span><i class="fas fa-user me-1"></i>${suggestion.customer_name}</span>
+                <span><i class="fas fa-rupee-sign me-1"></i>${Number(suggestion.amount).toLocaleString()}</span>
+              </div>
+            </div>
+            <div class="suggestion-type invoice">Invoice</div>
+          </div>
+        `;
+      }
+    }).join('');
+    
+    searchSuggestions.innerHTML = html;
+    searchSuggestions.style.display = 'block';
+    
+    // Add click handlers
+    document.querySelectorAll('.search-suggestion-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const value = this.dataset.value;
+        const type = this.dataset.type;
+        
+        searchInput.value = value;
+        hideSuggestions();
+        
+        if (type === 'invoice') {
+          // Navigate to the specific invoice
+          const invoiceId = this.dataset.id;
+          window.location.href = `/invoices/${invoiceId}`;
+        } else {
+          // Filter by customer
+          performLiveSearch(value);
+          // Update the form and submit
+          searchInput.closest('form').submit();
+        }
+      });
+      
+      item.addEventListener('mouseenter', function() {
+        document.querySelectorAll('.search-suggestion-item.active').forEach(active => {
+          active.classList.remove('active');
+        });
+        this.classList.add('active');
+      });
+    });
+  }
+  
+  function performLiveSearch(query) {
+    const rows = document.querySelectorAll('.invoice-row');
+    const tableBody = document.querySelector('tbody');
+    
+    if (!tableBody) return;
+    
+    tableBody.classList.add('live-search-active');
+    
+    rows.forEach(row => {
+      const invoiceNumber = row.querySelector('td:first-child .text-primary')?.textContent?.toLowerCase() || '';
+      const customerName = row.querySelector('.customer-info strong')?.textContent?.toLowerCase() || '';
+      const customerPhone = row.querySelector('.customer-info .text-muted')?.textContent?.toLowerCase() || '';
+      
+      const searchTerm = query.toLowerCase();
+      const matches = invoiceNumber.includes(searchTerm) || 
+                     customerName.includes(searchTerm) || 
+                     customerPhone.includes(searchTerm);
+      
+      if (matches) {
+        row.classList.add('search-match');
+        row.classList.remove('search-no-match');
+      } else {
+        row.classList.add('search-no-match');
+        row.classList.remove('search-match');
+      }
+    });
+  }
+  
+  function clearLiveSearch() {
+    const rows = document.querySelectorAll('.invoice-row');
+    const tableBody = document.querySelector('tbody');
+    
+    if (tableBody) {
+      tableBody.classList.remove('live-search-active');
+    }
+    
+    rows.forEach(row => {
+      row.classList.remove('search-match', 'search-no-match');
+    });
+  }
+  
+  function highlightSearchTerm(text, term) {
+    if (!term) return text;
+    
+    const regex = new RegExp(`(${term})`, 'gi');
+    return text.replace(regex, '<span class="search-highlight">$1</span>');
+  }
+  
+  function showLoading() {
+    searchLoading.style.display = 'block';
+    searchSuggestions.style.display = 'none';
+  }
+  
+  function hideLoading() {
+    searchLoading.style.display = 'none';
+  }
+  
+  function hideSuggestions() {
+    searchSuggestions.style.display = 'none';
+    searchLoading.style.display = 'none';
+  }
   
   if (tableView && cardView) {
     tableView.addEventListener('click', function() {
