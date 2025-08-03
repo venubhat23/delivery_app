@@ -108,9 +108,23 @@ end
   def generate_monthly_for_all
     month = params[:month]&.to_i || Date.current.month
     year = params[:year]&.to_i || Date.current.year
+    delivery_person_id = params[:delivery_person_id]
+    customer_ids = params[:customer_ids]
     
     begin
-      results = Invoice.generate_monthly_invoices_for_all_customers(month, year)
+      # Determine which customers to process
+      if customer_ids.present? && !customer_ids.include?('all')
+        # Specific customers selected
+        selected_customer_ids = customer_ids.reject { |id| id == 'all' }
+        results = Invoice.generate_monthly_invoices_for_selected_customers(selected_customer_ids, month, year)
+      elsif delivery_person_id.present? && delivery_person_id != 'all'
+        # Specific delivery person selected
+        results = Invoice.generate_monthly_invoices_for_delivery_person(delivery_person_id, month, year)
+      else
+        # All customers (default behavior)
+        results = Invoice.generate_monthly_invoices_for_all_customers(month, year)
+      end
+      
       success_count = 0
       failure_count = 0
       errors = []

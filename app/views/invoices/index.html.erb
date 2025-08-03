@@ -1651,11 +1651,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Generate Monthly for All Modal -->
 <div class="modal fade" id="generateMonthlyModal" tabindex="-1" aria-labelledby="generateMonthlyModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="generateMonthlyModalLabel">
-          <i class="fas fa-calendar me-2"></i>Generate Monthly Invoices for All Customers
+          <i class="fas fa-calendar me-2"></i>Generate Monthly Invoices
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -1679,9 +1679,44 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
           </div>
           
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <%= form.label :delivery_person_id, 'Delivery Person', class: 'form-label' %>
+              <div class="position-relative">
+                <%= form.select :delivery_person_id,
+                      options_for_select([['All Delivery Persons', 'all']] + User.delivery_people.map { |dp| [dp.name, dp.id] }),
+                      {},
+                      { 
+                        class: 'form-select delivery-person-select', 
+                        id: 'modal-delivery-person-select',
+                        data: { 
+                          search: 'true',
+                          placeholder: 'Search delivery persons...'
+                        }
+                      } %>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <%= form.label :customer_ids, 'Customers', class: 'form-label' %>
+              <div class="position-relative">
+                <select name="customer_ids[]" multiple class="form-select customer-select" id="modal-customer-select" 
+                        data-search="true" data-placeholder="Search customers..." style="height: 120px;">
+                  <option value="all" selected>All Customers</option>
+                  <% Customer.includes(:delivery_person).order(:name).each do |customer| %>
+                    <option value="<%= customer.id %>" data-delivery-person="<%= customer.delivery_person_id %>">
+                      <%= customer.name %> (<%= customer.delivery_person&.name || 'No Delivery Person' %>)
+                    </option>
+                  <% end %>
+                </select>
+              </div>
+              <small class="text-muted">Hold Ctrl/Cmd to select multiple customers</small>
+            </div>
+          </div>
+          
           <div class="alert alert-info mt-3">
             <i class="fas fa-info-circle me-2"></i>
-            This will generate invoices for all customers with completed deliveries for the selected month and year, and send WhatsApp notifications.
+            This will generate invoices for the selected customers with completed deliveries for the selected month and year, and send WhatsApp notifications.
           </div>
         </div>
         <div class="modal-footer">
@@ -1690,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 class: 'btn btn-primary', 
                 id: 'modal-generate-btn',
                 data: { 
-                  confirm: 'Are you sure you want to generate invoices for all customers for the selected month and year?',
+                  confirm: 'Are you sure you want to generate invoices for the selected criteria?',
                   disable_with: 'Generating...'
                 } %>
         </div>
@@ -1698,6 +1733,204 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+<style>
+  /* Enhanced styling for the monthly invoice generation modal */
+  #generateMonthlyModal .modal-dialog {
+    max-width: 800px;
+  }
+  
+  .customer-select {
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .customer-select option {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .customer-select option:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .customer-select option:checked {
+    background-color: #0d6efd;
+    color: white;
+  }
+  
+  /* Search input styling */
+  #delivery-person-search,
+  #customer-search {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    font-size: 0.9rem;
+  }
+  
+  #delivery-person-search:focus,
+  #customer-search:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  /* Dropdown styling improvements */
+  .delivery-person-select,
+  .customer-select {
+    border-radius: 6px;
+  }
+  
+  /* Hide options that don't match search */
+  .delivery-person-select option[style*="display: none"],
+  .customer-select option[style*="display: none"] {
+    display: none !important;
+  }
+  
+  /* Modal body spacing */
+  #generateMonthlyModal .modal-body .row + .row {
+    margin-top: 1rem;
+  }
+  
+  /* Alert styling */
+  #generateMonthlyModal .alert-info {
+    background-color: #e7f3ff;
+    border-color: #b8daff;
+    color: #004085;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const deliveryPersonSelect = document.getElementById('modal-delivery-person-select');
+  const customerSelect = document.getElementById('modal-customer-select');
+  
+  // Store original customer options
+  const originalCustomerOptions = Array.from(customerSelect.options);
+  
+  // Add search functionality to delivery person dropdown
+  function addSearchToDeliveryPerson() {
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'form-control mb-2';
+    searchInput.placeholder = 'Search delivery persons...';
+    searchInput.id = 'delivery-person-search';
+    
+    deliveryPersonSelect.parentNode.insertBefore(searchInput, deliveryPersonSelect);
+    
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const options = deliveryPersonSelect.options;
+      
+      for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        const text = option.text.toLowerCase();
+        option.style.display = text.includes(searchTerm) ? '' : 'none';
+      }
+    });
+  }
+  
+  // Add search functionality to customer dropdown
+  function addSearchToCustomer() {
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'form-control mb-2';
+    searchInput.placeholder = 'Search customers...';
+    searchInput.id = 'customer-search';
+    
+    customerSelect.parentNode.insertBefore(searchInput, customerSelect);
+    
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const options = customerSelect.options;
+      
+      for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        const text = option.text.toLowerCase();
+        option.style.display = text.includes(searchTerm) ? '' : 'none';
+      }
+    });
+  }
+  
+  // Filter customers based on selected delivery person
+  function filterCustomersByDeliveryPerson() {
+    const selectedDeliveryPersonId = deliveryPersonSelect.value;
+    
+    // Clear current options except "All Customers"
+    customerSelect.innerHTML = '<option value="all" selected>All Customers</option>';
+    
+    // Filter and add relevant customers
+    originalCustomerOptions.forEach(option => {
+      if (option.value === 'all') return; // Skip the "All Customers" option
+      
+      const customerDeliveryPersonId = option.getAttribute('data-delivery-person');
+      
+      if (selectedDeliveryPersonId === 'all' || 
+          selectedDeliveryPersonId === customerDeliveryPersonId) {
+        customerSelect.appendChild(option.cloneNode(true));
+      }
+    });
+  }
+  
+  // Handle delivery person selection change
+  deliveryPersonSelect.addEventListener('change', function() {
+    filterCustomersByDeliveryPerson();
+    
+    // Clear customer search when delivery person changes
+    const customerSearchInput = document.getElementById('customer-search');
+    if (customerSearchInput) {
+      customerSearchInput.value = '';
+    }
+  });
+  
+  // Handle customer selection
+  customerSelect.addEventListener('change', function() {
+    const allOption = customerSelect.querySelector('option[value="all"]');
+    const otherOptions = Array.from(customerSelect.options).filter(opt => opt.value !== 'all');
+    
+    // If "All Customers" is selected, deselect others
+    if (allOption && allOption.selected && customerSelect.selectedOptions.length > 1) {
+      otherOptions.forEach(opt => opt.selected = false);
+    }
+    
+    // If any specific customer is selected, deselect "All Customers"
+    if (otherOptions.some(opt => opt.selected) && allOption) {
+      allOption.selected = false;
+    }
+    
+    // If nothing is selected, select "All Customers"
+    if (customerSelect.selectedOptions.length === 0 && allOption) {
+      allOption.selected = true;
+    }
+  });
+  
+  // Initialize search functionality when modal opens
+  document.getElementById('generateMonthlyModal').addEventListener('shown.bs.modal', function() {
+    // Remove existing search inputs if any
+    const existingDeliverySearch = document.getElementById('delivery-person-search');
+    const existingCustomerSearch = document.getElementById('customer-search');
+    
+    if (existingDeliverySearch) existingDeliverySearch.remove();
+    if (existingCustomerSearch) existingCustomerSearch.remove();
+    
+    // Add search functionality
+    addSearchToDeliveryPerson();
+    addSearchToCustomer();
+    
+    // Reset selections
+    deliveryPersonSelect.value = 'all';
+    filterCustomersByDeliveryPerson();
+  });
+  
+  // Clean up when modal closes
+  document.getElementById('generateMonthlyModal').addEventListener('hidden.bs.modal', function() {
+    const deliverySearch = document.getElementById('delivery-person-search');
+    const customerSearch = document.getElementById('customer-search');
+    
+    if (deliverySearch) deliverySearch.remove();
+    if (customerSearch) customerSearch.remove();
+  });
+});
+</script>
 
 <!-- Share Invoice via WhatsApp Modal -->
 <div class="modal fade" id="shareWhatsAppModal" tabindex="-1" aria-labelledby="shareWhatsAppModalLabel" aria-hidden="true">

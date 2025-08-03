@@ -211,6 +211,54 @@ def self.generate_invoice_number(type = 'manual')
     results
   end
 
+  def self.generate_monthly_invoices_for_delivery_person(delivery_person_id, month = Date.current.month, year = Date.current.year)
+    results = []
+    customers_with_deliveries = Customer.joins(:delivery_assignments)
+                                      .where(
+                                        delivery_person_id: delivery_person_id,
+                                        delivery_assignments: { 
+                                          status: 'completed',
+                                          completed_at: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
+                                          invoice_generated: false
+                                        }
+                                      )
+                                      .distinct
+    
+    customers_with_deliveries.each do |customer|
+      result = generate_invoice_for_customer_month(customer.id, month, year)
+      results << {
+        customer: customer,
+        result: result
+      }
+    end
+    
+    results
+  end
+
+  def self.generate_monthly_invoices_for_selected_customers(customer_ids, month = Date.current.month, year = Date.current.year)
+    results = []
+    customers_with_deliveries = Customer.joins(:delivery_assignments)
+                                      .where(
+                                        id: customer_ids,
+                                        delivery_assignments: { 
+                                          status: 'completed',
+                                          completed_at: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
+                                          invoice_generated: false
+                                        }
+                                      )
+                                      .distinct
+    
+    customers_with_deliveries.each do |customer|
+      result = generate_invoice_for_customer_month(customer.id, month, year)
+      results << {
+        customer: customer,
+        result: result
+      }
+    end
+    
+    results
+  end
+
  def generate_invoice_number
     self.invoice_number = self.class.generate_invoice_number(invoice_type)
   end
