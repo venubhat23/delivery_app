@@ -150,6 +150,7 @@ Rails.application.routes.draw do
   resources :schedules, only: [:index] do
     collection do
       post :create_schedule
+      post :import_last_month
     end
   end
   
