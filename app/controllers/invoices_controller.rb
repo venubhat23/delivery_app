@@ -1,6 +1,6 @@
 # app/controllers/invoices_controller.rb
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :share_whatsapp]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :convert_to_completed, :share_whatsapp]
   before_action :set_customers, only: [:index, :new, :create, :generate]
   skip_before_action :require_login, only: [:public_view, :public_download_pdf]
   
@@ -291,6 +291,11 @@ end
     @invoice = Invoice.find(params[:id])
     @invoice.update(status: 'paid', paid_at: Time.current)
     redirect_to invoices_path, notice: 'Invoice marked as paid.'
+  end
+  
+  def convert_to_completed
+    @invoice.update(status: 'paid', paid_at: Time.current)
+    redirect_to invoices_path, notice: 'Invoice converted to completed successfully.'
   end
   
   # WhatsApp sharing action

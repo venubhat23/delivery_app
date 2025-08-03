@@ -164,6 +164,7 @@ Rails.application.routes.draw do
   resources :invoices do
     member do
       patch :mark_as_paid
+      patch :convert_to_completed
       post :share_whatsapp
     end
     
