@@ -261,12 +261,12 @@
                       <i class="fab fa-whatsapp"></i>
                     </button>
                     <% if invoice.status != 'paid' %>
-                      <%= button_to mark_as_paid_invoice_path(invoice), 
+                      <%= button_to convert_to_completed_invoice_path(invoice), 
                             method: :patch, 
                             class: 'btn btn-sm btn-outline-success', 
-                            data: { confirm: 'Are you sure you want to mark this invoice as paid?' }, 
-                            title: 'Mark as Paid' do %>
-                        <i class="fas fa-check-circle"></i>
+                            data: { confirm: 'Are you sure you want to convert this invoice to completed?' }, 
+                            title: 'Convert to Completed' do %>
+                        <i class="fas fa-check-double"></i>
                       <% end %>
                     <% end %>
                   </div>
@@ -341,11 +341,11 @@
                       <i class="fab fa-whatsapp me-1"></i>WhatsApp
                     </button>
                     <% if invoice.status != 'paid' %>
-                      <%= button_to mark_as_paid_invoice_path(invoice), 
+                      <%= button_to convert_to_completed_invoice_path(invoice), 
                             method: :patch, 
                             class: 'btn btn-sm btn-outline-success', 
-                            data: { confirm: 'Mark as paid?' } do %>
-                        <i class="fas fa-check me-1"></i>Paid
+                            data: { confirm: 'Convert to completed?' } do %>
+                        <i class="fas fa-check-double me-1"></i>Complete
                       <% end %>
                     <% end %>
                   </div>
