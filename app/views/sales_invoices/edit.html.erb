@@ -31,20 +31,22 @@
                     <div class="mb-3">
                       <%= form.label :customer_id, 'Customer', class: 'form-label' %>
                       <div class="input-group">
-                        <select class="form-select customer-select" id="customer_select" name="sales_invoice[customer_id]">
-                          <option value="">Select or type customer name...</option>
-                          <% @customers.each do |customer| %>
-                            <option value="<%= customer.id %>" 
-                                    data-name="<%= customer.name %>"
-                                    data-address="<%= customer.address %>"
-                                    data-phone="<%= customer.phone_number %>"
-                                    data-email="<%= customer.email %>"
-                                    data-gst="<%= customer.gst_number %>"
-                                    <%= 'selected' if @sales_invoice.customer_id == customer.id %>>
-                              <%= customer.name %> - <%= customer.phone_number %>
-                            </option>
-                          <% end %>
-                        </select>
+                        <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)..." class="flex-grow-1">
+                          <select class="form-select customer-select" id="customer_select" name="sales_invoice[customer_id]" data-searchable-select-target="select">
+                            <option value="">Search and select customer...</option>
+                            <% @customers.each do |customer| %>
+                              <option value="<%= customer.id %>" 
+                                      data-name="<%= customer.name %>"
+                                      data-address="<%= customer.address %>"
+                                      data-phone="<%= customer.phone_number %>"
+                                      data-email="<%= customer.email %>"
+                                      data-gst="<%= customer.gst_number %>"
+                                      <%= 'selected' if @sales_invoice.customer_id == customer.id %>>
+                                <%= customer.name %> - <%= customer.phone_number %>
+                              </option>
+                            <% end %>
+                          </select>
+                        </div>
                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
                           <i class="fas fa-plus"></i>
                         </button>

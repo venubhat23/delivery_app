@@ -27,10 +27,12 @@
         <%= form.label :color, class: "form-label fw-bold" do %>
           <i class="fas fa-palette me-1"></i>Category Color *
         <% end %>
-        <%= form.select :color, 
-            options_for_select(Category.colors_for_select, category.color), 
-            { prompt: 'Select a color' }, 
-            { class: "form-select", required: true, id: "category_color_select" } %>
+        <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search colors...">
+          <%= form.select :color, 
+              options_for_select(Category.colors_for_select, category.color), 
+              { prompt: 'Search and select color' }, 
+              { class: "form-select", required: true, id: "category_color_select", data: { "searchable-select-target" => "select" } } %>
+        </div>
         <div class="invalid-feedback">
           Please select a color.
         </div>

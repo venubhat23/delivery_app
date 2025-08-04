@@ -11,21 +11,14 @@ Rails.application.routes.draw do
 
   # API routes for searchable dropdowns
   namespace :api do
-    resources :customers, only: [:index] do
-      collection do
-        get :search
-      end
-    end
-    resources :products, only: [:index] do
-      collection do
-        get :search
-      end
-    end
-    resources :delivery_people, only: [:index] do
-      collection do
-        get :search
-      end
-    end
+    get 'customers/search', to: 'customers#search'
+    get 'sales_customers/search', to: 'sales_customers#search'
+    get 'products/search', to: 'products#search'
+    get 'sales_products/search', to: 'sales_products#search'
+    get 'users/search', to: 'users#search'
+    get 'delivery_people/search', to: 'users#search_delivery_people'
+    get 'categories/search', to: 'categories#search'
+    get 'parties/search', to: 'parties#search'
   end
   
   # Main application routes with full CRUD

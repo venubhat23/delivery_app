@@ -1,22 +1,25 @@
-class Api::CustomersController < ApplicationController
-  before_action :require_login
-
+class Api::CustomersController < Api::BaseController
   def search
-    @customers = Customer.where("name ILIKE ?", "%#{params[:q]}%")
-                        .limit(20)
-                        .order(:name)
-
-    render json: {
-      results: @customers.map do |customer|
-        {
-          id: customer.id,
-          text: "#{customer.name} - #{customer.phone}",
-          name: customer.name,
-          phone: customer.phone,
-          address: customer.address
-        }
-      end
+    search_term = params[:q]
+    page = params[:page]&.to_i || 1
+    
+    options = {
+      search_fields: [:name, :phone_number, :email],
+      display_method: ->(customer) { "#{customer.name} - #{customer.phone_number}" },
+      scope: :active,
+      per_page: 20
     }
+    
+    results = if page > 1
+      paginated_search_results(Customer, search_term, page, options)
+    else
+      {
+        results: search_results(Customer, search_term, options),
+        pagination: { more: false }
+      }
+    end
+    
+    render json: results
   end
 
   def index

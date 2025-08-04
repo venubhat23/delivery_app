@@ -1,35 +1,131 @@
 module ApplicationHelper
   # Existing helper methods...
 
-  # Enhanced form helpers for searchable dropdowns and date pickers
-  def searchable_select(form, field, options, html_options = {})
-    searchable_options = {
-      url: html_options.delete(:search_url),
-      placeholder: html_options.delete(:placeholder) || "Select an option...",
-      allow_clear: html_options.delete(:allow_clear) != false,
-      minimum_input_length: html_options.delete(:minimum_input_length) || 0
-    }
+  # Enhanced searchable select helper
+  def searchable_select(form, attribute, options_collection, selected_value = nil, html_options = {})
+    # Extract search configuration
+    search_config = html_options.delete(:search) || {}
+    search_type = search_config[:type] || 'local' # 'local' or 'ajax'
+    ajax_url = search_config[:url]
+    placeholder = search_config[:placeholder] || "Search #{attribute.to_s.humanize.downcase}..."
+    allow_clear = search_config.fetch(:allow_clear, true)
+    minimum_input_length = search_config[:minimum_input_length] || (search_type == 'ajax' ? 1 : 0)
 
-    # Remove nil values from searchable_options
-    searchable_options.compact!
-
-    # Build data attributes for Stimulus controller
-    data_attributes = {
-      controller: "searchable-select",
-      "searchable-select-placeholder-value" => searchable_options[:placeholder],
-      "searchable-select-allow-clear-value" => searchable_options[:allow_clear]
-    }
-
-    data_attributes["searchable-select-url-value"] = searchable_options[:url] if searchable_options[:url]
-    data_attributes["searchable-select-minimum-input-length-value"] = searchable_options[:minimum_input_length] if searchable_options[:minimum_input_length] > 0
-
-    # Merge with existing data attributes
+    # Prepare HTML options
+    html_options[:class] = "#{html_options[:class]} form-select".strip
     html_options[:data] ||= {}
-    html_options[:data].merge!("searchable-select-target" => "select")
+    html_options[:data].merge!(
+      controller: 'searchable-select',
+      'searchable-select-search-type-value': search_type,
+      'searchable-select-placeholder-value': placeholder,
+      'searchable-select-allow-clear-value': allow_clear,
+      'searchable-select-minimum-input-length-value': minimum_input_length,
+      'searchable-select-target': 'select'
+    )
 
-    content_tag :div, data: data_attributes do
-      form.select(field, options, {}, html_options)
+    # Add AJAX URL if provided
+    if search_type == 'ajax' && ajax_url
+      html_options[:data]['searchable-select-url-value'] = ajax_url
     end
+
+    # Generate the select field
+    if form
+      form.select(attribute, options_collection, { selected: selected_value }, html_options)
+    else
+      select_tag(attribute, options_from_collection_for_select(options_collection, :id, :name, selected_value), html_options)
+    end
+  end
+
+  # Helper for customer dropdown with search
+  def searchable_customer_select(form, attribute = :customer_id, selected_value = nil, html_options = {})
+    customers = Customer.active.order(:name)
+    options = options_from_collection_for_select(customers, :id, :name, selected_value)
+    
+    search_config = {
+      type: 'local',
+      placeholder: 'Search customers (e.g., "pr" for Pramod, Pradeep)...',
+      allow_clear: true
+    }
+    
+    html_options[:search] = search_config
+    searchable_select(form, attribute, options, selected_value, html_options)
+  end
+
+  # Helper for product dropdown with search
+  def searchable_product_select(form, attribute = :product_id, selected_value = nil, html_options = {})
+    products = Product.active.order(:name)
+    options = options_from_collection_for_select(products, :id, ->(p) { "#{p.name} - Rs#{p.price}" }, selected_value)
+    
+    search_config = {
+      type: 'local',
+      placeholder: 'Search products...',
+      allow_clear: true
+    }
+    
+    html_options[:search] = search_config
+    searchable_select(form, attribute, options, selected_value, html_options)
+  end
+
+  # Helper for sales product dropdown with search
+  def searchable_sales_product_select(form, attribute = :sales_product_id, selected_value = nil, html_options = {})
+    sales_products = SalesProduct.active.order(:name)
+    options = options_from_collection_for_select(sales_products, :id, ->(p) { "#{p.name} - Rs#{p.price}" }, selected_value)
+    
+    search_config = {
+      type: 'local',
+      placeholder: 'Search sales products...',
+      allow_clear: true
+    }
+    
+    html_options[:search] = search_config
+    searchable_select(form, attribute, options, selected_value, html_options)
+  end
+
+  # Helper for user/delivery person dropdown with search
+  def searchable_user_select(form, attribute = :user_id, role = nil, selected_value = nil, html_options = {})
+    users = User.active
+    users = users.where(role: role) if role
+    users = users.order(:name)
+    options = options_from_collection_for_select(users, :id, :name, selected_value)
+    
+    search_config = {
+      type: 'local',
+      placeholder: "Search #{role || 'users'}...",
+      allow_clear: true
+    }
+    
+    html_options[:search] = search_config
+    searchable_select(form, attribute, options, selected_value, html_options)
+  end
+
+  # Helper for category dropdown with search
+  def searchable_category_select(form, attribute = :category_id, selected_value = nil, html_options = {})
+    categories = Category.active.order(:name)
+    options = options_from_collection_for_select(categories, :id, :name, selected_value)
+    
+    search_config = {
+      type: 'local',
+      placeholder: 'Search categories...',
+      allow_clear: true
+    }
+    
+    html_options[:search] = search_config
+    searchable_select(form, attribute, options, selected_value, html_options)
+  end
+
+  # Helper for any model dropdown with search
+  def searchable_model_select(form, attribute, model_class, display_method = :name, selected_value = nil, html_options = {})
+    records = model_class.respond_to?(:active) ? model_class.active.order(display_method) : model_class.order(display_method)
+    options = options_from_collection_for_select(records, :id, display_method, selected_value)
+    
+    search_config = {
+      type: 'local',
+      placeholder: "Search #{model_class.name.downcase.pluralize}...",
+      allow_clear: true
+    }
+    
+    html_options[:search] = search_config
+    searchable_select(form, attribute, options, selected_value, html_options)
   end
 
   def enhanced_date_picker(form, field, html_options = {})
