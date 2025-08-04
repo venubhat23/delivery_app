@@ -153,13 +153,18 @@ class DeliveryAssignmentsController < ApplicationController
       da_params[:user_id] = da_params[:delivery_person_id]
     end
 
+    # Convert delivery_date to scheduled_date since delivery_date is just an alias method
+    if da_params[:delivery_date].present?
+      da_params[:scheduled_date] = da_params[:delivery_date]
+      da_params.delete(:delivery_date)
+    end
+
     da_params
   end
 
   def create_single_delivery
     @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params.except(:start_date, :end_date, :frequency))
     @delivery_assignment.status = 'pending' if @delivery_assignment.status.blank?
-    @delivery_assignment.scheduled_date = @delivery_assignment.delivery_date # alias for consistency
 
     if @delivery_assignment.save
       redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully created.'
