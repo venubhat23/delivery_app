@@ -187,12 +187,6 @@ export default class extends Controller {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      // Check if start date is in the past
-      if (start < today) {
-        this.showValidationError('Start date cannot be in the past')
-        return false
-      }
-
       // Check if end date is before start date
       if (end < start) {
         this.showValidationError('End date must be after start date')
