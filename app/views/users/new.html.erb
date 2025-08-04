@@ -714,12 +714,14 @@
                 </div>
                 
                 <div class="form-group">
-                    <%= form.select :role, options_for_select([
+                    <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search roles...">
+                <%= form.select :role, options_for_select([
                         ['Admin', 'admin'],
                         ['Delivery Person', 'delivery_person'],
                         ['User', 'user']
-                    ], @user.role), { prompt: '' }, { class: "form-control role-select", id: "role", required: true } %>
+                    ], @user.role), { prompt: 'Search and select role' }, { class: "form-control role-select", id: "role", required: true, data: { "searchable-select-target" => "select" } } %>
                     <label for="role" class="form-label">Select Role</label>
+                  </div>
                 </div>
             </div>
 

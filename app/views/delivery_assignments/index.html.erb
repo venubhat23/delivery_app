@@ -105,19 +105,23 @@
           </div>
           <div class="col-md-3">
             <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
-              <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
-                              { include_blank: false },
-                              { class: "form-select", onchange: "this.form.submit();" } %>
+              <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search statuses..." class="w-100">
+                <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
+                                { include_blank: false },
+                                { class: "form-select", onchange: "this.form.submit();", data: { "searchable-select-target" => "select" } } %>
+              </div>
               <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
               <%= form.hidden_field :date, value: params[:date] %>
             <% end %>
           </div>
           <div class="col-md-3">
             <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
-              <%= form.select :delivery_person_id,
-                              options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
-                              { include_blank: false },
-                              { class: "form-select", onchange: "this.form.submit();" } %>
+              <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search delivery people..." class="w-100">
+                <%= form.select :delivery_person_id,
+                                options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
+                                { include_blank: false },
+                                { class: "form-select", onchange: "this.form.submit();", data: { "searchable-select-target" => "select" } } %>
+              </div>
               <%= form.hidden_field :status, value: params[:status] %>
               <%= form.hidden_field :date, value: params[:date] %>
             <% end %>
