@@ -63,7 +63,7 @@
           </div>
 
           <!-- Customer Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_customers_path %>" data-searchable-select-placeholder-value="Search customers...">
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_customers_search_path %>" data-searchable-select-placeholder-value="Search customers...">
             <%= form.label :customer_id, class: "form-label" %>
             <%= form.select :customer_id, 
                 options_for_select([['Select Customer', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
@@ -75,7 +75,7 @@
           </div>
 
           <!-- Delivery Person Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_delivery_people_path %>" data-searchable-select-placeholder-value="Search delivery people...">
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_delivery_people_search_path %>" data-searchable-select-placeholder-value="Search delivery people...">
             <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
             <%= form.select :delivery_person_id, 
                 options_for_select([['Select Delivery Person', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, @delivery_assignment.user_id), 
@@ -87,7 +87,7 @@
           </div>
 
           <!-- Product Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_products_path %>" data-searchable-select-placeholder-value="Search products...">
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_products_search_path %>" data-searchable-select-placeholder-value="Search products...">
             <%= form.label :product_id, class: "form-label" %>
             <%= form.select :product_id, 
                 options_for_select([['Select Product', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
