@@ -104,7 +104,7 @@
           </div>
 
           <!-- Single Delivery Date Field -->
-          <div class="col-md-6" data-delivery-assignment-form-target="singleDateField" style="display: none;" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
+          <div class="col-md-6" data-delivery-assignment-form-target="singleDateField" style="display: none;" data-controller="date-picker">
             <%= form.label :delivery_date, "Delivery Date", class: "form-label" %>
             <%= form.date_field :delivery_date, 
                 class: "form-control", 
@@ -120,11 +120,10 @@
                     <i class="fas fa-calendar-week me-2"></i>Schedule Configuration
                   </h6>
                   <div class="row g-3">
-                    <div class="col-md-4" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
+                    <div class="col-md-4" data-controller="date-picker">
                       <%= form.label :start_date, "Start Date", class: "form-label" %>
                       <%= form.date_field :start_date, 
                           class: "form-control", 
-                          min: Date.current, 
                           required: true,
                           data: { 
                             "date-picker-target" => "input",
@@ -133,11 +132,10 @@
                           } %>
                     </div>
 
-                    <div class="col-md-4" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
+                    <div class="col-md-4" data-controller="date-picker">
                       <%= form.label :end_date, "End Date", class: "form-label" %>
                       <%= form.date_field :end_date, 
                           class: "form-control", 
-                          min: Date.current, 
                           required: true,
                           data: { 
                             "date-picker-target" => "input",

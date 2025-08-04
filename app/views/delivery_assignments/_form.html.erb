@@ -58,7 +58,7 @@
           </div>
 
           <!-- Enhanced Date Picker -->
-          <div class="col-md-6" data-controller="date-picker" data-date-picker-min-date-value="<%= Date.current %>">
+          <div class="col-md-6" data-controller="date-picker">
             <%= form.label :scheduled_date, "Delivery Date", class: "form-label" %>
             <%= form.date_field :scheduled_date, 
                 class: "form-control", 
