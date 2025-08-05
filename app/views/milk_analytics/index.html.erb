@@ -1,0 +1,444 @@
+<% content_for :title, "Milk Supply & Analytics Dashboard" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-glass-milk text-primary me-2"></i>
+        Milk Supply & Analytics
+      </h1>
+      <p class="text-muted mb-0">Comprehensive milk procurement and delivery analytics</p>
+    </div>
+    
+    <div class="d-flex gap-2">
+      <!-- Date Range Filter -->
+      <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fas fa-calendar me-1"></i>
+          <%= @date_range.capitalize %>
+        </button>
+        <ul class="dropdown-menu">
+          <li><%= link_to "Week", milk_analytics_path(date_range: 'week'), class: "dropdown-item #{'active' if @date_range == 'week'}" %></li>
+          <li><%= link_to "Month", milk_analytics_path(date_range: 'month'), class: "dropdown-item #{'active' if @date_range == 'month'}" %></li>
+          <li><%= link_to "Quarter", milk_analytics_path(date_range: 'quarter'), class: "dropdown-item #{'active' if @date_range == 'quarter'}" %></li>
+          <li><%= link_to "Year", milk_analytics_path(date_range: 'year'), class: "dropdown-item #{'active' if @date_range == 'year'}" %></li>
+        </ul>
+      </div>
+      
+      <!-- Action Buttons -->
+      <%= link_to new_procurement_schedule_path, class: "btn btn-primary" do %>
+        <i class="fas fa-plus me-1"></i>
+        New Milk Purchase
+      <% end %>
+    </div>
+  </div>
+
+  <!-- KPI Cards Row -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Total Milk Purchased
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= number_with_delimiter(@kpis[:total_milk_purchased]) %> L
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-glass-milk fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Gross Profit
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                ₹<%= number_with_delimiter(@kpis[:gross_profit].round(2)) %>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Completion Rate
+              </div>
+              <div class="row no-gutters align-items-center">
+                <div class="col-auto">
+                  <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                    <%= @kpis[:completion_rate] %>%
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="progress progress-sm mr-2">
+                    <div class="progress-bar bg-info" role="progressbar" 
+                         style="width: <%= @kpis[:completion_rate] %>%" 
+                         aria-valuenow="<%= @kpis[:completion_rate] %>" 
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Active Vendors
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= @kpis[:active_vendors] %>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-users fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row mb-4">
+    <!-- Daily Procurement Chart -->
+    <div class="col-xl-8 col-lg-7">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Daily Procurement Overview</h6>
+        </div>
+        <div class="card-body">
+          <div class="chart-area">
+            <canvas id="dailyProcurementChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vendor Distribution Chart -->
+    <div class="col-xl-4 col-lg-5">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Vendor Distribution</h6>
+        </div>
+        <div class="card-body">
+          <div class="chart-pie pt-4 pb-2">
+            <canvas id="vendorDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Milk Comparison and Vendor Performance Row -->
+  <div class="row mb-4">
+    <!-- Milk Purchase vs Delivery Comparison -->
+    <div class="col-xl-6 col-lg-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Milk Purchase vs Delivery</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6 text-center">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Purchased</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= number_with_delimiter(@milk_comparison[:purchased]) %> L
+              </div>
+            </div>
+            <div class="col-6 text-center">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Delivered</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= number_with_delimiter(@milk_comparison[:delivered]) %> L
+              </div>
+            </div>
+          </div>
+          <hr>
+          <div class="row">
+            <div class="col-6 text-center">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Remaining</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= number_with_delimiter(@milk_comparison[:remaining]) %> L
+              </div>
+            </div>
+            <div class="col-6 text-center">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Utilization</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= @milk_comparison[:utilization_rate] %>%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vendor Performance -->
+    <div class="col-xl-6 col-lg-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Top Vendor Performance</h6>
+        </div>
+        <div class="card-body">
+          <% @vendor_performance.first(5).each do |vendor| %>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span class="font-weight-bold"><%= vendor[:vendor] %></span>
+                <span class="text-success">₹<%= number_with_delimiter(vendor[:total_profit].round(2)) %></span>
+              </div>
+              <div class="progress mt-1">
+                <div class="progress-bar bg-success" role="progressbar" 
+                     style="width: <%= vendor[:reliability] %>%" 
+                     aria-valuenow="<%= vendor[:reliability] %>" 
+                     aria-valuemin="0" aria-valuemax="100">
+                  <%= vendor[:reliability] %>% Reliability
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activities and Quick Actions -->
+  <div class="row">
+    <!-- Recent Procurement Schedules -->
+    <div class="col-xl-4 col-lg-4">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Recent Schedules</h6>
+          <%= link_to procurement_schedules_path, class: "btn btn-sm btn-outline-primary" do %>
+            View All
+          <% end %>
+        </div>
+        <div class="card-body">
+          <% if @recent_schedules.any? %>
+            <% @recent_schedules.each do |schedule| %>
+              <div class="d-flex align-items-center mb-3">
+                <div class="mr-3">
+                  <div class="icon-circle bg-primary">
+                    <i class="fas fa-calendar text-white"></i>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="small text-gray-500"><%= schedule.created_at.strftime('%B %d, %Y') %></div>
+                  <div class="font-weight-bold"><%= schedule.vendor_name %></div>
+                  <div class="text-xs text-gray-500">
+                    <%= schedule.quantity %> L/day • ₹<%= schedule.buying_price %>/L
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted text-center">No recent schedules</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Assignments -->
+    <div class="col-xl-4 col-lg-4">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Pending Today</h6>
+          <%= link_to procurement_assignments_path, class: "btn btn-sm btn-outline-primary" do %>
+            View All
+          <% end %>
+        </div>
+        <div class="card-body">
+          <% if @pending_assignments.any? %>
+            <% @pending_assignments.each do |assignment| %>
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                  <div class="font-weight-bold"><%= assignment.vendor_name %></div>
+                  <div class="text-xs text-gray-500">
+                    <%= assignment.planned_quantity %> L • <%= assignment.formatted_date %>
+                  </div>
+                </div>
+                <span class="badge badge-warning">Pending</span>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted text-center">No pending assignments</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-xl-4 col-lg-4">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <%= link_to new_procurement_schedule_path, class: "btn btn-primary btn-sm" do %>
+              <i class="fas fa-plus me-1"></i>
+              New Procurement Schedule
+            <% end %>
+            
+            <%= link_to calendar_view_milk_analytics_path, class: "btn btn-outline-primary btn-sm" do %>
+              <i class="fas fa-calendar me-1"></i>
+              Calendar View
+            <% end %>
+            
+            <%= link_to vendor_analysis_milk_analytics_path, class: "btn btn-outline-info btn-sm" do %>
+              <i class="fas fa-chart-bar me-1"></i>
+              Vendor Analysis
+            <% end %>
+            
+            <%= link_to profit_analysis_milk_analytics_path, class: "btn btn-outline-success btn-sm" do %>
+              <i class="fas fa-chart-line me-1"></i>
+              Profit Analysis
+            <% end %>
+            
+            <%= link_to inventory_analysis_milk_analytics_path, class: "btn btn-outline-warning btn-sm" do %>
+              <i class="fas fa-boxes me-1"></i>
+              Inventory Analysis
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Daily Procurement Chart
+  const dailyCtx = document.getElementById('dailyProcurementChart').getContext('2d');
+  const dailyChart = new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+      labels: <%= raw @daily_chart_data.map { |d| d[:date] }.to_json %>,
+      datasets: [{
+        label: 'Planned Quantity (L)',
+        data: <%= raw @daily_chart_data.map { |d| d[:planned_quantity] }.to_json %>,
+        borderColor: 'rgb(54, 162, 235)',
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+        tension: 0.1
+      }, {
+        label: 'Actual Quantity (L)',
+        data: <%= raw @daily_chart_data.map { |d| d[:actual_quantity] }.to_json %>,
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Vendor Distribution Chart
+  const vendorCtx = document.getElementById('vendorDistributionChart').getContext('2d');
+  const vendorChart = new Chart(vendorCtx, {
+    type: 'doughnut',
+    data: {
+      labels: <%= raw @vendor_chart_data.map { |v| v[:vendor] }.to_json %>,
+      datasets: [{
+        data: <%= raw @vendor_chart_data.map { |v| v[:quantity] }.to_json %>,
+        backgroundColor: [
+          '#4e73df',
+          '#1cc88a',
+          '#36b9cc',
+          '#f6c23e',
+          '#e74a3b',
+          '#858796'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+});
+</script>
+
+<style>
+.icon-circle {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.border-left-primary {
+  border-left: 0.25rem solid #4e73df!important;
+}
+
+.border-left-success {
+  border-left: 0.25rem solid #1cc88a!important;
+}
+
+.border-left-info {
+  border-left: 0.25rem solid #36b9cc!important;
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid #f6c23e!important;
+}
+
+.progress-sm {
+  height: 0.5rem;
+}
+
+.chart-area {
+  position: relative;
+  height: 20rem;
+  width: 100%;
+}
+
+.chart-pie {
+  position: relative;
+  height: 15rem;
+  width: 100%;
+}
+</style>
