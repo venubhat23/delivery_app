@@ -1,0 +1,473 @@
+<% content_for :title, "#{@procurement_schedule.vendor_name} - Schedule Details" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h1 class="h3 mb-2">
+        <i class="fas fa-calendar-alt text-primary me-2"></i>
+        <%= @procurement_schedule.vendor_name %>
+      </h1>
+      <p class="text-muted">
+        Procurement schedule from <%= @procurement_schedule.from_date.strftime("%B %d, %Y") %> 
+        to <%= @procurement_schedule.to_date.strftime("%B %d, %Y") %>
+      </p>
+    </div>
+    <div class="col-md-4 text-end">
+      <%= link_to procurement_schedules_path, class: "btn btn-outline-secondary me-2" do %>
+        <i class="fas fa-arrow-left me-2"></i>
+        Back to List
+      <% end %>
+      <%= link_to edit_procurement_schedule_path(@procurement_schedule), class: "btn btn-warning me-2" do %>
+        <i class="fas fa-edit me-2"></i>
+        Edit
+      <% end %>
+      <%= link_to analytics_procurement_schedules_path, class: "btn btn-info" do %>
+        <i class="fas fa-chart-line me-2"></i>
+        Analytics
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Schedule Overview Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-primary text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-calendar fa-2x mb-2"></i>
+          <h4><%= @procurement_schedule.days_count %></h4>
+          <small>Total Days</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-info text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-tint fa-2x mb-2"></i>
+          <h4><%= number_with_delimiter(@procurement_schedule.total_planned_quantity) %> L</h4>
+          <small>Total Planned Quantity</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-success text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-rupee-sign fa-2x mb-2"></i>
+          <h4>₹<%= number_with_delimiter(@procurement_schedule.expected_profit) %></h4>
+          <small>Expected Profit</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-warning text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-percentage fa-2x mb-2"></i>
+          <h4><%= @procurement_schedule.completion_percentage %>%</h4>
+          <small>Completion Rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Details and Status -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Schedule Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <table class="table table-sm table-borderless">
+                <tr>
+                  <td class="fw-bold text-muted">Vendor Name:</td>
+                  <td><%= @procurement_schedule.vendor_name %></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-muted">Status:</td>
+                  <td>
+                    <span class="badge bg-<%= @procurement_schedule.status == 'active' ? 'success' : @procurement_schedule.status == 'completed' ? 'primary' : 'secondary' %> fs-6">
+                      <%= @procurement_schedule.status.titleize %>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-muted">Period:</td>
+                  <td>
+                    <%= @procurement_schedule.from_date.strftime("%B %d, %Y") %> - 
+                    <%= @procurement_schedule.to_date.strftime("%B %d, %Y") %>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-muted">Daily Quantity:</td>
+                  <td><%= number_with_delimiter(@procurement_schedule.quantity) %> <%= @procurement_schedule.unit.titleize %></td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <table class="table table-sm table-borderless">
+                <tr>
+                  <td class="fw-bold text-muted">Buying Price:</td>
+                  <td>₹<%= @procurement_schedule.buying_price %> per <%= @procurement_schedule.unit.singularize %></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-muted">Selling Price:</td>
+                  <td>₹<%= @procurement_schedule.selling_price %> per <%= @procurement_schedule.unit.singularize %></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-muted">Profit Margin:</td>
+                  <td class="text-success">₹<%= (@procurement_schedule.selling_price - @procurement_schedule.buying_price).round(2) %> (<%= @procurement_schedule.profit_margin_percentage %>%)</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-muted">Created:</td>
+                  <td><%= @procurement_schedule.created_at.strftime("%B %d, %Y at %I:%M %p") %></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          
+          <% if @procurement_schedule.notes.present? %>
+            <hr>
+            <div>
+              <h6 class="fw-bold text-muted mb-2">Notes:</h6>
+              <p class="mb-0"><%= simple_format(@procurement_schedule.notes) %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-chart-pie me-2"></i>
+            Completion Statistics
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-success">Completed</span>
+              <strong><%= @completion_stats[:completed] %></strong>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+              <div class="progress-bar bg-success" style="width: <%= @completion_stats[:total] > 0 ? (@completion_stats[:completed].to_f / @completion_stats[:total] * 100).round(2) : 0 %>%"></div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-warning">Pending</span>
+              <strong><%= @completion_stats[:pending] %></strong>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+              <div class="progress-bar bg-warning" style="width: <%= @completion_stats[:total] > 0 ? (@completion_stats[:pending].to_f / @completion_stats[:total] * 100).round(2) : 0 %>%"></div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-secondary">Cancelled</span>
+              <strong><%= @completion_stats[:cancelled] %></strong>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+              <div class="progress-bar bg-secondary" style="width: <%= @completion_stats[:total] > 0 ? (@completion_stats[:cancelled].to_f / @completion_stats[:total] * 100).round(2) : 0 %>%"></div>
+            </div>
+          </div>
+          
+          <hr>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Total Assignments</span>
+            <strong class="text-primary"><%= @completion_stats[:total] %></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Assignments -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0">
+        <i class="fas fa-tasks me-2"></i>
+        Daily Assignments
+      </h5>
+      <div>
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#bulkCompleteModal">
+          <i class="fas fa-check-double me-1"></i>
+          Bulk Complete
+        </button>
+        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#bulkCancelModal">
+          <i class="fas fa-times-circle me-1"></i>
+          Bulk Cancel
+        </button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <% if @assignments.any? %>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>
+                  <input type="checkbox" id="selectAll" class="form-check-input">
+                </th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Planned Quantity</th>
+                <th>Actual Quantity</th>
+                <th>Cost</th>
+                <th>Revenue</th>
+                <th>Profit</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @assignments.each do |assignment| %>
+                <tr class="<%= 'table-success' if assignment.status == 'completed' %>
+                           <%= 'table-warning' if assignment.status == 'pending' && assignment.overdue? %>">
+                  <td>
+                    <input type="checkbox" name="assignment_ids[]" value="<%= assignment.id %>" class="form-check-input assignment-checkbox">
+                  </td>
+                  <td>
+                    <div>
+                      <strong><%= assignment.date.strftime("%b %d, %Y") %></strong>
+                      <br>
+                      <small class="text-muted">
+                        <%= assignment.date.strftime("%A") %>
+                        <% if assignment.overdue? %>
+                          <span class="badge badge-sm bg-danger ms-1">Overdue</span>
+                        <% elsif assignment.today? %>
+                          <span class="badge badge-sm bg-info ms-1">Today</span>
+                        <% elsif assignment.future? %>
+                          <span class="badge badge-sm bg-secondary ms-1">Future</span>
+                        <% end %>
+                      </small>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-<%= assignment.status == 'completed' ? 'success' : assignment.status == 'pending' ? 'warning' : 'secondary' %>">
+                      <%= assignment.status.titleize %>
+                    </span>
+                    <% if assignment.completed_at %>
+                      <br><small class="text-muted">Completed <%= time_ago_in_words(assignment.completed_at) %> ago</small>
+                    <% end %>
+                  </td>
+                  <td>
+                    <strong><%= number_with_delimiter(assignment.planned_quantity) %> L</strong>
+                    <br>
+                    <small class="text-muted">₹<%= number_with_delimiter(assignment.planned_cost) %></small>
+                  </td>
+                  <td>
+                    <% if assignment.actual_quantity %>
+                      <strong class="text-<%= assignment.quantity_variance >= 0 ? 'success' : 'danger' %>">
+                        <%= number_with_delimiter(assignment.actual_quantity) %> L
+                      </strong>
+                      <% if assignment.quantity_variance != 0 %>
+                        <br>
+                        <small class="text-<%= assignment.quantity_variance >= 0 ? 'success' : 'danger' %>">
+                          <%= assignment.quantity_variance > 0 ? '+' : '' %><%= number_with_delimiter(assignment.quantity_variance) %> L
+                          (<%= assignment.quantity_variance_percentage %>%)
+                        </small>
+                      <% end %>
+                    <% else %>
+                      <span class="text-muted">-</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <strong>₹<%= number_with_delimiter(assignment.actual_cost) %></strong>
+                  </td>
+                  <td>
+                    <strong>₹<%= number_with_delimiter(assignment.actual_revenue) %></strong>
+                  </td>
+                  <td>
+                    <strong class="text-<%= assignment.actual_profit >= 0 ? 'success' : 'danger' %>">
+                      ₹<%= number_with_delimiter(assignment.actual_profit) %>
+                    </strong>
+                  </td>
+                  <td class="text-center">
+                    <% if assignment.status == 'pending' %>
+                      <button class="btn btn-sm btn-success me-1" onclick="completeAssignment(<%= assignment.id %>)">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button class="btn btn-sm btn-danger" onclick="cancelAssignment(<%= assignment.id %>)">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    <% else %>
+                      <%= link_to assignment, class: "btn btn-sm btn-outline-info" do %>
+                        <i class="fas fa-eye"></i>
+                      <% end %>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="text-center py-5">
+          <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
+          <h4 class="text-muted">No Assignments Found</h4>
+          <p class="text-muted">This schedule doesn't have any daily assignments yet.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Complete Assignment Modal -->
+<div class="modal fade" id="completeAssignmentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Complete Assignment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="completeAssignmentForm">
+          <div class="mb-3">
+            <label for="actualQuantity" class="form-label">Actual Quantity Received (Liters)</label>
+            <input type="number" class="form-control" id="actualQuantity" step="0.01" min="0" required>
+          </div>
+          <div class="mb-3">
+            <label for="completionNotes" class="form-label">Notes (Optional)</label>
+            <textarea class="form-control" id="completionNotes" rows="3" placeholder="Any notes about this delivery..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="submitComplete()">Complete Assignment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Assignment Modal -->
+<div class="modal fade" id="cancelAssignmentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cancel Assignment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="cancelAssignmentForm">
+          <div class="mb-3">
+            <label for="cancelReason" class="form-label">Reason for Cancellation</label>
+            <textarea class="form-control" id="cancelReason" rows="3" placeholder="Why is this assignment being cancelled?" required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" onclick="submitCancel()">Cancel Assignment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for Assignment Management -->
+<script>
+  let currentAssignmentId = null;
+
+  function completeAssignment(assignmentId) {
+    currentAssignmentId = assignmentId;
+    const modal = new bootstrap.Modal(document.getElementById('completeAssignmentModal'));
+    modal.show();
+  }
+
+  function cancelAssignment(assignmentId) {
+    currentAssignmentId = assignmentId;
+    const modal = new bootstrap.Modal(document.getElementById('cancelAssignmentModal'));
+    modal.show();
+  }
+
+  function submitComplete() {
+    const actualQuantity = document.getElementById('actualQuantity').value;
+    const notes = document.getElementById('completionNotes').value;
+
+    if (!actualQuantity || actualQuantity <= 0) {
+      alert('Please enter a valid actual quantity.');
+      return;
+    }
+
+    fetch(`/milk-assignments/${currentAssignmentId}/complete`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        actual_quantity: actualQuantity,
+        notes: notes
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while completing the assignment.');
+    });
+  }
+
+  function submitCancel() {
+    const reason = document.getElementById('cancelReason').value;
+
+    if (!reason.trim()) {
+      alert('Please provide a reason for cancellation.');
+      return;
+    }
+
+    fetch(`/milk-assignments/${currentAssignmentId}/cancel`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        reason: reason
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while cancelling the assignment.');
+    });
+  }
+
+  // Select all functionality
+  document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.assignment-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+    });
+  });
+
+  // Update select all when individual checkboxes change
+  document.querySelectorAll('.assignment-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const allCheckboxes = document.querySelectorAll('.assignment-checkbox');
+      const checkedCheckboxes = document.querySelectorAll('.assignment-checkbox:checked');
+      document.getElementById('selectAll').checked = allCheckboxes.length === checkedCheckboxes.length;
+    });
+  });
+</script>
