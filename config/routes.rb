@@ -196,31 +196,6 @@ Rails.application.routes.draw do
   get '/invoice/:token', to: 'invoices#public_view', as: 'public_invoice'
   get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download', defaults: { format: :pdf }
   
-  # Milk Supply & Analytics - Procurement Management
-  resources :procurement_schedules, path: 'farm-vendor-tracker' do
-    member do
-      patch :generate_assignments
-      patch :cancel_schedule
-    end
-    
-    collection do
-      get :analytics
-    end
-  end
-
-  resources :procurement_assignments, path: 'milk-procurement' do
-    member do
-      patch :complete
-      patch :cancel
-    end
-    
-    collection do
-      post :bulk_complete
-      get :daily_summary
-      get :vendor_performance
-    end
-  end
-
   # Admin Settings
   resources :admin_settings, path: 'admin-settings'
   

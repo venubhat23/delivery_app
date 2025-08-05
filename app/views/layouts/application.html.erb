@@ -914,37 +914,6 @@
                 <% end %>
               </li>
               
-              <!-- Business Analytics Section -->
-              <li class="nav-item" role="none">
-                <%= link_to analytics_procurement_schedules_path, 
-                    class: "nav-link #{'active' if controller_name == 'procurement_schedules' && action_name == 'analytics'}", 
-                    role: "menuitem",
-                    "aria-current": (controller_name == 'procurement_schedules' && action_name == 'analytics') ? "page" : nil do %>
-                  <i class="fas fa-analytics nav-icon" aria-hidden="true"></i>
-                  <span class="nav-text">Milk Supply Analytics</span>
-                <% end %>
-              </li>
-              
-              <li class="nav-item" role="none">
-                <%= link_to procurement_schedules_path, 
-                    class: "nav-link #{'active' if controller_name == 'procurement_schedules' && action_name != 'analytics'}", 
-                    role: "menuitem",
-                    "aria-current": (controller_name == 'procurement_schedules' && action_name != 'analytics') ? "page" : nil do %>
-                  <i class="fas fa-truck nav-icon" aria-hidden="true"></i>
-                  <span class="nav-text">Farm Vendor Tracker</span>
-                <% end %>
-              </li>
-              
-              <li class="nav-item" role="none">
-                <%= link_to procurement_assignments_path, 
-                    class: "nav-link #{'active' if controller_name == 'procurement_assignments'}", 
-                    role: "menuitem",
-                    "aria-current": controller_name == 'procurement_assignments' ? "page" : nil do %>
-                  <i class="fas fa-clipboard-list nav-icon" aria-hidden="true"></i>
-                  <span class="nav-text">Daily Procurement</span>
-                <% end %>
-              </li>
-              
               <li class="nav-item" role="none">
                 <%= link_to admin_settings_path, 
                     class: "nav-link #{'active' if controller_name == 'admin_settings'}", 
