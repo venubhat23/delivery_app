@@ -1,0 +1,351 @@
+<% content_for :title, "New Milk Procurement Schedule" %>
+
+<div class="container-fluid">
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-plus text-primary me-2"></i>
+        New Milk Procurement Schedule
+      </h1>
+      <p class="text-muted mb-0">Create a new monthly milk procurement schedule from farms</p>
+    </div>
+    
+    <%= link_to procurement_schedules_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-1"></i>
+      Back to Schedules
+    <% end %>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-10">
+      <div class="card shadow">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-calendar-plus me-2"></i>
+            Procurement Schedule Details
+          </h6>
+        </div>
+        
+        <div class="card-body">
+          <%= form_with model: @procurement_schedule, local: true, class: "needs-validation", novalidate: true do |form| %>
+            <% if @procurement_schedule.errors.any? %>
+              <div class="alert alert-danger" role="alert">
+                <h6 class="alert-heading">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  Please fix the following errors:
+                </h6>
+                <ul class="mb-0">
+                  <% @procurement_schedule.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <!-- Vendor Information -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :vendor_name, "Farm/Vendor Name", class: "form-label fw-bold" %>
+                <%= form.text_field :vendor_name, 
+                    class: "form-control #{'is-invalid' if @procurement_schedule.errors[:vendor_name].any?}",
+                    placeholder: "e.g., Green Valley Farm",
+                    required: true %>
+                <div class="invalid-feedback">
+                  <%= @procurement_schedule.errors[:vendor_name].first %>
+                </div>
+                <small class="form-text text-muted">Enter the name of the farm or vendor</small>
+              </div>
+
+              <!-- Unit Selection -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :unit, "Unit", class: "form-label fw-bold" %>
+                <%= form.select :unit, 
+                    options_for_select([
+                      ['Liters', 'liters'],
+                      ['Gallons', 'gallons'],
+                      ['Kilograms', 'kg'],
+                      ['Pounds', 'pounds']
+                    ], @procurement_schedule.unit || 'liters'),
+                    {},
+                    class: "form-select #{'is-invalid' if @procurement_schedule.errors[:unit].any?}" %>
+                <div class="invalid-feedback">
+                  <%= @procurement_schedule.errors[:unit].first %>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Date Range -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :from_date, "From Date", class: "form-label fw-bold" %>
+                <%= form.date_field :from_date, 
+                    class: "form-control #{'is-invalid' if @procurement_schedule.errors[:from_date].any?}",
+                    min: Date.current,
+                    required: true %>
+                <div class="invalid-feedback">
+                  <%= @procurement_schedule.errors[:from_date].first %>
+                </div>
+                <small class="form-text text-muted">Start date of procurement period</small>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :to_date, "To Date", class: "form-label fw-bold" %>
+                <%= form.date_field :to_date, 
+                    class: "form-control #{'is-invalid' if @procurement_schedule.errors[:to_date].any?}",
+                    min: Date.current,
+                    required: true %>
+                <div class="invalid-feedback">
+                  <%= @procurement_schedule.errors[:to_date].first %>
+                </div>
+                <small class="form-text text-muted">End date of procurement period</small>
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Quantity -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :quantity, "Daily Quantity", class: "form-label fw-bold" %>
+                <div class="input-group">
+                  <%= form.number_field :quantity, 
+                      class: "form-control #{'is-invalid' if @procurement_schedule.errors[:quantity].any?}",
+                      step: 0.01,
+                      min: 0.01,
+                      placeholder: "100.00",
+                      required: true %>
+                  <span class="input-group-text" id="quantity-unit">L/day</span>
+                  <div class="invalid-feedback">
+                    <%= @procurement_schedule.errors[:quantity].first %>
+                  </div>
+                </div>
+                <small class="form-text text-muted">Expected daily quantity from this vendor</small>
+              </div>
+
+              <!-- Status -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :status, "Status", class: "form-label fw-bold" %>
+                <%= form.select :status, 
+                    options_for_select([
+                      ['Active', 'active'],
+                      ['Inactive', 'inactive']
+                    ], @procurement_schedule.status || 'active'),
+                    {},
+                    class: "form-select #{'is-invalid' if @procurement_schedule.errors[:status].any?}" %>
+                <div class="invalid-feedback">
+                  <%= @procurement_schedule.errors[:status].first %>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Buying Price -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :buying_price, "Buying Price (per unit)", class: "form-label fw-bold" %>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <%= form.number_field :buying_price, 
+                      class: "form-control #{'is-invalid' if @procurement_schedule.errors[:buying_price].any?}",
+                      step: 0.01,
+                      min: 0.01,
+                      placeholder: "45.00",
+                      required: true %>
+                  <div class="invalid-feedback">
+                    <%= @procurement_schedule.errors[:buying_price].first %>
+                  </div>
+                </div>
+                <small class="form-text text-muted">Cost per unit you'll pay to the vendor</small>
+              </div>
+
+              <!-- Selling Price -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :selling_price, "Selling Price (per unit)", class: "form-label fw-bold" %>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <%= form.number_field :selling_price, 
+                      class: "form-control #{'is-invalid' if @procurement_schedule.errors[:selling_price].any?}",
+                      step: 0.01,
+                      min: 0.01,
+                      placeholder: "55.00",
+                      required: true %>
+                  <div class="invalid-feedback">
+                    <%= @procurement_schedule.errors[:selling_price].first %>
+                  </div>
+                </div>
+                <small class="form-text text-muted">Price per unit you'll sell to customers</small>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-3">
+              <%= form.label :notes, "Notes", class: "form-label fw-bold" %>
+              <%= form.text_area :notes, 
+                  class: "form-control #{'is-invalid' if @procurement_schedule.errors[:notes].any?}",
+                  rows: 3,
+                  placeholder: "Any additional notes about this procurement schedule..." %>
+              <div class="invalid-feedback">
+                <%= @procurement_schedule.errors[:notes].first %>
+              </div>
+            </div>
+
+            <!-- Calculation Preview -->
+            <div class="card bg-light mb-4" id="calculation-preview" style="display: none;">
+              <div class="card-header">
+                <h6 class="mb-0 text-primary">
+                  <i class="fas fa-calculator me-2"></i>
+                  Schedule Preview
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-3 text-center">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Duration</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800" id="duration-days">-</div>
+                  </div>
+                  <div class="col-md-3 text-center">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Quantity</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800" id="total-quantity">-</div>
+                  </div>
+                  <div class="col-md-3 text-center">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Cost</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800" id="total-cost">-</div>
+                  </div>
+                  <div class="col-md-3 text-center">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Expected Profit</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800" id="expected-profit">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-between">
+              <%= link_to procurement_schedules_path, class: "btn btn-outline-secondary" do %>
+                <i class="fas fa-times me-1"></i>
+                Cancel
+              <% end %>
+              
+              <div>
+                <%= form.submit "Create Schedule", class: "btn btn-primary" do %>
+                  <i class="fas fa-save me-1"></i>
+                  Create Schedule
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('.needs-validation');
+  const quantityField = document.getElementById('procurement_schedule_quantity');
+  const buyingPriceField = document.getElementById('procurement_schedule_buying_price');
+  const sellingPriceField = document.getElementById('procurement_schedule_selling_price');
+  const fromDateField = document.getElementById('procurement_schedule_from_date');
+  const toDateField = document.getElementById('procurement_schedule_to_date');
+  const unitField = document.getElementById('procurement_schedule_unit');
+  const calculationPreview = document.getElementById('calculation-preview');
+  
+  // Update unit display
+  function updateUnitDisplay() {
+    const unit = unitField.value;
+    const unitText = unit === 'liters' ? 'L' : unit === 'gallons' ? 'gal' : unit === 'kg' ? 'kg' : 'lbs';
+    document.getElementById('quantity-unit').textContent = unitText + '/day';
+  }
+  
+  // Calculate and display preview
+  function updateCalculationPreview() {
+    const quantity = parseFloat(quantityField.value) || 0;
+    const buyingPrice = parseFloat(buyingPriceField.value) || 0;
+    const sellingPrice = parseFloat(sellingPriceField.value) || 0;
+    const fromDate = fromDateField.value;
+    const toDate = toDateField.value;
+    
+    if (quantity && buyingPrice && sellingPrice && fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      const timeDiff = to.getTime() - from.getTime();
+      const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+      
+      if (daysDiff > 0) {
+        const totalQuantity = quantity * daysDiff;
+        const totalCost = totalQuantity * buyingPrice;
+        const totalRevenue = totalQuantity * sellingPrice;
+        const expectedProfit = totalRevenue - totalCost;
+        
+        document.getElementById('duration-days').textContent = daysDiff + ' days';
+        document.getElementById('total-quantity').textContent = totalQuantity.toFixed(2) + ' L';
+        document.getElementById('total-cost').textContent = '₹' + totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('expected-profit').textContent = '₹' + expectedProfit.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        
+        calculationPreview.style.display = 'block';
+      } else {
+        calculationPreview.style.display = 'none';
+      }
+    } else {
+      calculationPreview.style.display = 'none';
+    }
+  }
+  
+  // Event listeners
+  unitField.addEventListener('change', updateUnitDisplay);
+  [quantityField, buyingPriceField, sellingPriceField, fromDateField, toDateField].forEach(field => {
+    field.addEventListener('input', updateCalculationPreview);
+    field.addEventListener('change', updateCalculationPreview);
+  });
+  
+  // Form validation
+  form.addEventListener('submit', function(event) {
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    form.classList.add('was-validated');
+  });
+  
+  // Initialize
+  updateUnitDisplay();
+  updateCalculationPreview();
+});
+</script>
+
+<style>
+.form-label.fw-bold {
+  font-weight: 600 !important;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.input-group-text {
+  background-color: #f8f9fc;
+  border-color: #d1d3e2;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.btn-primary {
+  background-color: #4e73df;
+  border-color: #4e73df;
+}
+
+.btn-primary:hover {
+  background-color: #2e59d9;
+  border-color: #2653d4;
+}
+
+.text-primary {
+  color: #4e73df !important;
+}
+
+.border-left-primary {
+  border-left: 0.25rem solid #4e73df !important;
+}
+</style>

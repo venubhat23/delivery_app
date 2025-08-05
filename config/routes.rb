@@ -209,6 +209,41 @@ Rails.application.routes.draw do
     end
   end
   
+  # Milk Supply & Analytics routes
+  resources :procurement_schedules, path: 'milk-procurement' do
+    member do
+      patch :generate_assignments
+    end
+    
+    collection do
+      get :analytics
+    end
+  end
+  
+  resources :procurement_assignments, path: 'milk-assignments' do
+    member do
+      patch :complete
+      patch :cancel
+    end
+    
+    collection do
+      patch :bulk_update
+      get :calendar
+      get :daily_report
+      get :analytics_data
+    end
+  end
+  
+  # Main Milk Analytics Dashboard
+  resources :milk_analytics, path: 'milk-supply-analytics', only: [:index] do
+    collection do
+      get :calendar_view
+      get :vendor_analysis
+      get :profit_analysis
+      get :inventory_analysis
+    end
+  end
+
   # File Upload API
   post '/api/upload', to: 'uploads#create'
   
