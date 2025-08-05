@@ -69,10 +69,12 @@
       <div class="col-md-8">
         <%= form_with url: invoices_path, method: :get, local: true, class: 'row g-3' do |form| %>
           <div class="col-md-3">
-            <%= form.select :customer_id, 
-                  options_from_collection_for_select(@customers, :id, :name, params[:customer_id]),
-                  { prompt: 'All Customers' },
-                  { class: 'form-select' } %>
+            <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
+              <%= form.select :customer_id, 
+                    options_from_collection_for_select(@customers, :id, :name, params[:customer_id]),
+                    { prompt: 'All Customers' },
+                    { class: 'form-select', data: { "searchable-select-target" => "select" } } %>
+            </div>
           </div>
           <div class="col-md-2">
             <%= form.select :status, 
