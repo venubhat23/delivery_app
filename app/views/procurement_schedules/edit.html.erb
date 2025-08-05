@@ -1,0 +1,316 @@
+<% content_for :title, "Edit Procurement Schedule" %>
+
+<div class="container-fluid py-4">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-1 text-gray-800">
+            <i class="fas fa-edit text-primary me-2"></i>
+            Edit Procurement Schedule
+          </h1>
+          <p class="text-muted mb-0">Update milk procurement schedule for <%= @procurement_schedule.vendor_name %></p>
+        </div>
+        <div>
+          <%= link_to procurement_schedule_path(@procurement_schedule), class: "btn btn-secondary me-2" do %>
+            <i class="fas fa-eye me-1"></i>
+            View Schedule
+          <% end %>
+          <%= link_to procurement_schedules_path, class: "btn btn-secondary" do %>
+            <i class="fas fa-arrow-left me-1"></i>
+            Back to Schedules
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-farm me-2"></i>
+            Update Schedule Details
+          </h6>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @procurement_schedule, local: true, class: "needs-validation", novalidate: true do |form| %>
+            <% if @procurement_schedule.errors.any? %>
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                <ul class="mb-0">
+                  <% @procurement_schedule.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <!-- Vendor Information -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :vendor_name, class: "form-label fw-bold" do %>
+                  <i class="fas fa-farm me-1"></i>
+                  Farm/Vendor Name <span class="text-danger">*</span>
+                <% end %>
+                <%= form.text_field :vendor_name, 
+                    class: "form-control", 
+                    placeholder: "e.g., Sharma Dairy Farm",
+                    required: true %>
+                <div class="invalid-feedback">
+                  Please provide a vendor name.
+                </div>
+              </div>
+
+              <!-- Unit -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :unit, class: "form-label fw-bold" do %>
+                  <i class="fas fa-balance-scale me-1"></i>
+                  Unit <span class="text-danger">*</span>
+                <% end %>
+                <%= form.select :unit, 
+                    options_for_select([
+                      ['Liters', 'liters'],
+                      ['Gallons', 'gallons'],
+                      ['Kg', 'kg']
+                    ], @procurement_schedule.unit),
+                    { prompt: 'Select unit' },
+                    { class: "form-select", required: true } %>
+                <div class="invalid-feedback">
+                  Please select a unit.
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- From Date -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :from_date, class: "form-label fw-bold" do %>
+                  <i class="fas fa-calendar-start me-1"></i>
+                  From Date <span class="text-danger">*</span>
+                <% end %>
+                <%= form.date_field :from_date, 
+                    class: "form-control", 
+                    required: true %>
+                <div class="form-text">Start date for milk procurement</div>
+                <div class="invalid-feedback">
+                  Please provide a from date.
+                </div>
+              </div>
+
+              <!-- To Date -->
+              <div class="col-md-6 mb-3">
+                <%= form.label :to_date, class: "form-label fw-bold" do %>
+                  <i class="fas fa-calendar-end me-1"></i>
+                  To Date <span class="text-danger">*</span>
+                <% end %>
+                <%= form.date_field :to_date, 
+                    class: "form-control", 
+                    required: true %>
+                <div class="form-text">End date for milk procurement</div>
+                <div class="invalid-feedback">
+                  Please provide a to date.
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Total Quantity -->
+              <div class="col-md-4 mb-3">
+                <%= form.label :quantity, class: "form-label fw-bold" do %>
+                  <i class="fas fa-tint me-1"></i>
+                  Total Quantity <span class="text-danger">*</span>
+                <% end %>
+                <%= form.number_field :quantity, 
+                    class: "form-control", 
+                    step: 0.01,
+                    min: 0.01,
+                    placeholder: "e.g., 1000",
+                    required: true %>
+                <div class="form-text">Total quantity for the entire period</div>
+                <div class="invalid-feedback">
+                  Please provide a valid quantity.
+                </div>
+              </div>
+
+              <!-- Buying Price -->
+              <div class="col-md-4 mb-3">
+                <%= form.label :buying_price, class: "form-label fw-bold" do %>
+                  <i class="fas fa-rupee-sign me-1"></i>
+                  Buying Price <span class="text-danger">*</span>
+                <% end %>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <%= form.number_field :buying_price, 
+                      class: "form-control", 
+                      step: 0.01,
+                      min: 0.01,
+                      placeholder: "e.g., 25.00",
+                      required: true %>
+                </div>
+                <div class="form-text">Price per unit you pay to vendor</div>
+                <div class="invalid-feedback">
+                  Please provide a valid buying price.
+                </div>
+              </div>
+
+              <!-- Selling Price -->
+              <div class="col-md-4 mb-3">
+                <%= form.label :selling_price, class: "form-label fw-bold" do %>
+                  <i class="fas fa-tag me-1"></i>
+                  Selling Price <span class="text-danger">*</span>
+                <% end %>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <%= form.number_field :selling_price, 
+                      class: "form-control", 
+                      step: 0.01,
+                      min: 0.01,
+                      placeholder: "e.g., 30.00",
+                      required: true %>
+                </div>
+                <div class="form-text">Price per unit you sell to customers</div>
+                <div class="invalid-feedback">
+                  Please provide a valid selling price.
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+              <%= form.label :notes, class: "form-label fw-bold" do %>
+                <i class="fas fa-sticky-note me-1"></i>
+                Notes (Optional)
+              <% end %>
+              <%= form.text_area :notes, 
+                  class: "form-control", 
+                  rows: 3,
+                  placeholder: "Any additional notes about this procurement schedule..." %>
+            </div>
+
+            <!-- Current Status Info -->
+            <div class="alert alert-info">
+              <h6><i class="fas fa-info-circle me-2"></i>Current Status</h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <strong>Status:</strong> 
+                  <span class="badge <%= @procurement_schedule.status_badge_class %> ms-2">
+                    <%= @procurement_schedule.status.titleize %>
+                  </span>
+                </div>
+                <div class="col-md-6">
+                  <strong>Duration:</strong> <%= @procurement_schedule.duration_in_days %> days
+                </div>
+              </div>
+              <% if @procurement_schedule.procurement_assignments.any? %>
+                <div class="mt-2">
+                  <strong>Assignments:</strong> 
+                  <%= @procurement_schedule.procurement_assignments.count %> daily assignments created
+                </div>
+              <% end %>
+            </div>
+
+            <!-- Profit Calculation Preview -->
+            <div class="card bg-light mb-4">
+              <div class="card-body">
+                <h6 class="card-title">
+                  <i class="fas fa-calculator me-2"></i>
+                  Updated Profit Calculation
+                </h6>
+                <div class="row text-center">
+                  <div class="col-md-3">
+                    <div class="mb-2">
+                      <small class="text-muted d-block">Total Cost</small>
+                      <span class="h5 text-danger" id="total-cost">₹<%= number_with_delimiter(@procurement_schedule.total_planned_amount) %></span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-2">
+                      <small class="text-muted d-block">Total Revenue</small>
+                      <span class="h5 text-success" id="total-revenue">₹<%= number_with_delimiter(@procurement_schedule.expected_revenue) %></span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-2">
+                      <small class="text-muted d-block">Total Profit</small>
+                      <span class="h5 text-primary" id="total-profit">₹<%= number_with_delimiter(@procurement_schedule.expected_profit) %></span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-2">
+                      <small class="text-muted d-block">Profit Margin</small>
+                      <span class="h5 text-info" id="profit-margin"><%= @procurement_schedule.profit_margin_percentage %>%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between">
+              <%= link_to procurement_schedule_path(@procurement_schedule), class: "btn btn-secondary" do %>
+                <i class="fas fa-times me-1"></i>
+                Cancel
+              <% end %>
+              
+              <div>
+                <%= form.submit "Update Schedule", 
+                    class: "btn btn-primary btn-lg",
+                    data: { disable_with: "Updating..." } do %>
+                  <i class="fas fa-save me-1"></i>
+                  Update Schedule
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Form validation
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    });
+  });
+
+  // Real-time profit calculation
+  const quantityField = document.getElementById('procurement_schedule_quantity');
+  const buyingPriceField = document.getElementById('procurement_schedule_buying_price');
+  const sellingPriceField = document.getElementById('procurement_schedule_selling_price');
+  
+  function updateProfitCalculation() {
+    const quantity = parseFloat(quantityField.value) || 0;
+    const buyingPrice = parseFloat(buyingPriceField.value) || 0;
+    const sellingPrice = parseFloat(sellingPriceField.value) || 0;
+    
+    const totalCost = quantity * buyingPrice;
+    const totalRevenue = quantity * sellingPrice;
+    const totalProfit = totalRevenue - totalCost;
+    const profitMargin = totalCost > 0 ? ((totalProfit / totalCost) * 100) : 0;
+    
+    document.getElementById('total-cost').textContent = `₹${totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    document.getElementById('total-revenue').textContent = `₹${totalRevenue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    document.getElementById('total-profit').textContent = `₹${totalProfit.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    document.getElementById('profit-margin').textContent = `${profitMargin.toFixed(2)}%`;
+  }
+  
+  [quantityField, buyingPriceField, sellingPriceField].forEach(field => {
+    if (field) {
+      field.addEventListener('input', updateProfitCalculation);
+    }
+  });
+});
+</script>
