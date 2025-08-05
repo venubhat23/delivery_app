@@ -6,6 +6,8 @@ class User < ApplicationRecord
   has_many :delivery_schedules, dependent: :destroy
   has_many :parties, dependent: :destroy
   has_many :advertisements, dependent: :destroy
+  has_many :procurement_schedules, dependent: :destroy
+  has_many :procurement_assignments, dependent: :destroy
   
   # New associations for delivery person functionality
   has_many :assigned_customers, class_name: 'Customer', foreign_key: 'delivery_person_id', dependent: :nullify

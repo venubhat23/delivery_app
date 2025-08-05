@@ -915,6 +915,16 @@
               </li>
               
               <li class="nav-item" role="none">
+                <%= link_to analytics_procurement_schedules_path, 
+                    class: "nav-link #{'active' if controller_name.include?('procurement')}", 
+                    role: "menuitem",
+                    "aria-current": controller_name.include?('procurement') ? "page" : nil do %>
+                  <i class="fas fa-tint nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Milk Supply & Analytics</span>
+                <% end %>
+              </li>
+              
+              <li class="nav-item" role="none">
                 <%= link_to admin_settings_path, 
                     class: "nav-link #{'active' if controller_name == 'admin_settings'}", 
                     role: "menuitem",

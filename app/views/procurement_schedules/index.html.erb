@@ -1,0 +1,345 @@
+<% content_for :title, "Milk Purchase Schedules" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h1 class="h3 mb-2">
+        <i class="fas fa-list text-primary me-2"></i>
+        Milk Purchase Schedules
+      </h1>
+      <p class="text-muted">Manage your milk procurement schedules from farms</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <%= link_to analytics_procurement_schedules_path, class: "btn btn-info me-2" do %>
+        <i class="fas fa-chart-line me-2"></i>
+        Analytics Dashboard
+      <% end %>
+      <%= link_to new_procurement_schedule_path, class: "btn btn-success" do %>
+        <i class="fas fa-plus me-2"></i>
+        New Schedule
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-primary text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+          <h4><%= @total_schedules || 0 %></h4>
+          <small>Total Schedules</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-success text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-play-circle fa-2x mb-2"></i>
+          <h4><%= @active_schedules || 0 %></h4>
+          <small>Active Schedules</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-info text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-tint fa-2x mb-2"></i>
+          <h4><%= number_with_delimiter(@total_planned_quantity || 0) %> L</h4>
+          <small>Total Planned Quantity</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-gradient-warning text-white">
+        <div class="card-body text-center">
+          <i class="fas fa-rupee-sign fa-2x mb-2"></i>
+          <h4>₹<%= number_with_delimiter(@total_planned_cost || 0) %></h4>
+          <small>Total Planned Cost</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0">
+        <i class="fas fa-filter me-2"></i>
+        Filters
+      </h5>
+    </div>
+    <div class="card-body">
+      <%= form_with url: procurement_schedules_path, method: :get, local: true, class: "row g-3" do |form| %>
+        <div class="col-md-3">
+          <%= form.label :vendor, "Vendor", class: "form-label fw-bold" %>
+          <%= form.select :vendor, 
+              options_for_select([['All Vendors', '']] + @vendors.map { |v| [v, v] }, params[:vendor]),
+              {},
+              class: "form-select" %>
+        </div>
+        <div class="col-md-3">
+          <%= form.label :status, "Status", class: "form-label fw-bold" %>
+          <%= form.select :status, 
+              options_for_select([
+                ['All Statuses', ''],
+                ['Active', 'active'],
+                ['Inactive', 'inactive'],
+                ['Completed', 'completed'],
+                ['Cancelled', 'cancelled']
+              ], params[:status]),
+              {},
+              class: "form-select" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :start_date, "From Date", class: "form-label fw-bold" %>
+          <%= form.date_field :start_date, value: params[:start_date], class: "form-control" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :end_date, "To Date", class: "form-label fw-bold" %>
+          <%= form.date_field :end_date, value: params[:end_date], class: "form-control" %>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <%= form.submit "Filter", class: "btn btn-primary me-2" %>
+          <%= link_to "Reset", procurement_schedules_path, class: "btn btn-outline-secondary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Schedules Table -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0">
+        <i class="fas fa-table me-2"></i>
+        Procurement Schedules
+      </h5>
+      <small class="text-muted">
+        Showing <%= @procurement_schedules.offset_value + 1 %>-<%= [@procurement_schedules.offset_value + @procurement_schedules.limit_value, @procurement_schedules.total_count].min %> 
+        of <%= @procurement_schedules.total_count %> schedules
+      </small>
+    </div>
+    <div class="card-body p-0">
+      <% if @procurement_schedules.any? %>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Vendor Name</th>
+                <th>Period</th>
+                <th>Daily Quantity</th>
+                <th>Prices</th>
+                <th>Status</th>
+                <th>Progress</th>
+                <th>Expected Profit</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @procurement_schedules.each do |schedule| %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                        <%= schedule.vendor_name.first.upcase %>
+                      </div>
+                      <div>
+                        <strong><%= schedule.vendor_name %></strong>
+                        <br>
+                        <small class="text-muted">
+                          Created <%= time_ago_in_words(schedule.created_at) %> ago
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <strong><%= schedule.from_date.strftime("%b %d") %> - <%= schedule.to_date.strftime("%b %d, %Y") %></strong>
+                    <br>
+                    <small class="text-muted"><%= schedule.days_count %> days</small>
+                  </td>
+                  <td>
+                    <strong><%= number_with_delimiter(schedule.quantity) %> <%= schedule.unit.titleize %></strong>
+                    <br>
+                    <small class="text-muted">Total: <%= number_with_delimiter(schedule.total_planned_quantity) %> L</small>
+                  </td>
+                  <td>
+                    <div class="small">
+                      <div>Buy: <strong>₹<%= schedule.buying_price %></strong></div>
+                      <div>Sell: <strong>₹<%= schedule.selling_price %></strong></div>
+                      <div class="text-success">Margin: ₹<%= (schedule.selling_price - schedule.buying_price).round(2) %></div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-<%= schedule.status == 'active' ? 'success' : schedule.status == 'completed' ? 'primary' : 'secondary' %>">
+                      <%= schedule.status.titleize %>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="progress mb-1" style="height: 15px;">
+                      <div class="progress-bar bg-success" role="progressbar" style="width: <%= schedule.completion_percentage %>%">
+                        <%= schedule.completion_percentage %>%
+                      </div>
+                    </div>
+                    <small class="text-muted">
+                      <%= schedule.procurement_assignments.where(status: 'completed').count %>/<%= schedule.procurement_assignments.count %> completed
+                    </small>
+                  </td>
+                  <td class="text-end">
+                    <div class="text-<%= schedule.expected_profit >= 0 ? 'success' : 'danger' %>">
+                      <strong>₹<%= number_with_delimiter(schedule.expected_profit) %></strong>
+                    </div>
+                    <small class="text-muted">
+                      <%= schedule.profit_margin_percentage %>% margin
+                    </small>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group" role="group">
+                      <%= link_to schedule, class: "btn btn-sm btn-outline-info", 
+                          data: { bs_toggle: "tooltip", bs_title: "View Details" } do %>
+                        <i class="fas fa-eye"></i>
+                      <% end %>
+                      <%= link_to edit_procurement_schedule_path(schedule), class: "btn btn-sm btn-outline-warning",
+                          data: { bs_toggle: "tooltip", bs_title: "Edit Schedule" } do %>
+                        <i class="fas fa-edit"></i>
+                      <% end %>
+                      <%= link_to schedule, method: :delete, 
+                          class: "btn btn-sm btn-outline-danger",
+                          data: { 
+                            confirm: "Are you sure you want to delete this schedule? This will also delete all associated assignments.",
+                            bs_toggle: "tooltip", 
+                            bs_title: "Delete Schedule" 
+                          } do %>
+                        <i class="fas fa-trash"></i>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        <% if @procurement_schedules.respond_to?(:total_pages) && @procurement_schedules.total_pages > 1 %>
+          <div class="card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-muted">
+                  Page <%= @procurement_schedules.current_page %> of <%= @procurement_schedules.total_pages %>
+                </small>
+              </div>
+              <div>
+                <%= paginate @procurement_schedules, theme: 'bootstrap_5' %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        
+      <% else %>
+        <!-- Empty State -->
+        <div class="text-center py-5">
+          <i class="fas fa-calendar-plus fa-4x text-muted mb-3"></i>
+          <h4 class="text-muted">No Procurement Schedules Found</h4>
+          <p class="text-muted mb-4">
+            <% if params[:vendor].present? || params[:status].present? || params[:start_date].present? || params[:end_date].present? %>
+              No schedules match your current filters. Try adjusting your search criteria.
+            <% else %>
+              You haven't created any milk procurement schedules yet. Start by creating your first schedule.
+            <% end %>
+          </p>
+          <div>
+            <% if params[:vendor].present? || params[:status].present? || params[:start_date].present? || params[:end_date].present? %>
+              <%= link_to "Clear Filters", procurement_schedules_path, class: "btn btn-outline-primary me-2" %>
+            <% end %>
+            <%= link_to new_procurement_schedule_path, class: "btn btn-success" do %>
+              <i class="fas fa-plus me-2"></i>
+              Create Your First Schedule
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <% if @procurement_schedules.any? %>
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-bolt me-2"></i>
+              Quick Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3 mb-2">
+                <%= link_to today_procurement_assignments_path, class: "btn btn-success w-100" do %>
+                  <i class="fas fa-calendar-day me-2"></i>
+                  Today's Assignments
+                <% end %>
+              </div>
+              <div class="col-md-3 mb-2">
+                <%= link_to overdue_procurement_assignments_path, class: "btn btn-warning w-100" do %>
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  Overdue Items
+                <% end %>
+              </div>
+              <div class="col-md-3 mb-2">
+                <%= link_to calendar_procurement_assignments_path, class: "btn btn-info w-100" do %>
+                  <i class="fas fa-calendar me-2"></i>
+                  Calendar View
+                <% end %>
+              </div>
+              <div class="col-md-3 mb-2">
+                <%= link_to procurement_assignments_path, class: "btn btn-outline-primary w-100" do %>
+                  <i class="fas fa-tasks me-2"></i>
+                  All Assignments
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Initialize tooltips -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  });
+</script>
+
+<style>
+  .avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  .progress {
+    background-color: #e9ecef;
+  }
+  
+  .table > tbody > tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  
+  .btn-group .btn {
+    border-radius: 0.25rem !important;
+    margin-right: 2px;
+  }
+  
+  .btn-group .btn:last-child {
+    margin-right: 0;
+  }
+</style>
