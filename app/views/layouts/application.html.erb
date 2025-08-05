@@ -317,6 +317,49 @@
         padding: 1.5rem 1rem;
         height: 100%;
       }
+
+      /* Sidebar Button Styling */
+      .sidebar .nav-item button.nav-link {
+        color: var(--nav-link-color);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        margin: 0.1rem 0.75rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        border: none !important;
+        background: none !important;
+        width: calc(100% - 1.5rem);
+      }
+
+      .sidebar .nav-item button.nav-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+        border-radius: 12px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: -1;
+      }
+
+      .sidebar .nav-item button.nav-link:hover {
+        color: var(--nav-link-hover-color);
+        background: var(--nav-link-hover-bg);
+        transform: translateX(8px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+      }
+
+      .sidebar .nav-item button.nav-link:hover::before {
+        opacity: 1;
+      }
       
       .sidebar-brand {
         padding: 1rem;
@@ -815,8 +858,20 @@
                     role: "menuitem",
                     "aria-current": (current_page?(schedules_path) || controller_name == 'schedules') ? "page" : nil do %>
                   <i class="fas fa-calendar-alt nav-icon" aria-hidden="true"></i>
-                  <span class="nav-text">Schedules</span>
+                  <span class="nav-text">Reschedule</span>
                 <% end %>
+              </li>
+              
+              <li class="nav-item" role="none">
+                <button type="button" 
+                    class="nav-link btn btn-link text-start w-100 border-0 #{'active' if current_page?(schedules_path) || controller_name == 'schedules'}" 
+                    role="menuitem"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#importLastMonthModal"
+                    style="background: none; padding: 0.75rem 1.5rem;">
+                  <i class="fas fa-download nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Import Last Month Deliveries</span>
+                </button>
               </li>
               
               <li class="nav-item" role="none">
@@ -919,6 +974,111 @@
       
       <!-- Mobile Sidebar Overlay -->
       <div class="sidebar-overlay d-md-none" id="sidebarOverlay"></div>
+      
+      <!-- Import Last Month Deliveries Modal -->
+      <div class="modal fade" id="importLastMonthModal" tabindex="-1" aria-labelledby="importLastMonthModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-success text-white">
+              <h5 class="modal-title" id="importLastMonthModalLabel">
+                <i class="fas fa-download me-2"></i>
+                Import Last Month Deliveries
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+              <form id="importLastMonthForm">
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="importLastMonthMonth" class="form-label fw-bold">
+                      <i class="fas fa-calendar-day me-1"></i>
+                      Select Month
+                    </label>
+                    <select class="form-select" id="importLastMonthMonth" name="importLastMonthMonth" required>
+                      <option value="">Choose Month...</option>
+                      <option value="1">January</option>
+                      <option value="2">February</option>
+                      <option value="3">March</option>
+                      <option value="4">April</option>
+                      <option value="5">May</option>
+                      <option value="6">June</option>
+                      <option value="7">July</option>
+                      <option value="8">August</option>
+                      <option value="9">September</option>
+                      <option value="10">October</option>
+                      <option value="11">November</option>
+                      <option value="12">December</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="importLastMonthYear" class="form-label fw-bold">
+                      <i class="fas fa-calendar-year me-1"></i>
+                      Select Year
+                    </label>
+                    <select class="form-select" id="importLastMonthYear" name="importLastMonthYear" required>
+                      <option value="">Choose Year...</option>
+                      <% (2020..2030).each do |year| %>
+                        <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>>
+                          <%= year %>
+                        </option>
+                      <% end %>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="alert alert-info border-0 shadow-sm">
+                  <h6 class="alert-heading mb-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    How it works
+                  </h6>
+                  <ul class="mb-0 small">
+                    <li>All delivery assignments from the selected month will be copied to <strong><%= Date.current.strftime("%B %Y") %></strong></li>
+                    <li>Same products and delivery persons will be assigned</li>
+                    <li>All imported assignments will be in <strong>"Pending"</strong> state</li>
+                    <li>If the target month has fewer days, extra dates will be skipped</li>
+                    <li>If the target month has more days, the last day's assignment will be used</li>
+                  </ul>
+                </div>
+
+                <!-- Loading State -->
+                <div id="importLastMonthLoadingState" class="text-center py-3" style="display: none;">
+                  <div class="spinner-border text-success mb-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="text-muted mb-0">Importing deliveries...</p>
+                </div>
+
+                <!-- Success/Error Messages -->
+                <div id="importLastMonthSuccess" class="alert alert-success" style="display: none;">
+                  <h6 class="alert-heading">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Import Successful
+                  </h6>
+                  <p id="importLastMonthSuccessMessage" class="mb-0"></p>
+                </div>
+
+                <div id="importLastMonthError" class="alert alert-danger" style="display: none;">
+                  <h6 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Import Failed
+                  </h6>
+                  <p id="importLastMonthErrorMessage" class="mb-0"></p>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="fas fa-times me-2"></i>
+                Cancel
+              </button>
+              <button type="button" class="btn btn-success" id="importLastMonthBtn">
+                <i class="fas fa-download me-2"></i>
+                Import
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <!-- Logout Confirmation Modal -->
       <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
@@ -1098,6 +1258,113 @@
           // Initialize
           console.log('Sidebar initialized successfully');
           
+        })();
+
+        // Import Last Month Deliveries functionality
+        (function() {
+          'use strict';
+          
+          document.addEventListener('DOMContentLoaded', function() {
+            const importLastMonthBtn = document.getElementById('importLastMonthBtn');
+            const importLastMonthModal = document.getElementById('importLastMonthModal');
+            const importLastMonthLoadingState = document.getElementById('importLastMonthLoadingState');
+            const importLastMonthSuccess = document.getElementById('importLastMonthSuccess');
+            const importLastMonthError = document.getElementById('importLastMonthError');
+            const importLastMonthSuccessMessage = document.getElementById('importLastMonthSuccessMessage');
+            const importLastMonthErrorMessage = document.getElementById('importLastMonthErrorMessage');
+
+            if (importLastMonthBtn) {
+              importLastMonthBtn.addEventListener('click', function() {
+                const month = document.getElementById('importLastMonthMonth').value;
+                const year = document.getElementById('importLastMonthYear').value;
+
+                // Validate input
+                if (!month || !year) {
+                  alert('Please select both month and year');
+                  return;
+                }
+
+                // Hide previous messages
+                importLastMonthSuccess.style.display = 'none';
+                importLastMonthError.style.display = 'none';
+
+                // Show loading state
+                importLastMonthLoadingState.style.display = 'block';
+                importLastMonthBtn.disabled = true;
+
+                // Make API call
+                fetch('<%= import_selected_month_schedules_path %>', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                  },
+                  body: JSON.stringify({
+                    month: month,
+                    year: year
+                  })
+                })
+                .then(response => response.json())
+                .then(data => {
+                  // Hide loading state
+                  importLastMonthLoadingState.style.display = 'none';
+                  importLastMonthBtn.disabled = false;
+
+                  if (data.success) {
+                    // Show success message
+                    const summary = data.summary;
+                    importLastMonthSuccessMessage.innerHTML = `
+                      <strong>Import completed successfully!</strong><br>
+                      • ${summary.assignments_created} delivery assignments created<br>
+                      • ${summary.customers_affected} customers affected<br>
+                      • Source: ${summary.source_month} → Target: ${summary.target_month}
+                    `;
+                    importLastMonthSuccess.style.display = 'block';
+
+                    // Auto-close modal after 3 seconds
+                    setTimeout(() => {
+                      const modal = bootstrap.Modal.getInstance(importLastMonthModal);
+                      if (modal) {
+                        modal.hide();
+                      }
+                    }, 3000);
+
+                  } else {
+                    // Show error message
+                    importLastMonthErrorMessage.textContent = data.error || 'An error occurred while importing deliveries';
+                    importLastMonthError.style.display = 'block';
+                  }
+                })
+                .catch(error => {
+                  // Hide loading state
+                  importLastMonthLoadingState.style.display = 'none';
+                  importLastMonthBtn.disabled = false;
+
+                  // Show error message
+                  importLastMonthErrorMessage.textContent = 'Network error: ' + error.message;
+                  importLastMonthError.style.display = 'block';
+                });
+              });
+            }
+
+            // Reset modal state when it's closed
+            if (importLastMonthModal) {
+              importLastMonthModal.addEventListener('hidden.bs.modal', function() {
+                // Reset form
+                document.getElementById('importLastMonthForm').reset();
+                
+                // Hide all messages
+                importLastMonthLoadingState.style.display = 'none';
+                importLastMonthSuccess.style.display = 'none';
+                importLastMonthError.style.display = 'none';
+                
+                // Re-enable button
+                importLastMonthBtn.disabled = false;
+              });
+            }
+          });
+          
+          console.log('Import Last Month Deliveries functionality initialized');
         })();
       </script>
     <% else %>
