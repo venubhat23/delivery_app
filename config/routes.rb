@@ -163,6 +163,7 @@ Rails.application.routes.draw do
     collection do
       post :create_schedule
       post :import_last_month
+      post :import_selected_month
     end
   end
   
