@@ -321,10 +321,13 @@ class MilkAnalyticsController < ApplicationController
                .for_date_range(start_date, end_date)
                .group_by(&:vendor_name)
                .map do |vendor, assignments|
+      completed_assignments = assignments.select { |a| a.status == 'completed' }
+      assignments_with_actual_quantity = assignments.select { |a| a.actual_quantity.present? }
+      
       {
         vendor: vendor,
-        reliability: assignments.empty? ? 0 : (assignments.completed.count.to_f / assignments.count * 100).round(2),
-        average_quantity: assignments.with_actual_quantity.average(:actual_quantity)&.round(2) || 0,
+        reliability: assignments.empty? ? 0 : (completed_assignments.count.to_f / assignments.count * 100).round(2),
+        average_quantity: assignments_with_actual_quantity.empty? ? 0 : (assignments_with_actual_quantity.sum(&:actual_quantity).to_f / assignments_with_actual_quantity.count).round(2),
         total_profit: assignments.sum(&:actual_profit),
         price_consistency: calculate_price_consistency(assignments)
       }
