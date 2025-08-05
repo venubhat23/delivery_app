@@ -63,7 +63,7 @@
           </div>
 
           <!-- Customer Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_customers_search_path %>" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
             <%= form.label :customer_id, class: "form-label" %>
             <%= form.select :customer_id, 
                 options_for_select([['Search and select customer...', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 

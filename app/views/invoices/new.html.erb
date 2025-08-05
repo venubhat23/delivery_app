@@ -22,12 +22,12 @@
         <div class="col-md-6">
           <div class="mb-3" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
             <%= form.label :customer_id, class: "form-label" %>
-            <%= form.select :customer_id, 
-                           options_from_collection_for_select(@customers, :id, :name, @invoice.customer_id),
-                           { prompt: "Search and select customer..." }, 
-                           { class: "form-select", required: true, data: { "searchable-select-target" => "select" } } %>
-            <div class="form-text">
-              <small>Start typing to search customers by name</small>
+            <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
+              <%= form.select :customer_id, 
+                             options_from_collection_for_select(@customers, :id, :name, @invoice.customer_id),
+                             { prompt: "Select Customer" }, 
+                             { class: "form-select", required: true, data: { "searchable-select-target" => "select" } } %>
+
             </div>
           </div>
         </div>
@@ -68,10 +68,13 @@
               <div class="invoice-item row mb-3 border-bottom pb-3">
                 <div class="col-md-4" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search products...">
                   <%= item_form.label :product_id, "Product", class: "form-label" %>
-                  <%= item_form.select :product_id,
-                                      options_from_collection_for_select(@products, :id, :name, item_form.object.product_id),
-                                      { prompt: "Search and select product..." },
-                                      { class: "form-select product-select", required: true, data: { "searchable-select-target" => "select" } } %>
+                  <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search products...">
+                    <%= item_form.select :product_id,
+                                        options_from_collection_for_select(@products, :id, :name, item_form.object.product_id),
+                                        { prompt: "Select Product" },
+                                        { class: "form-select product-select", required: true, data: { "searchable-select-target" => "select" } } %>
+                  </div>
+
                 </div>
                 <div class="col-md-2">
                   <%= item_form.label :quantity, class: "form-label" %>
