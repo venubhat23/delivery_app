@@ -78,12 +78,12 @@
           <!-- Import Last Month's Deliveries Section -->
           <div class="mt-4 pt-4 border-top">
             <div class="text-center">
-              <button type="button" class="btn btn-success btn-lg px-5" id="importLastMonthBtn">
+              <button type="button" class="btn btn-success btn-lg px-5" id="importLastMonthBtn" data-bs-toggle="modal" data-bs-target="#importDeliveriesModal">
                 <i class="fas fa-download me-2"></i>
-                Import Last Month's Deliveries
+                Import Last Month Deliveries
               </button>
               <p class="text-muted mt-2 mb-0">
-                <small>Quickly import all delivery schedules and assignments from last month to this month</small>
+                <small>Import delivery schedules and assignments from any previous month</small>
               </p>
             </div>
           </div>
@@ -93,7 +93,7 @@
             <div class="spinner-border text-success mb-3" role="status">
               <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="text-muted">Importing last month's deliveries...</p>
+            <p class="text-muted">Importing deliveries...</p>
           </div>
 
           <!-- Loading State -->
@@ -173,7 +173,87 @@
     </div>
   </div>
 
-  <!-- Information Card -->
+  <!-- Import Deliveries Modal -->
+  <div class="modal fade" id="importDeliveriesModal" tabindex="-1" aria-labelledby="importDeliveriesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-gradient-success text-white">
+          <h5 class="modal-title" id="importDeliveriesModalLabel">
+            <i class="fas fa-download me-2"></i>
+            Import Last Month Deliveries
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="importForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="importMonth" class="form-label fw-bold">
+                  <i class="fas fa-calendar-day me-1"></i>
+                  Select Month
+                </label>
+                <select class="form-select" id="importMonth" name="importMonth" required>
+                  <option value="">Choose Month...</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="importYear" class="form-label fw-bold">
+                  <i class="fas fa-calendar-year me-1"></i>
+                  Select Year
+                </label>
+                <select class="form-select" id="importYear" name="importYear" required>
+                  <option value="">Choose Year...</option>
+                  <% (2020..2030).each do |year| %>
+                    <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>>
+                      <%= year %>
+                    </option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
+            
+            <div class="alert alert-info border-0 shadow-sm">
+              <h6 class="alert-heading mb-2">
+                <i class="fas fa-info-circle me-2"></i>
+                How it works
+              </h6>
+              <ul class="mb-0 small">
+                <li>All delivery assignments from the selected month will be copied to <strong><%= Date.current.strftime("%B %Y") %></strong></li>
+                <li>Same products and delivery persons will be assigned</li>
+                <li>All imported assignments will be in <strong>"Pending"</strong> state</li>
+                <li>If the target month has fewer days, extra dates will be skipped</li>
+                <li>If the target month has more days, the last day's assignment will be used</li>
+              </ul>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>
+            Cancel
+          </button>
+          <button type="button" class="btn btn-success" id="importBtn">
+            <i class="fas fa-download me-2"></i>
+            Import
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Information Card -->
   <div class="row justify-content-center mt-4">
     <div class="col-lg-8 col-xl-6">
       <div class="card border-0 bg-light">
@@ -205,12 +285,12 @@
           
           <h6 class="card-title text-success">
             <i class="fas fa-download me-2"></i>
-            Import Last Month's Deliveries
+            Import Last Month Deliveries
           </h6>
           <ul class="list-unstyled mb-0">
             <li class="mb-2">
               <i class="fas fa-check text-success me-2"></i>
-              Automatically imports all schedules from the previous month
+              Select any previous month and year to import delivery assignments
             </li>
             <li class="mb-2">
               <i class="fas fa-check text-success me-2"></i>
@@ -220,9 +300,13 @@
               <i class="fas fa-check text-success me-2"></i>
               All imported assignments are created in 'pending' status
             </li>
+            <li class="mb-2">
+              <i class="fas fa-check text-success me-2"></i>
+              Handles different month lengths automatically (30/31 days)
+            </li>
             <li class="mb-0">
               <i class="fas fa-check text-success me-2"></i>
-              Skips duplicate schedules and assignments if they already exist
+              Skips duplicate assignments if they already exist
             </li>
           </ul>
         </div>
@@ -280,6 +364,10 @@
   .btn-success:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+  }
+  
+  .bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   }
   
   .alert {
@@ -425,6 +513,60 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(error => {
       importLoadingState.style.display = 'none';
       importLastMonthBtn.disabled = false;
+      showError('Network error: ' + error.message);
+    });
+  });
+
+  // Modal import functionality
+  const importBtn = document.getElementById('importBtn');
+  const importModal = document.getElementById('importDeliveriesModal');
+  
+  importBtn.addEventListener('click', function() {
+    const importMonth = document.getElementById('importMonth').value;
+    const importYear = document.getElementById('importYear').value;
+    
+    if (!importMonth || !importYear) {
+      alert('Please select both month and year');
+      return;
+    }
+    
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(importModal);
+    modal.hide();
+    
+    // Hide previous results
+    hideAllSections();
+    
+    // Show loading state
+    importLoadingState.style.display = 'block';
+    
+    // Make API call to import selected month's deliveries
+    fetch('<%= import_selected_month_schedules_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        month: importMonth,
+        year: importYear
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      importLoadingState.style.display = 'none';
+      
+      if (data.success) {
+        showSummary(data.summary);
+        if (data.errors && data.errors.length > 0) {
+          showWarnings(data.errors);
+        }
+      } else {
+        showError(data.error || 'An error occurred while importing deliveries');
+      }
+    })
+    .catch(error => {
+      importLoadingState.style.display = 'none';
       showError('Network error: ' + error.message);
     });
   });

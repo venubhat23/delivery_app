@@ -66,12 +66,15 @@
           <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_customers_search_path %>" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
             <%= form.label :customer_id, class: "form-label" %>
             <%= form.select :customer_id, 
-                options_for_select([['Select Customer', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
+                options_for_select([['Search and select customer...', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
                 {}, { 
                   class: "form-select", 
                   required: true,
                   data: { "searchable-select-target" => "select" }
                 } %>
+            <div class="form-text">
+              <small>Start typing to search customers by name</small>
+            </div>
           </div>
 
           <!-- Delivery Person Selection with Search -->
@@ -87,15 +90,18 @@
           </div>
 
           <!-- Product Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_products_search_path %>" data-searchable-select-placeholder-value="Search products...">
+          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search products...">
             <%= form.label :product_id, class: "form-label" %>
             <%= form.select :product_id, 
-                options_for_select([['Select Product', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
+                options_for_select([['Search and select product...', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
                 {}, { 
                   class: "form-select", 
                   required: true,
                   data: { "searchable-select-target" => "select" }
                 } %>
+            <div class="form-text">
+              <small>Start typing to search products by name</small>
+            </div>
           </div>
 
           <div class="col-md-6">
