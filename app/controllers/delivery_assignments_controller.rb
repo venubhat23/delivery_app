@@ -156,8 +156,9 @@ class DeliveryAssignmentsController < ApplicationController
     # Convert delivery_date to scheduled_date since delivery_date is just an alias method
     if da_params[:delivery_date].present?
       da_params[:scheduled_date] = da_params[:delivery_date]
-      da_params.delete(:delivery_date)
     end
+    # Always remove delivery_date to avoid conflicts
+    da_params.delete(:delivery_date)
 
     da_params
   end
