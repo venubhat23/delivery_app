@@ -21,13 +21,26 @@ class ProcurementAssignmentsController < ApplicationController
       @procurement_assignments = @procurement_assignments.by_date(params[:date])
     end
 
-    @procurement_assignments = @procurement_assignments.order(:date, :vendor_name).page(params[:page])
-
-    # Summary data
-    @total_assignments = @procurement_assignments.count
-    @pending_assignments = @procurement_assignments.pending.count
-    @completed_assignments = @procurement_assignments.completed.count
-    @overdue_assignments = @procurement_assignments.select(&:overdue?).count
+    # Calculate summary data before pagination
+    filtered_assignments = @procurement_assignments
+    @total_assignments = filtered_assignments.count
+    @pending_assignments = filtered_assignments.pending.count
+    @completed_assignments = filtered_assignments.completed.count
+    @overdue_assignments = filtered_assignments.select(&:overdue?).count
+    
+    # Basic pagination without Kaminari
+    page = (params[:page] || 1).to_i
+    per_page = 25
+    offset = (page - 1) * per_page
+    
+    @total_count = filtered_assignments.count
+    @current_page = page
+    @per_page = per_page
+    @total_pages = (@total_count.to_f / per_page).ceil
+    
+    @procurement_assignments = filtered_assignments.order(:date, :vendor_name)
+                                                  .limit(per_page)
+                                                  .offset(offset)
 
     # Get unique vendors for filter dropdown
     @vendors = ProcurementAssignment.distinct.pluck(:vendor_name).sort
