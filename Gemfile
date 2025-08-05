@@ -37,9 +37,6 @@ gem 'rqrcode'
 # Icons
 gem 'font-awesome-rails'
 
-# Pagination
-gem 'kaminari'
-
 group :development, :test do
   gem 'byebug'
 end
