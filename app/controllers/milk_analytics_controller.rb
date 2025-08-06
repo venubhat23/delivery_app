@@ -44,6 +44,20 @@ class MilkAnalyticsController < ApplicationController
     
     # Monthly summary for calendar
     @monthly_summary = generate_monthly_summary(@start_date, @end_date)
+    
+    # Respond to JSON requests for real-time updates
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          daily_chart_data: @daily_chart_data,
+          vendor_chart_data: @vendor_chart_data,
+          kpis: @kpis,
+          milk_comparison: @milk_comparison,
+          vendor_performance: @vendor_performance
+        }
+      end
+    end
   end
 
   def calendar_view

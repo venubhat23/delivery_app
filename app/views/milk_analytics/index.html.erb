@@ -358,14 +358,19 @@
             </h5>
             <p class="text-muted mb-0 small">Track daily milk procurement trends</p>
           </div>
-          <div class="dropdown">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-              <i class="fas fa-ellipsis-v"></i>
+          <div class="d-flex gap-2">
+            <button id="refreshChartsBtn" class="btn btn-outline-success btn-sm" title="Refresh chart data">
+              <i class="fas fa-sync-alt me-2"></i>Refresh Data
             </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Export Data</a></li>
-              <li><a class="dropdown-item" href="#">View Details</a></li>
-            </ul>
+            <div class="dropdown">
+              <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Export Data</a></li>
+                <li><a class="dropdown-item" href="#">View Details</a></li>
+              </ul>
+            </div>
           </div>
         </div>
         <div class="card-body p-4">
@@ -710,98 +715,304 @@ document.addEventListener('DOMContentLoaded', function() {
   const dateRangeForm = document.getElementById('dateRangeForm');
   
   // Show custom date range when option is clicked
-  customRangeOption.addEventListener('click', function(e) {
-    e.preventDefault();
-    customDateRange.style.display = 'flex';
-    // Set focus to the first date input
-    const fromDateInput = customDateRange.querySelector('input[name="from_date"]');
-    if (fromDateInput) {
-      fromDateInput.focus();
-    }
-  });
+  if (customRangeOption) {
+    customRangeOption.addEventListener('click', function(e) {
+      e.preventDefault();
+      customDateRange.style.display = 'flex';
+      // Set focus to the first date input
+      const fromDateInput = customDateRange.querySelector('input[name="from_date"]');
+      if (fromDateInput) {
+        fromDateInput.focus();
+      }
+    });
+  }
   
   // Clear custom range and hide the form
-  clearCustomRange.addEventListener('click', function() {
-    // Redirect to default month view
-    window.location.href = '<%= milk_analytics_path(date_range: 'month') %>';
-  });
+  if (clearCustomRange) {
+    clearCustomRange.addEventListener('click', function() {
+      // Redirect to default month view
+      window.location.href = '<%= milk_analytics_path(date_range: 'month') %>';
+    });
+  }
   
   // Validate date range before submission
-  dateRangeForm.addEventListener('submit', function(e) {
-    const fromDate = document.querySelector('input[name="from_date"]').value;
-    const toDate = document.querySelector('input[name="to_date"]').value;
-    
-    if (!fromDate || !toDate) {
-      e.preventDefault();
-      alert('Please select both From and To dates.');
-      return false;
-    }
-    
-    if (new Date(fromDate) > new Date(toDate)) {
-      e.preventDefault();
-      alert('From date cannot be later than To date.');
-      return false;
-    }
-  });
-  // Daily Procurement Chart
-  const dailyCtx = document.getElementById('dailyProcurementChart').getContext('2d');
-  const dailyChart = new Chart(dailyCtx, {
-    type: 'line',
-    data: {
-      labels: <%= raw @daily_chart_data.map { |d| d[:date] }.to_json %>,
-      datasets: [{
-        label: 'Planned Quantity (L)',
-        data: <%= raw @daily_chart_data.map { |d| d[:planned_quantity] }.to_json %>,
-        borderColor: 'rgb(54, 162, 235)',
-        backgroundColor: 'rgba(54, 162, 235, 0.1)',
-        tension: 0.1
-      }, {
-        label: 'Actual Quantity (L)',
-        data: <%= raw @daily_chart_data.map { |d| d[:actual_quantity] }.to_json %>,
-        borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.1)',
-        tension: 0.1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
+  if (dateRangeForm) {
+    dateRangeForm.addEventListener('submit', function(e) {
+      const fromDate = document.querySelector('input[name="from_date"]').value;
+      const toDate = document.querySelector('input[name="to_date"]').value;
+      
+      if (!fromDate || !toDate) {
+        e.preventDefault();
+        alert('Please select both From and To dates.');
+        return false;
       }
+      
+      if (new Date(fromDate) > new Date(toDate)) {
+        e.preventDefault();
+        alert('From date cannot be later than To date.');
+        return false;
+      }
+    });
+  }
+
+  // Chart data with fallbacks for empty data
+  const dailyChartData = <%= raw @daily_chart_data.to_json %> || [];
+  const vendorChartData = <%= raw @vendor_chart_data.to_json %> || [];
+
+  // Daily Procurement Chart
+  const dailyCtx = document.getElementById('dailyProcurementChart');
+  if (dailyCtx) {
+    let dailyChart;
+    
+    if (dailyChartData.length === 0) {
+      // Show empty state message
+      dailyCtx.style.display = 'none';
+      const emptyMessage = document.createElement('div');
+      emptyMessage.className = 'text-center py-5';
+      emptyMessage.innerHTML = `
+        <div class="text-muted">
+          <i class="fas fa-chart-line fa-3x mb-3 opacity-50"></i>
+          <h5>No Procurement Data Available</h5>
+          <p>Start by creating procurement schedules to see daily trends</p>
+          <a href="<%= new_procurement_schedule_path %>" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create First Schedule
+          </a>
+        </div>
+      `;
+      dailyCtx.parentNode.appendChild(emptyMessage);
+    } else {
+      dailyChart = new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+          labels: dailyChartData.map(d => {
+            const date = new Date(d.date);
+            return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+          }),
+          datasets: [{
+            label: 'Planned Quantity (L)',
+            data: dailyChartData.map(d => d.planned_quantity || 0),
+            borderColor: 'rgb(54, 162, 235)',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }, {
+            label: 'Actual Quantity (L)',
+            data: dailyChartData.map(d => d.actual_quantity || 0),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 20
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: 'white',
+              bodyColor: 'white',
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderWidth: 1,
+              callbacks: {
+                title: function(context) {
+                  const dataIndex = context[0].dataIndex;
+                  const date = new Date(dailyChartData[dataIndex].date);
+                  return date.toLocaleDateString('en-IN', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  });
+                },
+                afterBody: function(context) {
+                  const dataIndex = context[0].dataIndex;
+                  const data = dailyChartData[dataIndex];
+                  return [
+                    `Cost: ₹${(data.cost || 0).toLocaleString('en-IN')}`,
+                    `Revenue: ₹${(data.revenue || 0).toLocaleString('en-IN')}`,
+                    `Profit: ₹${(data.profit || 0).toLocaleString('en-IN')}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + 'L';
+                }
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            }
+          }
+        }
+      });
     }
-  });
+  }
 
   // Vendor Distribution Chart
-  const vendorCtx = document.getElementById('vendorDistributionChart').getContext('2d');
-  const vendorChart = new Chart(vendorCtx, {
-    type: 'doughnut',
-    data: {
-      labels: <%= raw @vendor_chart_data.map { |v| v[:vendor] }.to_json %>,
-      datasets: [{
-        data: <%= raw @vendor_chart_data.map { |v| v[:quantity] }.to_json %>,
-        backgroundColor: [
-          '#4e73df',
-          '#1cc88a',
-          '#36b9cc',
-          '#f6c23e',
-          '#e74a3b',
-          '#858796'
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom'
+  const vendorCtx = document.getElementById('vendorDistributionChart');
+  if (vendorCtx) {
+    let vendorChart;
+    
+    if (vendorChartData.length === 0) {
+      // Show empty state message
+      vendorCtx.style.display = 'none';
+      const emptyMessage = document.createElement('div');
+      emptyMessage.className = 'text-center py-4';
+      emptyMessage.innerHTML = `
+        <div class="text-muted">
+          <i class="fas fa-chart-pie fa-3x mb-3 opacity-50"></i>
+          <h6>No Vendor Data Available</h6>
+          <p class="small">Add procurement schedules to see vendor distribution</p>
+        </div>
+      `;
+      vendorCtx.parentNode.appendChild(emptyMessage);
+    } else {
+      const colors = [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', 
+        '#858796', '#5a5c69', '#2e59d9', '#17a2b8', '#ffc107'
+      ];
+      
+      vendorChart = new Chart(vendorCtx, {
+        type: 'doughnut',
+        data: {
+          labels: vendorChartData.map(v => v.vendor || 'Unknown'),
+          datasets: [{
+            data: vendorChartData.map(v => v.quantity || 0),
+            backgroundColor: colors.slice(0, vendorChartData.length),
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            hoverBorderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 15,
+                usePointStyle: true,
+                font: {
+                  size: 12
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: 'white',
+              bodyColor: 'white',
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  const dataIndex = context.dataIndex;
+                  const data = vendorChartData[dataIndex];
+                  const total = vendorChartData.reduce((sum, v) => sum + (v.quantity || 0), 0);
+                  const percentage = total > 0 ? ((data.quantity || 0) / total * 100).toFixed(1) : 0;
+                  
+                  return [
+                    `${data.vendor}: ${(data.quantity || 0).toLocaleString('en-IN')}L (${percentage}%)`,
+                    `Cost: ₹${(data.cost || 0).toLocaleString('en-IN')}`,
+                    `Profit: ₹${(data.profit || 0).toLocaleString('en-IN')}`
+                  ];
+                }
+              }
+            }
+          },
+          cutout: '60%',
+          animation: {
+            animateScale: true,
+            animateRotate: true
+          }
         }
-      }
+      });
     }
-  });
+  }
+
+  // Real-time data refresh functionality
+  function refreshChartData() {
+    fetch(window.location.href, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Update daily chart if it exists
+      if (dailyChart && data.daily_chart_data) {
+        dailyChart.data.labels = data.daily_chart_data.map(d => {
+          const date = new Date(d.date);
+          return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+        });
+        dailyChart.data.datasets[0].data = data.daily_chart_data.map(d => d.planned_quantity || 0);
+        dailyChart.data.datasets[1].data = data.daily_chart_data.map(d => d.actual_quantity || 0);
+        dailyChart.update('none'); // Smooth update without animation
+      }
+
+      // Update vendor chart if it exists
+      if (vendorChart && data.vendor_chart_data) {
+        vendorChart.data.labels = data.vendor_chart_data.map(v => v.vendor || 'Unknown');
+        vendorChart.data.datasets[0].data = data.vendor_chart_data.map(v => v.quantity || 0);
+        vendorChart.update('none'); // Smooth update without animation
+      }
+
+      console.log('Charts updated with real-time data');
+    })
+    .catch(error => {
+      console.log('Real-time update not available:', error);
+      // Fail silently - real-time updates are optional
+    });
+  }
+
+  // Auto-refresh every 30 seconds (optional - can be disabled)
+  const enableAutoRefresh = false; // Set to true to enable auto-refresh
+  if (enableAutoRefresh) {
+    setInterval(refreshChartData, 30000);
+  }
+
+  // Manual refresh button (if you want to add one)
+  const refreshButton = document.getElementById('refreshChartsBtn');
+  if (refreshButton) {
+    refreshButton.addEventListener('click', function() {
+      refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+      refreshButton.disabled = true;
+      
+      setTimeout(() => {
+        refreshChartData();
+        refreshButton.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh Data';
+        refreshButton.disabled = false;
+      }, 1000);
+    });
+  }
 });
 </script>
 
