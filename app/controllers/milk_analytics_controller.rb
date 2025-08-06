@@ -222,21 +222,54 @@ class MilkAnalyticsController < ApplicationController
   def calculate_main_kpis(start_date, end_date)
     assignments = current_user.procurement_assignments.for_date_range(start_date, end_date)
     
+    # Calculate total milk purchased (actual + planned for pending)
+    actual_quantity = assignments.with_actual_quantity.sum(:actual_quantity)
+    pending_planned_quantity = assignments.pending.sum(:planned_quantity)
+    total_milk_purchased = actual_quantity + pending_planned_quantity
+    
+    # Calculate costs and revenues
+    actual_cost = assignments.sum(&:actual_cost)
+    pending_planned_cost = assignments.pending.sum { |a| a.planned_quantity * a.buying_price }
+    total_cost = actual_cost + pending_planned_cost
+    
+    actual_revenue = assignments.sum(&:actual_revenue)
+    pending_planned_revenue = assignments.pending.sum { |a| a.planned_quantity * a.selling_price }
+    total_revenue = actual_revenue + pending_planned_revenue
+    
+    # Calculate gross profit (actual + planned for pending)
+    actual_profit = assignments.sum(&:actual_profit)
+    pending_planned_profit = pending_planned_revenue - pending_planned_cost
+    gross_profit = actual_profit + pending_planned_profit
+    
     {
-      total_milk_purchased: assignments.sum(:actual_quantity),
-      total_cost: assignments.sum(&:actual_cost),
-      total_revenue: assignments.sum(&:actual_revenue),
-      gross_profit: assignments.sum(&:actual_profit),
+      total_milk_purchased: total_milk_purchased,
+      total_cost: total_cost,
+      total_revenue: total_revenue,
+      gross_profit: gross_profit,
       active_vendors: assignments.distinct.count(:vendor_name),
       completion_rate: assignments.completion_rate_for_period(start_date, end_date),
       average_buying_price: assignments.with_actual_quantity.average(:buying_price)&.round(2) || 0,
-      profit_margin: calculate_profit_margin(assignments)
+      profit_margin: calculate_profit_margin_with_planned(assignments)
     }
   end
 
   def calculate_profit_margin(assignments)
     total_cost = assignments.sum(&:actual_cost)
     total_revenue = assignments.sum(&:actual_revenue)
+    
+    return 0 if total_cost.zero?
+    ((total_revenue - total_cost) / total_cost * 100).round(2)
+  end
+
+  def calculate_profit_margin_with_planned(assignments)
+    # Include both actual and planned data
+    actual_cost = assignments.sum(&:actual_cost)
+    pending_planned_cost = assignments.pending.sum { |a| a.planned_quantity * a.buying_price }
+    total_cost = actual_cost + pending_planned_cost
+    
+    actual_revenue = assignments.sum(&:actual_revenue)
+    pending_planned_revenue = assignments.pending.sum { |a| a.planned_quantity * a.selling_price }
+    total_revenue = actual_revenue + pending_planned_revenue
     
     return 0 if total_cost.zero?
     ((total_revenue - total_cost) / total_cost * 100).round(2)
@@ -296,10 +329,11 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def calculate_milk_comparison(start_date, end_date)
-    # Procurement data
-    total_purchased = current_user.procurement_assignments
-                                 .for_date_range(start_date, end_date)
-                                 .sum(:actual_quantity)
+    # Procurement data - include both actual and planned
+    assignments = current_user.procurement_assignments.for_date_range(start_date, end_date)
+    actual_purchased = assignments.with_actual_quantity.sum(:actual_quantity)
+    pending_planned = assignments.pending.sum(:planned_quantity)
+    total_purchased = actual_purchased + pending_planned
     
     # Delivery data
     total_delivered = current_user.delivery_assignments
