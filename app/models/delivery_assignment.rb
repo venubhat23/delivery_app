@@ -51,7 +51,11 @@ class DeliveryAssignment < ApplicationRecord
   end
 
   def total_amount
-    (product&.price || 0) * (quantity || 0)
+    return 0 unless product&.price && quantity
+    (product.price.to_f * quantity.to_f).round(2)
+  rescue => e
+    Rails.logger.error "Error calculating total_amount for DeliveryAssignment #{id}: #{e.message}"
+    0
   end
 
   def status_display
@@ -134,6 +138,25 @@ class DeliveryAssignment < ApplicationRecord
       total_amount: summary.sum { |s| s[:total_amount] },
       month_year: start_date.strftime("%B %Y")
     }
+  end
+
+  # Safe total calculation methods for analytics
+  def self.safe_total_amount(deliveries)
+    deliveries.sum do |delivery|
+      delivery.total_amount || 0
+    rescue => e
+      Rails.logger.error "Error calculating amount for delivery #{delivery.id}: #{e.message}"
+      0
+    end
+  end
+
+  def self.safe_total_liters(deliveries)
+    deliveries.joins(:product)
+              .where(products: { unit_type: 'liters' })
+              .sum(:quantity) || 0
+  rescue => e
+    Rails.logger.error "Error calculating total liters: #{e.message}"
+    0
   end
 
   private

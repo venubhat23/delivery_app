@@ -110,6 +110,162 @@
   </div>
 </div>
 
+<!-- Total Delivered Milk Supply Analytics Section -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card delivery-analytics-card">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-truck-fast me-2 text-primary"></i>Total Delivered - Milk Supply & Analytics
+          </h5>
+          <div class="d-flex gap-2">
+            <input type="date" id="analytics-date-picker" class="form-control form-control-sm" 
+                   value="<%= Date.current.strftime('%Y-%m-%d') %>" style="width: 160px;">
+            <button id="refresh-analytics" class="btn btn-primary btn-sm">
+              <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+            <span class="badge bg-success" id="current-date-badge">Today: <%= Date.current.strftime('%b %d, %Y') %></span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <!-- Today's Delivery Stats -->
+        <div class="row mb-4">
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="delivery-stat-card bg-primary">
+              <div class="stat-icon">
+                <i class="fas fa-truck"></i>
+              </div>
+                             <div class="stat-content">
+                 <div class="stat-number" data-stat="deliveries-count"><%= @total_delivered_today[:count] %></div>
+                 <div class="stat-label">Today's Deliveries</div>
+               </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="delivery-stat-card bg-success">
+              <div class="stat-icon">
+                <i class="fas fa-rupee-sign"></i>
+              </div>
+                             <div class="stat-content">
+                 <div class="stat-number" data-stat="total-amount">₹<%= number_with_delimiter(@total_delivered_today[:total_amount].round(2)) %></div>
+                 <div class="stat-label">Today's Revenue</div>
+               </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="delivery-stat-card bg-info">
+              <div class="stat-icon">
+                <i class="fas fa-tint"></i>
+              </div>
+                             <div class="stat-content">
+                 <div class="stat-number" data-stat="total-liters"><%= @total_delivered_today[:total_liters] %></div>
+                 <div class="stat-label">Liters Delivered</div>
+               </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="delivery-stat-card bg-warning">
+              <div class="stat-icon">
+                <i class="fas fa-glass-whiskey"></i>
+              </div>
+                             <div class="stat-content">
+                 <div class="stat-number" data-stat="milk-products"><%= @total_delivered_today[:milk_products_count] %></div>
+                 <div class="stat-label">Milk Products</div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Comparison -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="comparison-card">
+              <h6 class="mb-3">
+                <i class="fas fa-calendar-alt me-2"></i>This Month's Performance
+              </h6>
+              <div class="comparison-stats">
+                                 <div class="comparison-item">
+                   <span class="label">Total Deliveries:</span>
+                   <span class="value" data-monthly="deliveries-count"><%= @total_delivered_monthly[:count] %></span>
+                 </div>
+                 <div class="comparison-item">
+                   <span class="label">Total Revenue:</span>
+                   <span class="value" data-monthly="total-amount">₹<%= number_with_delimiter(@total_delivered_monthly[:total_amount].round(2)) %></span>
+                 </div>
+                 <div class="comparison-item">
+                   <span class="label">Total Liters:</span>
+                   <span class="value" data-monthly="total-liters"><%= @total_delivered_monthly[:total_liters] %> L</span>
+                 </div>
+                 <div class="comparison-item">
+                   <span class="label">Milk Products:</span>
+                   <span class="value" data-monthly="milk-products"><%= @total_delivered_monthly[:milk_products_count] %></span>
+                 </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="comparison-card">
+              <h6 class="mb-3">
+                <i class="fas fa-chart-bar me-2"></i>Weekly Delivery Trend
+              </h6>
+              <canvas id="weeklyDeliveryChart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Delivered Products -->
+        <div class="row">
+          <div class="col-12">
+            <h6 class="mb-3">
+              <i class="fas fa-star me-2"></i>Top Delivered Products (Last 30 Days)
+            </h6>
+                         <div class="row" id="top-products-container">
+               <% if @top_delivered_products&.any? %>
+                 <% @top_delivered_products.each_with_index do |product, index| %>
+                  <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="top-delivered-product">
+                      <div class="product-rank-badge">
+                        <%= index + 1 %>
+                      </div>
+                      <div class="product-info">
+                        <h6 class="product-name"><%= product.name %></h6>
+                        <div class="product-stats">
+                          <div class="stat-item">
+                            <span class="stat-value"><%= product.total_delivered %></span>
+                            <span class="stat-unit"><%= product.unit_type %></span>
+                          </div>
+                          <div class="stat-item">
+                            <span class="stat-value">₹<%= number_with_delimiter(product.total_revenue.round(2)) %></span>
+                            <span class="stat-unit">Revenue</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              <% else %>
+                <div class="col-12">
+                  <div class="empty-state-sm">
+                    <i class="fas fa-box-open"></i>
+                    <p>No delivery data available</p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Charts and Analytics Row -->
 <div class="row mb-4">
   <div class="col-lg-8">
@@ -674,6 +830,177 @@
   margin: 0;
 }
 
+/* Delivery Analytics Styles */
+.delivery-analytics-card {
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.delivery-stat-card {
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.delivery-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.delivery-stat-card.bg-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.delivery-stat-card.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.delivery-stat-card.bg-info {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.delivery-stat-card.bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.delivery-stat-card .stat-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.delivery-stat-card .stat-content {
+  flex: 1;
+}
+
+.delivery-stat-card .stat-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.delivery-stat-card .stat-label {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.comparison-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  height: 100%;
+}
+
+.comparison-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comparison-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.comparison-item:last-child {
+  border-bottom: none;
+}
+
+.comparison-item .label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.comparison-item .value {
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.top-delivered-product {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.top-delivered-product:hover {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.product-rank-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.top-delivered-product .product-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+}
+
+.product-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-item .stat-value {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.stat-item .stat-unit {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .stats-card {
@@ -699,6 +1026,20 @@
   .product-metrics {
     flex-direction: column;
     gap: 0.5rem;
+  }
+  
+  .delivery-stat-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .delivery-stat-card .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .comparison-item {
+    font-size: 0.875rem;
   }
 }
 </style>
@@ -745,6 +1086,203 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // Weekly Delivery Chart
+  let weeklyChart;
+  function initializeWeeklyChart(weeklyData) {
+    const weeklyCtx = document.getElementById('weeklyDeliveryChart');
+    if (weeklyCtx) {
+      if (weeklyChart) {
+        weeklyChart.destroy();
+      }
+      
+      weeklyChart = new Chart(weeklyCtx, {
+        type: 'bar',
+        data: {
+          labels: weeklyData.map(d => d.day),
+          datasets: [
+            {
+              label: 'Deliveries',
+              data: weeklyData.map(d => d.count),
+              backgroundColor: 'rgba(16, 185, 129, 0.8)',
+              borderColor: 'rgba(16, 185, 129, 1)',
+              borderWidth: 1,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Liters',
+              data: weeklyData.map(d => d.liters),
+              backgroundColor: 'rgba(6, 182, 212, 0.8)',
+              borderColor: 'rgba(6, 182, 212, 1)',
+              borderWidth: 1,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 15
+              }
+            },
+            tooltip: {
+              callbacks: {
+                afterLabel: function(context) {
+                  const dataIndex = context.dataIndex;
+                  const amount = weeklyData[dataIndex].amount;
+                  return `Revenue: ₹${amount.toFixed(2)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Deliveries Count'
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Liters'
+              },
+              grid: {
+                drawOnChartArea: false,
+              },
+            },
+          }
+        }
+      });
+    }
+  }
+
+  // Initialize the chart with initial data
+  const initialWeeklyData = <%= raw @weekly_delivery_data.to_json %>;
+  initializeWeeklyChart(initialWeeklyData);
+
+  // Date filtering functionality
+  const datePicker = document.getElementById('analytics-date-picker');
+  const refreshButton = document.getElementById('refresh-analytics');
+  const dateBadge = document.getElementById('current-date-badge');
+
+  function formatNumber(num) {
+    return new Intl.NumberFormat('en-IN').format(num);
+  }
+
+  function updateAnalytics() {
+    const selectedDate = datePicker.value;
+    if (!selectedDate) return;
+
+    refreshButton.disabled = true;
+    refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+
+    fetch(`/dashboard/delivery_analytics?date=${selectedDate}`)
+      .then(response => response.json())
+      .then(data => {
+        // Update date badge
+        dateBadge.textContent = `Selected: ${data.date}`;
+        
+        // Update today's stats cards
+        const todayStats = data.today_stats;
+        document.querySelector('[data-stat="deliveries-count"]').textContent = todayStats.count;
+        document.querySelector('[data-stat="total-amount"]').textContent = `₹${formatNumber(todayStats.total_amount.toFixed(2))}`;
+        document.querySelector('[data-stat="total-liters"]').textContent = todayStats.total_liters;
+        document.querySelector('[data-stat="milk-products"]').textContent = todayStats.milk_products_count;
+
+        // Update monthly stats
+        const monthlyStats = data.monthly_stats;
+        document.querySelector('[data-monthly="deliveries-count"]').textContent = monthlyStats.count;
+        document.querySelector('[data-monthly="total-amount"]').textContent = `₹${formatNumber(monthlyStats.total_amount.toFixed(2))}`;
+        document.querySelector('[data-monthly="total-liters"]').textContent = `${monthlyStats.total_liters} L`;
+        document.querySelector('[data-monthly="milk-products"]').textContent = monthlyStats.milk_products_count;
+
+        // Update weekly chart
+        initializeWeeklyChart(data.weekly_data);
+
+        // Update top products
+        updateTopProducts(data.top_products);
+      })
+      .catch(error => {
+        console.error('Error updating analytics:', error);
+        alert('Failed to update analytics. Please try again.');
+      })
+      .finally(() => {
+        refreshButton.disabled = false;
+        refreshButton.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Refresh';
+      });
+  }
+
+  function updateTopProducts(products) {
+    const container = document.getElementById('top-products-container');
+    if (!container) return;
+
+    if (products.length === 0) {
+      container.innerHTML = `
+        <div class="col-12">
+          <div class="empty-state-sm">
+            <i class="fas fa-box-open"></i>
+            <p>No delivery data available</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    products.forEach((product, index) => {
+      html += `
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+          <div class="top-delivered-product">
+            <div class="product-rank-badge">${index + 1}</div>
+            <div class="product-info">
+              <h6 class="product-name">${product.name}</h6>
+              <div class="product-stats">
+                <div class="stat-item">
+                  <span class="stat-value">${product.total_delivered}</span>
+                  <span class="stat-unit">${product.unit_type}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">₹${formatNumber(product.total_revenue)}</span>
+                  <span class="stat-unit">Revenue</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  // Event listeners
+  refreshButton.addEventListener('click', updateAnalytics);
+  datePicker.addEventListener('change', updateAnalytics);
 });
 </script>
 
