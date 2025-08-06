@@ -148,10 +148,10 @@ class DeliveryAssignmentsController < ApplicationController
 
   def delivery_assignment_params
     da_params = params.require(:delivery_assignment).permit(
-      :customer_id, :product_id, :quantity, 
+      :customer_id, :product_id, :quantity, :unit,
       :delivery_date, :special_instructions, :status, :priority,
       :delivery_person_id, :start_date, :end_date, :frequency
-    )
+    ).dup  # Create a copy to avoid modifying original params
 
     # Handle delivery_person_id to user_id mapping
     if da_params[:delivery_person_id].present?
@@ -163,6 +163,9 @@ class DeliveryAssignmentsController < ApplicationController
       da_params[:scheduled_date] = da_params[:delivery_date]
       da_params.delete(:delivery_date)
     end
+
+    # Set default unit if not provided
+    da_params[:unit] = 'pieces' if da_params[:unit].blank?
 
     da_params
   end
@@ -204,7 +207,7 @@ class DeliveryAssignmentsController < ApplicationController
       redirect_to delivery_assignments_path, 
                   notice: "Delivery schedule created successfully. #{created_count} delivery assignments generated."
     else
-      @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params)
+      @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params.except(:start_date, :end_date, :frequency))
       @delivery_assignment.errors.add(:base, "Failed to create delivery schedule: #{delivery_schedule.errors.full_messages.join(', ')}")
       load_form_data
       render :new
