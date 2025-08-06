@@ -47,6 +47,17 @@
               <div class="h5 mb-0 font-weight-bold text-gray-800">
                 <%= number_with_delimiter(@kpis[:total_milk_purchased]) %> L
               </div>
+              <% 
+                assignments = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
+                actual_qty = assignments.with_actual_quantity.sum(:actual_quantity)
+                planned_qty = assignments.pending.sum(:planned_quantity)
+              %>
+              <% if planned_qty > 0 %>
+                <div class="text-xs text-muted mt-1">
+                  <span class="text-success"><%= number_with_delimiter(actual_qty) %> actual</span> + 
+                  <span class="text-info"><%= number_with_delimiter(planned_qty) %> planned</span>
+                </div>
+              <% end %>
             </div>
             <div class="col-auto">
               <i class="fas fa-glass-milk fa-2x text-gray-300"></i>
@@ -67,6 +78,17 @@
               <div class="h5 mb-0 font-weight-bold text-gray-800">
                 ₹<%= number_with_delimiter(@kpis[:gross_profit].round(2)) %>
               </div>
+              <% 
+                assignments = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
+                actual_profit = assignments.sum(&:actual_profit)
+                pending_planned_profit = assignments.pending.sum { |a| (a.planned_quantity * a.selling_price) - (a.planned_quantity * a.buying_price) }
+              %>
+              <% if pending_planned_profit > 0 %>
+                <div class="text-xs text-muted mt-1">
+                  <span class="text-success">₹<%= number_with_delimiter(actual_profit.round(2)) %> actual</span> + 
+                  <span class="text-info">₹<%= number_with_delimiter(pending_planned_profit.round(2)) %> planned</span>
+                </div>
+              <% end %>
             </div>
             <div class="col-auto">
               <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
