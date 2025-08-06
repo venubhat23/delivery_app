@@ -5,6 +5,7 @@ class ProductsController < ApplicationController
   def index
     @products = Product.includes(:category).all.order(:name)
     @products = @products.by_category(params[:category]) if params[:category].present?
+    @products = @products.search(params[:search]) if params[:search].present?
     @total_products = @products.count
     @categories = Category.all.order(:name)
   end

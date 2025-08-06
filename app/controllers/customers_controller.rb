@@ -14,6 +14,9 @@ class CustomersController < ApplicationController
       @selected_delivery_person_id = 'all'
     end
     
+    # Search by customer name
+    @customers = @customers.search(params[:search]) if params[:search].present?
+    
     @customers = @customers.order(:name)
     @total_customers = @customers.count
     
