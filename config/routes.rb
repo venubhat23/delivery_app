@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   root 'dashboard#index'
   
+  # Dashboard analytics endpoint
+  get '/dashboard/delivery_analytics', to: 'dashboard#delivery_analytics'
+  
   # Authentication routes
   get '/login', to: 'sessions#new'
   post '/login', to: 'sessions#create'
