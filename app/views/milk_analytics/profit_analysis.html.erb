@@ -1,0 +1,363 @@
+<% content_for :title, "Profit Analysis - Milk Supply & Analytics" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-chart-line text-primary me-2"></i>
+        Profit Analysis
+      </h1>
+      <p class="text-muted mb-0">Detailed profit breakdown and trends</p>
+    </div>
+    
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <!-- Date Range Filter -->
+      <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fas fa-calendar me-1"></i>
+          <%= @date_range == 'custom' ? 'Custom Range' : @date_range.capitalize %>
+        </button>
+        <ul class="dropdown-menu">
+          <li><%= link_to "Week", profit_analysis_milk_analytics_path(date_range: 'week'), class: "dropdown-item #{'active' if @date_range == 'week'}" %></li>
+          <li><%= link_to "Month", profit_analysis_milk_analytics_path(date_range: 'month'), class: "dropdown-item #{'active' if @date_range == 'month'}" %></li>
+          <li><%= link_to "Quarter", profit_analysis_milk_analytics_path(date_range: 'quarter'), class: "dropdown-item #{'active' if @date_range == 'quarter'}" %></li>
+          <li><%= link_to "Year", profit_analysis_milk_analytics_path(date_range: 'year'), class: "dropdown-item #{'active' if @date_range == 'year'}" %></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a href="#" class="dropdown-item" id="customRangeOption">Custom Range</a></li>
+        </ul>
+      </div>
+      
+      <!-- Custom Date Range Form (Initially Hidden) -->
+      <div id="customDateRange" class="d-flex gap-2 align-items-center" style="<%= @date_range == 'custom' ? '' : 'display: none;' %>">
+        <%= form_with url: profit_analysis_milk_analytics_path, method: :get, local: true, id: "dateRangeForm", class: "d-flex gap-2 align-items-center" do |form| %>
+          <div class="form-group mb-0">
+            <%= form.label :from_date, "From:", class: "form-label me-1 mb-0 small" %>
+            <%= form.date_field :from_date, value: @from_date, class: "form-control form-control-sm", style: "width: 150px;" %>
+          </div>
+          <div class="form-group mb-0">
+            <%= form.label :to_date, "To:", class: "form-label me-1 mb-0 small" %>
+            <%= form.date_field :to_date, value: @to_date, class: "form-control form-control-sm", style: "width: 150px;" %>
+          </div>
+          <%= form.submit "Apply", class: "btn btn-primary btn-sm" %>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="clearCustomRange">Clear</button>
+        <% end %>
+      </div>
+      
+      <!-- Current Date Range Display -->
+      <% if @date_range == 'custom' && @from_date.present? && @to_date.present? %>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          Showing data from <%= Date.parse(@from_date).strftime('%b %d, %Y') %> to <%= Date.parse(@to_date).strftime('%b %d, %Y') %>
+        </div>
+      <% else %>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          Showing data from <%= @start_date.strftime('%b %d, %Y') %> to <%= @end_date.strftime('%b %d, %Y') %>
+        </div>
+      <% end %>
+      
+      <!-- Back Button -->
+      <%= link_to milk_analytics_path, class: "btn btn-outline-secondary" do %>
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Dashboard
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Profit Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Cost</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                ₹<%= number_with_delimiter(@profit_analysis[:total_cost].round(2)) %>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Revenue</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                ₹<%= number_with_delimiter(@profit_analysis[:total_revenue].round(2)) %>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Gross Profit</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                ₹<%= number_with_delimiter(@profit_analysis[:gross_profit].round(2)) %>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Profit Margin</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= @profit_analysis[:profit_margin] %>%
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-percentage fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row mb-4">
+    <!-- Daily Profit Trend -->
+    <div class="col-xl-8 col-lg-7">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Daily Profit Trend</h6>
+        </div>
+        <div class="card-body">
+          <div class="chart-area">
+            <canvas id="dailyProfitChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vendor Profit Distribution -->
+    <div class="col-xl-4 col-lg-5">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Vendor Profit Distribution</h6>
+        </div>
+        <div class="card-body">
+          <div class="chart-pie pt-4 pb-2">
+            <canvas id="vendorProfitChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor Profit Breakdown Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header">
+          <h6 class="m-0 font-weight-bold text-primary">Vendor Profit Breakdown</h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Total Cost</th>
+                  <th>Total Revenue</th>
+                  <th>Profit</th>
+                  <th>Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @profit_analysis[:vendor_profits].each do |vendor_profit| %>
+                  <tr>
+                    <td><%= vendor_profit[:vendor] %></td>
+                    <td>₹<%= number_with_delimiter(vendor_profit[:cost].round(2)) %></td>
+                    <td>₹<%= number_with_delimiter(vendor_profit[:revenue].round(2)) %></td>
+                    <td class="<%= vendor_profit[:profit] >= 0 ? 'text-success' : 'text-danger' %>">
+                      ₹<%= number_with_delimiter(vendor_profit[:profit].round(2)) %>
+                    </td>
+                    <td class="<%= vendor_profit[:margin] >= 0 ? 'text-success' : 'text-danger' %>">
+                      <%= vendor_profit[:margin] %>%
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Custom Date Range Functionality
+  const customRangeOption = document.getElementById('customRangeOption');
+  const customDateRange = document.getElementById('customDateRange');
+  const clearCustomRange = document.getElementById('clearCustomRange');
+  const dateRangeForm = document.getElementById('dateRangeForm');
+  
+  // Show custom date range when option is clicked
+  if (customRangeOption) {
+    customRangeOption.addEventListener('click', function(e) {
+      e.preventDefault();
+      customDateRange.style.display = 'flex';
+      const fromDateInput = customDateRange.querySelector('input[name="from_date"]');
+      if (fromDateInput) {
+        fromDateInput.focus();
+      }
+    });
+  }
+  
+  // Clear custom range and hide the form
+  if (clearCustomRange) {
+    clearCustomRange.addEventListener('click', function() {
+      window.location.href = '<%= profit_analysis_milk_analytics_path(date_range: 'month') %>';
+    });
+  }
+  
+  // Validate date range before submission
+  if (dateRangeForm) {
+    dateRangeForm.addEventListener('submit', function(e) {
+      const fromDate = document.querySelector('input[name="from_date"]').value;
+      const toDate = document.querySelector('input[name="to_date"]').value;
+      
+      if (!fromDate || !toDate) {
+        e.preventDefault();
+        alert('Please select both From and To dates.');
+        return false;
+      }
+      
+      if (new Date(fromDate) > new Date(toDate)) {
+        e.preventDefault();
+        alert('From date cannot be later than To date.');
+        return false;
+      }
+    });
+  }
+
+  // Daily Profit Chart
+  const dailyProfitCtx = document.getElementById('dailyProfitChart').getContext('2d');
+  const dailyProfitChart = new Chart(dailyProfitCtx, {
+    type: 'line',
+    data: {
+      labels: <%= raw @profit_analysis[:daily_profits].map { |d| d[:date] }.to_json %>,
+      datasets: [{
+        label: 'Daily Profit (₹)',
+        data: <%= raw @profit_analysis[:daily_profits].map { |d| d[:profit] }.to_json %>,
+        borderColor: 'rgb(28, 200, 138)',
+        backgroundColor: 'rgba(28, 200, 138, 0.1)',
+        tension: 0.1
+      }, {
+        label: 'Daily Cost (₹)',
+        data: <%= raw @profit_analysis[:daily_profits].map { |d| d[:cost] }.to_json %>,
+        borderColor: 'rgb(231, 74, 59)',
+        backgroundColor: 'rgba(231, 74, 59, 0.1)',
+        tension: 0.1
+      }, {
+        label: 'Daily Revenue (₹)',
+        data: <%= raw @profit_analysis[:daily_profits].map { |d| d[:revenue] }.to_json %>,
+        borderColor: 'rgb(54, 162, 235)',
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Vendor Profit Chart
+  const vendorProfitCtx = document.getElementById('vendorProfitChart').getContext('2d');
+  const vendorProfitChart = new Chart(vendorProfitCtx, {
+    type: 'doughnut',
+    data: {
+      labels: <%= raw @profit_analysis[:vendor_profits].map { |v| v[:vendor] }.to_json %>,
+      datasets: [{
+        data: <%= raw @profit_analysis[:vendor_profits].map { |v| v[:profit] }.to_json %>,
+        backgroundColor: [
+          '#4e73df',
+          '#1cc88a',
+          '#36b9cc',
+          '#f6c23e',
+          '#e74a3b',
+          '#858796',
+          '#5a5c69',
+          '#2e59d9'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+});
+</script>
+
+<style>
+.border-left-primary {
+  border-left: 0.25rem solid #4e73df!important;
+}
+
+.border-left-success {
+  border-left: 0.25rem solid #1cc88a!important;
+}
+
+.border-left-info {
+  border-left: 0.25rem solid #36b9cc!important;
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid #f6c23e!important;
+}
+
+.chart-area {
+  position: relative;
+  height: 20rem;
+  width: 100%;
+}
+
+.chart-pie {
+  position: relative;
+  height: 15rem;
+  width: 100%;
+}
+</style>
