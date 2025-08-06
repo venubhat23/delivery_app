@@ -210,7 +210,8 @@ class MilkAnalyticsController < ApplicationController
     delivery_data = current_user.delivery_assignments
                                .joins(:product)
                                .where(scheduled_date: @date)
-                               .where(products: { name: ['Milk', 'milk', 'MILK'] })
+                               .where(status: 'completed')
+                               .where("products.name ILIKE ? OR products.name ILIKE ?", '%milk%', '%dairy%')
     
     total_delivered = delivery_data.sum(:quantity)
     
@@ -235,7 +236,8 @@ class MilkAnalyticsController < ApplicationController
       daily_delivered = current_user.delivery_assignments
                                    .joins(:product)
                                    .where(scheduled_date: date)
-                                   .where(products: { name: ['Milk', 'milk', 'MILK'] })
+                                   .where(status: 'completed')
+                                   .where("products.name ILIKE ? OR products.name ILIKE ?", '%milk%', '%dairy%')
                                    .sum(:quantity) || 0
       
       {
@@ -365,11 +367,12 @@ class MilkAnalyticsController < ApplicationController
     pending_planned = assignments.pending.sum(:planned_quantity)
     total_purchased = actual_purchased + pending_planned
     
-    # Delivery data
+    # Delivery data - include completed deliveries and milk-related products
     total_delivered = current_user.delivery_assignments
                                  .joins(:product)
                                  .where(scheduled_date: start_date..end_date)
-                                 .where(products: { name: ['Milk', 'milk', 'MILK'] })
+                                 .where(status: 'completed')
+                                 .where("products.name ILIKE ? OR products.name ILIKE ?", '%milk%', '%dairy%')
                                  .sum(:quantity) || 0
     
     {
