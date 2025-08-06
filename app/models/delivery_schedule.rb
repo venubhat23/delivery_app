@@ -12,8 +12,6 @@ class DeliverySchedule < ApplicationRecord
   validates :end_date, presence: true
   validates :status, presence: true, inclusion: { in: %w[active inactive completed cancelled] }
   
-  validate :end_date_after_start_date
-  validate :start_date_not_in_past
 
   scope :active, -> { where(status: 'active') }
   scope :completed, -> { where(status: 'completed') }
