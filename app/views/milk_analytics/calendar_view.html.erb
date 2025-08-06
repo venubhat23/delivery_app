@@ -98,13 +98,20 @@
               
               <% if summary[:assignments_count] > 0 %>
                 <div class="text-xs mb-1">
-                  <span class="text-success"><%= summary[:total_actual] %>L actual</span>
+                  <% if summary[:total_actual] > 0 %>
+                    <span class="text-success"><%= summary[:total_actual] %>L actual</span>
+                  <% end %>
                   <% if summary[:total_planned] > summary[:total_actual] %>
-                    <br><span class="text-info"><%= summary[:total_planned] - summary[:total_actual] %>L planned</span>
+                    <% if summary[:total_actual] > 0 %><br><% end %>
+                    <span class="text-info"><%= summary[:total_planned] - summary[:total_actual] %>L planned</span>
+                  <% end %>
+                  <% if summary[:total_planned] == 0 && summary[:total_actual] == 0 %>
+                    <span class="text-muted">No quantity</span>
                   <% end %>
                 </div>
                 <div class="text-xs mb-1">
                   <span class="text-primary">₹<%= number_with_delimiter(summary[:profit].round(2)) %> profit</span>
+                  <br><small class="text-muted">Cost: ₹<%= number_with_delimiter(summary[:total_cost].round(2)) %></small>
                 </div>
                 <div class="text-xs">
                   <span class="badge badge-<%= summary[:completed_count] == summary[:assignments_count] ? 'success' : summary[:completed_count] > 0 ? 'warning' : 'secondary' %>">
@@ -162,10 +169,26 @@
                               <span class="text-muted">-</span>
                             <% end %>
                           </td>
-                          <td>₹<%= number_with_delimiter(assignment.actual_cost.round(2)) %></td>
-                          <td>₹<%= number_with_delimiter(assignment.actual_revenue.round(2)) %></td>
-                          <td class="<%= assignment.actual_profit >= 0 ? 'text-success' : 'text-danger' %>">
-                            ₹<%= number_with_delimiter(assignment.actual_profit.round(2)) %>
+                          <td>
+                            <% if assignment.actual_quantity.present? %>
+                              ₹<%= number_with_delimiter(assignment.actual_cost.round(2)) %>
+                            <% else %>
+                              ₹<%= number_with_delimiter(assignment.planned_cost.round(2)) %> <small class="text-muted">(planned)</small>
+                            <% end %>
+                          </td>
+                          <td>
+                            <% if assignment.actual_quantity.present? %>
+                              ₹<%= number_with_delimiter(assignment.actual_revenue.round(2)) %>
+                            <% else %>
+                              ₹<%= number_with_delimiter(assignment.planned_revenue.round(2)) %> <small class="text-muted">(planned)</small>
+                            <% end %>
+                          </td>
+                          <td class="<%= (assignment.actual_quantity.present? ? assignment.actual_profit : assignment.planned_profit) >= 0 ? 'text-success' : 'text-danger' %>">
+                            <% if assignment.actual_quantity.present? %>
+                              ₹<%= number_with_delimiter(assignment.actual_profit.round(2)) %>
+                            <% else %>
+                              ₹<%= number_with_delimiter(assignment.planned_profit.round(2)) %> <small class="text-muted">(planned)</small>
+                            <% end %>
                           </td>
                           <td>
                             <span class="badge badge-<%= case assignment.status

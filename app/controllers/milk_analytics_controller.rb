@@ -84,16 +84,40 @@ class MilkAnalyticsController < ApplicationController
     # Group by date for calendar display
     @assignments_by_date = @assignments.group_by(&:date)
     
-    # Daily summaries
+    # Daily summaries with improved calculations
     @daily_summaries = (@start_date..@end_date).map do |date|
       daily_assignments = @assignments.select { |a| a.date == date }
+      
+      # Calculate totals including both actual and planned data
+      total_planned = daily_assignments.sum(&:planned_quantity)
+      total_actual = daily_assignments.sum { |a| a.actual_quantity || 0 }
+      
+      # For cost and revenue, use actual if available, otherwise use planned
+      total_cost = daily_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_cost
+        else
+          a.planned_cost
+        end
+      end
+      
+      total_revenue = daily_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_revenue
+        else
+          a.planned_revenue
+        end
+      end
+      
+      profit = total_revenue - total_cost
+      
       {
         date: date,
-        total_planned: daily_assignments.sum(&:planned_quantity),
-        total_actual: daily_assignments.sum { |a| a.actual_quantity || 0 },
-        total_cost: daily_assignments.sum(&:actual_cost),
-        total_revenue: daily_assignments.sum(&:actual_revenue),
-        profit: daily_assignments.sum(&:actual_profit),
+        total_planned: total_planned,
+        total_actual: total_actual,
+        total_cost: total_cost,
+        total_revenue: total_revenue,
+        profit: profit,
         assignments_count: daily_assignments.count,
         completed_count: daily_assignments.count { |a| a.is_completed? }
       }
@@ -173,29 +197,57 @@ class MilkAnalyticsController < ApplicationController
       @start_date, @end_date = calculate_date_range(@date_range)
     end
     
-    # Profit breakdown
+    assignments = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
+    
+    # Enhanced profit breakdown including both actual and planned data
+    total_cost = assignments.sum do |a|
+      if a.actual_quantity.present?
+        a.actual_cost
+      else
+        a.planned_cost
+      end
+    end
+    
+    total_revenue = assignments.sum do |a|
+      if a.actual_quantity.present?
+        a.actual_revenue
+      else
+        a.planned_revenue
+      end
+    end
+    
+    gross_profit = total_revenue - total_cost
+    profit_margin = total_revenue > 0 ? (gross_profit / total_revenue * 100).round(2) : 0
+    
     @profit_analysis = {
-      total_cost: 0,
-      total_revenue: 0,
-      gross_profit: 0,
-      profit_margin: 0,
+      total_cost: total_cost,
+      total_revenue: total_revenue,
+      gross_profit: gross_profit,
+      profit_margin: profit_margin,
       daily_profits: [],
       vendor_profits: []
     }
     
-    assignments = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
-    
-    @profit_analysis[:total_cost] = assignments.sum(&:actual_cost)
-    @profit_analysis[:total_revenue] = assignments.sum(&:actual_revenue)
-    @profit_analysis[:gross_profit] = @profit_analysis[:total_revenue] - @profit_analysis[:total_cost]
-    @profit_analysis[:profit_margin] = @profit_analysis[:total_revenue] > 0 ? 
-      (@profit_analysis[:gross_profit] / @profit_analysis[:total_revenue] * 100).round(2) : 0
-    
-    # Daily profit trend
+    # Daily profit trend with improved calculations
     @profit_analysis[:daily_profits] = (@start_date..@end_date).map do |date|
       daily_assignments = assignments.select { |a| a.date == date }
-      daily_cost = daily_assignments.sum(&:actual_cost)
-      daily_revenue = daily_assignments.sum(&:actual_revenue)
+      
+      daily_cost = daily_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_cost
+        else
+          a.planned_cost
+        end
+      end
+      
+      daily_revenue = daily_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_revenue
+        else
+          a.planned_revenue
+        end
+      end
+      
       {
         date: date.strftime('%Y-%m-%d'),
         cost: daily_cost,
@@ -204,16 +256,32 @@ class MilkAnalyticsController < ApplicationController
       }
     end
     
-    # Vendor profit breakdown
+    # Vendor profit breakdown with improved calculations
     @profit_analysis[:vendor_profits] = assignments.group_by(&:vendor_name).map do |vendor, vendor_assignments|
-      vendor_cost = vendor_assignments.sum(&:actual_cost)
-      vendor_revenue = vendor_assignments.sum(&:actual_revenue)
+      vendor_cost = vendor_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_cost
+        else
+          a.planned_cost
+        end
+      end
+      
+      vendor_revenue = vendor_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_revenue
+        else
+          a.planned_revenue
+        end
+      end
+      
+      vendor_profit = vendor_revenue - vendor_cost
+      
       {
         vendor: vendor,
         cost: vendor_cost,
         revenue: vendor_revenue,
-        profit: vendor_revenue - vendor_cost,
-        margin: vendor_revenue > 0 ? ((vendor_revenue - vendor_cost) / vendor_revenue * 100).round(2) : 0
+        profit: vendor_profit,
+        margin: vendor_revenue > 0 ? (vendor_profit / vendor_revenue * 100).round(2) : 0
       }
     end
   end
@@ -282,19 +350,26 @@ class MilkAnalyticsController < ApplicationController
     pending_planned_quantity = assignments.pending.sum(:planned_quantity)
     total_milk_purchased = actual_quantity + pending_planned_quantity
     
-    # Calculate costs and revenues
-    actual_cost = assignments.sum(&:actual_cost)
-    pending_planned_cost = assignments.pending.sum { |a| a.planned_quantity * a.buying_price }
-    total_cost = actual_cost + pending_planned_cost
+    # Enhanced cost calculations - use actual when available, planned otherwise
+    total_cost = assignments.sum do |a|
+      if a.actual_quantity.present?
+        a.actual_cost
+      else
+        a.planned_cost
+      end
+    end
     
-    actual_revenue = assignments.sum(&:actual_revenue)
-    pending_planned_revenue = assignments.pending.sum { |a| a.planned_quantity * a.selling_price }
-    total_revenue = actual_revenue + pending_planned_revenue
+    # Enhanced revenue calculations - use actual when available, planned otherwise
+    total_revenue = assignments.sum do |a|
+      if a.actual_quantity.present?
+        a.actual_revenue
+      else
+        a.planned_revenue
+      end
+    end
     
-    # Calculate gross profit (actual + planned for pending)
-    actual_profit = assignments.sum(&:actual_profit)
-    pending_planned_profit = pending_planned_revenue - pending_planned_cost
-    gross_profit = actual_profit + pending_planned_profit
+    # Calculate gross profit
+    gross_profit = total_revenue - total_cost
     
     {
       total_milk_purchased: total_milk_purchased,
@@ -304,7 +379,7 @@ class MilkAnalyticsController < ApplicationController
       active_vendors: assignments.distinct.count(:vendor_name),
       completion_rate: assignments.completion_rate_for_period(start_date, end_date),
       average_buying_price: assignments.with_actual_quantity.average(:buying_price)&.round(2) || 0,
-      profit_margin: calculate_profit_margin_with_planned(assignments)
+      profit_margin: total_cost > 0 ? (gross_profit / total_cost * 100).round(2) : 0
     }
   end
 
@@ -335,13 +410,31 @@ class MilkAnalyticsController < ApplicationController
     
     (start_date..end_date).map do |date|
       daily_assignments = assignments.select { |a| a.date == date }
+      
+      # Enhanced calculations for better chart data
+      cost = daily_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_cost
+        else
+          a.planned_cost
+        end
+      end
+      
+      revenue = daily_assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_revenue
+        else
+          a.planned_revenue
+        end
+      end
+      
       {
         date: date.strftime('%Y-%m-%d'),
         planned_quantity: daily_assignments.sum(&:planned_quantity),
         actual_quantity: daily_assignments.sum { |a| a.actual_quantity || 0 },
-        cost: daily_assignments.sum(&:actual_cost),
-        revenue: daily_assignments.sum(&:actual_revenue),
-        profit: daily_assignments.sum(&:actual_profit)
+        cost: cost,
+        revenue: revenue,
+        profit: revenue - cost
       }
     end
   end
@@ -351,12 +444,30 @@ class MilkAnalyticsController < ApplicationController
                .for_date_range(start_date, end_date)
                .group_by(&:vendor_name)
                .map do |vendor, assignments|
+      
+      # Enhanced vendor calculations
+      cost = assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_cost
+        else
+          a.planned_cost
+        end
+      end
+      
+      revenue = assignments.sum do |a|
+        if a.actual_quantity.present?
+          a.actual_revenue
+        else
+          a.planned_revenue
+        end
+      end
+      
       {
         vendor: vendor,
         quantity: assignments.sum { |a| a.actual_quantity || 0 },
-        cost: assignments.sum(&:actual_cost),
-        revenue: assignments.sum(&:actual_revenue),
-        profit: assignments.sum(&:actual_profit)
+        cost: cost,
+        revenue: revenue,
+        profit: revenue - cost
       }
     end
   end
