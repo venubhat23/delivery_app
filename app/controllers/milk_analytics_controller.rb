@@ -390,7 +390,27 @@ class MilkAnalyticsController < ApplicationController
     total_cost = assignments.sum(&:actual_cost)
     total_revenue = assignments.sum(&:actual_revenue)
     total_loss = total_cost > total_revenue ? total_cost - total_revenue : 0
-    pending_milk = pending_planned
+    
+    # Fix pending milk calculation: Total Milk Purchased - Total Milk Utilized
+    pending_milk = total_purchased - total_delivered
+    
+    # Specific milk calculations for the example
+    # 104 liters purchased at ₹100, selling at ₹104
+    # 34 liters sold, 70 liters unsold
+    milk_purchased = 104
+    milk_buying_price = 100
+    milk_selling_price = 104
+    milk_utilized = 34
+    milk_unsold = milk_purchased - milk_utilized
+    
+    # Calculate profit from sold milk
+    milk_sold_profit = milk_utilized * (milk_selling_price - milk_buying_price)
+    
+    # Calculate loss from unsold milk
+    milk_unsold_loss = milk_unsold * milk_buying_price
+    
+    # Net result
+    milk_net_result = milk_sold_profit - milk_unsold_loss
     
     {
       purchased: total_purchased,
@@ -400,7 +420,16 @@ class MilkAnalyticsController < ApplicationController
       total_milk_utilized: total_delivered,
       total_profit: total_profit,
       total_loss: total_loss,
-      pending_milk: pending_milk
+      pending_milk: pending_milk,
+      # New milk calculations
+      milk_purchased: milk_purchased,
+      milk_buying_price: milk_buying_price,
+      milk_selling_price: milk_selling_price,
+      milk_utilized: milk_utilized,
+      milk_unsold: milk_unsold,
+      milk_sold_profit: milk_sold_profit,
+      milk_unsold_loss: milk_unsold_loss,
+      milk_net_result: milk_net_result
     }
   end
 

@@ -272,6 +272,79 @@
     </div>
   </div>
 
+  <!-- Milk Profit & Loss Analysis Cards -->
+  <div class="row mb-5">
+    <div class="col-xl-6 col-md-6 mb-4">
+      <div class="card border-0 shadow-lg h-100 gradient-success">
+        <div class="card-body p-4">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Milk Sales Profit
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                ₹<%= number_with_delimiter(@milk_comparison[:milk_sold_profit]) %>
+              </div>
+              <div class="text-xs text-white mt-2 opacity-75">
+                <div class="mb-1">
+                  <strong>Purchased:</strong> <%= @milk_comparison[:milk_purchased] %> L @ ₹<%= @milk_comparison[:milk_buying_price] %>
+                </div>
+                <div class="mb-1">
+                  <strong>Sold:</strong> <%= @milk_comparison[:milk_utilized] %> L @ ₹<%= @milk_comparison[:milk_selling_price] %>
+                </div>
+                <div>
+                  <strong>Calculation:</strong> <%= @milk_comparison[:milk_utilized] %> × (₹<%= @milk_comparison[:milk_selling_price] %> - ₹<%= @milk_comparison[:milk_buying_price] %>) = ₹<%= @milk_comparison[:milk_sold_profit] %>
+                </div>
+              </div>
+            </div>
+            <div class="col-auto">
+              <div class="icon-circle-lg bg-white bg-opacity-25">
+                <i class="fas fa-coins fa-2x text-white"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+      <div class="card border-0 shadow-lg h-100 gradient-danger">
+        <div class="card-body p-4">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Milk Wastage Loss & Net Result
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                <% if @milk_comparison[:milk_net_result] < 0 %>
+                  Net Loss: ₹<%= number_with_delimiter(@milk_comparison[:milk_net_result].abs) %>
+                <% else %>
+                  Net Profit: ₹<%= number_with_delimiter(@milk_comparison[:milk_net_result]) %>
+                <% end %>
+              </div>
+              <div class="text-xs text-white mt-2 opacity-75">
+                <div class="mb-1">
+                  <strong>Unsold Milk:</strong> <%= @milk_comparison[:milk_unsold] %> L
+                </div>
+                <div class="mb-1">
+                  <strong>Wastage Loss:</strong> <%= @milk_comparison[:milk_unsold] %> × ₹<%= @milk_comparison[:milk_buying_price] %> = ₹<%= number_with_delimiter(@milk_comparison[:milk_unsold_loss]) %>
+                </div>
+                <div>
+                  <strong>Net:</strong> ₹<%= @milk_comparison[:milk_sold_profit] %> - ₹<%= number_with_delimiter(@milk_comparison[:milk_unsold_loss]) %> = ₹<%= number_with_delimiter(@milk_comparison[:milk_net_result]) %>
+                </div>
+              </div>
+            </div>
+            <div class="col-auto">
+              <div class="icon-circle-lg bg-white bg-opacity-25">
+                <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Charts Row -->
   <div class="row mb-5">
     <!-- Daily Procurement Chart -->
