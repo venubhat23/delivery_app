@@ -2,80 +2,40 @@
 
 <div class="container-fluid">
   <!-- Header Section -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-5">
     <div>
-      <h1 class="h3 mb-0 text-gray-800">
-        <i class="fas fa-glass-milk text-primary me-2"></i>
+      <h1 class="h2 mb-2 text-dark fw-bold">
+        <i class="fas fa-glass-milk text-primary me-3" style="font-size: 2rem;"></i>
         Milk Supply & Analytics
       </h1>
-      <p class="text-muted mb-0">Comprehensive milk procurement and delivery analytics</p>
+      <p class="text-muted mb-0 fs-5">Comprehensive milk procurement and delivery analytics dashboard</p>
     </div>
     
-    <div class="d-flex gap-2 align-items-center flex-wrap">
-      <!-- Date Range Filter -->
-      <div class="dropdown">
-        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-          <i class="fas fa-calendar me-1"></i>
-          <%= @date_range == 'custom' ? 'Custom Range' : @date_range.capitalize %>
-        </button>
-        <ul class="dropdown-menu">
-          <li><%= link_to "Week", milk_analytics_path(date_range: 'week'), class: "dropdown-item #{'active' if @date_range == 'week'}" %></li>
-          <li><%= link_to "Month", milk_analytics_path(date_range: 'month'), class: "dropdown-item #{'active' if @date_range == 'month'}" %></li>
-          <li><%= link_to "Quarter", milk_analytics_path(date_range: 'quarter'), class: "dropdown-item #{'active' if @date_range == 'quarter'}" %></li>
-          <li><%= link_to "Year", milk_analytics_path(date_range: 'year'), class: "dropdown-item #{'active' if @date_range == 'year'}" %></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a href="#" class="dropdown-item" id="customRangeOption">Custom Range</a></li>
-        </ul>
-      </div>
-      
-      <!-- Custom Date Range Form (Initially Hidden) -->
-      <div id="customDateRange" class="d-flex gap-2 align-items-center" style="<%= @date_range == 'custom' ? '' : 'display: none;' %>">
-        <%= form_with url: milk_analytics_path, method: :get, local: true, id: "dateRangeForm", class: "d-flex gap-2 align-items-center" do |form| %>
-          <div class="form-group mb-0">
-            <%= form.label :from_date, "From:", class: "form-label me-1 mb-0 small" %>
-            <%= form.date_field :from_date, value: @from_date, class: "form-control form-control-sm", style: "width: 150px;" %>
-          </div>
-          <div class="form-group mb-0">
-            <%= form.label :to_date, "To:", class: "form-label me-1 mb-0 small" %>
-            <%= form.date_field :to_date, value: @to_date, class: "form-control form-control-sm", style: "width: 150px;" %>
-          </div>
-          <%= form.submit "Apply", class: "btn btn-primary btn-sm" %>
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="clearCustomRange">Clear</button>
-        <% end %>
-      </div>
-      
-      <!-- Current Date Range Display -->
-      <% if @date_range == 'custom' && @from_date.present? && @to_date.present? %>
-        <div class="text-muted small">
-          <i class="fas fa-info-circle me-1"></i>
-          Showing data from <%= Date.parse(@from_date).strftime('%b %d, %Y') %> to <%= Date.parse(@to_date).strftime('%b %d, %Y') %>
-        </div>
-      <% else %>
-        <div class="text-muted small">
-          <i class="fas fa-info-circle me-1"></i>
-          Showing data from <%= @start_date.strftime('%b %d, %Y') %> to <%= @end_date.strftime('%b %d, %Y') %>
-        </div>
+    <div class="d-flex gap-3 align-items-center">
+      <!-- Action Buttons -->
+      <%= link_to new_procurement_schedule_path, class: "btn btn-primary btn-lg px-4 py-3 shadow-lg" do %>
+        <i class="fas fa-plus me-2"></i>
+        New Milk Purchase
       <% end %>
       
-      <!-- Action Buttons -->
-      <%= link_to new_procurement_schedule_path, class: "btn btn-primary" do %>
-        <i class="fas fa-plus me-1"></i>
-        New Milk Purchase
+      <%= link_to calendar_view_milk_analytics_path, class: "btn btn-outline-primary btn-lg px-4 py-3" do %>
+        <i class="fas fa-calendar me-2"></i>
+        Calendar View
       <% end %>
     </div>
   </div>
 
   <!-- KPI Cards Row -->
-  <div class="row mb-4">
+  <div class="row mb-5">
     <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-primary shadow h-100 py-2">
-        <div class="card-body">
+      <div class="card border-0 shadow-lg h-100 gradient-primary">
+        <div class="card-body p-4">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
                 Total Milk Purchased
               </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <div class="h4 mb-0 font-weight-bold text-white">
                 <%= number_with_delimiter(@kpis[:total_milk_purchased]) %> L
               </div>
               <% 
@@ -84,14 +44,16 @@
                 planned_qty = assignments.pending.sum(:planned_quantity)
               %>
               <% if planned_qty > 0 %>
-                <div class="text-xs text-muted mt-1">
-                  <span class="text-success"><%= number_with_delimiter(actual_qty) %> actual</span> + 
-                  <span class="text-info"><%= number_with_delimiter(planned_qty) %> planned</span>
+                <div class="text-xs text-white mt-2 opacity-75">
+                  <span class="badge badge-light me-1"><%= number_with_delimiter(actual_qty) %> actual</span>
+                  <span class="badge badge-light"><%= number_with_delimiter(planned_qty) %> planned</span>
                 </div>
               <% end %>
             </div>
             <div class="col-auto">
-              <i class="fas fa-glass-milk fa-2x text-gray-300"></i>
+              <div class="icon-circle-lg bg-white bg-opacity-25">
+                <i class="fas fa-glass-milk fa-2x text-white"></i>
+              </div>
             </div>
           </div>
         </div>
@@ -99,14 +61,14 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-success shadow h-100 py-2">
-        <div class="card-body">
+      <div class="card border-0 shadow-lg h-100 gradient-success">
+        <div class="card-body p-4">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
                 Gross Profit
               </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <div class="h4 mb-0 font-weight-bold text-white">
                 ₹<%= number_with_delimiter(@kpis[:gross_profit].round(2)) %>
               </div>
               <% 
@@ -115,14 +77,16 @@
                 pending_planned_profit = assignments.pending.sum { |a| (a.planned_quantity * a.selling_price) - (a.planned_quantity * a.buying_price) }
               %>
               <% if pending_planned_profit > 0 %>
-                <div class="text-xs text-muted mt-1">
-                  <span class="text-success">₹<%= number_with_delimiter(actual_profit.round(2)) %> actual</span> + 
-                  <span class="text-info">₹<%= number_with_delimiter(pending_planned_profit.round(2)) %> planned</span>
+                <div class="text-xs text-white mt-2 opacity-75">
+                  <span class="badge badge-light me-1">₹<%= number_with_delimiter(actual_profit.round(2)) %> actual</span>
+                  <span class="badge badge-light">₹<%= number_with_delimiter(pending_planned_profit.round(2)) %> planned</span>
                 </div>
               <% end %>
             </div>
             <div class="col-auto">
-              <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+              <div class="icon-circle-lg bg-white bg-opacity-25">
+                <i class="fas fa-rupee-sign fa-2x text-white"></i>
+              </div>
             </div>
           </div>
         </div>
@@ -130,22 +94,22 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-info shadow h-100 py-2">
-        <div class="card-body">
+      <div class="card border-0 shadow-lg h-100 gradient-info">
+        <div class="card-body p-4">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
                 Completion Rate
               </div>
               <div class="row no-gutters align-items-center">
                 <div class="col-auto">
-                  <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                  <div class="h4 mb-0 mr-3 font-weight-bold text-white">
                     <%= @kpis[:completion_rate] %>%
                   </div>
                 </div>
                 <div class="col">
-                  <div class="progress progress-sm mr-2">
-                    <div class="progress-bar bg-info" role="progressbar" 
+                  <div class="progress progress-modern mr-2">
+                    <div class="progress-bar bg-white" role="progressbar" 
                          style="width: <%= @kpis[:completion_rate] %>%" 
                          aria-valuenow="<%= @kpis[:completion_rate] %>" 
                          aria-valuemin="0" aria-valuemax="100"></div>
@@ -154,7 +118,9 @@
               </div>
             </div>
             <div class="col-auto">
-              <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+              <div class="icon-circle-lg bg-white bg-opacity-25">
+                <i class="fas fa-clipboard-check fa-2x text-white"></i>
+              </div>
             </div>
           </div>
         </div>
@@ -162,19 +128,25 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-warning shadow h-100 py-2">
-        <div class="card-body">
+      <div class="card border-0 shadow-lg h-100 gradient-warning">
+        <div class="card-body p-4">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
                 Active Vendors
               </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <div class="h4 mb-0 font-weight-bold text-white">
                 <%= @kpis[:active_vendors] %>
+              </div>
+              <div class="text-xs text-white mt-2 opacity-75">
+                <i class="fas fa-trending-up me-1"></i>
+                Reliable Partners
               </div>
             </div>
             <div class="col-auto">
-              <i class="fas fa-users fa-2x text-gray-300"></i>
+              <div class="icon-circle-lg bg-white bg-opacity-25">
+                <i class="fas fa-users fa-2x text-white"></i>
+              </div>
             </div>
           </div>
         </div>
@@ -183,14 +155,29 @@
   </div>
 
   <!-- Charts Row -->
-  <div class="row mb-4">
+  <div class="row mb-5">
     <!-- Daily Procurement Chart -->
     <div class="col-xl-8 col-lg-7">
-      <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-          <h6 class="m-0 font-weight-bold text-primary">Daily Procurement Overview</h6>
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
+          <div>
+            <h5 class="m-0 font-weight-bold text-primary">
+              <i class="fas fa-chart-line me-2"></i>
+              Daily Procurement Overview
+            </h5>
+            <p class="text-muted mb-0 small">Track daily milk procurement trends</p>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Export Data</a></li>
+              <li><a class="dropdown-item" href="#">View Details</a></li>
+            </ul>
+          </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           <div class="chart-area">
             <canvas id="dailyProcurementChart" width="400" height="200"></canvas>
           </div>
@@ -200,12 +187,27 @@
 
     <!-- Vendor Distribution Chart -->
     <div class="col-xl-4 col-lg-5">
-      <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-          <h6 class="m-0 font-weight-bold text-primary">Vendor Distribution</h6>
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
+          <div>
+            <h5 class="m-0 font-weight-bold text-primary">
+              <i class="fas fa-chart-pie me-2"></i>
+              Vendor Distribution
+            </h5>
+            <p class="text-muted mb-0 small">Vendor contribution breakdown</p>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Export Data</a></li>
+              <li><a class="dropdown-item" href="#">View Details</a></li>
+            </ul>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="chart-pie pt-4 pb-2">
+        <div class="card-body p-4">
+          <div class="chart-pie pt-2 pb-2">
             <canvas id="vendorDistributionChart"></canvas>
           </div>
         </div>
@@ -214,40 +216,55 @@
   </div>
 
   <!-- Milk Comparison and Vendor Performance Row -->
-  <div class="row mb-4">
+  <div class="row mb-5">
     <!-- Milk Purchase vs Delivery Comparison -->
     <div class="col-xl-6 col-lg-6">
-      <div class="card shadow mb-4">
-        <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">Milk Purchase vs Delivery</h6>
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header py-4">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle bg-primary bg-opacity-10 me-3">
+              <i class="fas fa-balance-scale text-primary"></i>
+            </div>
+            <div>
+              <h5 class="m-0 font-weight-bold text-primary">Milk Purchase vs Delivery</h5>
+              <p class="text-muted mb-0 small">Supply and demand analysis</p>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="row">
+        <div class="card-body p-4">
+          <div class="row mb-4">
             <div class="col-6 text-center">
-              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Purchased</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <%= number_with_delimiter(@milk_comparison[:purchased]) %> L
+              <div class="metric-card bg-primary bg-opacity-10 p-3 rounded-3">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-2">Purchased</div>
+                <div class="h4 mb-0 font-weight-bold text-primary">
+                  <%= number_with_delimiter(@milk_comparison[:purchased]) %> L
+                </div>
               </div>
             </div>
             <div class="col-6 text-center">
-              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Delivered</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <%= number_with_delimiter(@milk_comparison[:delivered]) %> L
+              <div class="metric-card bg-success bg-opacity-10 p-3 rounded-3">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-2">Delivered</div>
+                <div class="h4 mb-0 font-weight-bold text-success">
+                  <%= number_with_delimiter(@milk_comparison[:delivered]) %> L
+                </div>
               </div>
             </div>
           </div>
-          <hr>
           <div class="row">
             <div class="col-6 text-center">
-              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Remaining</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <%= number_with_delimiter(@milk_comparison[:remaining]) %> L
+              <div class="metric-card bg-warning bg-opacity-10 p-3 rounded-3">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-2">Remaining</div>
+                <div class="h4 mb-0 font-weight-bold text-warning">
+                  <%= number_with_delimiter(@milk_comparison[:remaining]) %> L
+                </div>
               </div>
             </div>
             <div class="col-6 text-center">
-              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Utilization</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <%= @milk_comparison[:utilization_rate] %>%
+              <div class="metric-card bg-info bg-opacity-10 p-3 rounded-3">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-2">Utilization</div>
+                <div class="h4 mb-0 font-weight-bold text-info">
+                  <%= @milk_comparison[:utilization_rate] %>%
+                </div>
               </div>
             </div>
           </div>
@@ -257,25 +274,51 @@
 
     <!-- Vendor Performance -->
     <div class="col-xl-6 col-lg-6">
-      <div class="card shadow mb-4">
-        <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">Top Vendor Performance</h6>
-        </div>
-        <div class="card-body">
-          <% @vendor_performance.first(5).each do |vendor| %>
-            <div class="mb-3">
-              <div class="d-flex justify-content-between">
-                <span class="font-weight-bold"><%= vendor[:vendor] %></span>
-                <span class="text-success">₹<%= number_with_delimiter(vendor[:total_profit].round(2)) %></span>
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header py-4">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="icon-circle bg-success bg-opacity-10 me-3">
+                <i class="fas fa-trophy text-success"></i>
               </div>
-              <div class="progress mt-1">
-                <div class="progress-bar bg-success" role="progressbar" 
-                     style="width: <%= vendor[:reliability] %>%" 
-                     aria-valuenow="<%= vendor[:reliability] %>" 
-                     aria-valuemin="0" aria-valuemax="100">
-                  <%= vendor[:reliability] %>% Reliability
+              <div>
+                <h5 class="m-0 font-weight-bold text-primary">Top Vendor Performance</h5>
+                <p class="text-muted mb-0 small">Best performing vendors</p>
+              </div>
+            </div>
+            <%= link_to vendor_analysis_milk_analytics_path, class: "btn btn-outline-primary btn-sm" do %>
+              View All
+            <% end %>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <% if @vendor_performance.any? %>
+            <% @vendor_performance.first(5).each_with_index do |vendor, index| %>
+              <div class="vendor-performance-item mb-4 p-3 rounded-3 <%= 'bg-light' if index.even? %>">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="d-flex align-items-center">
+                    <span class="badge bg-primary me-2"><%= index + 1 %></span>
+                    <span class="font-weight-bold text-dark"><%= vendor[:vendor] %></span>
+                  </div>
+                  <span class="text-success fw-bold">₹<%= number_with_delimiter(vendor[:total_profit].round(2)) %></span>
+                </div>
+                <div class="progress progress-modern-vendor mt-2">
+                  <div class="progress-bar bg-success" role="progressbar" 
+                       style="width: <%= vendor[:reliability] %>%" 
+                       aria-valuenow="<%= vendor[:reliability] %>" 
+                       aria-valuemin="0" aria-valuemax="100">
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                  <small class="text-muted">Reliability</small>
+                  <small class="text-success fw-bold"><%= vendor[:reliability] %>%</small>
                 </div>
               </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No vendor performance data available</p>
             </div>
           <% end %>
         </div>
@@ -287,33 +330,54 @@
   <div class="row">
     <!-- Recent Procurement Schedules -->
     <div class="col-xl-4 col-lg-4">
-      <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-          <h6 class="m-0 font-weight-bold text-primary">Recent Schedules</h6>
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle bg-primary bg-opacity-10 me-3">
+              <i class="fas fa-history text-primary"></i>
+            </div>
+            <div>
+              <h5 class="m-0 font-weight-bold text-primary">Recent Schedules</h5>
+              <p class="text-muted mb-0 small">Latest procurement activities</p>
+            </div>
+          </div>
           <%= link_to procurement_schedules_path, class: "btn btn-sm btn-outline-primary" do %>
             View All
           <% end %>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           <% if @recent_schedules.any? %>
-            <% @recent_schedules.each do |schedule| %>
-              <div class="d-flex align-items-center mb-3">
-                <div class="mr-3">
+            <% @recent_schedules.each_with_index do |schedule, index| %>
+              <div class="schedule-item d-flex align-items-center mb-4 p-3 rounded-3 <%= 'bg-light' if index.even? %>">
+                <div class="me-3">
                   <div class="icon-circle bg-primary">
                     <i class="fas fa-calendar text-white"></i>
                   </div>
                 </div>
                 <div class="flex-grow-1">
-                  <div class="small text-gray-500"><%= schedule.created_at.strftime('%B %d, %Y') %></div>
-                  <div class="font-weight-bold"><%= schedule.vendor_name %></div>
-                  <div class="text-xs text-gray-500">
-                    <%= schedule.quantity %> L/day • ₹<%= schedule.buying_price %>/L
+                  <div class="small text-muted mb-1"><%= schedule.created_at.strftime('%B %d, %Y') %></div>
+                  <div class="font-weight-bold text-dark"><%= schedule.vendor_name %></div>
+                  <div class="text-sm text-muted">
+                    <i class="fas fa-glass-milk me-1"></i>
+                    <%= schedule.quantity %> L/day • 
+                    <i class="fas fa-rupee-sign me-1"></i>
+                    ₹<%= schedule.buying_price %>/L
                   </div>
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-success">Active</span>
                 </div>
               </div>
             <% end %>
           <% else %>
-            <p class="text-muted text-center">No recent schedules</p>
+            <div class="text-center py-4">
+              <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No recent schedules</p>
+              <%= link_to new_procurement_schedule_path, class: "btn btn-primary btn-sm" do %>
+                <i class="fas fa-plus me-1"></i>
+                Create Schedule
+              <% end %>
+            </div>
           <% end %>
         </div>
       </div>
@@ -321,28 +385,52 @@
 
     <!-- Pending Assignments -->
     <div class="col-xl-4 col-lg-4">
-      <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-          <h6 class="m-0 font-weight-bold text-primary">Pending Today</h6>
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle bg-warning bg-opacity-10 me-3">
+              <i class="fas fa-clock text-warning"></i>
+            </div>
+            <div>
+              <h5 class="m-0 font-weight-bold text-primary">Pending Today</h5>
+              <p class="text-muted mb-0 small">Assignments awaiting completion</p>
+            </div>
+          </div>
           <%= link_to procurement_assignments_path, class: "btn btn-sm btn-outline-primary" do %>
             View All
           <% end %>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           <% if @pending_assignments.any? %>
-            <% @pending_assignments.each do |assignment| %>
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <div>
-                  <div class="font-weight-bold"><%= assignment.vendor_name %></div>
-                  <div class="text-xs text-gray-500">
-                    <%= assignment.planned_quantity %> L • <%= assignment.formatted_date %>
+            <% @pending_assignments.each_with_index do |assignment, index| %>
+              <div class="assignment-item d-flex align-items-center justify-content-between mb-4 p-3 rounded-3 <%= 'bg-light' if index.even? %>">
+                <div class="d-flex align-items-center">
+                  <div class="icon-circle bg-warning me-3">
+                    <i class="fas fa-user text-white"></i>
+                  </div>
+                  <div>
+                    <div class="font-weight-bold text-dark"><%= assignment.vendor_name %></div>
+                    <div class="text-sm text-muted">
+                      <i class="fas fa-glass-milk me-1"></i>
+                      <%= assignment.planned_quantity %> L • 
+                      <i class="fas fa-calendar me-1"></i>
+                      <%= assignment.formatted_date %>
+                    </div>
                   </div>
                 </div>
-                <span class="badge badge-warning">Pending</span>
+                <div>
+                  <span class="badge bg-warning">Pending</span>
+                  <% if assignment.date < Date.current %>
+                    <span class="badge bg-danger ms-1">Overdue</span>
+                  <% end %>
+                </div>
               </div>
             <% end %>
           <% else %>
-            <p class="text-muted text-center">No pending assignments</p>
+            <div class="text-center py-4">
+              <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+              <p class="text-muted">All assignments completed!</p>
+            </div>
           <% end %>
         </div>
       </div>
@@ -350,35 +438,68 @@
 
     <!-- Quick Actions -->
     <div class="col-xl-4 col-lg-4">
-      <div class="card shadow mb-4">
-        <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header py-4">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle bg-info bg-opacity-10 me-3">
+              <i class="fas fa-bolt text-info"></i>
+            </div>
+            <div>
+              <h5 class="m-0 font-weight-bold text-primary">Quick Actions</h5>
+              <p class="text-muted mb-0 small">Essential operations</p>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="d-grid gap-2">
-            <%= link_to new_procurement_schedule_path, class: "btn btn-primary btn-sm" do %>
-              <i class="fas fa-plus me-1"></i>
-              New Procurement Schedule
+        <div class="card-body p-4">
+          <div class="d-grid gap-3">
+            <%= link_to new_procurement_schedule_path, class: "btn btn-primary d-flex align-items-center justify-content-start" do %>
+              <div class="icon-circle bg-white bg-opacity-20 me-3">
+                <i class="fas fa-plus text-white"></i>
+              </div>
+              <div class="text-start">
+                <div class="fw-bold">New Schedule</div>
+                <small class="opacity-75">Create procurement schedule</small>
+              </div>
             <% end %>
             
-            <%= link_to calendar_view_milk_analytics_path, class: "btn btn-outline-primary btn-sm" do %>
-              <i class="fas fa-calendar me-1"></i>
-              Calendar View
+            <%= link_to calendar_view_milk_analytics_path, class: "btn btn-outline-primary d-flex align-items-center justify-content-start" do %>
+              <div class="icon-circle bg-primary bg-opacity-10 me-3">
+                <i class="fas fa-calendar text-primary"></i>
+              </div>
+              <div class="text-start">
+                <div class="fw-bold">Calendar View</div>
+                <small class="text-muted">View schedule calendar</small>
+              </div>
             <% end %>
             
-            <%= link_to vendor_analysis_milk_analytics_path, class: "btn btn-outline-info btn-sm" do %>
-              <i class="fas fa-chart-bar me-1"></i>
-              Vendor Analysis
+            <%= link_to vendor_analysis_milk_analytics_path, class: "btn btn-outline-info d-flex align-items-center justify-content-start" do %>
+              <div class="icon-circle bg-info bg-opacity-10 me-3">
+                <i class="fas fa-chart-bar text-info"></i>
+              </div>
+              <div class="text-start">
+                <div class="fw-bold">Vendor Analysis</div>
+                <small class="text-muted">Performance insights</small>
+              </div>
             <% end %>
             
-            <%= link_to profit_analysis_milk_analytics_path, class: "btn btn-outline-success btn-sm" do %>
-              <i class="fas fa-chart-line me-1"></i>
-              Profit Analysis
+            <%= link_to profit_analysis_milk_analytics_path, class: "btn btn-outline-success d-flex align-items-center justify-content-start" do %>
+              <div class="icon-circle bg-success bg-opacity-10 me-3">
+                <i class="fas fa-chart-line text-success"></i>
+              </div>
+              <div class="text-start">
+                <div class="fw-bold">Profit Analysis</div>
+                <small class="text-muted">Financial reports</small>
+              </div>
             <% end %>
             
-            <%= link_to inventory_analysis_milk_analytics_path, class: "btn btn-outline-warning btn-sm" do %>
-              <i class="fas fa-boxes me-1"></i>
-              Inventory Analysis
+            <%= link_to inventory_analysis_milk_analytics_path, class: "btn btn-outline-warning d-flex align-items-center justify-content-start" do %>
+              <div class="icon-circle bg-warning bg-opacity-10 me-3">
+                <i class="fas fa-boxes text-warning"></i>
+              </div>
+              <div class="text-start">
+                <div class="fw-bold">Inventory Analysis</div>
+                <small class="text-muted">Stock management</small>
+              </div>
             <% end %>
           </div>
         </div>
@@ -503,6 +624,15 @@ document.addEventListener('DOMContentLoaded', function() {
   justify-content: center;
 }
 
+.icon-circle-lg {
+  height: 3.5rem;
+  width: 3.5rem;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .border-left-primary {
   border-left: 0.25rem solid #4e73df!important;
 }
@@ -523,6 +653,17 @@ document.addEventListener('DOMContentLoaded', function() {
   height: 0.5rem;
 }
 
+.progress-modern {
+  height: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 0.25rem;
+}
+
+.progress-modern .progress-bar {
+  background-color: white;
+  border-radius: 0.25rem;
+}
+
 .chart-area {
   position: relative;
   height: 20rem;
@@ -533,5 +674,171 @@ document.addEventListener('DOMContentLoaded', function() {
   position: relative;
   height: 15rem;
   width: 100%;
+}
+
+/* Modern Gradient Backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.gradient-info {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  color: white;
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+/* Enhanced Card Styling */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 1rem;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+/* Modern Button Styling */
+.btn-lg {
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.btn-outline-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* Enhanced Chart Cards */
+.card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 1rem 1rem 0 0 !important;
+  border-bottom: none;
+}
+
+/* Badge Styling */
+.badge-light {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Text Enhancements */
+.text-dark {
+  color: #2d3748 !important;
+}
+
+.fw-bold {
+  font-weight: 700 !important;
+}
+
+/* Metric Cards */
+.metric-card {
+  transition: transform 0.2s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.metric-card:hover {
+  transform: scale(1.02);
+}
+
+/* Vendor Performance Items */
+.vendor-performance-item {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.vendor-performance-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.progress-modern-vendor {
+  height: 0.5rem;
+  background-color: rgba(0,0,0,0.1);
+  border-radius: 0.25rem;
+}
+
+.progress-modern-vendor .progress-bar {
+  border-radius: 0.25rem;
+}
+
+/* Enhanced Shadows */
+.shadow-lg {
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 3px 10px rgba(0,0,0,0.05) !important;
+}
+
+/* Improved Typography */
+.h4 {
+  font-weight: 700;
+}
+
+.h5 {
+  font-weight: 600;
+}
+
+/* Background Utilities */
+.bg-opacity-10 {
+  --bs-bg-opacity: 0.1;
+}
+
+/* Animation for cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .h2 {
+    font-size: 1.5rem;
+  }
+  
+  .btn-lg {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .icon-circle-lg {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+  
+  .metric-card {
+    margin-bottom: 1rem;
+  }
+  
+  .vendor-performance-item {
+    margin-bottom: 1rem;
+  }
+  
+  .schedule-item, .assignment-item {
+    padding: 0.5rem;
+  }
 }
 </style>
