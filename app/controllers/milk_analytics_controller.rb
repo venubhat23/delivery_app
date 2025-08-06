@@ -12,7 +12,15 @@ class MilkAnalyticsController < ApplicationController
       @end_date = Date.parse(@to_date)
       @date_range = 'custom'
     else
-      @start_date, @end_date = calculate_date_range(@date_range)
+      # Default to today's date if no custom dates provided
+      if @from_date.blank? && @to_date.blank?
+        @start_date = Date.current
+        @end_date = Date.current
+        @from_date = Date.current.to_s
+        @to_date = Date.current.to_s
+      else
+        @start_date, @end_date = calculate_date_range(@date_range)
+      end
     end
     
     # Main KPIs
@@ -207,7 +215,8 @@ class MilkAnalyticsController < ApplicationController
     total_purchased = procurement_data.sum(:actual_quantity)
     
     # Get delivery data (milk sold) - assuming milk products
-    delivery_data = current_user.delivery_assignments
+    # Use DeliveryAssignment instead of current_user.delivery_assignments
+    delivery_data = DeliveryAssignment
                                .joins(:product)
                                .where(scheduled_date: @date)
                                .where(status: 'completed')
@@ -233,7 +242,7 @@ class MilkAnalyticsController < ApplicationController
                                    .for_date(date)
                                    .sum(:actual_quantity)
       
-      daily_delivered = current_user.delivery_assignments
+      daily_delivered = DeliveryAssignment
                                    .joins(:product)
                                    .where(scheduled_date: date)
                                    .where(status: 'completed')
@@ -368,18 +377,30 @@ class MilkAnalyticsController < ApplicationController
     total_purchased = actual_purchased + pending_planned
     
     # Delivery data - include completed deliveries and milk-related products
-    total_delivered = current_user.delivery_assignments
+    # Check all DeliveryAssignment instead of current_user.delivery_assignments
+    total_delivered = DeliveryAssignment
                                  .joins(:product)
                                  .where(scheduled_date: start_date..end_date)
                                  .where(status: 'completed')
                                  .where("products.name ILIKE ? OR products.name ILIKE ?", '%milk%', '%dairy%')
                                  .sum(:quantity) || 0
     
+    # Calculate additional metrics
+    total_profit = assignments.sum(&:actual_profit)
+    total_cost = assignments.sum(&:actual_cost)
+    total_revenue = assignments.sum(&:actual_revenue)
+    total_loss = total_cost > total_revenue ? total_cost - total_revenue : 0
+    pending_milk = pending_planned
+    
     {
       purchased: total_purchased,
       delivered: total_delivered,
       remaining: total_purchased - total_delivered,
-      utilization_rate: total_purchased > 0 ? (total_delivered.to_f / total_purchased * 100).round(2) : 0
+      utilization_rate: total_purchased > 0 ? (total_delivered.to_f / total_purchased * 100).round(2) : 0,
+      total_milk_utilized: total_delivered,
+      total_profit: total_profit,
+      total_loss: total_loss,
+      pending_milk: pending_milk
     }
   end
 
