@@ -31,6 +31,7 @@ class DeliveryAssignment < ApplicationRecord
     end_date = start_date.end_of_month
     where(completed_at: start_date..end_date)
   }
+  scope :search_by_customer, ->(term) { joins(:customer).where("customers.name ILIKE ?", "%#{term}%") }
 
   # INSTANCE METHODS
   def delivery_person

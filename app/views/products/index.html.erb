@@ -62,21 +62,28 @@
 <div class="card mb-4">
   <div class="card-body">
     <div class="row align-items-center">
-      <div class="col-md-6">
+      <div class="col-md-8">
         <%= form_with url: products_path, method: :get, local: true, class: "d-flex align-items-center" do |form| %>
+          <div class="me-3">
+            <%= form.text_field :search, 
+                placeholder: "Search products by name...", 
+                value: params[:search],
+                class: "form-control",
+                style: "min-width: 250px;" %>
+          </div>
           <div class="me-3">
             <%= form.select :category, 
                 options_for_select([['All Categories', '']] + @categories.map { |c| [c.name, c.id] }, params[:category]), 
                 { }, 
-                { class: "form-select", onchange: "this.form.submit();" } %>
+                { class: "form-select" } %>
           </div>
-          <%= form.submit "Filter", class: "btn btn-outline-primary" %>
+          <%= form.submit "Search & Filter", class: "btn btn-outline-primary" %>
         <% end %>
       </div>
-      <div class="col-md-6 text-end">
-        <% if params[:category].present? %>
+      <div class="col-md-4 text-end">
+        <% if params[:category].present? || params[:search].present? %>
           <%= link_to products_path, class: "btn btn-outline-secondary" do %>
-            <i class="fas fa-times me-1"></i>Clear Filter
+            <i class="fas fa-times me-1"></i>Clear All
           <% end %>
         <% end %>
       </div>

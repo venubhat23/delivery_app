@@ -6,7 +6,7 @@ class DeliveryAssignmentsController < ApplicationController
     # Date filtering - default to today, but allow viewing other dates
     filter_date = params[:date].present? ? Date.parse(params[:date]) : Date.today
     
-    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product)
+    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product, :customer)
                                              .where(scheduled_date: filter_date)
                                              .order(created_at: :desc)
     
@@ -19,6 +19,11 @@ class DeliveryAssignmentsController < ApplicationController
     if params[:delivery_person_id].present?
       @delivery_assignments = DeliveryAssignment.joins(:delivery_person)
                                             .where(delivery_person: { id: params[:delivery_person_id] })
+    end
+
+    # Search by customer name
+    if params[:search].present?
+      @delivery_assignments = @delivery_assignments.search_by_customer(params[:search])
     end
 
     @delivery_people = User.delivery_people.all

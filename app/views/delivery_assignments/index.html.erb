@@ -91,66 +91,61 @@
 <div class="card mb-4">
   <div class="card-body">
     <div class="row align-items-center">
-      <div class="col-md-8">
-        <div class="row g-3">
-          <div class="col-md-3">
-            <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
-              <%= form.date_field :date, value: @current_date, 
-                                  class: "form-control", 
-                                  onchange: "this.form.submit();",
-                                  title: "Select date to view assignments" %>
-              <%= form.hidden_field :status, value: params[:status] %>
-              <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
-            <% end %>
+      <div class="col-md-10">
+        <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex align-items-center flex-wrap gap-3" do |form| %>
+          <div>
+            <%= form.text_field :search, 
+                placeholder: "Search by customer name...", 
+                value: params[:search],
+                class: "form-control",
+                style: "min-width: 200px;" %>
           </div>
-          <div class="col-md-3">
-            <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
-              <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search statuses..." class="w-100">
-                <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
-                                { include_blank: false },
-                                { class: "form-select", onchange: "this.form.submit();", data: { "searchable-select-target" => "select" } } %>
-              </div>
-              <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
-              <%= form.hidden_field :date, value: params[:date] %>
-            <% end %>
+          <div>
+            <%= form.date_field :date, value: @current_date, 
+                                class: "form-control", 
+                                title: "Select date to view assignments" %>
           </div>
-          <div class="col-md-3">
-            <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex" do |form| %>
-              <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search delivery people..." class="w-100">
-                <%= form.select :delivery_person_id,
-                                options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
-                                { include_blank: false },
-                                { class: "form-select", onchange: "this.form.submit();", data: { "searchable-select-target" => "select" } } %>
-              </div>
-              <%= form.hidden_field :status, value: params[:status] %>
-              <%= form.hidden_field :date, value: params[:date] %>
-            <% end %>
-          </div>
-          <div class="col-md-3">
-            <div class="d-flex gap-2">
-              <% if params[:status].present? || params[:delivery_person_id].present? || (params[:date].present? && params[:date] != Date.today.to_s) %>
-                <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary" do %>
-                  <i class="fas fa-times me-2"></i>Clear Filters
-                <% end %>
-              <% end %>
-              <div class="btn-group" role="group">
-                <%= link_to delivery_assignments_path(date: Date.yesterday), 
-                    class: "btn btn-outline-primary btn-sm", 
-                    title: "Yesterday" do %>
-                  <i class="fas fa-chevron-left"></i>
-                <% end %>
-                <%= link_to delivery_assignments_path, 
-                    class: "btn btn-outline-primary btn-sm", 
-                    title: "Today" do %>
-                  <i class="fas fa-home"></i>
-                <% end %>
-                <%= link_to delivery_assignments_path(date: Date.tomorrow), 
-                    class: "btn btn-outline-primary btn-sm", 
-                    title: "Tomorrow" do %>
-                  <i class="fas fa-chevron-right"></i>
-                <% end %>
-              </div>
+          <div>
+            <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search statuses...">
+              <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
+                              { include_blank: false },
+                              { class: "form-select", data: { "searchable-select-target" => "select" } } %>
             </div>
+          </div>
+          <div>
+            <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search delivery people...">
+              <%= form.select :delivery_person_id,
+                              options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
+                              { include_blank: false },
+                              { class: "form-select", data: { "searchable-select-target" => "select" } } %>
+            </div>
+          </div>
+          <%= form.submit "Search & Filter", class: "btn btn-outline-primary" %>
+        <% end %>
+      </div>
+      <div class="col-md-2">
+        <div class="d-flex gap-2 justify-content-end">
+          <% if params[:status].present? || params[:delivery_person_id].present? || params[:search].present? || (params[:date].present? && params[:date] != Date.today.to_s) %>
+            <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary btn-sm" do %>
+              <i class="fas fa-times me-1"></i>Clear All
+            <% end %>
+          <% end %>
+          <div class="btn-group" role="group">
+            <%= link_to delivery_assignments_path(date: Date.yesterday), 
+                class: "btn btn-outline-primary btn-sm", 
+                title: "Yesterday" do %>
+              <i class="fas fa-chevron-left"></i>
+            <% end %>
+            <%= link_to delivery_assignments_path, 
+                class: "btn btn-outline-primary btn-sm", 
+                title: "Today" do %>
+              <i class="fas fa-home"></i>
+            <% end %>
+            <%= link_to delivery_assignments_path(date: Date.tomorrow), 
+                class: "btn btn-outline-primary btn-sm", 
+                title: "Tomorrow" do %>
+              <i class="fas fa-chevron-right"></i>
+            <% end %>
           </div>
         </div>
       </div>
