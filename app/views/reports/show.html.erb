@@ -1,0 +1,264 @@
+<!-- app/views/reports/show.html.erb -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-file-invoice me-3"></i>GST Report Details
+      </h1>
+      <p class="text-muted mb-0">
+        <%= @report.respond_to?(:name) ? @report.name : "GST Report" %> | 
+        <%= @from_date.strftime('%d/%m/%Y') %> to <%= @to_date.strftime('%d/%m/%Y') %>
+      </p>
+    </div>
+    <div>
+      <%= link_to reports_path, class: "btn btn-outline-secondary me-2" do %>
+        <i class="fas fa-arrow-left me-2"></i>Back to Reports
+      <% end %>
+      <%= link_to download_pdf_report_path(@report.respond_to?(:id) ? @report.id : 1), 
+                  class: "btn btn-primary", 
+                  target: "_blank" do %>
+        <i class="fas fa-download me-2"></i>Download PDF
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- GST Report Header -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h5 class="fw-bold mb-3">GSTR-1</h5>
+        <h6 class="fw-bold mb-2">Atma Nirbhar Farm</h6>
+        <p class="mb-1">Mobile: 9972808044</p>
+        <p class="mb-1">GST No: 29AOIPT8113K1ZC</p>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <p class="mb-1"><strong>Date Range:</strong> <%= @from_date.strftime('%d/%m/%Y') %> to <%= @to_date.strftime('%d/%m/%Y') %></p>
+        <p class="mb-1"><strong>Generated On:</strong> <%= Time.current.strftime('%d/%m/%Y at %I:%M %p') %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-primary">
+      <div class="stats-icon">
+        <i class="fas fa-rupee-sign"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@gst_data[:summary][:total_sales]) %></div>
+      <div class="stats-label">Total Sales</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-percentage"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@gst_data[:summary][:total_tax]) %></div>
+      <div class="stats-label">Total Tax</div>
+    </div>
+  </div>
+  <div class="col-md-2 mb-3">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@gst_data[:summary][:cgst]) %></div>
+      <div class="stats-label">CGST</div>
+    </div>
+  </div>
+  <div class="col-md-2 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@gst_data[:summary][:sgst]) %></div>
+      <div class="stats-label">SGST</div>
+    </div>
+  </div>
+  <div class="col-md-2 mb-3">
+    <div class="stats-card stats-card-danger">
+      <div class="stats-icon">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@gst_data[:summary][:igst]) %></div>
+      <div class="stats-label">IGST</div>
+    </div>
+  </div>
+</div>
+
+<!-- Sales Table -->
+<div class="card">
+  <div class="card-header">
+    <h6 class="mb-0">
+      <i class="fas fa-table me-2"></i>Sales Transactions
+    </h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover" id="gstReportTable">
+        <thead class="table-dark">
+          <tr>
+            <th rowspan="2" class="align-middle">GSTIN</th>
+            <th rowspan="2" class="align-middle">Customer Name</th>
+            <th colspan="2" class="text-center">Place of Supply</th>
+            <th colspan="3" class="text-center">Invoice Details</th>
+            <th colspan="6" class="text-center">Amount of Tax</th>
+            <th rowspan="2" class="align-middle">Total Tax</th>
+          </tr>
+          <tr>
+            <th>State Code</th>
+            <th>State Name</th>
+            <th>Invoice No.</th>
+            <th>Invoice Date</th>
+            <th>Invoice Value</th>
+            <th>Total Tax %</th>
+            <th>Taxable Value</th>
+            <th>Central Tax Amount</th>
+            <th>State/UT Tax Amount</th>
+            <th>Integrated Tax Amount</th>
+            <th>CESS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if @gst_data[:sales_transactions].any? %>
+            <% @gst_data[:sales_transactions].each do |transaction| %>
+              <tr>
+                <td>-</td>
+                <td><%= transaction[:customer_name] %></td>
+                <td><%= transaction[:state_code] %></td>
+                <td><%= transaction[:state_name] %></td>
+                <td><%= transaction[:invoice_no] %></td>
+                <td><%= transaction[:invoice_date] %></td>
+                <td class="text-end">₹<%= number_with_delimiter(transaction[:invoice_value]) %></td>
+                <td class="text-end"><%= transaction[:tax_rate] %>%</td>
+                <td class="text-end">₹<%= number_with_delimiter(transaction[:taxable_value]) %></td>
+                <td class="text-end">₹<%= number_with_delimiter(transaction[:central_tax]) %></td>
+                <td class="text-end">₹<%= number_with_delimiter(transaction[:state_tax]) %></td>
+                <td class="text-end">₹<%= number_with_delimiter(transaction[:integrated_tax]) %></td>
+                <td class="text-end">₹<%= number_with_delimiter(transaction[:cess]) %></td>
+                <td class="text-end fw-bold">₹<%= number_with_delimiter(transaction[:total_tax]) %></td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="14" class="text-center text-muted py-4">
+                <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                No sales transactions found for the selected period.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <% if @gst_data[:sales_transactions].any? %>
+          <tfoot class="table-secondary">
+            <tr class="fw-bold">
+              <td colspan="6">Total</td>
+              <td class="text-end">₹<%= number_with_delimiter(@gst_data[:summary][:total_sales]) %></td>
+              <td></td>
+              <td class="text-end">₹<%= number_with_delimiter(@gst_data[:summary][:total_sales] - @gst_data[:summary][:total_tax]) %></td>
+              <td class="text-end">₹<%= number_with_delimiter(@gst_data[:summary][:cgst]) %></td>
+              <td class="text-end">₹<%= number_with_delimiter(@gst_data[:summary][:sgst]) %></td>
+              <td class="text-end">₹<%= number_with_delimiter(@gst_data[:summary][:igst]) %></td>
+              <td class="text-end">₹0.0</td>
+              <td class="text-end">₹<%= number_with_delimiter(@gst_data[:summary][:total_tax]) %></td>
+            </tr>
+          </tfoot>
+        <% end %>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize DataTable if available
+  if (typeof $('#gstReportTable').DataTable === 'function') {
+    $('#gstReportTable').DataTable({
+      responsive: true,
+      pageLength: 25,
+      order: [[4, 'desc']], // Sort by invoice date descending
+      columnDefs: [
+        { targets: [6, 8, 9, 10, 11, 12, 13], className: 'text-end' }
+      ],
+      dom: 'Bfrtip',
+      buttons: [
+        'copy', 'csv', 'excel', 'print'
+      ]
+    });
+  }
+});
+</script>
+
+<style>
+.stats-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-left: 4px solid #007bff;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.stats-card-primary { border-left-color: #007bff; }
+.stats-card-success { border-left-color: #28a745; }
+.stats-card-info { border-left-color: #17a2b8; }
+.stats-card-warning { border-left-color: #ffc107; }
+.stats-card-danger { border-left-color: #dc3545; }
+
+.stats-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.7;
+}
+
+.stats-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.stats-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.table th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem 1rem;
+  margin: -1rem -1rem 2rem -1rem;
+  border-radius: 0 0 10px 10px;
+}
+
+.page-header .btn {
+  color: white;
+  border-color: white;
+}
+
+.page-header .btn:hover {
+  background-color: white;
+  color: #667eea;
+}
+</style>
