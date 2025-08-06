@@ -203,7 +203,7 @@ Rails.application.routes.draw do
   resources :admin_settings, path: 'admin-settings'
   
   # Reports
-  resources :reports, only: [:index] do
+  resources :reports, only: [:index, :show] do
     collection do
       post :generate_gst_report
     end
