@@ -11,20 +11,51 @@
       <p class="text-muted mb-0">Comprehensive milk procurement and delivery analytics</p>
     </div>
     
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 align-items-center flex-wrap">
       <!-- Date Range Filter -->
       <div class="dropdown">
         <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
           <i class="fas fa-calendar me-1"></i>
-          <%= @date_range.capitalize %>
+          <%= @date_range == 'custom' ? 'Custom Range' : @date_range.capitalize %>
         </button>
         <ul class="dropdown-menu">
           <li><%= link_to "Week", milk_analytics_path(date_range: 'week'), class: "dropdown-item #{'active' if @date_range == 'week'}" %></li>
           <li><%= link_to "Month", milk_analytics_path(date_range: 'month'), class: "dropdown-item #{'active' if @date_range == 'month'}" %></li>
           <li><%= link_to "Quarter", milk_analytics_path(date_range: 'quarter'), class: "dropdown-item #{'active' if @date_range == 'quarter'}" %></li>
           <li><%= link_to "Year", milk_analytics_path(date_range: 'year'), class: "dropdown-item #{'active' if @date_range == 'year'}" %></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a href="#" class="dropdown-item" id="customRangeOption">Custom Range</a></li>
         </ul>
       </div>
+      
+      <!-- Custom Date Range Form (Initially Hidden) -->
+      <div id="customDateRange" class="d-flex gap-2 align-items-center" style="<%= @date_range == 'custom' ? '' : 'display: none;' %>">
+        <%= form_with url: milk_analytics_path, method: :get, local: true, id: "dateRangeForm", class: "d-flex gap-2 align-items-center" do |form| %>
+          <div class="form-group mb-0">
+            <%= form.label :from_date, "From:", class: "form-label me-1 mb-0 small" %>
+            <%= form.date_field :from_date, value: @from_date, class: "form-control form-control-sm", style: "width: 150px;" %>
+          </div>
+          <div class="form-group mb-0">
+            <%= form.label :to_date, "To:", class: "form-label me-1 mb-0 small" %>
+            <%= form.date_field :to_date, value: @to_date, class: "form-control form-control-sm", style: "width: 150px;" %>
+          </div>
+          <%= form.submit "Apply", class: "btn btn-primary btn-sm" %>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="clearCustomRange">Clear</button>
+        <% end %>
+      </div>
+      
+      <!-- Current Date Range Display -->
+      <% if @date_range == 'custom' && @from_date.present? && @to_date.present? %>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          Showing data from <%= Date.parse(@from_date).strftime('%b %d, %Y') %> to <%= Date.parse(@to_date).strftime('%b %d, %Y') %>
+        </div>
+      <% else %>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          Showing data from <%= @start_date.strftime('%b %d, %Y') %> to <%= @end_date.strftime('%b %d, %Y') %>
+        </div>
+      <% end %>
       
       <!-- Action Buttons -->
       <%= link_to new_procurement_schedule_path, class: "btn btn-primary" do %>
@@ -360,6 +391,46 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // Custom Date Range Functionality
+  const customRangeOption = document.getElementById('customRangeOption');
+  const customDateRange = document.getElementById('customDateRange');
+  const clearCustomRange = document.getElementById('clearCustomRange');
+  const dateRangeForm = document.getElementById('dateRangeForm');
+  
+  // Show custom date range when option is clicked
+  customRangeOption.addEventListener('click', function(e) {
+    e.preventDefault();
+    customDateRange.style.display = 'flex';
+    // Set focus to the first date input
+    const fromDateInput = customDateRange.querySelector('input[name="from_date"]');
+    if (fromDateInput) {
+      fromDateInput.focus();
+    }
+  });
+  
+  // Clear custom range and hide the form
+  clearCustomRange.addEventListener('click', function() {
+    // Redirect to default month view
+    window.location.href = '<%= milk_analytics_path(date_range: 'month') %>';
+  });
+  
+  // Validate date range before submission
+  dateRangeForm.addEventListener('submit', function(e) {
+    const fromDate = document.querySelector('input[name="from_date"]').value;
+    const toDate = document.querySelector('input[name="to_date"]').value;
+    
+    if (!fromDate || !toDate) {
+      e.preventDefault();
+      alert('Please select both From and To dates.');
+      return false;
+    }
+    
+    if (new Date(fromDate) > new Date(toDate)) {
+      e.preventDefault();
+      alert('From date cannot be later than To date.');
+      return false;
+    }
+  });
   // Daily Procurement Chart
   const dailyCtx = document.getElementById('dailyProcurementChart').getContext('2d');
   const dailyChart = new Chart(dailyCtx, {

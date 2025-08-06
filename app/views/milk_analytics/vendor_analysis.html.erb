@@ -1,0 +1,233 @@
+<% content_for :title, "Vendor Analysis - Milk Supply & Analytics" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-chart-bar text-primary me-2"></i>
+        Vendor Analysis
+      </h1>
+      <p class="text-muted mb-0">Detailed vendor performance and analytics</p>
+    </div>
+    
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <!-- Date Range Filter -->
+      <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fas fa-calendar me-1"></i>
+          <%= @date_range == 'custom' ? 'Custom Range' : @date_range.capitalize %>
+        </button>
+        <ul class="dropdown-menu">
+          <li><%= link_to "Week", vendor_analysis_milk_analytics_path(date_range: 'week', vendor: @vendor), class: "dropdown-item #{'active' if @date_range == 'week'}" %></li>
+          <li><%= link_to "Month", vendor_analysis_milk_analytics_path(date_range: 'month', vendor: @vendor), class: "dropdown-item #{'active' if @date_range == 'month'}" %></li>
+          <li><%= link_to "Quarter", vendor_analysis_milk_analytics_path(date_range: 'quarter', vendor: @vendor), class: "dropdown-item #{'active' if @date_range == 'quarter'}" %></li>
+          <li><%= link_to "Year", vendor_analysis_milk_analytics_path(date_range: 'year', vendor: @vendor), class: "dropdown-item #{'active' if @date_range == 'year'}" %></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a href="#" class="dropdown-item" id="customRangeOption">Custom Range</a></li>
+        </ul>
+      </div>
+      
+      <!-- Custom Date Range Form (Initially Hidden) -->
+      <div id="customDateRange" class="d-flex gap-2 align-items-center" style="<%= @date_range == 'custom' ? '' : 'display: none;' %>">
+        <%= form_with url: vendor_analysis_milk_analytics_path, method: :get, local: true, id: "dateRangeForm", class: "d-flex gap-2 align-items-center" do |form| %>
+          <%= form.hidden_field :vendor, value: @vendor %>
+          <div class="form-group mb-0">
+            <%= form.label :from_date, "From:", class: "form-label me-1 mb-0 small" %>
+            <%= form.date_field :from_date, value: @from_date, class: "form-control form-control-sm", style: "width: 150px;" %>
+          </div>
+          <div class="form-group mb-0">
+            <%= form.label :to_date, "To:", class: "form-label me-1 mb-0 small" %>
+            <%= form.date_field :to_date, value: @to_date, class: "form-control form-control-sm", style: "width: 150px;" %>
+          </div>
+          <%= form.submit "Apply", class: "btn btn-primary btn-sm" %>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="clearCustomRange">Clear</button>
+        <% end %>
+      </div>
+      
+      <!-- Current Date Range Display -->
+      <% if @date_range == 'custom' && @from_date.present? && @to_date.present? %>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          Showing data from <%= Date.parse(@from_date).strftime('%b %d, %Y') %> to <%= Date.parse(@to_date).strftime('%b %d, %Y') %>
+        </div>
+      <% else %>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          Showing data from <%= @start_date.strftime('%b %d, %Y') %> to <%= @end_date.strftime('%b %d, %Y') %>
+        </div>
+      <% end %>
+      
+      <!-- Back Button -->
+      <%= link_to milk_analytics_path, class: "btn btn-outline-secondary" do %>
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Dashboard
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Vendor Selection -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-body">
+          <%= form_with url: vendor_analysis_milk_analytics_path, method: :get, local: true, class: "d-flex align-items-center gap-3" do |form| %>
+            <%= form.hidden_field :from_date, value: @from_date %>
+            <%= form.hidden_field :to_date, value: @to_date %>
+            <%= form.hidden_field :date_range, value: @date_range %>
+            <div class="form-group mb-0">
+              <%= form.label :vendor, "Select Vendor:", class: "form-label me-2 mb-0" %>
+              <%= form.select :vendor, options_from_collection_for_select(@vendors.map{|v| [v, v]}, :first, :last, @vendor), 
+                              { prompt: "All Vendors" }, 
+                              { class: "form-select", style: "width: 200px;" } %>
+            </div>
+            <%= form.submit "Analyze", class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor Analytics Content -->
+  <% if @vendor.present? && @vendor_analytics %>
+    <!-- Specific Vendor Analysis -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow">
+          <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Analysis for <%= @vendor %></h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Assignments</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @vendor_analytics[:total_assignments] %></div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completion Rate</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @vendor_analytics[:completion_rate] %>%</div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Quantity</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800"><%= number_with_delimiter(@vendor_analytics[:total_actual_quantity]) %> L</div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Profit</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">₹<%= number_with_delimiter(@vendor_analytics[:profit].round(2)) %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% elsif @all_vendors %>
+    <!-- All Vendors Comparison -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow">
+          <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">All Vendors Comparison</h6>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Vendor</th>
+                    <th>Total Assignments</th>
+                    <th>Completion Rate</th>
+                    <th>Total Quantity (L)</th>
+                    <th>Total Cost</th>
+                    <th>Total Profit</th>
+                    <th>Avg Price/L</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @all_vendors.each do |vendor_data| %>
+                    <tr>
+                      <td>
+                        <%= link_to vendor_analysis_milk_analytics_path(vendor: vendor_data[:vendor], date_range: @date_range, from_date: @from_date, to_date: @to_date), 
+                                    class: "text-primary" do %>
+                          <%= vendor_data[:vendor] %>
+                        <% end %>
+                      </td>
+                      <td><%= vendor_data[:total_assignments] %></td>
+                      <td>
+                        <span class="badge badge-<%= vendor_data[:completion_rate] >= 80 ? 'success' : vendor_data[:completion_rate] >= 60 ? 'warning' : 'danger' %>">
+                          <%= vendor_data[:completion_rate] %>%
+                        </span>
+                      </td>
+                      <td><%= number_with_delimiter(vendor_data[:total_quantity]) %></td>
+                      <td>₹<%= number_with_delimiter(vendor_data[:total_cost].round(2)) %></td>
+                      <td>₹<%= number_with_delimiter(vendor_data[:profit].round(2)) %></td>
+                      <td>₹<%= vendor_data[:average_price] %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow">
+          <div class="card-body text-center">
+            <p class="text-muted">Select a vendor to view detailed analysis or leave blank to compare all vendors.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Custom Date Range Functionality
+  const customRangeOption = document.getElementById('customRangeOption');
+  const customDateRange = document.getElementById('customDateRange');
+  const clearCustomRange = document.getElementById('clearCustomRange');
+  const dateRangeForm = document.getElementById('dateRangeForm');
+  
+  // Show custom date range when option is clicked
+  if (customRangeOption) {
+    customRangeOption.addEventListener('click', function(e) {
+      e.preventDefault();
+      customDateRange.style.display = 'flex';
+      const fromDateInput = customDateRange.querySelector('input[name="from_date"]');
+      if (fromDateInput) {
+        fromDateInput.focus();
+      }
+    });
+  }
+  
+  // Clear custom range and hide the form
+  if (clearCustomRange) {
+    clearCustomRange.addEventListener('click', function() {
+      window.location.href = '<%= vendor_analysis_milk_analytics_path(date_range: 'month', vendor: @vendor) %>';
+    });
+  }
+  
+  // Validate date range before submission
+  if (dateRangeForm) {
+    dateRangeForm.addEventListener('submit', function(e) {
+      const fromDate = document.querySelector('input[name="from_date"]').value;
+      const toDate = document.querySelector('input[name="to_date"]').value;
+      
+      if (!fromDate || !toDate) {
+        e.preventDefault();
+        alert('Please select both From and To dates.');
+        return false;
+      }
+      
+      if (new Date(fromDate) > new Date(toDate)) {
+        e.preventDefault();
+        alert('From date cannot be later than To date.');
+        return false;
+      }
+    });
+  }
+});
+</script>

@@ -1,0 +1,229 @@
+<% content_for :title, "Calendar View - Milk Supply & Analytics" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-calendar text-primary me-2"></i>
+        Calendar View
+      </h1>
+      <p class="text-muted mb-0">Calendar-based milk procurement overview</p>
+    </div>
+    
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <!-- View Type Filter -->
+      <div class="dropdown">
+        <button class="btn btn-outline-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fas fa-eye me-1"></i>
+          <%= @view_type.capitalize %> View
+        </button>
+        <ul class="dropdown-menu">
+          <li><%= link_to "Day", calendar_view_milk_analytics_path(view_type: 'day', date: @date), class: "dropdown-item #{'active' if @view_type == 'day'}" %></li>
+          <li><%= link_to "Week", calendar_view_milk_analytics_path(view_type: 'week', date: @date), class: "dropdown-item #{'active' if @view_type == 'week'}" %></li>
+          <li><%= link_to "Month", calendar_view_milk_analytics_path(view_type: 'month', date: @date), class: "dropdown-item #{'active' if @view_type == 'month'}" %></li>
+        </ul>
+      </div>
+      
+      <!-- Date Navigation -->
+      <div class="btn-group" role="group">
+        <%= link_to calendar_view_milk_analytics_path(date: @date - 1.send(@view_type == 'month' ? :month : @view_type == 'week' ? :week : :day), view_type: @view_type), 
+                    class: "btn btn-outline-secondary" do %>
+          <i class="fas fa-chevron-left"></i>
+        <% end %>
+        
+        <%= form_with url: calendar_view_milk_analytics_path, method: :get, local: true, class: "d-inline" do |form| %>
+          <%= form.hidden_field :view_type, value: @view_type %>
+          <%= form.date_field :date, value: @date, onchange: "this.form.submit()", class: "btn btn-outline-primary border-0 text-center", style: "width: 150px;" %>
+        <% end %>
+        
+        <%= link_to calendar_view_milk_analytics_path(date: @date + 1.send(@view_type == 'month' ? :month : @view_type == 'week' ? :week : :day), view_type: @view_type), 
+                    class: "btn btn-outline-secondary" do %>
+          <i class="fas fa-chevron-right"></i>
+        <% end %>
+      </div>
+      
+      <!-- Today Button -->
+      <%= link_to calendar_view_milk_analytics_path(view_type: @view_type), class: "btn btn-primary" do %>
+        <i class="fas fa-home me-1"></i>
+        Today
+      <% end %>
+      
+      <!-- Back Button -->
+      <%= link_to milk_analytics_path, class: "btn btn-outline-secondary" do %>
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Dashboard
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Current Period Display -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <% case @view_type %>
+              <% when 'day' %>
+                <%= @date.strftime('%A, %B %d, %Y') %>
+              <% when 'week' %>
+                Week of <%= @start_date.strftime('%B %d') %> - <%= @end_date.strftime('%B %d, %Y') %>
+              <% when 'month' %>
+                <%= @date.strftime('%B %Y') %>
+              <% end %>
+            </h5>
+            <div class="text-muted">
+              Showing <%= @view_type %> view from <%= @start_date.strftime('%b %d') %> to <%= @end_date.strftime('%b %d, %Y') %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Summaries -->
+  <div class="row mb-4">
+    <% @daily_summaries.each do |summary| %>
+      <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <div class="card shadow h-100 <%= 'border-primary' if summary[:date] == Date.current %>">
+          <div class="card-body">
+            <div class="text-center">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                <%= summary[:date].strftime('%a') %>
+              </div>
+              <div class="h6 mb-2 font-weight-bold text-gray-800">
+                <%= summary[:date].day %>
+              </div>
+              
+              <% if summary[:assignments_count] > 0 %>
+                <div class="text-xs mb-1">
+                  <span class="text-success"><%= summary[:total_actual] %>L actual</span>
+                  <% if summary[:total_planned] > summary[:total_actual] %>
+                    <br><span class="text-info"><%= summary[:total_planned] - summary[:total_actual] %>L planned</span>
+                  <% end %>
+                </div>
+                <div class="text-xs mb-1">
+                  <span class="text-primary">₹<%= number_with_delimiter(summary[:profit].round(2)) %> profit</span>
+                </div>
+                <div class="text-xs">
+                  <span class="badge badge-<%= summary[:completed_count] == summary[:assignments_count] ? 'success' : summary[:completed_count] > 0 ? 'warning' : 'secondary' %>">
+                    <%= summary[:completed_count] %>/<%= summary[:assignments_count] %> completed
+                  </span>
+                </div>
+              <% else %>
+                <div class="text-xs text-muted">No assignments</div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Assignments Detail -->
+  <% if @assignments_by_date.any? %>
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow">
+          <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Assignment Details</h6>
+          </div>
+          <div class="card-body">
+            <% @assignments_by_date.each do |date, assignments| %>
+              <div class="mb-4">
+                <h6 class="text-primary border-bottom pb-2">
+                  <%= date.strftime('%A, %B %d, %Y') %>
+                  <span class="text-muted small">(<%= assignments.count %> assignments)</span>
+                </h6>
+                
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Vendor</th>
+                        <th>Planned Qty</th>
+                        <th>Actual Qty</th>
+                        <th>Cost</th>
+                        <th>Revenue</th>
+                        <th>Profit</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% assignments.each do |assignment| %>
+                        <tr>
+                          <td><%= assignment.vendor_name %></td>
+                          <td><%= assignment.planned_quantity %> L</td>
+                          <td>
+                            <% if assignment.actual_quantity %>
+                              <%= assignment.actual_quantity %> L
+                            <% else %>
+                              <span class="text-muted">-</span>
+                            <% end %>
+                          </td>
+                          <td>₹<%= number_with_delimiter(assignment.actual_cost.round(2)) %></td>
+                          <td>₹<%= number_with_delimiter(assignment.actual_revenue.round(2)) %></td>
+                          <td class="<%= assignment.actual_profit >= 0 ? 'text-success' : 'text-danger' %>">
+                            ₹<%= number_with_delimiter(assignment.actual_profit.round(2)) %>
+                          </td>
+                          <td>
+                            <span class="badge badge-<%= case assignment.status
+                                                        when 'completed' then 'success'
+                                                        when 'in_progress' then 'warning'
+                                                        when 'pending' then 'secondary'
+                                                        else 'secondary'
+                                                        end %>">
+                              <%= assignment.status.humanize %>
+                            </span>
+                          </td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow">
+          <div class="card-body text-center">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No assignments found for the selected period.</p>
+            <%= link_to new_procurement_schedule_path, class: "btn btn-primary" do %>
+              <i class="fas fa-plus me-1"></i>
+              Create New Procurement Schedule
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<style>
+.card.border-primary {
+  border: 2px solid #4e73df !important;
+}
+
+.badge-success {
+  background-color: #1cc88a;
+}
+
+.badge-warning {
+  background-color: #f6c23e;
+}
+
+.badge-secondary {
+  background-color: #858796;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e3e6f0 !important;
+}
+</style>

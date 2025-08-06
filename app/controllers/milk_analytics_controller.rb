@@ -3,7 +3,17 @@ class MilkAnalyticsController < ApplicationController
 
   def index
     @date_range = params[:date_range] || 'month'
-    @start_date, @end_date = calculate_date_range(@date_range)
+    @from_date = params[:from_date]
+    @to_date = params[:to_date]
+    
+    # Use custom date range if provided, otherwise use predefined range
+    if @from_date.present? && @to_date.present?
+      @start_date = Date.parse(@from_date)
+      @end_date = Date.parse(@to_date)
+      @date_range = 'custom'
+    else
+      @start_date, @end_date = calculate_date_range(@date_range)
+    end
     
     # Main KPIs
     @kpis = calculate_main_kpis(@start_date, @end_date)
@@ -71,7 +81,17 @@ class MilkAnalyticsController < ApplicationController
   def vendor_analysis
     @vendor = params[:vendor]
     @date_range = params[:date_range] || 'month'
-    @start_date, @end_date = calculate_date_range(@date_range)
+    @from_date = params[:from_date]
+    @to_date = params[:to_date]
+    
+    # Use custom date range if provided, otherwise use predefined range
+    if @from_date.present? && @to_date.present?
+      @start_date = Date.parse(@from_date)
+      @end_date = Date.parse(@to_date)
+      @date_range = 'custom'
+    else
+      @start_date, @end_date = calculate_date_range(@date_range)
+    end
     
     if @vendor.present?
       # Specific vendor analysis
@@ -119,7 +139,17 @@ class MilkAnalyticsController < ApplicationController
 
   def profit_analysis
     @date_range = params[:date_range] || 'month'
-    @start_date, @end_date = calculate_date_range(@date_range)
+    @from_date = params[:from_date]
+    @to_date = params[:to_date]
+    
+    # Use custom date range if provided, otherwise use predefined range
+    if @from_date.present? && @to_date.present?
+      @start_date = Date.parse(@from_date)
+      @end_date = Date.parse(@to_date)
+      @date_range = 'custom'
+    else
+      @start_date, @end_date = calculate_date_range(@date_range)
+    end
     
     # Profit breakdown
     @profit_analysis = {
