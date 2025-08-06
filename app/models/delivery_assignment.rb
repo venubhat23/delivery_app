@@ -93,9 +93,13 @@ class DeliveryAssignment < ApplicationRecord
     status == 'completed' && !invoice_generated?
   end
 
-  # Alias method for backward compatibility
+  # Alias methods for backward compatibility
   def delivery_date
     scheduled_date
+  end
+
+  def delivery_date=(date)
+    self.scheduled_date = date
   end
 
   # CLASS METHODS
