@@ -1,0 +1,15 @@
+<%# Link showing page number
+  - available local variables
+    page:          a page object for "this" page
+    url:           url to this page
+    current_page:  a page object for the currently displayed page
+    remote:        data-remote
+    rel:           "next" or "prev"
+
+-%>
+<li class="page-item<%= ' active' if page.current? %>">
+  <%= link_to_unless page.current?, page, url, {remote: remote, rel: rel.to_s.presence, class: 'page-link'} do -%>
+    <%= page %>
+    <span class="sr-only">(current)</span>
+  <% end -%>
+</li>
