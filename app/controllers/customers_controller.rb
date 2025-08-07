@@ -4,7 +4,8 @@ class CustomersController < ApplicationController
   before_action :set_customer, only: [:show, :edit, :update, :destroy]
   
   def index
-    @customers = Customer.includes(:user, :delivery_person)
+    # Optimize queries with proper includes to prevent N+1 queries
+    @customers = Customer.includes(:user, :delivery_person, :delivery_assignments, :invoices)
     
     # Filter by delivery person if selected
     if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all'
@@ -19,6 +20,9 @@ class CustomersController < ApplicationController
     
     @customers = @customers.order(:name)
     @total_customers = @customers.count
+    
+    # Add pagination - 50 customers per page
+    @customers = @customers.page(params[:page]).per(50)
     
     # Get all delivery people for the dropdown
     @delivery_people = User.delivery_people.order(:name)

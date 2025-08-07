@@ -5,7 +5,8 @@ class InvoicesController < ApplicationController
   skip_before_action :require_login, only: [:public_view, :public_download_pdf]
   
   def index
-    @invoices = Invoice.includes(:customer)
+    # Optimize queries with proper includes to prevent N+1 queries
+    @invoices = Invoice.includes(:customer, :invoice_items, :delivery_assignments)
     
     # Apply filters
     @invoices = @invoices.by_customer(params[:customer_id]) if params[:customer_id].present?
@@ -28,6 +29,10 @@ class InvoicesController < ApplicationController
     
     # Get invoice statistics
     @stats = Invoice.invoice_stats
+    
+    # Add pagination - 50 invoices per page
+    @total_invoices = @invoices.count
+    @invoices = @invoices.page(params[:page]).per(50)
     
     respond_to do |format|
       format.html
