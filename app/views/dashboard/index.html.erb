@@ -182,44 +182,6 @@
           </div>
         </div>
 
-        <!-- Monthly Comparison -->
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <div class="comparison-card">
-              <h6 class="mb-3">
-                <i class="fas fa-calendar-alt me-2"></i>This Month's Performance
-              </h6>
-              <div class="comparison-stats">
-                                 <div class="comparison-item">
-                   <span class="label">Total Deliveries:</span>
-                   <span class="value" data-monthly="deliveries-count"><%= @total_delivered_monthly[:count] %></span>
-                 </div>
-                 <div class="comparison-item">
-                   <span class="label">Total Revenue:</span>
-                   <span class="value" data-monthly="total-amount">₹<%= number_with_delimiter(@total_delivered_monthly[:total_amount].round(2)) %></span>
-                 </div>
-                 <div class="comparison-item">
-                   <span class="label">Total Liters:</span>
-                   <span class="value" data-monthly="total-liters"><%= @total_delivered_monthly[:total_liters] %> L</span>
-                 </div>
-                 <div class="comparison-item">
-                   <span class="label">Milk Products:</span>
-                   <span class="value" data-monthly="milk-products"><%= @total_delivered_monthly[:milk_products_count] %></span>
-                 </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-md-6">
-            <div class="comparison-card">
-              <h6 class="mb-3">
-                <i class="fas fa-chart-bar me-2"></i>Weekly Delivery Trend
-              </h6>
-              <canvas id="weeklyDeliveryChart" height="200"></canvas>
-            </div>
-          </div>
-        </div>
-
         <!-- Top Delivered Products -->
         <div class="row">
           <div class="col-12">
