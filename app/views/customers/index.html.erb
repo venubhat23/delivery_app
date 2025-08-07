@@ -261,6 +261,11 @@
         </table>
       </div>
       
+      <!-- Pagination -->
+      <div class="d-flex justify-content-center mt-4">
+        <%= paginate @customers, theme: 'twitter-bootstrap-4' %>
+      </div>
+      
       <!-- Card View (Hidden by default) -->
       <div id="cardViewContent" class="d-none">
         <div class="row p-4">
@@ -365,6 +370,11 @@
               </div>
             </div>
           <% end %>
+        </div>
+        
+        <!-- Pagination for Card View -->
+        <div class="d-flex justify-content-center mt-4">
+          <%= paginate @customers, theme: 'twitter-bootstrap-4' %>
         </div>
       </div>
     <% else %>

@@ -122,6 +122,7 @@
             <tr>
               <th>Name</th>
               <th>Image</th>
+              <th>URL</th>
               <th>Start Date</th>
               <th>End Date</th>
               <th>Duration</th>
@@ -150,6 +151,19 @@
                     <span class="text-muted">
                       <i class="fas fa-image fa-2x"></i>
                       <br><small>No Image</small>
+                    </span>
+                  <% end %>
+                </td>
+                <td class="text-center">
+                  <% if advertisement.url.present? %>
+                    <a href="<%= advertisement.url %>" target="_blank" class="btn btn-sm btn-outline-primary" title="Visit URL">
+                      <i class="fas fa-external-link-alt"></i>
+                    </a>
+                    <br><small class="text-muted"><%= truncate(advertisement.url, length: 30) %></small>
+                  <% else %>
+                    <span class="text-muted">
+                      <i class="fas fa-link"></i>
+                      <br><small>No URL</small>
                     </span>
                   <% end %>
                 </td>
@@ -196,6 +210,11 @@
             <% end %>
           </tbody>
         </table>
+      </div>
+      
+      <!-- Pagination -->
+      <div class="d-flex justify-content-center mt-4">
+        <%= paginate @advertisements, theme: 'twitter-bootstrap-4' %>
       </div>
     <% else %>
       <div class="text-center py-5">

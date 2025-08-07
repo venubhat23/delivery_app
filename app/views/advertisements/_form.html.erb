@@ -107,6 +107,15 @@
         <small class="form-text text-muted">Active ads will be displayed, inactive ads will be hidden</small>
       </div>
     </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :url, class: "form-label fw-bold" do %>
+          <i class="fas fa-link me-1"></i>Advertisement URL
+        <% end %>
+        <%= form.url_field :url, class: "form-control", placeholder: "https://example.com" %>
+        <small class="form-text text-muted">Optional: Link to redirect when advertisement is clicked</small>
+      </div>
+    </div>
   </div>
 
   <div class="actions">

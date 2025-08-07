@@ -7,6 +7,9 @@ class AdvertisementsController < ApplicationController
     @advertisements = @advertisements.where(status: params[:status]) if params[:status].present?
     @total_advertisements = @advertisements.count
     
+    # Add pagination - 50 advertisements per page
+    @advertisements = @advertisements.page(params[:page]).per(50)
+    
     # Filter by status for stats
     @active_count = Advertisement.by_user(current_user).active.count
     @inactive_count = Advertisement.by_user(current_user).inactive.count
@@ -54,6 +57,6 @@ class AdvertisementsController < ApplicationController
   end
 
   def advertisement_params
-    params.require(:advertisement).permit(:name, :image_url, :start_date, :end_date, :status)
+    params.require(:advertisement).permit(:name, :image_url, :start_date, :end_date, :status, :url)
   end
 end

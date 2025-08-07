@@ -4,11 +4,27 @@ class DeliveryAssignmentsController < ApplicationController
 
   def index
     # Date filtering - default to today, but allow viewing other dates
-    filter_date = params[:date].present? ? Date.parse(params[:date]) : Date.today
+    # Fix date filter to show exact date matches only
+    if params[:date].present?
+      begin
+        filter_date = Date.parse(params[:date])
+      rescue ArgumentError
+        filter_date = Date.today
+      end
+    else
+      filter_date = Date.today
+    end
     
-    @delivery_assignments = DeliveryAssignment.includes(:user, :delivery_person, :product, :customer)
-                                             .where(scheduled_date: filter_date)
-                                             .order(created_at: :desc)
+    # Optimize queries with proper includes to prevent N+1 queries
+    @delivery_assignments = DeliveryAssignment.includes(
+      :user, 
+      :delivery_person, 
+      :product, 
+      :customer, 
+      :delivery_schedule,
+      :invoice
+    ).where(scheduled_date: filter_date)
+     .order(created_at: :desc)
     
     # Filter by status if provided
     if params[:status].present?
@@ -17,7 +33,7 @@ class DeliveryAssignmentsController < ApplicationController
     
     # Filter by delivery person if provided
     if params[:delivery_person_id].present?
-      @delivery_assignments = DeliveryAssignment.joins(:delivery_person)
+      @delivery_assignments = @delivery_assignments.joins(:delivery_person)
                                             .where(delivery_person: { id: params[:delivery_person_id] })
     end
 
@@ -25,6 +41,10 @@ class DeliveryAssignmentsController < ApplicationController
     if params[:search].present?
       @delivery_assignments = @delivery_assignments.search_by_customer(params[:search])
     end
+
+    # Add pagination - 50 assignments per page
+    @total_assignments = @delivery_assignments.count
+    @delivery_assignments = @delivery_assignments.page(params[:page]).per(50)
 
     @delivery_people = User.delivery_people.all
     @statuses = DeliveryAssignment.distinct.pluck(:status).compact
