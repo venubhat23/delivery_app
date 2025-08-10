@@ -95,13 +95,21 @@
           function initCustomerLiveSearch() {
             const input = document.getElementById('customer-live-search');
             const submit = document.getElementById('customer-search-submit');
-            if (!input || !submit) return;
+            if (!input) return;
 
             let debounceTimer = null;
             input.addEventListener('input', function() {
               if (debounceTimer) clearTimeout(debounceTimer);
               debounceTimer = setTimeout(function() {
-                submit.click();
+                if (input.form) {
+                  if (typeof input.form.requestSubmit === 'function') {
+                    input.form.requestSubmit();
+                  } else {
+                    input.form.submit();
+                  }
+                } else {
+                  submit.click();
+                }
               }, 400);
             });
 
@@ -117,7 +125,15 @@
             const submit = document.getElementById('customer-search-submit');
             if (!select || !submit) return;
             select.addEventListener('change', function() {
-              submit.click();
+              if (select.form) {
+                if (typeof select.form.requestSubmit === 'function') {
+                  select.form.requestSubmit();
+                } else {
+                  select.form.submit();
+                }
+              } else {
+                submit.click();
+              }
             });
           }
 

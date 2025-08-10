@@ -46,10 +46,11 @@ class Customer < ApplicationRecord
   scope :with_coordinates, -> { where.not(latitude: nil, longitude: nil) }
   scope :without_coordinates, -> { where(latitude: nil, longitude: nil) }
   scope :search, ->(term) {
-    where(
-      "name ILIKE :q OR address ILIKE :q OR phone_number ILIKE :q OR alt_phone_number ILIKE :q OR email ILIKE :q OR member_id ILIKE :q",
-      q: "%#{term}%"
-    )
+    left_joins(:delivery_person)
+      .where(
+        "customers.name ILIKE :q OR customers.address ILIKE :q OR customers.phone_number ILIKE :q OR customers.alt_phone_number ILIKE :q OR customers.email ILIKE :q OR customers.member_id ILIKE :q OR delivery_people.name ILIKE :q",
+        q: "%#{term}%"
+      )
   }
   scope :by_user, ->(user) { where(user: user) }
   scope :by_delivery_person, ->(dp) { where(delivery_person: dp) }
