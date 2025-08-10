@@ -45,7 +45,12 @@ class Customer < ApplicationRecord
   scope :unassigned, -> { where(delivery_person_id: nil) }
   scope :with_coordinates, -> { where.not(latitude: nil, longitude: nil) }
   scope :without_coordinates, -> { where(latitude: nil, longitude: nil) }
-  scope :search, ->(term) { where("name ILIKE ? OR address ILIKE ?", "%#{term}%", "%#{term}%") }
+  scope :search, ->(term) {
+    where(
+      "name ILIKE :q OR address ILIKE :q OR phone_number ILIKE :q OR email ILIKE :q OR member_id ILIKE :q",
+      q: "%#{term}%"
+    )
+  }
   scope :by_user, ->(user) { where(user: user) }
   scope :by_delivery_person, ->(dp) { where(delivery_person: dp) }
   scope :recent, -> { order(created_at: :desc) }
