@@ -250,10 +250,15 @@ end
     query = params[:q].to_s.strip
     
     if query.present? && query.length >= 1
-      # Get customers starting with the query
-      customers = Customer.where("name ILIKE ?", "#{query}%")
-                         .limit(10)
-                         .order(:name)
+      # Get customers matching name or phone/alt_phone starting with/containing digits
+      # Prioritize starts-with for names, allow contains for numbers
+      customers = Customer.where(
+                    "name ILIKE :name_q OR phone_number ILIKE :num_q OR alt_phone_number ILIKE :num_q",
+                    name_q: "#{query}%",
+                    num_q: "%#{query}%"
+                  )
+                  .limit(10)
+                  .order(:name)
       
       # Get invoices matching the query
       invoices = Invoice.includes(:customer)
@@ -263,18 +268,16 @@ end
       
       suggestions = []
       
-      # Add customer suggestions
       customers.each do |customer|
         suggestions << {
           type: 'customer',
           label: customer.name,
           value: customer.name,
-          phone: customer.phone_number,
+          phone: customer.phone_number.presence || customer.alt_phone_number,
           id: customer.id
         }
       end
       
-      # Add invoice suggestions
       invoices.each do |invoice|
         suggestions << {
           type: 'invoice',
@@ -399,178 +402,30 @@ end
     end
   end
   
-    private
-  
-  def generate_pdf_response
-    begin
-      Rails.logger.info "Starting PDF generation for invoice #{@invoice.id}"
-      
-      render pdf: "invoice_#{@invoice.formatted_number || @invoice.id}",
-             template: 'invoices/show',
-             layout: false,
-             page_size: 'A4',
-             margin: { top: 5, bottom: 5, left: 5, right: 5 },
-             encoding: 'UTF-8',
-             disposition: 'attachment'
-             
-      Rails.logger.info "PDF generation completed successfully for invoice #{@invoice.id}"
-    rescue => e
-      Rails.logger.error "PDF generation failed for invoice #{@invoice.id}: #{e.message}"
-      Rails.logger.error "Error class: #{e.class}"
-      Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
-      
-      # Fallback to HTML with print-friendly styling
-      flash[:alert] = "PDF generation temporarily unavailable. Showing print-friendly version."
-      render template: 'invoices/show_print', layout: false, content_type: 'text/html'
-    end
-  end
-   
-   def set_invoice
+  private
+
+  def set_invoice
     @invoice = Invoice.find(params[:id])
   end
-  
-  def build_whatsapp_message(invoice, public_url)
-    company_name = "Atma Nirbhar Farm" # You can make this configurable
-    
-    message = <<~MSG
-      Hi! 👋
 
-      Your invoice has been generated:
-      📄 Invoice ##{invoice.formatted_number}
-      💰 Amount: ₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}
-      📅 Date: #{invoice.invoice_date.strftime('%d %B %Y')}
-
-      Download your invoice PDF:
-#{public_url}
-
-      Thank you for your business! 🙏
-      - #{company_name}
-    MSG
-    
-    message.strip
-  end
-  
-  def set_customers
-    @customers = Customer.includes(:user).order(:name)
-  end
-  
   def invoice_params
-    params.require(:invoice).permit(
-      :customer_id, :invoice_date, :due_date, :status, :notes,
-      invoice_items_attributes: [:id, :product_id, :quantity, :unit_price, :_destroy]
-    )
+    params.require(:invoice).permit(:customer_id, :status, :invoice_date, :due_date, :invoice_number, :notes)
   end
 
-  # NEW: Send WhatsApp invoice notification
-  def send_whatsapp_invoice(invoice)
-    # return unless invoice&.customer&.phone_number.present?
-    
-    whatsapp_service = WhatsappService.new
-    
-    # Create personalized message
-    message = create_invoice_message(invoice)
-    
-    # PDF URL (using the dummy PDF you provided)
-    pdf_url = "https://conasems-ava-prod.s3.sa-east-1.amazonaws.com/aulas/ava/dummy-1641923583.pdf"
-    # Send WhatsApp message with PDF
-    whatsapp_service.send_pdf(invoice.customer.phone_number,pdf_url,message)
-    
-    Rails.logger.info "WhatsApp invoice sent to #{invoice.customer.name} (#{invoice.customer.phone_number})"
-  end
-  
-  # NEW: Create personalized invoice message
-  def create_invoice_message(invoice)
-    month_year = invoice.invoice_date.strftime("%B %Y")
-    formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}"
-    
-    message = <<~MSG
-      Hello #{invoice.customer.name}! 👋
-      
-      Your #{month_year} invoice is ready! 📋
-      
-      📄 Invoice #: #{invoice.formatted_number}
-      💰 Total Amount: #{formatted_amount}
-      📅 Due Date: #{invoice.due_date.strftime('%d %B %Y')}
-      
-      Please find your detailed invoice attached as PDF. 
-      
-      Thank you for your continued business! 🙏
-      
-      For any queries, please contact us.
-    MSG
-    
-    message.strip
-
+  def set_customers
+    @customers = Customer.order(:name)
   end
 
-
-  def render_pdf
-    # Option 1: Using WickedPDF (most common)
-    if defined?(WickedPdf)
-      render pdf: "invoice_#{@invoice.id}",
-             template: 'invoices/show.html.erb',
-             layout: false,
-             page_size: 'A4',
-             margin: { top: 5, bottom: 5, left: 5, right: 5 },
-             encoding: 'UTF-8',
-             show_as_html: params[:debug].present?,
-             footer: {
-               right: 'Page [page] of [topage]',
-               font_size: 8
-             }
-    
-    # Option 2: Using Prawn (if you prefer pure Ruby PDF generation)
-    elsif defined?(Prawn)
-      pdf_content = generate_pdf_with_prawn
-      send_data pdf_content, 
-                filename: "invoice_#{@invoice.id}.pdf", 
-                type: 'application/pdf', 
-                disposition: 'attachment'
-    
-    # Option 3: Using Grover (Chrome headless)
-    elsif defined?(Grover)
-      html_content = render_to_string(template: 'invoices/show.html.erb', layout: false)
-      pdf_content = Grover.new(html_content, format: 'A4', margin: '0.5in').to_pdf
-      send_data pdf_content, 
-                filename: "invoice_#{@invoice.id}.pdf", 
-                type: 'application/pdf', 
-                disposition: 'attachment'
-    
-    # Fallback: Render as HTML if no PDF gem is available
-    else
-      render template: 'invoices/show.html.erb', layout: false
-    end
+  def build_whatsapp_message(invoice, public_url)
+    "Hello #{invoice.customer.name}, your invoice #{invoice.formatted_number} for ₹#{invoice.total_amount} is ready. View/download: #{public_url}"
   end
-  
-  def generate_pdf_with_prawn
-    Prawn::Document.new do |pdf|
-      # Add your Prawn PDF generation logic here
-      pdf.text "Invoice ##{@invoice.id}", size: 20, style: :bold
-      pdf.move_down 20
-      
-      pdf.text "Customer: #{@invoice.customer.name}"
-      pdf.text "Date: #{@invoice.invoice_date.strftime('%d/%m/%Y')}"
-      pdf.text "Due Date: #{@invoice.due_date.strftime('%d/%m/%Y')}"
-      pdf.move_down 20
-      
-      # Add invoice items table
-      table_data = [['Product', 'Quantity', 'Rate', 'Amount']]
-      @invoice_items.each do |item|
-        table_data << [
-          item.product&.name || 'Product',
-          item.quantity.to_s,
-          "₹#{item.unit_price}",
-          "₹#{item.total_price || (item.quantity * item.unit_price)}"
-        ]
-      end
-      
-      pdf.table(table_data, header: true, width: pdf.bounds.width) do
-        row(0).font_style = :bold
-        columns(1..3).align = :right
-      end
-      
-      pdf.move_down 20
-      pdf.text "Total: ₹#{@invoice.total_amount}", size: 14, style: :bold, align: :right
-    end.render
+
+  def generate_pdf_response
+    render pdf: "invoice_#{@invoice.id}",
+           template: 'invoices/show',
+           layout: false,
+           page_size: 'A4',
+           margin: { top: 5, bottom: 5, left: 5, right: 5 },
+           encoding: 'UTF-8'
   end
 end
