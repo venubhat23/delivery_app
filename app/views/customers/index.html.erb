@@ -74,7 +74,6 @@
                 class: "form-control",
                 style: "min-width: 350px;",
                 id: "customer-live-search" %>
-            <button type="button" id="customer-search-btn" class="btn btn-outline-secondary"><i class="fas fa-search"></i></button>
           </div>
           <div class="me-3">
             <label for="delivery_person_filter" class="form-label me-2 mb-0" style="white-space: nowrap;">
@@ -93,22 +92,28 @@
           <%= form.submit "Search & Filter", class: "btn btn-outline-primary d-none", id: "customer-search-submit" %>
         <% end %>
         <script>
-          document.addEventListener('DOMContentLoaded', function() {
+          function initCustomerLiveSearch() {
             const input = document.getElementById('customer-live-search');
-            const btn = document.getElementById('customer-search-btn');
             const submit = document.getElementById('customer-search-submit');
-            if (btn && input && submit) {
-              btn.addEventListener('click', function() {
+            if (!input || !submit) return;
+
+            let debounceTimer = null;
+            input.addEventListener('input', function() {
+              if (debounceTimer) clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(function() {
                 submit.click();
-              });
-              input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  submit.click();
-                }
-              });
-            }
-          });
+              }, 400);
+            });
+
+            input.addEventListener('keydown', function(e) {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+              }
+            });
+          }
+
+          document.addEventListener('turbo:load', initCustomerLiveSearch);
+          document.addEventListener('DOMContentLoaded', initCustomerLiveSearch);
         </script>
       </div>
       <div class="col-md-4 text-end">
