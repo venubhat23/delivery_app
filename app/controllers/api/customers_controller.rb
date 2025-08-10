@@ -4,8 +4,14 @@ class Api::CustomersController < Api::BaseController
     page = params[:page]&.to_i || 1
     
     options = {
-      search_fields: [:name, :phone_number, :email],
-      display_method: ->(customer) { "#{customer.name} - #{customer.phone_number}" },
+      search_fields: [:name, :phone_number, :email, :member_id],
+      display_method: ->(customer) {
+        parts = []
+        parts << customer.name if customer.name.present?
+        parts << customer.phone_number if customer.phone_number.present?
+        parts << "ID: #{customer.member_id}" if customer.member_id.present?
+        parts.join(" · ")
+      },
       scope: :active,
       per_page: 20
     }

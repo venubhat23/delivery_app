@@ -15,8 +15,18 @@ class CustomersController < ApplicationController
       @selected_delivery_person_id = 'all'
     end
     
-    # Search by customer name
-    @customers = @customers.search(params[:search]) if params[:search].present?
+    # Search by term across multiple fields
+    if params[:search].present?
+      term = params[:search].strip
+      # If exact member_id match exists, redirect to that customer
+      exact_customer = Customer.find_by(member_id: term)
+      exact_customer ||= Customer.find_by(phone_number: term)
+      exact_customer ||= Customer.find_by(email: term)
+      if exact_customer
+        redirect_to exact_customer and return
+      end
+      @customers = @customers.search(term)
+    end
     
     @customers = @customers.order(:name)
     @total_customers = @customers.count

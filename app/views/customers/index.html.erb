@@ -69,10 +69,10 @@
         <%= form_with url: customers_path, method: :get, local: true, class: "d-flex align-items-center" do |form| %>
           <div class="me-3">
             <%= form.text_field :search, 
-                placeholder: "Search customers by name...", 
+                placeholder: "Search by name, phone, email, or member ID (e.g., 96328)...", 
                 value: params[:search],
                 class: "form-control",
-                style: "min-width: 250px;" %>
+                style: "min-width: 350px;" %>
           </div>
           <div class="me-3">
             <label for="delivery_person_filter" class="form-label me-2 mb-0" style="white-space: nowrap;">
@@ -168,6 +168,13 @@
                       <% if customer.phone_number.present? %>
                         <div class="text-muted small">
                           <i class="fas fa-phone me-1"></i><%= customer.phone_number %>
+                        </div>
+                      <% end %>
+                      <% if customer.member_id.present? %>
+                        <div class="small mt-1">
+                          <%= link_to customer_path(customer), class: "text-decoration-none" do %>
+                            <code class="text-muted">ID: <%= customer.member_id %></code>
+                          <% end %>
                         </div>
                       <% end %>
                     </div>
