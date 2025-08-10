@@ -1,58 +1,62 @@
 class Api::CustomersController < Api::BaseController
   def search
-    search_term = params[:q]
+    search_term = params[:q].to_s.strip
     page = params[:page]&.to_i || 1
     
-    options = {
-      search_fields: [:name, :phone_number, :email, :member_id],
-      display_method: ->(customer) {
-        parts = []
-        parts << customer.name if customer.name.present?
-        parts << customer.phone_number if customer.phone_number.present?
-        parts << "ID: #{customer.member_id}" if customer.member_id.present?
-        parts.join(" · ")
-      },
-      scope: :active,
-      per_page: 20
-    }
-    
-    results = if page > 1
-      paginated_search_results(Customer, search_term, page, options)
-    else
-      {
-        results: search_results(Customer, search_term, options),
-        pagination: { more: false }
-      }
+    # Basic paginated JSON for Select2 or similar
+    scope = Customer.active.order(:name)
+    if search_term.present?
+      like = "%#{search_term}%"
+      scope = scope.where(
+        "name ILIKE :q OR phone_number ILIKE :q OR alt_phone_number ILIKE :q OR email ILIKE :q OR member_id ILIKE :q",
+        q: like
+      )
     end
-    
-    render json: results
+
+    customers = scope.page(page).per(20)
+
+    render json: {
+      results: customers.map { |customer|
+        {
+          id: customer.id,
+          text: [customer.name, customer.phone_number.presence || customer.alt_phone_number, (customer.member_id.present? ? "ID: #{customer.member_id}" : nil)].compact.join(" · "),
+          name: customer.name,
+          phone: customer.phone_number.presence || customer.alt_phone_number,
+          member_id: customer.member_id
+        }
+      },
+      pagination: { more: customers.next_page.present? }
+    }
   end
 
   def index
-    page = params[:page] || 1
+    page = params[:page].presence || 1
     per_page = 20
     
-    @customers = Customer.all
+    customers = Customer.order(:name)
     
     if params[:q].present?
-      @customers = @customers.where("name ILIKE ? OR phone ILIKE ?", 
-                                   "%#{params[:q]}%", "%#{params[:q]}%")
+      like = "%#{params[:q]}%"
+      customers = customers.where(
+        "name ILIKE :q OR phone_number ILIKE :q OR alt_phone_number ILIKE :q",
+        q: like
+      )
     end
     
-    @customers = @customers.page(page).per(per_page).order(:name)
+    customers = customers.page(page).per(per_page)
     
     render json: {
-      results: @customers.map do |customer|
+      results: customers.map do |customer|
         {
           id: customer.id,
-          text: "#{customer.name} - #{customer.phone}",
+          text: "#{customer.name} - #{customer.phone_number.presence || customer.alt_phone_number}",
           name: customer.name,
-          phone: customer.phone,
+          phone: customer.phone_number.presence || customer.alt_phone_number,
           address: customer.address
         }
       end,
       pagination: {
-        more: @customers.next_page.present?
+        more: customers.next_page.present?
       }
     }
   end

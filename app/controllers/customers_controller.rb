@@ -21,6 +21,7 @@ class CustomersController < ApplicationController
       # If exact member_id match exists, redirect to that customer
       exact_customer = Customer.find_by(member_id: term)
       exact_customer ||= Customer.find_by(phone_number: term)
+      exact_customer ||= Customer.find_by(alt_phone_number: term)
       exact_customer ||= Customer.find_by(email: term)
       if exact_customer
         redirect_to exact_customer and return

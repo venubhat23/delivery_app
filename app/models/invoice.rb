@@ -39,8 +39,8 @@ class Invoice < ApplicationRecord
   scope :search_by_number_or_customer, ->(query) {
     return all if query.blank?
     joins(:customer).where(
-      "invoices.invoice_number ILIKE ? OR customers.name ILIKE ? OR customers.phone_number ILIKE ?", 
-      "%#{query}%", "%#{query}%", "%#{query}%"
+      "invoices.invoice_number ILIKE :q OR customers.name ILIKE :q OR customers.phone_number ILIKE :q OR customers.alt_phone_number ILIKE :q",
+      q: "%#{query}%"
     )
   }
   
@@ -128,7 +128,7 @@ class Invoice < ApplicationRecord
   end
   
   # Class methods
-def self.generate_invoice_number(type = 'manual')
+ def self.generate_invoice_number(type = 'manual')
     prefix = case type
              when 'profit_invoice'
                'PROF'
@@ -259,7 +259,7 @@ def self.generate_invoice_number(type = 'manual')
     results
   end
 
- def generate_invoice_number
+  def generate_invoice_number
     self.invoice_number = self.class.generate_invoice_number(invoice_type)
   end
   
@@ -298,54 +298,25 @@ def self.generate_invoice_number(type = 'manual')
       product = Product.find(product_id)
       total_quantity = product_assignments.sum(&:quantity)
       unit_price = product.price
-      total_price = (total_quantity && unit_price) ? total_quantity * unit_price : 0
 
-      invoice.invoice_items.build(
+      item = invoice.invoice_items.build(
         product: product,
         quantity: total_quantity,
         unit_price: unit_price,
-        total_price: total_price
+        total_price: total_quantity * (unit_price || 0)
       )
-
-      total_amount += total_price
+      total_amount += item.total_price
     end
 
-    # Set required fields
-    invoice.total_amount = invoice.invoice_items.sum(&:total_price)
+    invoice.total_amount = total_amount
 
-    invoice.invoice_number = generate_invoice_number  # You’ll need to define this method
     if invoice.save
-      invoice.update!(total_amount: total_amount)
-
-      assignments.update_all(invoice_generated: true, invoice_id: invoice.id)
+      assignments.each do |assignment|
+        assignment.update(invoice_generated: true, invoice_id: invoice.id)
+      end
       invoice
     else
-      Rails.logger.error "Failed to create invoice for customer #{customer.id}: #{invoice.errors.full_messages}"
       nil
     end
-  end
-
-  
-  private
-  
-  def generate_invoice_number
-    self.invoice_number = self.class.generate_invoice_number
-  end
-  
-  def calculate_total_amount
-    # Calculate base amount (excluding tax)
-    taxable_amount = invoice_items.sum { |item| item.quantity * (item.unit_price || 0) }
-    
-    # Calculate total tax
-    total_tax = invoice_items.sum do |item|
-      base_amount = item.quantity * (item.unit_price || 0)
-      item.product&.total_tax_amount_for(base_amount) || 0
-    end
-    
-    self.total_amount = taxable_amount + total_tax
-  end
-  
-  def mark_delivery_assignments_as_invoiced
-    delivery_assignments.update_all(invoice_generated: true, invoice_id: id)
   end
 end

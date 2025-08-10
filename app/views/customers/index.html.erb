@@ -67,12 +67,14 @@
     <div class="row align-items-center">
       <div class="col-md-8">
         <%= form_with url: customers_path, method: :get, local: true, class: "d-flex align-items-center" do |form| %>
-          <div class="me-3">
+          <div class="me-3 position-relative" style="display:flex;align-items:center;gap:8px;">
             <%= form.text_field :search, 
-                placeholder: "Search by name, phone, email, or member ID (e.g., 96328)...", 
+                placeholder: "Search by name, phone, email, or member ID (e.g., 9632)...", 
                 value: params[:search],
                 class: "form-control",
-                style: "min-width: 350px;" %>
+                style: "min-width: 350px;",
+                id: "customer-live-search" %>
+            <button type="button" id="customer-search-btn" class="btn btn-outline-secondary"><i class="fas fa-search"></i></button>
           </div>
           <div class="me-3">
             <label for="delivery_person_filter" class="form-label me-2 mb-0" style="white-space: nowrap;">
@@ -88,8 +90,26 @@
                     id: "delivery_person_filter"
                   } %>
           </div>
-          <%= form.submit "Search & Filter", class: "btn btn-outline-primary" %>
+          <%= form.submit "Search & Filter", class: "btn btn-outline-primary d-none", id: "customer-search-submit" %>
         <% end %>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('customer-live-search');
+            const btn = document.getElementById('customer-search-btn');
+            const submit = document.getElementById('customer-search-submit');
+            if (btn && input && submit) {
+              btn.addEventListener('click', function() {
+                submit.click();
+              });
+              input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  submit.click();
+                }
+              });
+            }
+          });
+        </script>
       </div>
       <div class="col-md-4 text-end">
         <div class="d-flex align-items-center justify-content-end">

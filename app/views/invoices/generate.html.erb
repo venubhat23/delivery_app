@@ -253,25 +253,19 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentCustomerSearchTerm = '';
   
   if (customerSearchInput) {
-    // Handle input changes
-    customerSearchInput.addEventListener('input', function() {
-      const query = this.value.trim();
-      currentCustomerSearchTerm = query;
-      
-      clearTimeout(customerSearchTimeout);
-      
-      if (query.length === 0) {
-        hideCustomerSuggestions();
-        clearSelectedCustomer();
-        return;
-      }
-      
-      if (query.length >= 1) {
+    // Trigger customer search on Enter key
+    customerSearchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = this.value.trim();
+        currentCustomerSearchTerm = query;
+        if (query.length === 0) {
+          hideCustomerSuggestions();
+          clearSelectedCustomer();
+          return;
+        }
         showCustomerLoading();
-        
-        customerSearchTimeout = setTimeout(() => {
-          fetchCustomerSuggestions(query);
-        }, 300);
+        fetchCustomerSuggestions(query);
       }
     });
     
@@ -363,11 +357,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const html = suggestions.map(suggestion => {
       const highlightedName = highlightSearchTerm(suggestion.label, currentCustomerSearchTerm);
+      const phone = suggestion.phone || '';
       
       return `
-        <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${suggestion.phone || ''}">
+        <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${phone}">
           <div class="customer-suggestion-name">${highlightedName}</div>
-          ${suggestion.phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${suggestion.phone}</div>` : ''}
+          ${phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${phone}</div>` : ''}
         </div>
       `;
     }).join('');

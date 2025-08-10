@@ -1228,30 +1228,46 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentSearchTerm = '';
   
   if (searchInput) {
-    // Handle input changes
-    searchInput.addEventListener('input', function() {
-      const query = this.value.trim();
-      currentSearchTerm = query;
-      
-      clearTimeout(searchTimeout);
-      
-      if (query.length === 0) {
-        hideSuggestions();
-        clearLiveSearch();
-        return;
-      }
-      
-      if (query.length >= 1) {
+    // Trigger on Enter key
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = this.value.trim();
+        currentSearchTerm = query;
+        if (query.length === 0) {
+          hideSuggestions();
+          clearLiveSearch();
+          return;
+        }
         showLoading();
-        
-        searchTimeout = setTimeout(() => {
-          fetchSuggestions(query);
-          performLiveSearch(query);
-        }, 300);
+        fetchSuggestions(query);
+        performLiveSearch(query);
+        // Submit the filter form so server-side results update and URL reflects search
+        this.closest('form').submit();
       }
     });
-    
-    // Handle focus
+
+    // Click on search icon triggers search
+    const icon = document.querySelector('.search-icon');
+    if (icon) {
+      icon.style.cursor = 'pointer';
+      icon.addEventListener('click', function() {
+        const query = searchInput.value.trim();
+        currentSearchTerm = query;
+        if (query.length === 0) {
+          hideSuggestions();
+          clearLiveSearch();
+          return;
+        }
+        showLoading();
+        fetchSuggestions(query);
+        performLiveSearch(query);
+        // Submit the filter form so server-side results update and URL reflects search
+        searchInput.closest('form').submit();
+      });
+    }
+
+    // Optional: fetch suggestions on focus without searching rows
     searchInput.addEventListener('focus', function() {
       const query = this.value.trim();
       if (query.length >= 1) {
@@ -1416,10 +1432,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const customerName = row.querySelector('.customer-info strong')?.textContent?.toLowerCase() || '';
       const customerPhone = row.querySelector('.customer-info .text-muted')?.textContent?.toLowerCase() || '';
       
+      const digitsOnly = (s) => s.replace(/\D/g, '');
       const searchTerm = query.toLowerCase();
+      const searchDigits = digitsOnly(searchTerm);
+      
       const matches = invoiceNumber.includes(searchTerm) || 
                      customerName.includes(searchTerm) || 
-                     customerPhone.includes(searchTerm);
+                     customerPhone.includes(searchTerm) ||
+                     (searchDigits.length >= 3 && digitsOnly(customerPhone).includes(searchDigits));
       
       if (matches) {
         row.classList.add('search-match');
