@@ -43,6 +43,9 @@ class CustomersController < ApplicationController
   
   def new
     @customer = Customer.new
+    # Load dropdown data for optional delivery setup
+    @delivery_people = User.delivery_people.order(:name)
+    @products = Product.order(:name)
   end
   
   def create
@@ -57,9 +60,16 @@ class CustomersController < ApplicationController
     
     respond_to do |format|
       if @customer.save
+        # Optionally create initial delivery schedule + assignments
+        maybe_create_initial_delivery_setup(@customer)
+        
         format.html { redirect_to @customer, notice: 'Customer was successfully created.' }
         format.json { render json: { success: true, customer: @customer, message: 'Customer created successfully' } }
       else
+        # Reload dropdown data on failure
+        @delivery_people = User.delivery_people.order(:name)
+        @products = Product.order(:name)
+        
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: { success: false, errors: @customer.errors.full_messages, message: 'Failed to create customer' } }
       end
@@ -67,6 +77,9 @@ class CustomersController < ApplicationController
   end
   
   def edit
+    # Load dropdown data for optional delivery setup used in shared form
+    @delivery_people = User.delivery_people.order(:name)
+    @products = Product.order(:name)
   end
   
   def update
@@ -195,18 +208,13 @@ class CustomersController < ApplicationController
       require 'csv'
       csv = CSV.parse(csv_data.strip, headers: true, header_converters: :symbol)
       
-      required_headers = [:name, :phone_number, :address, :email, :gst_number, :pan_number, :delivery_person_id, :product_id, :quantity, :start_date, :end_date]
+      required_headers = [:name, :phone_number, :address, :email, :gst_number, :pan_number, :member_id, :latitude, :longitude]
       missing_headers = required_headers - csv.headers.compact.map(&:to_sym)
       
       if missing_headers.any?
         render json: { 
           valid: false, 
           message: "Missing required columns: #{missing_headers.join(', ')}" 
-        }
-      elsif csv.count > 50
-        render json: { 
-          valid: false, 
-          message: "Maximum 50 customers allowed per bulk import. Your file contains #{csv.count} rows." 
         }
       else
         render json: { 
@@ -249,5 +257,69 @@ class CustomersController < ApplicationController
       :user_id, :delivery_person_id, :image_url,
       :phone_number, :email, :gst_number, :pan_number, :member_id
     )
+  end
+
+  # Creates a delivery schedule and daily delivery assignments if optional fields are provided
+  def maybe_create_initial_delivery_setup(customer)
+    details = params[:delivery_details] || {}
+    return if details.blank?
+
+    begin
+      start_date = details[:start_date].presence && Date.parse(details[:start_date])
+      end_date   = details[:end_date].presence && Date.parse(details[:end_date])
+    rescue ArgumentError
+      start_date = nil
+      end_date = nil
+    end
+
+    product_id = details[:product_id].presence
+    quantity   = (details[:quantity].presence || 1).to_f
+    unit_param = details[:unit].presence
+
+    # Determine delivery person: prefer explicit selection in optional section, fallback to customer.assignment
+    delivery_person_id = (details[:delivery_person_id].presence || customer.delivery_person_id).to_i
+
+    # Ensure required fields exist
+    return if start_date.blank? || end_date.blank? || product_id.blank? || delivery_person_id.zero?
+
+    product = Product.find_by(id: product_id)
+    return if product.nil?
+
+    default_unit = unit_param || product.unit_type
+
+    schedule = DeliverySchedule.create(
+      customer_id: customer.id,
+      user_id: delivery_person_id,
+      product_id: product.id,
+      start_date: start_date,
+      end_date: end_date,
+      frequency: 'daily',
+      status: 'active',
+      default_quantity: quantity,
+      default_unit: default_unit
+    )
+
+    return unless schedule.persisted?
+
+    # Generate daily assignments for the date range
+    current_date = start_date
+    while current_date <= end_date
+      DeliveryAssignment.create(
+        customer_id: customer.id,
+        user_id: delivery_person_id,
+        product_id: product.id,
+        quantity: quantity,
+        unit: default_unit,
+        scheduled_date: current_date,
+        status: 'pending',
+        delivery_schedule_id: schedule.id
+      )
+      current_date += 1.day
+    end
+
+    # Ensure the customer is assigned to the delivery person if not already
+    if customer.delivery_person_id.blank?
+      customer.update(delivery_person_id: delivery_person_id)
+    end
   end
 end
