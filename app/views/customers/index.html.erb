@@ -114,16 +114,31 @@
 
           function initDeliveryPersonFilter() {
             const select = document.getElementById('delivery_person_filter');
-            const submit = document.getElementById('customer-search-submit');
-            if (!select || !submit) return;
-            select.addEventListener('change', function() {
-              submit.click();
-            });
+            if (!select) return;
+            const form = select.closest('form');
+            if (!form) return;
+
+            // Remove any previous listener to avoid duplicate submissions after Turbo renders
+            const handlerKey = '__deliveryFilterHandler__';
+            const oldHandler = select[handlerKey];
+            if (oldHandler) select.removeEventListener('change', oldHandler);
+
+            const handleChange = function() {
+              if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+              } else {
+                form.submit();
+              }
+            };
+
+            select.addEventListener('change', handleChange);
+            select[handlerKey] = handleChange;
           }
 
           document.addEventListener('turbo:load', initCustomerLiveSearch);
           document.addEventListener('DOMContentLoaded', initCustomerLiveSearch);
           document.addEventListener('turbo:load', initDeliveryPersonFilter);
+          document.addEventListener('turbo:render', initDeliveryPersonFilter);
           document.addEventListener('DOMContentLoaded', initDeliveryPersonFilter);
         </script>
       </div>
