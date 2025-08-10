@@ -112,8 +112,19 @@
             });
           }
 
+          function initDeliveryPersonFilter() {
+            const select = document.getElementById('delivery_person_filter');
+            const submit = document.getElementById('customer-search-submit');
+            if (!select || !submit) return;
+            select.addEventListener('change', function() {
+              submit.click();
+            });
+          }
+
           document.addEventListener('turbo:load', initCustomerLiveSearch);
           document.addEventListener('DOMContentLoaded', initCustomerLiveSearch);
+          document.addEventListener('turbo:load', initDeliveryPersonFilter);
+          document.addEventListener('DOMContentLoaded', initDeliveryPersonFilter);
         </script>
       </div>
       <div class="col-md-4 text-end">
