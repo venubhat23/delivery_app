@@ -62,8 +62,11 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def create
+    # Check if we have multiple products
+    if params[:assignment_products].present?
+      create_multi_product_deliveries
     # Check if this is a scheduled delivery (date range)
-    if delivery_assignment_params[:start_date].present? && delivery_assignment_params[:end_date].present?
+    elsif delivery_assignment_params[:start_date].present? && delivery_assignment_params[:end_date].present?
       create_scheduled_deliveries
     else
       create_single_delivery
@@ -202,6 +205,120 @@ class DeliveryAssignmentsController < ApplicationController
     end
   end
 
+  def create_multi_product_deliveries
+    customer_id = delivery_assignment_params[:customer_id]
+    delivery_person_id = delivery_assignment_params[:delivery_person_id]
+    start_date = delivery_assignment_params[:start_date].present? ? Date.parse(delivery_assignment_params[:start_date]) : nil
+    end_date = delivery_assignment_params[:end_date].present? ? Date.parse(delivery_assignment_params[:end_date]) : nil
+    frequency = delivery_assignment_params[:frequency] || 'daily'
+    delivery_date = delivery_assignment_params[:delivery_date].present? ? Date.parse(delivery_assignment_params[:delivery_date]) : nil
+    
+    # Validate required fields
+    if customer_id.blank? || delivery_person_id.blank?
+      @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params)
+      @delivery_assignment.errors.add(:base, "Customer and delivery person are required.")
+      load_form_data
+      render :new
+      return
+    end
+    
+    # Check if it's scheduled (has date range) or single delivery
+    is_scheduled = start_date.present? && end_date.present?
+    is_single = delivery_date.present?
+    
+    if !is_scheduled && !is_single
+      @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params)
+      @delivery_assignment.errors.add(:base, "Please provide either a delivery date or date range.")
+      load_form_data
+      render :new
+      return
+    end
+    
+    products_data = params[:assignment_products] || {}
+    valid_products = products_data.select { |_, p| p[:product_id].present? && p[:quantity].present? }
+    
+    if valid_products.empty?
+      @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params)
+      @delivery_assignment.errors.add(:base, "Please add at least one product.")
+      load_form_data
+      render :new
+      return
+    end
+    
+    begin
+      schedules_created = 0
+      assignments_created = 0
+      
+      ActiveRecord::Base.transaction do
+        valid_products.each do |index, product_data|
+          product = Product.find(product_data[:product_id])
+          quantity = product_data[:quantity].to_f
+          unit = product_data[:unit].presence || product.unit_type
+          discount_amount = product_data[:discount_amount].to_f
+          
+          if is_scheduled
+            # Create delivery schedule for this product
+            delivery_schedule = DeliverySchedule.create!(
+              customer_id: customer_id,
+              user_id: delivery_person_id,
+              product_id: product.id,
+              start_date: start_date,
+              end_date: end_date,
+              frequency: frequency,
+              status: 'active',
+              default_quantity: quantity,
+              default_unit: unit,
+              default_discount_amount: discount_amount
+            )
+            
+            schedules_created += 1
+            
+            # Generate delivery assignments based on schedule
+            assignments_created += generate_delivery_assignments(delivery_schedule)
+          else
+            # Create single delivery assignment
+            assignment = DeliveryAssignment.create!(
+              customer_id: customer_id,
+              user_id: delivery_person_id,
+              product_id: product.id,
+              quantity: quantity,
+              unit: unit,
+              scheduled_date: delivery_date,
+              status: 'pending',
+              special_instructions: delivery_assignment_params[:special_instructions],
+              discount_amount: discount_amount
+            )
+            
+            # Calculate and save final amount
+            assignment.calculate_final_amount_after_discount
+            
+            assignments_created += 1
+          end
+        end
+      end
+      
+      if is_scheduled
+        redirect_to delivery_assignments_path, 
+                    notice: "Successfully created #{schedules_created} delivery schedule(s) and #{assignments_created} delivery assignment(s)."
+      else
+        redirect_to delivery_assignments_path, 
+                    notice: "Successfully created #{assignments_created} delivery assignment(s)."
+      end
+      
+    rescue ActiveRecord::RecordInvalid => e
+      @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params)
+      @delivery_assignment.errors.add(:base, "Failed to create deliveries: #{e.message}")
+      load_form_data
+      render :new
+    rescue => e
+      Rails.logger.error "Error creating multi-product deliveries: #{e.message}"
+      @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params)
+      @delivery_assignment.errors.add(:base, "An error occurred while creating deliveries.")
+      load_form_data
+      render :new
+    end
+  end
+
   def create_scheduled_deliveries
     start_date = Date.parse(delivery_assignment_params[:start_date])
     end_date = Date.parse(delivery_assignment_params[:end_date])
@@ -248,9 +365,12 @@ class DeliveryAssignmentsController < ApplicationController
         scheduled_date: current_date,
         status: 'pending',
         unit: delivery_schedule.product.unit_type,
-        delivery_schedule_id: delivery_schedule.id
+        delivery_schedule_id: delivery_schedule.id,
+        discount_amount: delivery_schedule.default_discount_amount || 0
       )
       if assignment.save
+        # Calculate and save final amount
+        assignment.calculate_final_amount_after_discount
         created_count += 1
       end
       
@@ -307,7 +427,7 @@ class DeliveryAssignmentsController < ApplicationController
       invoice = Invoice.create!(
         customer: assignment.customer,
         delivery_assignment: assignment,
-        amount: (assignment.product&.price || 0) * (assignment.quantity || 1),
+        amount: assignment.final_amount,
         due_date: 30.days.from_now,
         status: 'pending'
       )
@@ -319,9 +439,14 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def calculate_delivery_amount
-    # Basic calculation - you can customize this logic
+    # Use final amount after discount if available, otherwise calculate normally
+    return @delivery_assignment.final_amount if @delivery_assignment.final_amount_after_discount.present?
+    
+    # Fallback to basic calculation
     base_amount = @delivery_assignment.product&.price || 0
     quantity = @delivery_assignment.quantity || 1
-    base_amount * quantity
+    total = base_amount * quantity
+    discount = @delivery_assignment.discount_amount || 0
+    [total - discount, 0].max
   end
 end

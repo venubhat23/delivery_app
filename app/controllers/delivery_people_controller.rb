@@ -164,6 +164,22 @@ class DeliveryPeopleController < ApplicationController
     @total_delivery_people = @delivery_people.count
     @total_assigned_customers = Customer.assigned.count
     @unassigned_customers = Customer.unassigned.count
+    
+    respond_to do |format|
+      format.html # render index.html.erb
+      format.json do
+        render json: @delivery_people.map { |dp|
+          {
+            id: dp.id,
+            name: dp.name,
+            email: dp.email,
+            phone: dp.phone,
+            customer_count: dp.assigned_customers.count,
+            available_slots: dp.available_customer_slots
+          }
+        }
+      end
+    end
   end
 
   def show

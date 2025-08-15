@@ -64,8 +64,14 @@ class CustomersController < ApplicationController
         # Optionally create initial delivery schedule + assignments
         maybe_create_initial_delivery_setup(@customer)
         
-        format.html { redirect_to @customer, notice: 'Customer was successfully created.' }
-        format.json { render json: { success: true, customer: @customer, message: 'Customer created successfully' } }
+        success_message = 'Customer was successfully created.'
+        if params[:products].present? && params[:delivery_details].present?
+          products_count = params[:products].count { |_, p| p[:product_id].present? }
+          success_message += " Created delivery schedules for #{products_count} product(s)." if products_count > 0
+        end
+        
+        format.html { redirect_to @customer, notice: success_message }
+        format.json { render json: { success: true, customer: @customer, message: success_message } }
       else
         # Reload dropdown data on failure
         @delivery_people = User.delivery_people.order(:name)
@@ -246,6 +252,79 @@ class CustomersController < ApplicationController
     end
   end
   
+  # Reassign delivery person for a customer
+  def reassign_delivery_person
+    @customer = Customer.find(params[:id])
+    new_delivery_person_id = params[:delivery_person_id]
+    
+    if new_delivery_person_id.blank?
+      render json: { 
+        success: false, 
+        message: "Please select a delivery person" 
+      }, status: :unprocessable_entity
+      return
+    end
+    
+    # Validate delivery person exists
+    new_delivery_person = User.delivery_people.find_by(id: new_delivery_person_id)
+    if new_delivery_person.nil?
+      render json: { 
+        success: false, 
+        message: "Invalid delivery person selected" 
+      }, status: :unprocessable_entity
+      return
+    end
+    
+    # Calculate tomorrow's date for updating future assignments
+    tomorrow = Date.current + 1.day
+    
+    begin
+      ActiveRecord::Base.transaction do
+        # Update customer's delivery person
+        @customer.update!(delivery_person_id: new_delivery_person_id)
+        
+        # Update delivery schedules from tomorrow onwards
+        updated_schedules = @customer.delivery_schedules
+                                   .where('start_date >= ? OR end_date >= ?', tomorrow, tomorrow)
+                                   .update_all(user_id: new_delivery_person_id)
+        
+        # Update delivery assignments from tomorrow onwards
+        updated_assignments = @customer.delivery_assignments
+                                      .where('scheduled_date >= ?', tomorrow)
+                                      .where(status: ['pending', 'scheduled'])
+                                      .update_all(user_id: new_delivery_person_id)
+        
+        render json: { 
+          success: true, 
+          message: "Successfully updated #{updated_schedules} schedules and #{updated_assignments} assignments",
+          customer: {
+            id: @customer.id,
+            name: @customer.name,
+            delivery_person: {
+              id: new_delivery_person.id,
+              name: new_delivery_person.name
+            }
+          },
+          updates: {
+            schedules: updated_schedules,
+            assignments: updated_assignments
+          }
+        }
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { 
+        success: false, 
+        message: "Failed to reassign delivery person: #{e.message}" 
+      }, status: :unprocessable_entity
+    rescue => e
+      Rails.logger.error "Error reassigning delivery person: #{e.message}"
+      render json: { 
+        success: false, 
+        message: "An error occurred while reassigning the delivery person" 
+      }, status: :internal_server_error
+    end
+  end
+  
   private
   
   def set_customer
@@ -260,10 +339,12 @@ class CustomersController < ApplicationController
     )
   end
 
-  # Creates a delivery schedule and daily delivery assignments if optional fields are provided
+  # Creates delivery schedules and daily delivery assignments for multiple products if provided
   def maybe_create_initial_delivery_setup(customer)
     details = params[:delivery_details] || {}
-    return if details.blank?
+    products_data = params[:products] || {}
+    
+    return if details.blank? || products_data.blank?
 
     begin
       start_date = details[:start_date].presence && Date.parse(details[:start_date])
@@ -273,54 +354,84 @@ class CustomersController < ApplicationController
       end_date = nil
     end
 
-    product_id = details[:product_id].presence
-    quantity   = (details[:quantity].presence || 1).to_f
-    unit_param = details[:unit].presence
+    # Determine delivery person
+    delivery_person_id = details[:delivery_person_id].presence&.to_i
+    
+    # Return if essential details are missing
+    return if start_date.blank? || end_date.blank? || delivery_person_id.blank?
 
-    # Determine delivery person: prefer explicit selection in optional section, fallback to customer.assignment
-    delivery_person_id = (details[:delivery_person_id].presence || customer.delivery_person_id).to_i
+    # Validate delivery person exists
+    delivery_person = User.delivery_people.find_by(id: delivery_person_id)
+    return if delivery_person.nil?
 
-    # Ensure required fields exist
-    return if start_date.blank? || end_date.blank? || product_id.blank? || delivery_person_id.zero?
+    # Process each product
+    schedules_created = 0
+    assignments_created = 0
 
-    product = Product.find_by(id: product_id)
-    return if product.nil?
+    ActiveRecord::Base.transaction do
+      products_data.each do |index, product_data|
+        next if product_data[:product_id].blank? || product_data[:quantity].blank?
 
-    default_unit = unit_param || product.unit_type
+        product = Product.find_by(id: product_data[:product_id])
+        next if product.nil?
 
-    schedule = DeliverySchedule.create(
-      customer_id: customer.id,
-      user_id: delivery_person_id,
-      product_id: product.id,
-      start_date: start_date,
-      end_date: end_date,
-      frequency: 'daily',
-      status: 'active',
-      default_quantity: quantity,
-      default_unit: default_unit
-    )
+        quantity = product_data[:quantity].to_f
+        next if quantity <= 0
 
-    return unless schedule.persisted?
+        unit = product_data[:unit].presence || product.unit_type
+        discount_amount = product_data[:discount_amount].to_f
 
-    # Generate daily assignments for the date range
-    current_date = start_date
-    while current_date <= end_date
-      DeliveryAssignment.create(
-        customer_id: customer.id,
-        user_id: delivery_person_id,
-        product_id: product.id,
-        quantity: quantity,
-        unit: default_unit,
-        scheduled_date: current_date,
-        status: 'pending',
-        delivery_schedule_id: schedule.id
-      )
-      current_date += 1.day
+        # Create delivery schedule for this product
+        schedule = DeliverySchedule.create!(
+          customer_id: customer.id,
+          user_id: delivery_person_id,
+          product_id: product.id,
+          start_date: start_date,
+          end_date: end_date,
+          frequency: 'daily',
+          status: 'active',
+          default_quantity: quantity,
+          default_unit: unit,
+          default_discount_amount: discount_amount
+        )
+
+        schedules_created += 1
+
+        # Generate daily assignments for the date range
+        current_date = start_date
+        while current_date <= end_date
+          assignment = DeliveryAssignment.create!(
+            customer_id: customer.id,
+            user_id: delivery_person_id,
+            product_id: product.id,
+            quantity: quantity,
+            unit: unit,
+            scheduled_date: current_date,
+            status: 'pending',
+            delivery_schedule_id: schedule.id,
+            discount_amount: discount_amount
+          )
+          
+          # Calculate and save final amount
+          assignment.calculate_final_amount_after_discount
+          
+          assignments_created += 1
+          current_date += 1.day
+        end
+      end
+
+      # Ensure the customer is assigned to the delivery person if not already
+      if customer.delivery_person_id.blank?
+        customer.update!(delivery_person_id: delivery_person_id)
+      end
     end
 
-    # Ensure the customer is assigned to the delivery person if not already
-    if customer.delivery_person_id.blank?
-      customer.update(delivery_person_id: delivery_person_id)
-    end
+    Rails.logger.info "Created #{schedules_created} schedules and #{assignments_created} assignments for customer #{customer.id}"
+    
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error "Error creating delivery setup for customer #{customer.id}: #{e.message}"
+    # Don't fail the customer creation if delivery setup fails
+  rescue => e
+    Rails.logger.error "Unexpected error creating delivery setup for customer #{customer.id}: #{e.message}"
   end
 end

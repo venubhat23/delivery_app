@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,6 +41,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "url"
     t.index ["end_date"], name: "index_advertisements_on_end_date"
     t.index ["start_date", "end_date"], name: "index_advertisements_on_start_date_and_end_date"
     t.index ["start_date"], name: "index_advertisements_on_start_date"
@@ -121,8 +122,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
     t.bigint "invoice_id"
     t.integer "delivery_person_id"
     t.text "special_instructions"
+    t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0"
+    t.decimal "final_amount_after_discount", precision: 10, scale: 2
     t.index ["customer_id"], name: "index_delivery_assignments_on_customer_id"
     t.index ["delivery_schedule_id"], name: "index_delivery_assignments_on_delivery_schedule_id"
+    t.index ["discount_amount"], name: "index_delivery_assignments_on_discount_amount"
+    t.index ["final_amount_after_discount"], name: "index_delivery_assignments_on_final_amount_after_discount"
     t.index ["invoice_generated"], name: "index_delivery_assignments_on_invoice_generated"
     t.index ["invoice_id"], name: "index_delivery_assignments_on_invoice_id"
     t.index ["product_id"], name: "index_delivery_assignments_on_product_id"
@@ -152,7 +157,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
     t.string "default_unit", default: "pieces"
     t.bigint "product_id"
     t.integer "delivery_person_id"
+    t.decimal "default_discount_amount", precision: 10, scale: 2, default: "0.0"
     t.index ["customer_id"], name: "index_delivery_schedules_on_customer_id"
+    t.index ["default_discount_amount"], name: "index_delivery_schedules_on_default_discount_amount"
     t.index ["delivery_person_id"], name: "index_delivery_schedules_on_delivery_person_id"
     t.index ["product_id"], name: "index_delivery_schedules_on_product_id"
     t.index ["user_id"], name: "index_delivery_schedules_on_user_id"
@@ -184,11 +191,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
     t.datetime "last_reminder_sent_at"
     t.text "notes"
     t.string "phone_number"
+    t.string "share_token"
+    t.datetime "shared_at"
     t.index ["customer_id"], name: "index_invoices_on_customer_id"
     t.index ["due_date"], name: "index_invoices_on_due_date"
     t.index ["invoice_date"], name: "index_invoices_on_invoice_date"
     t.index ["invoice_number"], name: "index_invoices_on_invoice_number", unique: true
     t.index ["invoice_type"], name: "index_invoices_on_invoice_type"
+    t.index ["share_token"], name: "index_invoices_on_share_token", unique: true
     t.index ["status"], name: "index_invoices_on_status"
   end
 
@@ -216,6 +226,45 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
     t.index ["mobile_number"], name: "index_parties_on_mobile_number"
     t.index ["name"], name: "index_parties_on_name"
     t.index ["user_id"], name: "index_parties_on_user_id"
+  end
+
+  create_table "procurement_assignments", force: :cascade do |t|
+    t.bigint "procurement_schedule_id", null: false
+    t.string "vendor_name", null: false
+    t.date "date", null: false
+    t.decimal "planned_quantity", precision: 10, scale: 2, null: false
+    t.decimal "actual_quantity", precision: 10, scale: 2
+    t.decimal "buying_price", precision: 10, scale: 2, null: false
+    t.decimal "selling_price", precision: 10, scale: 2, null: false
+    t.string "status", default: "pending"
+    t.text "notes"
+    t.string "unit", default: "liters"
+    t.bigint "user_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["date"], name: "index_procurement_assignments_on_date"
+    t.index ["procurement_schedule_id", "date"], name: "idx_on_procurement_schedule_id_date_cd15031368"
+    t.index ["procurement_schedule_id"], name: "index_procurement_assignments_on_procurement_schedule_id"
+    t.index ["status"], name: "index_procurement_assignments_on_status"
+    t.index ["user_id"], name: "index_procurement_assignments_on_user_id"
+    t.index ["vendor_name"], name: "index_procurement_assignments_on_vendor_name"
+  end
+
+  create_table "procurement_schedules", force: :cascade do |t|
+    t.string "vendor_name", null: false
+    t.date "from_date", null: false
+    t.date "to_date", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.decimal "buying_price", precision: 10, scale: 2, null: false
+    t.decimal "selling_price", precision: 10, scale: 2, null: false
+    t.string "status", default: "active"
+    t.bigint "user_id", null: false
+    t.text "notes"
+    t.string "unit", default: "liters"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_procurement_schedules_on_user_id"
   end
 
   create_table "products", force: :cascade do |t|
@@ -478,6 +527,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_053214) do
   add_foreign_key "invoice_items", "products"
   add_foreign_key "invoices", "customers"
   add_foreign_key "parties", "users"
+  add_foreign_key "procurement_assignments", "procurement_schedules"
+  add_foreign_key "procurement_assignments", "users"
+  add_foreign_key "procurement_schedules", "users"
   add_foreign_key "products", "categories"
   add_foreign_key "purchase_invoice_items", "purchase_invoices"
   add_foreign_key "purchase_invoice_items", "purchase_products"

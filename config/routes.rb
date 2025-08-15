@@ -43,6 +43,10 @@ Rails.application.routes.draw do
       post :validate_enhanced_csv
       get :download_enhanced_template
     end
+    
+    member do
+      patch :reassign_delivery_person
+    end
   end
   
   resources :advertisements
@@ -134,6 +138,9 @@ Rails.application.routes.draw do
       get :statistics
     end
   end
+  
+  # JSON API for delivery people (for dropdowns)
+  get '/delivery_people', to: 'delivery_people#index', defaults: { format: :json }
   
   # Delivery Assignments (consolidated - removed duplicate)
   resources :delivery_assignments, path: 'assign_deliveries' do

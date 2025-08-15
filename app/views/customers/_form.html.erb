@@ -154,14 +154,18 @@
     <strong>Tip:</strong> You can get GPS coordinates by searching the address on Google Maps and copying the coordinates from the URL.
   </div>
 
-  <!-- Optional Delivery Setup -->
+  <!-- Multiple Products Delivery Setup -->
   <div class="card mt-4">
-    <div class="card-header bg-light">
-      <strong><i class="fas fa-truck me-2"></i>Optional: Create Initial Delivery Plan</strong>
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <strong><i class="fas fa-truck me-2"></i>Optional: Create Initial Delivery Plans</strong>
+      <button type="button" class="btn btn-sm btn-primary" id="addProductBtn">
+        <i class="fas fa-plus me-1"></i>Add Product
+      </button>
     </div>
     <div class="card-body">
-      <div class="row">
-        <div class="col-md-6">
+      <!-- Common delivery details -->
+      <div class="row mb-4">
+        <div class="col-md-4">
           <div class="mb-3">
             <label class="form-label fw-bold"><i class="fas fa-user-tag me-1"></i>Delivery Person</label>
             <select name="delivery_details[delivery_person_id]" class="form-select" id="delivery_details_delivery_person_id">
@@ -172,57 +176,37 @@
             </select>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label fw-bold"><i class="fas fa-box me-1"></i>Product</label>
-            <select name="delivery_details[product_id]" class="form-select" id="delivery_details_product_id">
-              <option value="">Select product (optional)</option>
-              <% (@products || Product.order(:name)).each do |p| %>
-                <option value="<%= p.id %>" data-unit="<%= p.unit_type %>"><%= p.name %></option>
-              <% end %>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-4">
-          <div class="mb-3">
-            <label class="form-label fw-bold"><i class="fas fa-sort-numeric-up me-1"></i>Quantity</label>
-            <input type="number" step="0.01" min="0" name="delivery_details[quantity]" class="form-control" placeholder="e.g., 1.0">
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="mb-3">
-            <label class="form-label fw-bold"><i class="fas fa-balance-scale me-1"></i>Unit</label>
-            <select name="delivery_details[unit]" id="delivery_details_unit" class="form-select">
-              <option value="">Auto (from product)</option>
-              <% Product.unit_types_for_select.each do |label, value| %>
-                <option value="<%= value %>"><%= label %></option>
-              <% end %>
-            </select>
-          </div>
-        </div>
         <div class="col-md-4">
           <div class="mb-3">
             <label class="form-label fw-bold"><i class="fas fa-calendar-day me-1"></i>From Date</label>
-            <input type="date" name="delivery_details[start_date]" class="form-control">
+            <input type="date" name="delivery_details[start_date]" class="form-control" id="common_start_date">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="fas fa-calendar-check me-1"></i>To Date</label>
+            <input type="date" name="delivery_details[end_date]" class="form-control" id="common_end_date">
           </div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-md-4">
-          <div class="mb-3">
-            <label class="form-label fw-bold"><i class="fas fa-calendar-check me-1"></i>To Date</label>
-            <input type="date" name="delivery_details[end_date]" class="form-control">
-          </div>
+      <!-- Products Section -->
+      <div class="products-section">
+        <h6 class="mb-3"><i class="fas fa-boxes me-2"></i>Products & Quantities</h6>
+        <div id="productsContainer">
+          <!-- Product rows will be added here -->
         </div>
-        <div class="col-md-8 d-flex align-items-end">
-          <div class="form-text">
-            Leave these fields empty if you don't want to auto-create delivery assignments now.
-          </div>
+        
+        <div class="empty-products-message text-center text-muted py-4" id="emptyProductsMessage">
+          <i class="fas fa-box-open fa-2x mb-2"></i>
+          <p class="mb-1">No products added yet</p>
+          <small>Click "Add Product" to create delivery schedules for specific products</small>
         </div>
+      </div>
+
+      <div class="form-text mt-3">
+        <i class="fas fa-info-circle me-1"></i>
+        Leave all fields empty if you don't want to auto-create delivery assignments now. You can add products and schedules later.
       </div>
     </div>
   </div>
@@ -275,19 +259,163 @@ document.addEventListener('DOMContentLoaded', function() {
   // Setup customer image upload
   setupCustomerImageUpload();
 
-  // Auto-set unit when product changes
-  const productSelect = document.getElementById('delivery_details_product_id');
-  const unitSelect = document.getElementById('delivery_details_unit');
-  if (productSelect && unitSelect) {
-    productSelect.addEventListener('change', function() {
-      const selected = productSelect.options[productSelect.selectedIndex];
-      const unit = selected && selected.getAttribute('data-unit');
-      if (unit) {
-        unitSelect.value = unit;
-      }
-    });
-  }
+  // Initialize multi-product functionality
+  initializeMultiProductDelivery();
 });
+
+// Multi-product delivery functionality
+let productRowCounter = 0;
+const availableProducts = [
+  <% (@products || Product.order(:name)).each_with_index do |p, index| %>
+    {
+      id: <%= p.id %>,
+      name: "<%= j(p.name) %>",
+      unit_type: "<%= p.unit_type %>",
+      price: <%= p.price || 0 %>
+    }<%= index < (@products || Product.order(:name)).count - 1 ? ',' : '' %>
+  <% end %>
+];
+
+const unitTypes = [
+  <% Product.unit_types_for_select.each_with_index do |(label, value), index| %>
+    {
+      label: "<%= j(label) %>",
+      value: "<%= value %>"
+    }<%= index < Product.unit_types_for_select.count - 1 ? ',' : '' %>
+  <% end %>
+];
+
+function initializeMultiProductDelivery() {
+  const addProductBtn = document.getElementById('addProductBtn');
+  if (addProductBtn) {
+    addProductBtn.addEventListener('click', addProductRow);
+  }
+  
+  updateEmptyMessage();
+}
+
+function addProductRow() {
+  productRowCounter++;
+  const container = document.getElementById('productsContainer');
+  const rowId = `product-row-${productRowCounter}`;
+  
+  const productRow = document.createElement('div');
+  productRow.className = 'product-row border rounded p-3 mb-3 bg-light';
+  productRow.id = rowId;
+  
+  productRow.innerHTML = `
+    <div class="row align-items-center">
+      <div class="col-md-3">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-box me-1"></i>Product</label>
+          <select name="products[${productRowCounter}][product_id]" class="form-select product-select" data-row="${productRowCounter}" required>
+            <option value="">Select product</option>
+            ${availableProducts.map(p => `<option value="${p.id}" data-unit="${p.unit_type}" data-price="${p.price || 0}">${p.name} - Rs${p.price || 0}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-sort-numeric-up me-1"></i>Quantity</label>
+          <input type="number" step="0.01" min="0.01" name="products[${productRowCounter}][quantity]" class="form-control" placeholder="1.0" required>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-balance-scale me-1"></i>Unit</label>
+          <select name="products[${productRowCounter}][unit]" class="form-select unit-select" data-row="${productRowCounter}">
+            <option value="">Auto (from product)</option>
+            ${unitTypes.map(u => `<option value="${u.value}">${u.label}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-percent me-1"></i>Discount (Rs)</label>
+          <input type="number" step="0.01" min="0" name="products[${productRowCounter}][discount_amount]" class="form-control discount-input" data-row="${productRowCounter}" placeholder="0.00">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-calculator me-1"></i>Final Amount</label>
+          <input type="text" class="form-control final-amount-display" data-row="${productRowCounter}" readonly placeholder="Rs 0.00" style="background-color: #f8f9fc;">
+        </div>
+      </div>
+      <div class="col-md-1">
+        <div class="d-flex justify-content-end">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProductRow('${rowId}')">
+            <i class="fas fa-trash me-1"></i>Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  container.appendChild(productRow);
+  
+  // Setup auto-unit selection and amount calculation for this row
+  const productSelect = productRow.querySelector('.product-select');
+  const unitSelect = productRow.querySelector('.unit-select');
+  const quantityInput = productRow.querySelector('input[name*="[quantity]"]');
+  const discountInput = productRow.querySelector('.discount-input');
+  const finalAmountDisplay = productRow.querySelector('.final-amount-display');
+  
+  function calculateFinalAmount() {
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const price = selectedOption ? parseFloat(selectedOption.getAttribute('data-price')) || 0 : 0;
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const discount = parseFloat(discountInput.value) || 0;
+    
+    const totalAmount = price * quantity;
+    const finalAmount = Math.max(totalAmount - discount, 0);
+    
+    finalAmountDisplay.value = `Rs ${finalAmount.toFixed(2)}`;
+    
+    // Update discount input validation
+    discountInput.max = totalAmount;
+    
+    if (discount > totalAmount) {
+      discountInput.setCustomValidity('Discount cannot exceed total amount');
+    } else {
+      discountInput.setCustomValidity('');
+    }
+  }
+  
+  productSelect.addEventListener('change', function() {
+    const selected = productSelect.options[productSelect.selectedIndex];
+    const unit = selected && selected.getAttribute('data-unit');
+    if (unit && unitSelect.value === '') {
+      unitSelect.value = unit;
+    }
+    calculateFinalAmount();
+  });
+  
+  quantityInput.addEventListener('input', calculateFinalAmount);
+  discountInput.addEventListener('input', calculateFinalAmount);
+  
+  // Initial calculation
+  calculateFinalAmount();
+  
+  updateEmptyMessage();
+}
+
+function removeProductRow(rowId) {
+  const row = document.getElementById(rowId);
+  if (row) {
+    row.remove();
+    updateEmptyMessage();
+  }
+}
+
+function updateEmptyMessage() {
+  const container = document.getElementById('productsContainer');
+  const emptyMessage = document.getElementById('emptyProductsMessage');
+  const hasProducts = container && container.children.length > 0;
+  
+  if (emptyMessage) {
+    emptyMessage.style.display = hasProducts ? 'none' : 'block';
+  }
+}
 
 // Customer Image upload functions
 function setupCustomerImageUpload() {
@@ -439,5 +567,33 @@ function removeCustomerImage() {
 .upload-progress .progress-bar {
   background-color: #4e73df;
   transition: width 0.3s ease;
+}
+
+/* Multi-product styles */
+.product-row {
+  background-color: #f8f9fc !important;
+  border: 1px solid #e3e6f0 !important;
+  transition: all 0.3s ease;
+}
+
+.product-row:hover {
+  border-color: #4e73df !important;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(78, 115, 223, 0.15) !important;
+}
+
+.products-section h6 {
+  color: #5a5c69;
+  font-weight: 600;
+}
+
+.empty-products-message {
+  background-color: #f8f9fc;
+  border: 2px dashed #d1d3e2;
+  border-radius: 0.35rem;
+}
+
+.btn-outline-danger:hover {
+  background-color: #e74a3b;
+  border-color: #e74a3b;
 }
 </style>

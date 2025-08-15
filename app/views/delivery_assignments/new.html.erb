@@ -62,51 +62,91 @@
             </div>
           </div>
 
-          <!-- Customer Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_customers_search_path %>" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
-            <%= form.label :customer_id, class: "form-label" %>
-            <%= form.select :customer_id, 
-                options_for_select([['Search and select customer...', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
-                {}, { 
-                  class: "form-select", 
-                  required: true,
-                  data: { "searchable-select-target" => "select" }
-                } %>
-            <div class="form-text">
-              <small>Start typing to search customers by name</small>
-            </div>
-          </div>
-
-          <!-- Delivery Person Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-url-value="<%= api_delivery_people_search_path %>" data-searchable-select-placeholder-value="Search delivery people...">
-            <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
-            <%= form.select :delivery_person_id, 
-                options_for_select([['Select Delivery Person', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, @delivery_assignment.user_id), 
-                {}, { 
-                  class: "form-select", 
-                  required: true,
-                  data: { "searchable-select-target" => "select" }
-                } %>
-          </div>
-
-          <!-- Product Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search products...">
-            <%= form.label :product_id, class: "form-label" %>
-            <%= form.select :product_id, 
-                options_for_select([['Search and select product...', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
-                {}, { 
-                  class: "form-select", 
-                  required: true,
-                  data: { "searchable-select-target" => "select" }
-                } %>
-            <div class="form-text">
-              <small>Start typing to search products by name</small>
-            </div>
-          </div>
-
+          <!-- Customer Search -->
           <div class="col-md-6">
-            <%= form.label :quantity, class: "form-label" %>
-            <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
+            <%= form.label :customer_id, class: "form-label fw-bold" %>
+            <%= form.hidden_field :customer_id, id: "selected_customer_id" %>
+            <div class="position-relative">
+              <input type="text" 
+                     class="form-control" 
+                     id="customer_search_input" 
+                     placeholder="Search by name, phone, email, or member ID (e.g., 9632)..." 
+                     autocomplete="off"
+                     required>
+              <div class="search-results-dropdown d-none" id="customer_search_results">
+                <div class="search-loading d-none">
+                  <div class="p-3 text-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Searching customers...
+                  </div>
+                </div>
+                <div class="search-results-list"></div>
+                <div class="search-no-results d-none">
+                  <div class="p-3 text-muted text-center">
+                    <i class="fas fa-search me-2"></i>No customers found
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-text">
+              <small><i class="fas fa-info-circle me-1"></i>Start typing to search customers by name, phone, email, or member ID</small>
+            </div>
+          </div>
+
+          <!-- Delivery Person Search -->
+          <div class="col-md-6">
+            <%= form.label :delivery_person_id, "Delivery Person", class: "form-label fw-bold" %>
+            <%= form.hidden_field :delivery_person_id, id: "selected_delivery_person_id" %>
+            <div class="position-relative">
+              <input type="text" 
+                     class="form-control" 
+                     id="delivery_person_search_input" 
+                     placeholder="Search delivery people by name..." 
+                     autocomplete="off"
+                     required>
+              <div class="search-results-dropdown d-none" id="delivery_person_search_results">
+                <div class="search-loading d-none">
+                  <div class="p-3 text-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Searching delivery people...
+                  </div>
+                </div>
+                <div class="search-results-list"></div>
+                <div class="search-no-results d-none">
+                  <div class="p-3 text-muted text-center">
+                    <i class="fas fa-truck me-2"></i>No delivery people found
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-text">
+              <small><i class="fas fa-info-circle me-1"></i>Start typing to search delivery people by name</small>
+            </div>
+          </div>
+
+          <!-- Multiple Products Section -->
+          <div class="col-12">
+            <div class="card bg-light">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                  <i class="fas fa-boxes me-2"></i>Products & Quantities
+                </h6>
+                <button type="button" class="btn btn-sm btn-primary" id="addAssignmentProductBtn">
+                  <i class="fas fa-plus me-1"></i>Add Product
+                </button>
+              </div>
+              <div class="card-body">
+                <div id="assignmentProductsContainer">
+                  <!-- Product rows will be added here -->
+                </div>
+                
+                <div class="empty-assignment-products-message text-center text-muted py-4" id="emptyAssignmentProductsMessage">
+                  <i class="fas fa-box-open fa-2x mb-2"></i>
+                  <p class="mb-1">No products added yet</p>
+                  <small>Click "Add Product" to specify products for delivery</small>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Single Delivery Date Field -->
@@ -262,6 +302,28 @@
 </div>
 
 <script>
+// Multi-product delivery assignment functionality
+let assignmentProductRowCounter = 0;
+const availableAssignmentProducts = [
+  <% @products.each_with_index do |p, index| %>
+    {
+      id: <%= p.id %>,
+      name: "<%= j(p.name) %>",
+      price: "<%= p.price %>",
+      unit_type: "<%= p.unit_type %>"
+    }<%= index < @products.count - 1 ? ',' : '' %>
+  <% end %>
+];
+
+const assignmentUnitTypes = [
+  <% Product.unit_types_for_select.each_with_index do |(label, value), index| %>
+    {
+      label: "<%= j(label) %>",
+      value: "<%= value %>"
+    }<%= index < Product.unit_types_for_select.count - 1 ? ',' : '' %>
+  <% end %>
+];
+
 document.addEventListener('DOMContentLoaded', function() {
   const startDateField = document.getElementById('delivery_assignment_start_date');
   const endDateField = document.getElementById('delivery_assignment_end_date');
@@ -269,10 +331,19 @@ document.addEventListener('DOMContentLoaded', function() {
   const schedulePreview = document.getElementById('schedule-preview');
   const submitBtn = document.getElementById('submit-btn');
 
+  // Initialize multi-product functionality
+  initializeMultiProductAssignments();
+  
+  // Initialize search functionality
+  initializeSearchDropdowns();
+
   function updateSchedulePreview() {
-    const startDate = startDateField.value;
-    const endDate = endDateField.value;
-    const frequency = frequencyField.value;
+    const startDate = startDateField?.value;
+    const endDate = endDateField?.value;
+    const frequency = frequencyField?.value;
+    const scheduleInfo = document.querySelector('[data-delivery-assignment-form-target="scheduleInfo"]');
+    
+    if (!scheduleInfo) return;
     
     if (startDate && endDate && frequency) {
       const start = new Date(startDate);
@@ -301,24 +372,590 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
         
-        document.getElementById('schedule-info').innerHTML = 
-          `<strong>${deliveryCount}</strong> delivery assignments will be created<br>
-           <small>From ${start.toLocaleDateString()} to ${end.toLocaleDateString()}</small>`;
+        const productCount = document.querySelectorAll('.assignment-product-row').length;
+        const totalAssignments = deliveryCount * Math.max(productCount, 1);
+        
+        scheduleInfo.innerHTML = 
+          `<strong>${totalAssignments}</strong> delivery assignments will be created<br>
+           <small>From ${start.toLocaleDateString()} to ${end.toLocaleDateString()}</small>
+           <br><small>${productCount} product(s) × ${deliveryCount} delivery dates</small>`;
       } else {
-        document.getElementById('schedule-info').innerHTML = 
+        scheduleInfo.innerHTML = 
           '<span class="text-danger">End date must be after start date</span>';
       }
     } else {
-      document.getElementById('schedule-info').textContent = 'Select dates and frequency to see preview';
+      scheduleInfo.innerHTML = '<div class="text-muted"><i class="fas fa-info-circle me-2"></i>Select dates and frequency to see preview</div>';
     }
   }
 
   // Preview update listeners
-  startDateField.addEventListener('change', updateSchedulePreview);
-  endDateField.addEventListener('change', updateSchedulePreview);
-  frequencyField.addEventListener('change', updateSchedulePreview);
+  if (startDateField) startDateField.addEventListener('change', updateSchedulePreview);
+  if (endDateField) endDateField.addEventListener('change', updateSchedulePreview);
+  if (frequencyField) frequencyField.addEventListener('change', updateSchedulePreview);
 
   // Initialize
   updateSchedulePreview();
 });
+
+function initializeMultiProductAssignments() {
+  const addProductBtn = document.getElementById('addAssignmentProductBtn');
+  if (addProductBtn) {
+    addProductBtn.addEventListener('click', addAssignmentProductRow);
+  }
+  
+  updateAssignmentEmptyMessage();
+}
+
+function addAssignmentProductRow() {
+  assignmentProductRowCounter++;
+  const container = document.getElementById('assignmentProductsContainer');
+  const rowId = `assignment-product-row-${assignmentProductRowCounter}`;
+  
+  const productRow = document.createElement('div');
+  productRow.className = 'assignment-product-row border rounded p-3 mb-3 bg-white';
+  productRow.id = rowId;
+  
+  productRow.innerHTML = `
+    <div class="row align-items-center">
+      <div class="col-md-3">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-box me-1"></i>Product</label>
+          <select name="assignment_products[${assignmentProductRowCounter}][product_id]" class="form-select assignment-product-select" data-row="${assignmentProductRowCounter}" required>
+            <option value="">Select product</option>
+            ${availableAssignmentProducts.map(p => `<option value="${p.id}" data-unit="${p.unit_type}" data-price="${p.price}">${p.name} - Rs${p.price}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-sort-numeric-up me-1"></i>Quantity</label>
+          <input type="number" step="0.01" min="0.01" name="assignment_products[${assignmentProductRowCounter}][quantity]" class="form-control quantity-input" placeholder="1.0" required>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-balance-scale me-1"></i>Unit</label>
+          <select name="assignment_products[${assignmentProductRowCounter}][unit]" class="form-select assignment-unit-select" data-row="${assignmentProductRowCounter}">
+            <option value="">Auto (from product)</option>
+            ${assignmentUnitTypes.map(u => `<option value="${u.value}">${u.label}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-percent me-1"></i>Discount (Rs)</label>
+          <input type="number" step="0.01" min="0" name="assignment_products[${assignmentProductRowCounter}][discount_amount]" class="form-control assignment-discount-input" data-row="${assignmentProductRowCounter}" placeholder="0.00">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="mb-3 mb-md-0">
+          <label class="form-label fw-bold"><i class="fas fa-calculator me-1"></i>Final Amount</label>
+          <input type="text" class="form-control assignment-final-amount-display" data-row="${assignmentProductRowCounter}" readonly placeholder="Rs 0.00" style="background-color: #f8f9fc;">
+        </div>
+      </div>
+      <div class="col-md-1">
+        <div class="d-flex justify-content-end">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAssignmentProductRow('${rowId}')">
+            <i class="fas fa-trash me-1"></i>Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  container.appendChild(productRow);
+  
+  // Setup auto-unit selection and discount calculation for this row
+  const productSelect = productRow.querySelector('.assignment-product-select');
+  const unitSelect = productRow.querySelector('.assignment-unit-select');
+  const quantityInput = productRow.querySelector('.quantity-input');
+  const discountInput = productRow.querySelector('.assignment-discount-input');
+  const finalAmountDisplay = productRow.querySelector('.assignment-final-amount-display');
+  
+  function calculateAssignmentFinalAmount() {
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const price = selectedOption ? parseFloat(selectedOption.getAttribute('data-price')) || 0 : 0;
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const discount = parseFloat(discountInput.value) || 0;
+    
+    const totalAmount = price * quantity;
+    const finalAmount = Math.max(totalAmount - discount, 0);
+    
+    finalAmountDisplay.value = `Rs ${finalAmount.toFixed(2)}`;
+    
+    // Update discount input validation
+    discountInput.max = totalAmount;
+    
+    if (discount > totalAmount) {
+      discountInput.setCustomValidity('Discount cannot exceed total amount');
+    } else {
+      discountInput.setCustomValidity('');
+    }
+  }
+  
+  productSelect.addEventListener('change', function() {
+    const selected = productSelect.options[productSelect.selectedIndex];
+    const unit = selected && selected.getAttribute('data-unit');
+    if (unit && unitSelect.value === '') {
+      unitSelect.value = unit;
+    }
+    calculateAssignmentFinalAmount();
+    updateAssignmentSchedulePreview();
+  });
+  
+  quantityInput.addEventListener('input', function() {
+    calculateAssignmentFinalAmount();
+    updateAssignmentSchedulePreview();
+  });
+  
+  discountInput.addEventListener('input', calculateAssignmentFinalAmount);
+  
+  // Initial calculation
+  calculateAssignmentFinalAmount();
+  
+  updateAssignmentEmptyMessage();
+  updateAssignmentSchedulePreview();
+}
+
+function removeAssignmentProductRow(rowId) {
+  const row = document.getElementById(rowId);
+  if (row) {
+    row.remove();
+    updateAssignmentEmptyMessage();
+    updateAssignmentSchedulePreview();
+  }
+}
+
+function updateAssignmentEmptyMessage() {
+  const container = document.getElementById('assignmentProductsContainer');
+  const emptyMessage = document.getElementById('emptyAssignmentProductsMessage');
+  const hasProducts = container && container.children.length > 0;
+  
+  if (emptyMessage) {
+    emptyMessage.style.display = hasProducts ? 'none' : 'block';
+  }
+}
+
+function updateAssignmentSchedulePreview() {
+  // This function updates the schedule preview considering multiple products
+  const startDateField = document.getElementById('delivery_assignment_start_date');
+  const endDateField = document.getElementById('delivery_assignment_end_date');
+  const frequencyField = document.getElementById('delivery_assignment_frequency');
+  const scheduleInfo = document.querySelector('[data-delivery-assignment-form-target="scheduleInfo"]');
+  
+  if (!scheduleInfo) return;
+  
+  const startDate = startDateField?.value;
+  const endDate = endDateField?.value;
+  const frequency = frequencyField?.value;
+  
+  if (startDate && endDate && frequency) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (start <= end) {
+      let deliveryCount = 0;
+      let current = new Date(start);
+      
+      // Calculate approximate number of deliveries
+      while (current <= end) {
+        deliveryCount++;
+        switch (frequency) {
+          case 'daily':
+            current.setDate(current.getDate() + 1);
+            break;
+          case 'weekly':
+            current.setDate(current.getDate() + 7);
+            break;
+          case 'bi_weekly':
+            current.setDate(current.getDate() + 14);
+            break;
+          case 'monthly':
+            current.setMonth(current.getMonth() + 1);
+            break;
+        }
+      }
+      
+      const productCount = document.querySelectorAll('.assignment-product-row').length;
+      const totalAssignments = deliveryCount * Math.max(productCount, 1);
+      
+      scheduleInfo.innerHTML = 
+        `<strong>${totalAssignments}</strong> delivery assignments will be created<br>
+         <small>From ${start.toLocaleDateString()} to ${end.toLocaleDateString()}</small>
+         <br><small>${productCount} product(s) × ${deliveryCount} delivery dates</small>`;
+    } else {
+      scheduleInfo.innerHTML = 
+        '<span class="text-danger">End date must be after start date</span>';
+    }
+  } else {
+    scheduleInfo.innerHTML = '<div class="text-muted"><i class="fas fa-info-circle me-2"></i>Select dates and frequency to see preview</div>';
+  }
+}
+
+// Search functionality for customers and delivery people
+function initializeSearchDropdowns() {
+  initializeCustomerSearch();
+  initializeDeliveryPersonSearch();
+}
+
+function initializeCustomerSearch() {
+  const searchInput = document.getElementById('customer_search_input');
+  const searchResults = document.getElementById('customer_search_results');
+  const hiddenField = document.getElementById('selected_customer_id');
+  
+  if (!searchInput || !searchResults || !hiddenField) return;
+  
+  let searchTimeout = null;
+  let currentRequest = null;
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Abort previous request
+    if (currentRequest) {
+      currentRequest.abort();
+    }
+    
+    if (query.length < 2) {
+      hideSearchResults(searchResults);
+      hiddenField.value = '';
+      return;
+    }
+    
+    // Debounce search
+    searchTimeout = setTimeout(() => {
+      performCustomerSearch(query, searchInput, searchResults, hiddenField);
+    }, 300);
+  });
+  
+  // Hide results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      hideSearchResults(searchResults);
+    }
+  });
+}
+
+function initializeDeliveryPersonSearch() {
+  const searchInput = document.getElementById('delivery_person_search_input');
+  const searchResults = document.getElementById('delivery_person_search_results');
+  const hiddenField = document.getElementById('selected_delivery_person_id');
+  
+  if (!searchInput || !searchResults || !hiddenField) return;
+  
+  let searchTimeout = null;
+  let currentRequest = null;
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Abort previous request
+    if (currentRequest) {
+      currentRequest.abort();
+    }
+    
+    if (query.length < 2) {
+      hideSearchResults(searchResults);
+      hiddenField.value = '';
+      return;
+    }
+    
+    // Debounce search
+    searchTimeout = setTimeout(() => {
+      performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField);
+    }, 300);
+  });
+  
+  // Hide results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      hideSearchResults(searchResults);
+    }
+  });
+}
+
+function performCustomerSearch(query, searchInput, searchResults, hiddenField) {
+  showSearchLoading(searchResults);
+  
+  currentRequest = fetch(`/api/customers/search?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    currentRequest = null;
+    hideSearchLoading(searchResults);
+    
+    if (data && data.results && data.results.length > 0) {
+      displayCustomerResults(data.results, searchInput, searchResults, hiddenField);
+    } else {
+      showNoResults(searchResults);
+    }
+  })
+  .catch(error => {
+    currentRequest = null;
+    hideSearchLoading(searchResults);
+    if (error.name !== 'AbortError') {
+      console.error('Search error:', error);
+      showNoResults(searchResults);
+    }
+  });
+}
+
+function performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField) {
+  showSearchLoading(searchResults);
+  
+  currentRequest = fetch(`/api/delivery_people/search?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    currentRequest = null;
+    hideSearchLoading(searchResults);
+    
+    if (data && data.results && data.results.length > 0) {
+      displayDeliveryPersonResults(data.results, searchInput, searchResults, hiddenField);
+    } else {
+      showNoResults(searchResults);
+    }
+  })
+  .catch(error => {
+    currentRequest = null;
+    hideSearchLoading(searchResults);
+    if (error.name !== 'AbortError') {
+      console.error('Search error:', error);
+      showNoResults(searchResults);
+    }
+  });
+}
+
+function displayCustomerResults(customers, searchInput, searchResults, hiddenField) {
+  const resultsList = searchResults.querySelector('.search-results-list');
+  resultsList.innerHTML = '';
+  
+  customers.forEach(customer => {
+    const resultItem = document.createElement('div');
+    resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
+    resultItem.innerHTML = `
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <div class="avatar-circle">
+            ${customer.name.charAt(0).toUpperCase()}
+          </div>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-bold">${customer.name}</div>
+          <div class="text-muted small">
+            ${customer.phone ? `<i class="fas fa-phone me-1"></i>${customer.phone}` : ''}
+            ${customer.member_id ? `<i class="fas fa-id-card me-1 ms-2"></i>${customer.member_id}` : ''}
+          </div>
+          ${customer.address ? `<div class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>${customer.address}</div>` : ''}
+        </div>
+      </div>
+    `;
+    
+    resultItem.addEventListener('click', function() {
+      selectCustomer(customer, searchInput, searchResults, hiddenField);
+    });
+    
+    resultsList.appendChild(resultItem);
+  });
+  
+  showSearchResults(searchResults);
+}
+
+function displayDeliveryPersonResults(deliveryPeople, searchInput, searchResults, hiddenField) {
+  const resultsList = searchResults.querySelector('.search-results-list');
+  resultsList.innerHTML = '';
+  
+  deliveryPeople.forEach(person => {
+    const resultItem = document.createElement('div');
+    resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
+    resultItem.innerHTML = `
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <div class="avatar-circle bg-info">
+            ${(person.data ? person.data.name : person.name).charAt(0).toUpperCase()}
+          </div>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-bold">${person.data ? person.data.name : person.name}</div>
+          <div class="text-muted small">
+            ${person.data && person.data.email ? `<i class="fas fa-envelope me-1"></i>${person.data.email}` : ''}
+          </div>
+          <div class="text-muted small">
+            <i class="fas fa-truck me-1"></i>Delivery Person
+          </div>
+        </div>
+      </div>
+    `;
+    
+    resultItem.addEventListener('click', function() {
+      selectDeliveryPerson(person, searchInput, searchResults, hiddenField);
+    });
+    
+    resultsList.appendChild(resultItem);
+  });
+  
+  showSearchResults(searchResults);
+}
+
+function selectCustomer(customer, searchInput, searchResults, hiddenField) {
+  searchInput.value = customer.name;
+  hiddenField.value = customer.id;
+  hideSearchResults(searchResults);
+}
+
+function selectDeliveryPerson(person, searchInput, searchResults, hiddenField) {
+  searchInput.value = person.data ? person.data.name : person.name;
+  hiddenField.value = person.id;
+  hideSearchResults(searchResults);
+}
+
+function showSearchLoading(searchResults) {
+  searchResults.classList.remove('d-none');
+  searchResults.querySelector('.search-loading').classList.remove('d-none');
+  searchResults.querySelector('.search-results-list').innerHTML = '';
+  searchResults.querySelector('.search-no-results').classList.add('d-none');
+}
+
+function hideSearchLoading(searchResults) {
+  searchResults.querySelector('.search-loading').classList.add('d-none');
+}
+
+function showSearchResults(searchResults) {
+  searchResults.classList.remove('d-none');
+  searchResults.querySelector('.search-no-results').classList.add('d-none');
+}
+
+function showNoResults(searchResults) {
+  searchResults.classList.remove('d-none');
+  searchResults.querySelector('.search-no-results').classList.remove('d-none');
+  searchResults.querySelector('.search-results-list').innerHTML = '';
+}
+
+function hideSearchResults(searchResults) {
+  searchResults.classList.add('d-none');
+}
 </script>
+
+<style>
+/* Multi-product assignment styles */
+.assignment-product-row {
+  background-color: #ffffff !important;
+  border: 1px solid #e3e6f0 !important;
+  transition: all 0.3s ease;
+}
+
+.assignment-product-row:hover {
+  border-color: #4e73df !important;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(78, 115, 223, 0.15) !important;
+}
+
+.empty-assignment-products-message {
+  background-color: #f8f9fc;
+  border: 2px dashed #d1d3e2;
+  border-radius: 0.35rem;
+}
+
+.card.bg-light {
+  background-color: #f8f9fc !important;
+}
+
+.card.bg-light .card-header {
+  background-color: #eaecf4 !important;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.btn-outline-danger:hover {
+  background-color: #e74a3b;
+  border-color: #e74a3b;
+  color: white;
+}
+
+.form-label.fw-bold {
+  color: #5a5c69;
+  font-weight: 600;
+}
+
+/* Search dropdown styles */
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.search-result-item:hover {
+  background-color: #f8f9fc;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.avatar-circle.bg-info {
+  background: linear-gradient(45deg, #36b9cc, #258391);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.search-loading {
+  color: #6c757d;
+}
+
+.search-no-results {
+  color: #6c757d;
+}
+
+/* Form input focus styles */
+#customer_search_input:focus,
+#delivery_person_search_input:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+</style>

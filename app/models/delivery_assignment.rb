@@ -10,6 +10,7 @@ class DeliveryAssignment < ApplicationRecord
   validates :customer_id, :user_id, :product_id, :scheduled_date, :unit, presence: true
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending in_progress completed cancelled] }
+  validates :discount_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   validate :delivery_person_is_valid
 
@@ -56,6 +57,31 @@ class DeliveryAssignment < ApplicationRecord
   rescue => e
     Rails.logger.error "Error calculating total_amount for DeliveryAssignment #{id}: #{e.message}"
     0
+  end
+
+  def calculate_final_amount_after_discount
+    base_amount = total_amount
+    discount = discount_amount.to_f
+    final_amount = [base_amount - discount, 0].max.round(2)
+    
+    # Update the stored value
+    update_column(:final_amount_after_discount, final_amount) if final_amount_after_discount != final_amount
+    
+    final_amount
+  end
+
+  def final_amount
+    return final_amount_after_discount if final_amount_after_discount.present?
+    calculate_final_amount_after_discount
+  end
+
+  def discount_percentage
+    return 0 if total_amount.zero? || discount_amount.to_f.zero?
+    ((discount_amount.to_f / total_amount) * 100).round(2)
+  end
+
+  def has_discount?
+    discount_amount.to_f > 0
   end
 
   def status_display
