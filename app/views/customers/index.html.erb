@@ -188,76 +188,69 @@
         <table class="table table-hover mb-0">
           <thead>
             <tr>
-              <th><i class="fas fa-image me-1"></i>Photo</th>
-              <th><i class="fas fa-user me-1"></i>Customer</th>
-              <th><i class="fas fa-map-marker-alt me-1"></i>Address</th>
-              <th><i class="fas fa-globe me-1"></i>Location</th>
-              <th><i class="fas fa-truck me-1"></i>Delivery Person</th>
-              <th><i class="fas fa-user-tie me-1"></i>Added By</th>
-              <th><i class="fas fa-calendar me-1"></i>Added</th>
-              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+              <th width="10%"><i class="fas fa-image me-1"></i>Image</th>
+              <th width="35%"><i class="fas fa-user me-1"></i>Customer Details</th>
+              <th width="20%"><i class="fas fa-truck me-1"></i>Delivery Person</th>
+              <th width="20%"><i class="fas fa-calendar me-1"></i>Added</th>
+              <th width="15%"><i class="fas fa-cogs me-1"></i>Actions</th>
             </tr>
           </thead>
           <tbody>
             <% @customers.each do |customer| %>
-              <tr class="customer-row">
+              <tr class="customer-row customer-clickable" 
+                  data-customer-id="<%= customer.id %>"
+                  data-customer-name="<%= customer.name %>"
+                  data-customer-image="<%= customer.image_url %>"
+                  style="cursor: pointer;">
                 <td>
-                  <% if customer.image_url.present? %>
-                    <img src="<%= customer.image_url %>" alt="<%= customer.name %>" class="customer-image-thumbnail">
-                  <% else %>
-                    <div class="customer-image-placeholder">
-                      <i class="fas fa-user text-muted"></i>
-                    </div>
-                  <% end %>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <div class="customer-avatar me-3">
-                      <%= customer.name.first.upcase %>
-                    </div>
-                    <div>
-                      <strong class="text-primary"><%= customer.name %></strong>
-                      <% if customer.phone_number.present? %>
-                        <div class="text-muted small">
-                          <i class="fas fa-phone me-1"></i><%= customer.phone_number %>
-                        </div>
-                      <% end %>
-                      <% if customer.member_id.present? %>
-                        <div class="small mt-1">
-                          <%= link_to customer_path(customer), class: "text-decoration-none" do %>
-                            <code class="text-muted">ID: <%= customer.member_id %></code>
-                          <% end %>
-                        </div>
-                      <% end %>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="address-cell">
-                    <% if customer.address.present? %>
-                      <span class="text-truncate" title="<%= customer.address %>">
-                        <i class="fas fa-map-marker-alt me-1 text-muted"></i>
-                        <%= truncate(customer.address, length: 50) %>
-                      </span>
+                  <div class="customer-image-cell text-center">
+                    <% if customer.image_url.present? %>
+                      <img src="<%= customer.image_url %>" 
+                           alt="<%= customer.name %>" 
+                           class="customer-table-image rounded-circle"
+                           style="width: 40px; height: 40px; object-fit: cover;">
                     <% else %>
-                      <span class="text-muted">No address</span>
+                      <div class="customer-avatar-small bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                           style="width: 40px; height: 40px; font-size: 14px;">
+                        <%= customer.name.first.upcase %>
+                      </div>
                     <% end %>
                   </div>
                 </td>
                 <td>
-                  <% if customer.latitude && customer.longitude %>
-                    <div class="location-badge">
-                      <span class="badge bg-success">
-                        <i class="fas fa-map-pin me-1"></i>
-                        <%= number_with_precision(customer.latitude, precision: 4) %>, 
-                        <%= number_with_precision(customer.longitude, precision: 4) %>
-                      </span>
+                  <div class="customer-details-cell">
+                    <div>
+                        <div class="customer-name">
+                          <strong class="text-primary"><%= customer.name %></strong>
+                          <% if customer.member_id.present? %>
+                            <code class="text-muted ms-2">ID: <%= customer.member_id %></code>
+                          <% end %>
+                        </div>
+                        
+                        <div class="customer-contact mt-1">
+                          <% if customer.phone_number.present? %>
+                            <div class="text-muted small">
+                              <i class="fas fa-phone me-1 text-primary"></i><%= customer.phone_number %>
+                            </div>
+                          <% end %>
+                        </div>
+                        
+                        <div class="customer-address mt-1">
+                          <% if customer.address.present? %>
+                            <div class="text-muted small" title="<%= customer.address %>">
+                              <i class="fas fa-map-marker-alt me-1 text-muted"></i>
+                              <%= truncate(customer.address, length: 20) %>
+                            </div>
+                          <% end %>
+                          <% if customer.latitude.present? && customer.longitude.present? %>
+                            <div class="text-muted small">
+                              <i class="fas fa-map-pin me-1 text-success"></i>
+                              <%= customer.latitude.round(6) %>, <%= customer.longitude.round(6) %>
+                            </div>
+                          <% end %>
+                        </div>
                     </div>
-                  <% else %>
-                    <span class="badge bg-secondary">
-                      <i class="fas fa-map-marker-slash me-1"></i>No coordinates
-                    </span>
-                  <% end %>
+                  </div>
                 </td>
                 <td>
                   <% if customer.delivery_person.present? %>
@@ -282,20 +275,16 @@
                   <% end %>
                 </td>
                 <td>
-                  <div class="added-by-info">
-                    <div class="d-flex align-items-center">
-                      <div class="user-mini-avatar me-2">
-                        <%= customer.user.name.first.upcase %>
-                      </div>
-                      <span class="text-muted"><%= customer.user.name %></span>
+                  <div class="added-info">
+                    <div class="text-muted">
+                      <i class="fas fa-calendar me-1"></i>
+                      <%= customer.created_at.strftime("%b %d, %Y") %>
+                    </div>
+                    <div class="text-muted small mt-1">
+                      <i class="fas fa-user me-1"></i>
+                      <%= customer.user&.name || 'Unknown' %>
                     </div>
                   </div>
-                </td>
-                <td>
-                  <span class="text-muted">
-                    <i class="fas fa-calendar me-1"></i>
-                    <%= customer.created_at.strftime("%b %d, %Y") %>
-                  </span>
                 </td>
                 <td>
                   <div class="btn-group" role="group">
@@ -343,7 +332,11 @@
         <div class="row p-4">
           <% @customers.each do |customer| %>
             <div class="col-md-6 col-lg-4 mb-4">
-              <div class="customer-card">
+              <div class="customer-card customer-clickable" 
+                   data-customer-id="<%= customer.id %>"
+                   data-customer-name="<%= customer.name %>"
+                   data-customer-image="<%= customer.image_url %>"
+                   style="cursor: pointer;">
                 <div class="customer-card-header">
                   <div class="customer-avatar-large">
                     <%= customer.name.split.map(&:first).join.upcase %>
@@ -398,25 +391,13 @@
                         <span class="text-muted small"><%= truncate(customer.address, length: 100) %></span>
                       </div>
                     <% end %>
-                  </div>
-                  
-                  <div class="customer-stats">
-                    <div class="stat-item">
-                      <span class="stat-label">Status</span>
-                      <% if customer.delivery_person.present? %>
-                        <span class="stat-value text-success">Assigned</span>
-                      <% else %>
-                        <span class="stat-value text-warning">Unassigned</span>
-                      <% end %>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-label">Location</span>
-                      <% if customer.latitude && customer.longitude %>
-                        <span class="stat-value text-success">Geo-Located</span>
-                      <% else %>
-                        <span class="stat-value text-muted">Not Located</span>
-                      <% end %>
-                    </div>
+                    
+                    <% if customer.latitude.present? && customer.longitude.present? %>
+                      <div class="d-flex align-items-start mb-2">
+                        <i class="fas fa-map-pin me-2 text-success mt-1"></i>
+                        <span class="text-muted small"><%= customer.latitude.round(6) %>, <%= customer.longitude.round(6) %></span>
+                      </div>
+                    <% end %>
                   </div>
                   
                   <div class="customer-badges">
@@ -431,24 +412,19 @@
                         Not Assigned
                       </span>
                     <% end %>
-                    
-                    <% if customer.latitude && customer.longitude %>
-                      <span class="badge bg-success mb-2">
-                        <i class="fas fa-map-pin me-1"></i>
-                        Geo-Located
-                      </span>
-                    <% end %>
                   </div>
                   
                   <div class="customer-footer">
                     <div class="d-flex justify-content-between align-items-center">
                       <small class="text-muted">
-                        <i class="fas fa-user me-1"></i>
-                        Added by <%= customer.user.name %>
-                      </small>
-                      <small class="text-muted">
-                        <i class="fas fa-calendar me-1"></i>
-                        <%= customer.created_at.strftime("%b %d, %Y") %>
+                        <div>
+                          <i class="fas fa-calendar me-1"></i>
+                          <%= customer.created_at.strftime("%b %d, %Y") %>
+                        </div>
+                        <div class="mt-1">
+                          <i class="fas fa-user me-1"></i>
+                          <%= customer.user&.name || 'Unknown' %>
+                        </div>
                       </small>
                     </div>
                   </div>
@@ -1250,6 +1226,37 @@
   </div>
 </div>
 
+<!-- Customer Image Modal -->
+<div class="modal fade" id="customerImageModal" tabindex="-1" aria-labelledby="customerImageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="customerImageModalLabel">
+          <i class="fas fa-user me-2"></i><span id="customerImageModalName">Customer</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div id="customerImageContainer">
+          <img id="customerImageDisplay" src="" alt="Customer Image" class="img-fluid rounded shadow" style="max-height: 400px; max-width: 100%;">
+        </div>
+        <div id="customerNoImage" class="d-none">
+          <div class="text-center py-5">
+            <i class="fas fa-user-circle text-muted" style="font-size: 8rem;"></i>
+            <h5 class="mt-3 text-muted">No Image Available</h5>
+            <p class="text-muted">This customer doesn't have a profile image.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-2"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const tableView = document.getElementById('tableView');
@@ -1292,6 +1299,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize unassign modal functionality
   initializeUnassignModal();
+  
+  // Initialize customer image modal functionality
+  initializeCustomerImageModal();
 });
 
 // Re-initialize on Turbo navigation
@@ -1302,6 +1312,9 @@ document.addEventListener('turbo:load', function() {
   
   // Re-initialize unassign modal on Turbo navigation
   initializeUnassignModal();
+  
+  // Re-initialize customer image modal on Turbo navigation
+  initializeCustomerImageModal();
 });
 
 function initializeUnassignModal() {
@@ -1437,14 +1450,57 @@ function initializeUnassignModal() {
     });
   }
 }
+
+function initializeCustomerImageModal() {
+  const customerRows = document.querySelectorAll('.customer-clickable');
+  const modal = document.getElementById('customerImageModal');
+  const modalName = document.getElementById('customerImageModalName');
+  const imageContainer = document.getElementById('customerImageContainer');
+  const imageDisplay = document.getElementById('customerImageDisplay');
+  const noImageDiv = document.getElementById('customerNoImage');
+  
+  if (!modal) return;
+  
+  customerRows.forEach(row => {
+    row.addEventListener('click', function(e) {
+      // Don't trigger modal if clicking on action buttons
+      if (e.target.closest('.btn') || e.target.closest('.btn-group')) {
+        return;
+      }
+      
+      const customerName = this.dataset.customerName;
+      const customerImage = this.dataset.customerImage;
+      
+      // Set customer name in modal
+      modalName.textContent = customerName;
+      
+      // Show or hide image based on availability
+      if (customerImage && customerImage.trim() !== '') {
+        imageContainer.classList.remove('d-none');
+        noImageDiv.classList.add('d-none');
+        imageDisplay.src = customerImage;
+        imageDisplay.alt = `${customerName} Photo`;
+      } else {
+        imageContainer.classList.add('d-none');
+        noImageDiv.classList.remove('d-none');
+      }
+      
+      // Show the modal
+      const bootstrapModal = new bootstrap.Modal(modal);
+      bootstrapModal.show();
+    });
+  });
+}
 </script>
 </div> <!-- End customers-content-wrapper -->
 
 <style>
 .customers-content-wrapper {
-  margin-left: 60px;
-  margin-right: 20px;
-  padding: 0 20px;
+  margin-left: 0px;
+  margin-right: 0px;
+  padding: 0 15px;
+  max-width: none !important;
+  width: auto !important;
 }
 
 /* Remove scroll functionality and smooth scrolling */
@@ -1465,9 +1521,22 @@ body {
 .table-responsive {
   overflow-x: visible !important;
   overflow-y: visible !important;
+  -webkit-overflow-scrolling: auto !important;
 }
 
 .card-body {
+  overflow: visible !important;
+}
+
+/* Ensure table doesn't create scrollbars */
+.table {
+  width: 100% !important;
+  table-layout: auto !important;
+}
+
+/* Remove any container overflow */
+#tableViewContent,
+#cardViewContent {
   overflow: visible !important;
 }
 
@@ -1477,19 +1546,19 @@ body {
   scroll-behavior: auto !important;
 }
 
-/* Make sure content fits properly in the shifted layout */
+/* Make sure content fits properly in the layout */
 @media (max-width: 768px) {
   .customers-content-wrapper {
-    margin-left: 20px;
-    margin-right: 10px;
+    margin-left: 0px;
+    margin-right: 0px;
     padding: 0 10px;
   }
 }
 
 @media (max-width: 576px) {
   .customers-content-wrapper {
-    margin-left: 10px;
-    margin-right: 10px;
+    margin-left: 0px;
+    margin-right: 0px;
     padding: 0 5px;
   }
 }
