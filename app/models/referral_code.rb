@@ -9,7 +9,7 @@ class ReferralCode < ApplicationRecord
   before_validation :generate_code, if: -> { code.blank? }
   before_validation :generate_share_url_slug, if: -> { share_url_slug.blank? }
 
-  scope :active, -> { joins(:customer).where(customers: { deleted_at: nil }) }
+  scope :active, -> { joins(:customer).where(customers: { is_active: true }) }
   scope :with_referrals, -> { where('total_referrals > 0') }
   scope :with_credits, -> { where('total_credits > 0') }
   scope :recent, -> { order(created_at: :desc) }
