@@ -9,7 +9,6 @@ class ProcurementSchedule < ApplicationRecord
   validates :unit, presence: true, inclusion: { in: %w[liters gallons kg pounds pieces] }
   
   validate :to_date_after_from_date
-  validate :dates_not_in_past
 
   scope :active, -> { where(status: 'active') }
   scope :by_vendor, ->(vendor) { where(vendor_name: vendor) }
@@ -90,13 +89,6 @@ class ProcurementSchedule < ApplicationRecord
     end
   end
 
-  def dates_not_in_past
-    return unless from_date
-    
-    if from_date < Date.current
-      errors.add(:from_date, 'cannot be in the past')
-    end
-  end
 
   def generate_procurement_assignments
     return unless from_date && to_date

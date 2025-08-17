@@ -251,6 +251,7 @@ Rails.application.routes.draw do
       get :vendor_analysis
       get :profit_analysis
       get :inventory_analysis
+      get :generate_reports
     end
   end
 

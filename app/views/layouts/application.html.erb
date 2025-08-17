@@ -335,6 +335,7 @@
         background: none !important;
         width: 100%;
       }
+      
 
       .sidebar .nav-item button.nav-link::before {
         content: '';
@@ -851,13 +852,14 @@
                 <% end %>
               </li>
               
+              <!-- Milk Analytics Module -->
               <li class="nav-item" role="none">
                 <%= link_to milk_analytics_path, 
                     class: "nav-link #{'active' if controller_name.in?(%w[milk_analytics procurement_schedules procurement_assignments])}", 
                     role: "menuitem",
                     "aria-current": controller_name.in?(%w[milk_analytics procurement_schedules procurement_assignments]) ? "page" : nil do %>
-                  <i class="fas fa-chart-bar nav-icon" aria-hidden="true"></i>
-                  <span class="nav-text">Milk Supply & Analytics</span>
+                  <i class="fas fa-glass-milk nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">📊 Milk Analytics</span>
                 <% end %>
               </li>
               

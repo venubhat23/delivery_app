@@ -62,15 +62,7 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def create
-    # Check if we have multiple products
-    if params[:assignment_products].present?
-      create_multi_product_deliveries
-    # Check if this is a scheduled delivery (date range)
-    elsif delivery_assignment_params[:start_date].present? && delivery_assignment_params[:end_date].present?
-      create_scheduled_deliveries
-    else
-      create_single_delivery
-    end
+    create_single_delivery
   end
 
   def edit
@@ -172,19 +164,14 @@ class DeliveryAssignmentsController < ApplicationController
   def delivery_assignment_params
     da_params = params.require(:delivery_assignment).permit(
       :customer_id, :product_id, :quantity, :unit,
-      :delivery_date, :special_instructions, :status, :priority,
-      :delivery_person_id, :start_date, :end_date, :frequency
+      :scheduled_date, :special_instructions, :status, :priority,
+      :delivery_person_id,
+      additional_products: [:product_id, :quantity, :unit]
     ).dup  # Create a copy to avoid modifying original params
 
     # Handle delivery_person_id to user_id mapping
     if da_params[:delivery_person_id].present?
       da_params[:user_id] = da_params[:delivery_person_id]
-    end
-
-    # Convert delivery_date to scheduled_date since delivery_date is just an alias method
-    if da_params[:delivery_date].present?
-      da_params[:scheduled_date] = da_params[:delivery_date]
-      da_params.delete(:delivery_date)
     end
 
     # Set default unit if not provided
@@ -194,11 +181,40 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def create_single_delivery
-    @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params.except(:start_date, :end_date, :frequency))
+    assignment_params = delivery_assignment_params.except(:additional_products)
+    additional_products = delivery_assignment_params[:additional_products] || []
+    
+    # Create main delivery assignment
+    @delivery_assignment = DeliveryAssignment.new(assignment_params)
     @delivery_assignment.status = 'pending' if @delivery_assignment.status.blank?
 
     if @delivery_assignment.save
-      redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully created.'
+      # Create additional product assignments
+      created_count = 1 # Count the main assignment
+      additional_products.each do |product_data|
+        next if product_data[:product_id].blank?
+        
+        additional_assignment = DeliveryAssignment.new(
+          customer_id: @delivery_assignment.customer_id,
+          user_id: @delivery_assignment.user_id,
+          product_id: product_data[:product_id],
+          quantity: product_data[:quantity],
+          unit: product_data[:unit] || 'pieces',
+          scheduled_date: @delivery_assignment.scheduled_date,
+          special_instructions: @delivery_assignment.special_instructions,
+          status: 'pending'
+        )
+        
+        if additional_assignment.save
+          created_count += 1
+        end
+      end
+      
+      notice_message = created_count > 1 ? 
+        "Successfully created #{created_count} delivery assignments." : 
+        'Single delivery assignment was successfully created.'
+        
+      redirect_to delivery_assignments_path, notice: notice_message
     else
       load_form_data
       render :new

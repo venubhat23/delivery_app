@@ -33,7 +33,7 @@ class Api::UsersController < Api::BaseController
     }
     
     # Filter for delivery people only
-    query = User.where(role: 'delivery_person').active
+    query = User.where(role: 'delivery_person')
     
     results = if search_term.present?
       search_conditions = options[:search_fields].map do |field|
@@ -50,14 +50,33 @@ class Api::UsersController < Api::BaseController
         results: delivery_people.map do |user|
           {
             id: user.id,
-            text: user.name,
-            data: user.as_json(only: [:id, :name, :email])
+            text: [user.name, user.phone.presence, user.email.presence].compact.join(" · "),
+            data: {
+              name: user.name,
+              phone: user.phone,
+              email: user.email
+            }
           }
         end,
         pagination: { more: false }
       }
     else
-      { results: [], pagination: { more: false } }
+      # Return all delivery people when no search term
+      all_delivery_people = query.limit(options[:per_page]).order(:name)
+      {
+        results: all_delivery_people.map do |user|
+          {
+            id: user.id,
+            text: [user.name, user.phone.presence, user.email.presence].compact.join(" · "),
+            data: {
+              name: user.name,
+              phone: user.phone,
+              email: user.email
+            }
+          }
+        end,
+        pagination: { more: false }
+      }
     end
     
     render json: results

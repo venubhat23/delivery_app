@@ -1,702 +1,1262 @@
-<% content_for :title, "Milk Supply & Analytics Dashboard" %>
+<% content_for :title, "Milk Analytics Dashboard" %>
 
 <div class="container-fluid">
-  <!-- Header Section -->
-  <div class="d-flex justify-content-between align-items-center mb-5">
-    <div>
-      <h1 class="h2 mb-2 text-dark fw-bold">
-        <i class="fas fa-glass-milk text-primary me-3" style="font-size: 2rem;"></i>
-        Milk Supply & Analytics
-      </h1>
-      <p class="text-muted mb-0 fs-5">Comprehensive milk procurement and delivery analytics dashboard</p>
-    </div>
-    
-    <div class="d-flex gap-3 align-items-center">
-      <!-- Action Buttons -->
-      <%= link_to new_procurement_schedule_path, class: "btn btn-primary btn-lg px-4 py-3 shadow-lg" do %>
-        <i class="fas fa-plus me-2"></i>
-        New Milk Purchase
-      <% end %>
-      
-      <%= link_to calendar_view_milk_analytics_path, class: "btn btn-outline-primary btn-lg px-4 py-3" do %>
-        <i class="fas fa-calendar me-2"></i>
-        Calendar View
-      <% end %>
-    </div>
-  </div>
-
-  <!-- Date Filter Section -->
+  <!-- Header with Navigation Tabs -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body py-3">
-          <%= form_with url: milk_analytics_path, method: :get, local: true, class: "d-flex align-items-center gap-3" do |form| %>
-            <div class="d-flex align-items-center gap-2">
-              <label class="form-label mb-0 fw-bold text-muted">Start Date:</label>
-              <%= form.date_field :from_date, 
-                  value: @from_date || Date.current, 
-                  class: "form-control form-control-sm", 
-                  style: "width: 150px;" %>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-              <label class="form-label mb-0 fw-bold text-muted">End Date:</label>
-              <%= form.date_field :to_date, 
-                  value: @to_date || Date.current, 
-                  class: "form-control form-control-sm", 
-                  style: "width: 150px;" %>
-            </div>
-            <%= form.submit "Apply", class: "btn btn-primary btn-sm px-4" %>
-          <% end %>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h2 mb-2 text-dark fw-bold">
+            <i class="fas fa-glass-milk text-primary me-3" style="font-size: 2rem;"></i>
+            Milk Analytics
+          </h1>
+          <p class="text-muted mb-0 fs-5">Comprehensive milk procurement and delivery analytics</p>
         </div>
       </div>
+      
+      <!-- Navigation Tabs -->
+      <ul class="nav nav-pills nav-fill" id="milkAnalyticsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" 
+                  type="button" role="tab" aria-controls="dashboard" aria-selected="true">
+            <i class="fas fa-chart-line me-2"></i>📈 Dashboard
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports" 
+                  type="button" role="tab" aria-controls="reports" aria-selected="false">
+            <i class="fas fa-file-alt me-2"></i>📊 Reports
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="procurement-tab" data-bs-toggle="pill" data-bs-target="#procurement" 
+                  type="button" role="tab" aria-controls="procurement" aria-selected="false">
+            <i class="fas fa-plus me-2"></i>➕ Create Procurement
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar" 
+                  type="button" role="tab" aria-controls="calendar" aria-selected="false">
+            <i class="fas fa-calendar-alt me-2"></i>📅 Procurement Calendar
+          </button>
+        </li>
+      </ul>
     </div>
   </div>
 
-  <!-- KPI Cards Row -->
-  <div class="row mb-5">
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-primary">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Total Milk Purchased
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <%= number_with_delimiter(@kpis[:total_milk_purchased]) %> L
-              </div>
-              <% 
-                assignments = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
-                actual_qty = assignments.with_actual_quantity.sum(:actual_quantity)
-                planned_qty = assignments.pending.sum(:planned_quantity)
-              %>
-              <% if planned_qty > 0 %>
-                <div class="text-xs text-white mt-2 opacity-75">
-                  <span class="badge badge-light me-1"><%= number_with_delimiter(actual_qty) %> actual</span>
-                  <span class="badge badge-light"><%= number_with_delimiter(planned_qty) %> planned</span>
+  <!-- Tab Content -->
+  <div class="tab-content" id="milkAnalyticsTabContent">
+    
+    <!-- Dashboard & Reports Tab -->
+    <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+      <!-- Date Filter Section -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body py-3">
+              <%= form_with url: milk_analytics_path, method: :get, local: true, class: "d-flex align-items-center gap-3 flex-wrap" do |form| %>
+                <div class="d-flex align-items-center gap-2">
+                  <label class="form-label mb-0 fw-bold text-muted">📅 Date Range:</label>
+                  <%= form.select :date_range, 
+                      options_for_select([
+                        ['Today', 'today'],
+                        ['This Week', 'week'], 
+                        ['This Month', 'month'],
+                        ['Custom Range', 'custom']
+                      ], params[:date_range] || 'today'), 
+                      {}, { class: "form-select", style: "width: 150px;", onchange: "toggleCustomDates()" } %>
                 </div>
-              <% end %>
-            </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
-                <i class="fas fa-glass-milk fa-2x text-white"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-success">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Gross Profit
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                ₹<%= number_with_delimiter(@kpis[:gross_profit].round(2)) %>
-              </div>
-              <% 
-                assignments = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
-                actual_profit = assignments.sum(&:actual_profit)
-                pending_planned_profit = assignments.pending.sum { |a| (a.planned_quantity * a.selling_price) - (a.planned_quantity * a.buying_price) }
-              %>
-              <% if pending_planned_profit > 0 %>
-                <div class="text-xs text-white mt-2 opacity-75">
-                  <span class="badge badge-light me-1">₹<%= number_with_delimiter(actual_profit.round(2)) %> actual</span>
-                  <span class="badge badge-light">₹<%= number_with_delimiter(pending_planned_profit.round(2)) %> planned</span>
-                </div>
-              <% end %>
-            </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
-                <i class="fas fa-rupee-sign fa-2x text-white"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-info">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Completion Rate
-              </div>
-              <div class="row no-gutters align-items-center">
-                <div class="col-auto">
-                  <div class="h4 mb-0 mr-3 font-weight-bold text-white">
-                    <%= @kpis[:completion_rate] %>%
+                <div class="custom-dates d-none">
+                  <div class="d-flex align-items-center gap-2">
+                    <label class="form-label mb-0 fw-bold text-muted">From:</label>
+                    <%= form.date_field :from_date, 
+                        value: params[:from_date] || Date.current, 
+                        class: "form-control form-control-sm", 
+                        style: "width: 150px;" %>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <label class="form-label mb-0 fw-bold text-muted">To:</label>
+                    <%= form.date_field :to_date, 
+                        value: params[:to_date] || Date.current, 
+                        class: "form-control form-control-sm", 
+                        style: "width: 150px;" %>
                   </div>
                 </div>
-                <div class="col">
-                  <div class="progress progress-modern mr-2">
-                    <div class="progress-bar bg-white" role="progressbar" 
-                         style="width: <%= @kpis[:completion_rate] %>%" 
-                         aria-valuenow="<%= @kpis[:completion_rate] %>" 
-                         aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
-                <i class="fas fa-clipboard-check fa-2x text-white"></i>
-              </div>
+                <%= form.submit "Apply Filter", class: "btn btn-primary btn-sm px-4" %>
+              <% end %>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-warning">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
+      <!-- KPI Cards Row -->
+      <div class="row mb-4">
+        <!-- Card 1: Active Vendors -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-primary">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-users fa-2x text-white"></i>
+              </div>
               <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
                 Active Vendors
               </div>
               <div class="h4 mb-0 font-weight-bold text-white">
-                <%= @kpis[:active_vendors] %>
-              </div>
-              <div class="text-xs text-white mt-2 opacity-75">
-                <i class="fas fa-trending-up me-1"></i>
-                Reliable Partners
-              </div>
-            </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
-                <i class="fas fa-users fa-2x text-white"></i>
+                <%= @total_vendors || 0 %>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Additional KPI Cards Row -->
-  <div class="row mb-5">
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-info">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
+        <!-- Card 2: Total Liters Procured -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-info">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-glass-milk fa-2x text-white"></i>
+              </div>
               <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Total Milk Utilized
+                Liters Procured
               </div>
               <div class="h4 mb-0 font-weight-bold text-white">
-                <%= number_with_delimiter(@milk_comparison[:total_milk_utilized]) %> L
+                <%= number_with_delimiter(@total_liters || 0) %>L
               </div>
             </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
+          </div>
+        </div>
+
+        <!-- Card 3: Total Purchase Amount -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-warning">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-rupee-sign fa-2x text-white"></i>
+              </div>
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Purchase Amount
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                ₹<%= number_with_delimiter(@total_cost || 0) %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Liters Delivered -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-success">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
                 <i class="fas fa-truck fa-2x text-white"></i>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-success">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
               <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Total Profit
+                Liters Delivered
               </div>
               <div class="h4 mb-0 font-weight-bold text-white">
-                ₹<%= number_with_delimiter(@milk_comparison[:total_profit].round(2)) %>
-              </div>
-            </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
-                <i class="fas fa-chart-line fa-2x text-white"></i>
+                <%= number_with_delimiter(@total_delivered || 0) %>L
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-danger">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Total Loss
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                ₹<%= number_with_delimiter(@milk_comparison[:total_loss].round(2)) %>
-              </div>
-            </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
-                <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-primary">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Pending Milk
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <%= number_with_delimiter(@milk_comparison[:pending_milk]) %> L
-              </div>
-            </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
+        <!-- Card 5: Milk Pending -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-warning">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
                 <i class="fas fa-hourglass-half fa-2x text-white"></i>
               </div>
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Milk Pending
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                <% milk_pending = (@total_liters || 0) - (@total_delivered || 0) %>
+                <%= number_with_delimiter(milk_pending) %>L
+              </div>
+              <div class="text-xs text-white opacity-75">
+                <% pending_percentage = (@total_liters && @total_liters > 0) ? ((milk_pending.to_f / @total_liters) * 100).round(1) : 0 %>
+                <%= pending_percentage %>% of procurement
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Milk Profit & Loss Analysis Cards -->
-  <div class="row mb-5">
-    <div class="col-xl-6 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-success">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
+        <!-- Card 6: Revenue from Deliveries -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-success">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-chart-line fa-2x text-white"></i>
+              </div>
               <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Milk Sales Profit
+                Revenue
               </div>
               <div class="h4 mb-0 font-weight-bold text-white">
-                ₹<%= number_with_delimiter(@milk_comparison[:milk_sold_profit]) %>
-              </div>
-              <div class="text-xs text-white mt-2 opacity-75">
-                <div class="mb-1">
-                  <strong>Purchased:</strong> <%= @milk_comparison[:milk_purchased] %> L @ ₹<%= @milk_comparison[:milk_buying_price] %>
-                </div>
-                <div class="mb-1">
-                  <strong>Sold:</strong> <%= @milk_comparison[:milk_utilized] %> L @ ₹<%= @milk_comparison[:milk_selling_price] %>
-                </div>
-                <div>
-                  <strong>Calculation:</strong> <%= @milk_comparison[:milk_utilized] %> × (₹<%= @milk_comparison[:milk_selling_price] %> - ₹<%= @milk_comparison[:milk_buying_price] %>) = ₹<%= @milk_comparison[:milk_sold_profit] %>
-                </div>
+                ₹<%= number_with_delimiter(@total_revenue || 0) %>
               </div>
             </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
+          </div>
+        </div>
+
+        <!-- Card 7: Profit/Loss -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 <%= (@total_profit || 0) >= 0 ? 'gradient-success' : 'gradient-danger' %>">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-<%= (@total_profit || 0) >= 0 ? 'arrow-up' : 'arrow-down' %> fa-2x text-white"></i>
+              </div>
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                <%= (@total_profit || 0) >= 0 ? 'Profit' : 'Loss' %>
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                ₹<%= number_with_delimiter((@total_profit || 0).abs) %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8: Profit Margin -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-info">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-percentage fa-2x text-white"></i>
+              </div>
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Profit Margin
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                <% profit_margin = (@total_revenue && @total_revenue > 0) ? (((@total_profit || 0).to_f / @total_revenue) * 100).round(1) : 0 %>
+                <%= profit_margin %>%
+              </div>
+              <div class="text-xs text-white opacity-75">
+                Profit ÷ Revenue × 100
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 9: Cost Recovery -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 <%= (@total_cost && @total_cost > 0 && @total_revenue && (@total_revenue.to_f / @total_cost * 100) >= 100) ? 'gradient-success' : 'gradient-danger' %>">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
                 <i class="fas fa-coins fa-2x text-white"></i>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-6 col-md-6 mb-4">
-      <div class="card border-0 shadow-lg h-100 gradient-danger">
-        <div class="card-body p-4">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
               <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Milk Wastage Loss & Net Result
+                Cost Recovery
               </div>
               <div class="h4 mb-0 font-weight-bold text-white">
-                <% if @milk_comparison[:milk_net_result] < 0 %>
-                  Net Loss: ₹<%= number_with_delimiter(@milk_comparison[:milk_net_result].abs) %>
-                <% else %>
-                  Net Profit: ₹<%= number_with_delimiter(@milk_comparison[:milk_net_result]) %>
-                <% end %>
+                <% cost_recovery = (@total_cost && @total_cost > 0) ? ((@total_revenue.to_f / @total_cost) * 100).round(2) : 0 %>
+                <%= cost_recovery %>%
               </div>
-              <div class="text-xs text-white mt-2 opacity-75">
-                <div class="mb-1">
-                  <strong>Unsold Milk:</strong> <%= @milk_comparison[:milk_unsold] %> L
-                </div>
-                <div class="mb-1">
-                  <strong>Wastage Loss:</strong> <%= @milk_comparison[:milk_unsold] %> × ₹<%= @milk_comparison[:milk_buying_price] %> = ₹<%= number_with_delimiter(@milk_comparison[:milk_unsold_loss]) %>
-                </div>
-                <div>
-                  <strong>Net:</strong> ₹<%= @milk_comparison[:milk_sold_profit] %> - ₹<%= number_with_delimiter(@milk_comparison[:milk_unsold_loss]) %> = ₹<%= number_with_delimiter(@milk_comparison[:milk_net_result]) %>
-                </div>
+              <div class="text-xs text-white opacity-75">
+                Revenue ÷ Cost × 100
               </div>
             </div>
-            <div class="col-auto">
-              <div class="icon-circle-lg bg-white bg-opacity-25">
+          </div>
+        </div>
+
+        <!-- Card 10: Break-even Need -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-warning">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-balance-scale fa-2x text-white"></i>
+              </div>
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Break-even Need
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                <% breakeven_liters = (@total_cost && @total_cost > 0) ? (@total_cost.to_f / 100).round(0) : 0 %>
+                <%= number_with_delimiter(breakeven_liters) %>L
+              </div>
+              <div class="text-xs text-white opacity-75">
+                Cost ÷ ₹100/L
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 11: Utilization Rate -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-primary">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                <i class="fas fa-chart-pie fa-2x text-white"></i>
+              </div>
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Utilization Rate
+              </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                <% utilization_rate = (@total_liters && @total_liters > 0) ? ((@total_delivered.to_f / @total_liters) * 100).round(1) : 0 %>
+                <%= utilization_rate %>%
+              </div>
+              <div class="text-xs text-white opacity-75">
+                Delivered ÷ Procured × 100
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 12: Wastage Cost -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+          <div class="card border-0 shadow-lg h-100 gradient-danger">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
                 <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Charts Row -->
-  <div class="row mb-5">
-    <!-- Daily Procurement Chart -->
-    <div class="col-xl-8 col-lg-7">
-      <div class="card border-0 shadow-lg mb-4">
-        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
-          <div>
-            <h5 class="m-0 font-weight-bold text-primary">
-              <i class="fas fa-chart-line me-2"></i>
-              Daily Procurement Overview
-            </h5>
-            <p class="text-muted mb-0 small">Track daily milk procurement trends</p>
-          </div>
-          <div class="d-flex gap-2">
-            <button id="refreshChartsBtn" class="btn btn-outline-success btn-sm" title="Refresh chart data">
-              <i class="fas fa-sync-alt me-2"></i>Refresh Data
-            </button>
-            <div class="dropdown">
-              <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-ellipsis-v"></i>
-              </button>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Export Data</a></li>
-                <li><a class="dropdown-item" href="#">View Details</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-4">
-          <div class="chart-area">
-            <canvas id="dailyProcurementChart" width="400" height="200"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Vendor Distribution Chart -->
-    <div class="col-xl-4 col-lg-5">
-      <div class="card border-0 shadow-lg mb-4">
-        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
-          <div>
-            <h5 class="m-0 font-weight-bold text-primary">
-              <i class="fas fa-chart-pie me-2"></i>
-              Vendor Distribution
-            </h5>
-            <p class="text-muted mb-0 small">Vendor contribution breakdown</p>
-          </div>
-          <div class="dropdown">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-              <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Export Data</a></li>
-              <li><a class="dropdown-item" href="#">View Details</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="card-body p-4">
-          <div class="chart-pie pt-2 pb-2">
-            <canvas id="vendorDistributionChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Milk Comparison and Vendor Performance Row -->
-  <div class="row mb-5">
-    <!-- Milk Purchase vs Delivery Comparison -->
-    <div class="col-xl-6 col-lg-6">
-      <div class="card border-0 shadow-lg mb-4">
-        <div class="card-header py-4">
-          <div class="d-flex align-items-center">
-            <div class="icon-circle bg-primary bg-opacity-10 me-3">
-              <i class="fas fa-balance-scale text-primary"></i>
-            </div>
-            <div>
-              <h5 class="m-0 font-weight-bold text-primary">Milk Purchase vs Delivery</h5>
-              <p class="text-muted mb-0 small">Supply and demand analysis</p>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-4">
-          <div class="row mb-4">
-            <div class="col-6 text-center">
-              <div class="metric-card bg-primary bg-opacity-10 p-3 rounded-3">
-                <div class="text-xs font-weight-bold text-primary text-uppercase mb-2">Purchased</div>
-                <div class="h4 mb-0 font-weight-bold text-primary">
-                  <%= number_with_delimiter(@milk_comparison[:purchased]) %> L
-                </div>
+              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                Wastage Cost
               </div>
-            </div>
-            <div class="col-6 text-center">
-              <div class="metric-card bg-success bg-opacity-10 p-3 rounded-3">
-                <div class="text-xs font-weight-bold text-success text-uppercase mb-2">Delivered</div>
-                <div class="h4 mb-0 font-weight-bold text-success">
-                  <%= number_with_delimiter(@milk_comparison[:delivered]) %> L
-                </div>
+              <div class="h4 mb-0 font-weight-bold text-white">
+                <% 
+                  milk_pending = (@total_liters || 0) - (@total_delivered || 0)
+                  wastage_cost = (@total_liters && @total_liters > 0) ? (milk_pending * (@total_cost.to_f / @total_liters)).round(0) : 0
+                %>
+                ₹<%= number_with_delimiter(wastage_cost) %>
               </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-6 text-center">
-              <div class="metric-card bg-warning bg-opacity-10 p-3 rounded-3">
-                <div class="text-xs font-weight-bold text-warning text-uppercase mb-2">Remaining</div>
-                <div class="h4 mb-0 font-weight-bold text-warning">
-                  <%= number_with_delimiter(@milk_comparison[:remaining]) %> L
-                </div>
-              </div>
-            </div>
-            <div class="col-6 text-center">
-              <div class="metric-card bg-info bg-opacity-10 p-3 rounded-3">
-                <div class="text-xs font-weight-bold text-info text-uppercase mb-2">Utilization</div>
-                <div class="h4 mb-0 font-weight-bold text-info">
-                  <%= @milk_comparison[:utilization_rate] %>%
-                </div>
+              <div class="text-xs text-white opacity-75">
+                Pending × Avg Cost/L
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Vendor Performance -->
-    <div class="col-xl-6 col-lg-6">
-      <div class="card border-0 shadow-lg mb-4">
-        <div class="card-header py-4">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center">
-              <div class="icon-circle bg-success bg-opacity-10 me-3">
-                <i class="fas fa-trophy text-success"></i>
-              </div>
-              <div>
-                <h5 class="m-0 font-weight-bold text-primary">Top Vendor Performance</h5>
-                <p class="text-muted mb-0 small">Best performing vendors</p>
+      <!-- Summary Tables -->
+      <div class="row">
+        <!-- Procurement Summary -->
+        <div class="col-lg-6 mb-4">
+          <div class="card border-0 shadow-lg">
+            <div class="card-header py-4">
+              <h5 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-shopping-cart me-2"></i>Procurement Summary
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Vendor</th>
+                      <th>Quantity (L)</th>
+                      <th>Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if @vendor_summary&.any? %>
+                      <% @vendor_summary.each do |vendor| %>
+                        <tr>
+                          <td><%= vendor[:name] %></td>
+                          <td><%= number_with_delimiter(vendor[:quantity]) %></td>
+                          <td>₹<%= number_with_delimiter(vendor[:amount]) %></td>
+                        </tr>
+                      <% end %>
+                    <% else %>
+                      <tr>
+                        <td colspan="3" class="text-center text-muted py-4">
+                          <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                          No procurement data available
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
               </div>
             </div>
-            <%= link_to vendor_analysis_milk_analytics_path, class: "btn btn-outline-primary btn-sm" do %>
-              View All
-            <% end %>
           </div>
         </div>
-        <div class="card-body p-4">
-          <% if @vendor_performance.any? %>
-            <% @vendor_performance.first(5).each_with_index do |vendor, index| %>
-              <div class="vendor-performance-item mb-4 p-3 rounded-3 <%= 'bg-light' if index.even? %>">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <div class="d-flex align-items-center">
-                    <span class="badge bg-primary me-2"><%= index + 1 %></span>
-                    <span class="font-weight-bold text-dark"><%= vendor[:vendor] %></span>
-                  </div>
-                  <span class="text-success fw-bold">₹<%= number_with_delimiter(vendor[:total_profit].round(2)) %></span>
-                </div>
-                <div class="progress progress-modern-vendor mt-2">
-                  <div class="progress-bar bg-success" role="progressbar" 
-                       style="width: <%= vendor[:reliability] %>%" 
-                       aria-valuenow="<%= vendor[:reliability] %>" 
-                       aria-valuemin="0" aria-valuemax="100">
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between mt-1">
-                  <small class="text-muted">Reliability</small>
-                  <small class="text-success fw-bold"><%= vendor[:reliability] %>%</small>
-                </div>
-              </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-4">
-              <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
-              <p class="text-muted">No vendor performance data available</p>
+
+        <!-- Delivery Summary -->
+        <div class="col-lg-6 mb-4">
+          <div class="card border-0 shadow-lg">
+            <div class="card-header py-4">
+              <h5 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-truck me-2"></i>Delivery Summary
+              </h5>
             </div>
-          <% end %>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Status</th>
+                      <th>Count</th>
+                      <th>Quantity (L)</th>
+                      <th>Revenue (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if @delivery_summary&.any? %>
+                      <% @delivery_summary.each do |delivery| %>
+                        <tr>
+                          <td>
+                            <span class="badge bg-<%= delivery[:status] == 'completed' ? 'success' : 'warning' %>">
+                              <%= delivery[:status].titleize %>
+                            </span>
+                          </td>
+                          <td><%= delivery[:count] %></td>
+                          <td><%= number_with_delimiter(delivery[:quantity]) %></td>
+                          <td>₹<%= number_with_delimiter(delivery[:revenue]) %></td>
+                        </tr>
+                      <% end %>
+                    <% else %>
+                      <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                          <i class="fas fa-truck fa-2x mb-2"></i><br>
+                          No delivery data available
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Recent Activities and Quick Actions -->
-  <div class="row">
-    <!-- Recent Procurement Schedules -->
-    <div class="col-xl-4 col-lg-4">
-      <div class="card border-0 shadow-lg mb-4">
-        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="icon-circle bg-primary bg-opacity-10 me-3">
-              <i class="fas fa-history text-primary"></i>
+      <!-- Detailed Calculations Section -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-lg">
+            <div class="card-header py-4 bg-gradient-primary text-white">
+              <h5 class="m-0 font-weight-bold">
+                <i class="fas fa-calculator me-2"></i>📊 Detailed Financial Calculations & Formulas
+              </h5>
+              <p class="mb-0 small opacity-90">Complete breakdown of procurement costs, delivery revenue, and profit calculations with formulas</p>
             </div>
-            <div>
-              <h5 class="m-0 font-weight-bold text-primary">Recent Schedules</h5>
-              <p class="text-muted mb-0 small">Latest procurement activities</p>
-            </div>
-          </div>
-          <%= link_to procurement_schedules_path, class: "btn btn-sm btn-outline-primary" do %>
-            View All
-          <% end %>
-        </div>
-        <div class="card-body p-4">
-          <% if @recent_schedules.any? %>
-            <% @recent_schedules.each_with_index do |schedule, index| %>
-              <div class="schedule-item d-flex align-items-center mb-4 p-3 rounded-3 <%= 'bg-light' if index.even? %>">
-                <div class="me-3">
-                  <div class="icon-circle bg-primary">
-                    <i class="fas fa-calendar text-white"></i>
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <div class="small text-muted mb-1"><%= schedule.created_at.strftime('%B %d, %Y') %></div>
-                  <div class="font-weight-bold text-dark"><%= schedule.vendor_name %></div>
-                  <div class="text-sm text-muted">
-                    <i class="fas fa-glass-milk me-1"></i>
-                    <%= schedule.quantity %> L/day • 
-                    <i class="fas fa-rupee-sign me-1"></i>
-                    ₹<%= schedule.buying_price %>/L
-                  </div>
-                </div>
-                <div class="text-end">
-                  <span class="badge bg-success">Active</span>
-                </div>
-              </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-4">
-              <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
-              <p class="text-muted">No recent schedules</p>
-              <%= link_to new_procurement_schedule_path, class: "btn btn-primary btn-sm" do %>
-                <i class="fas fa-plus me-1"></i>
-                Create Schedule
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
+            <div class="card-body">
+              
+              <!-- Procurement Calculations -->
+              <div class="row mb-5">
+                <div class="col-12">
+                  <h6 class="text-primary fw-bold mb-3">
+                    <i class="fas fa-shopping-cart me-2"></i>🛒 Procurement Cost Analysis
+                  </h6>
+                  
+                  <div class="row">
+                    <!-- Planned vs Actual Procurement -->
+                    <div class="col-lg-6 mb-4">
+                      <div class="card bg-light border-0">
+                        <div class="card-body">
+                          <h6 class="card-title text-info">📋 Planned Procurement</h6>
+                          <div class="calculation-breakdown">
+                            <% planned_total_quantity = 0 %>
+                            <% planned_total_cost = 0 %>
+                            <% if @vendor_summary&.any? %>
+                              <% @vendor_summary.each do |vendor| %>
+                                <% 
+                                  # Calculate planned quantities (assuming these are planned values)
+                                  planned_quantity = vendor[:quantity] || 0
+                                  planned_cost = vendor[:amount] || 0
+                                  planned_total_quantity += planned_quantity
+                                  planned_total_cost += planned_cost
+                                %>
+                                <div class="mb-2">
+                                  <strong><%= vendor[:name] %>:</strong><br>
+                                  <small class="text-muted">
+                                    Planned: <%= number_with_delimiter(planned_quantity) %>L × ₹90/L = ₹<%= number_with_delimiter(planned_cost) %>
+                                  </small>
+                                </div>
+                              <% end %>
+                            <% end %>
+                            <hr>
+                            <div class="fw-bold">
+                              <strong>Total Planned:</strong><br>
+                              Quantity: <%= number_with_delimiter(planned_total_quantity) %>L<br>
+                              Cost: ₹<%= number_with_delimiter(planned_total_cost) %>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-    <!-- Pending Assignments -->
-    <div class="col-xl-4 col-lg-4">
-      <div class="card border-0 shadow-lg mb-4">
-        <div class="card-header py-4 d-flex flex-row align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="icon-circle bg-warning bg-opacity-10 me-3">
-              <i class="fas fa-clock text-warning"></i>
-            </div>
-            <div>
-              <h5 class="m-0 font-weight-bold text-primary">Pending Today</h5>
-              <p class="text-muted mb-0 small">Assignments awaiting completion</p>
-            </div>
-          </div>
-          <%= link_to procurement_assignments_path, class: "btn btn-sm btn-outline-primary" do %>
-            View All
-          <% end %>
-        </div>
-        <div class="card-body p-4">
-          <% if @pending_assignments.any? %>
-            <% @pending_assignments.each_with_index do |assignment, index| %>
-              <div class="assignment-item d-flex align-items-center justify-content-between mb-4 p-3 rounded-3 <%= 'bg-light' if index.even? %>">
-                <div class="d-flex align-items-center">
-                  <div class="icon-circle bg-warning me-3">
-                    <i class="fas fa-user text-white"></i>
-                  </div>
-                  <div>
-                    <div class="font-weight-bold text-dark"><%= assignment.vendor_name %></div>
-                    <div class="text-sm text-muted">
-                      <i class="fas fa-glass-milk me-1"></i>
-                      <%= assignment.planned_quantity %> L • 
-                      <i class="fas fa-calendar me-1"></i>
-                      <%= assignment.formatted_date %>
+                    <!-- Actual Procurement -->
+                    <div class="col-lg-6 mb-4">
+                      <div class="card bg-light border-0">
+                        <div class="card-body">
+                          <h6 class="card-title text-success">✅ Actual Procurement</h6>
+                          <div class="calculation-breakdown">
+                            <div class="mb-2">
+                              <strong>Total Received:</strong> <%= number_with_delimiter(@total_liters || 0) %>L<br>
+                              <small class="text-muted">Formula: Sum of all actual quantities received from vendors</small>
+                            </div>
+                            <div class="mb-2">
+                              <strong>Total Cost:</strong> ₹<%= number_with_delimiter(@total_cost || 0) %><br>
+                              <small class="text-muted">Formula: Σ(Actual Quantity × Buying Price per vendor)</small>
+                            </div>
+                            <div class="mb-2">
+                              <strong>Average Cost/L:</strong> ₹<%= (@total_liters && @total_liters > 0) ? number_with_delimiter((@total_cost.to_f / @total_liters).round(2)) : '0' %><br>
+                              <small class="text-muted">Formula: Total Cost ÷ Total Liters</small>
+                            </div>
+                            <div class="variance-analysis">
+                              <% 
+                                variance_quantity = (@total_liters || 0) - planned_total_quantity
+                                variance_cost = (@total_cost || 0) - planned_total_cost
+                                variance_percentage = planned_total_quantity > 0 ? ((variance_quantity.to_f / planned_total_quantity) * 100).round(2) : 0
+                              %>
+                              <strong>Variance Analysis:</strong><br>
+                              <span class="<%= variance_quantity >= 0 ? 'text-success' : 'text-danger' %>">
+                                Quantity: <%= variance_quantity >= 0 ? '+' : '' %><%= number_with_delimiter(variance_quantity) %>L (<%= variance_percentage %>%)
+                              </span><br>
+                              <span class="<%= variance_cost >= 0 ? 'text-danger' : 'text-success' %>">
+                                Cost: <%= variance_cost >= 0 ? '+' : '' %>₹<%= number_with_delimiter(variance_cost) %>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div>
-                  <span class="badge bg-warning">Pending</span>
-                  <% if assignment.date < Date.current %>
-                    <span class="badge bg-danger ms-1">Overdue</span>
-                  <% end %>
+              </div>
+
+              <!-- Delivery Revenue Analysis -->
+              <div class="row mb-5">
+                <div class="col-12">
+                  <h6 class="text-primary fw-bold mb-3">
+                    <i class="fas fa-truck me-2"></i>🚚 Delivery Revenue Analysis
+                  </h6>
+                  
+                  <div class="row">
+                    <!-- Revenue Breakdown -->
+                    <div class="col-lg-6 mb-4">
+                      <div class="card bg-light border-0">
+                        <div class="card-body">
+                          <h6 class="card-title text-success">💰 Revenue Calculations</h6>
+                          <div class="calculation-breakdown">
+                            <div class="mb-3">
+                              <strong>Total Delivered:</strong> <%= number_with_delimiter(@total_delivered || 0) %>L<br>
+                              <small class="text-muted">Formula: Sum of all completed delivery quantities</small>
+                            </div>
+                            <div class="mb-3">
+                              <strong>Total Revenue:</strong> ₹<%= number_with_delimiter(@total_revenue || 0) %><br>
+                              <small class="text-muted">Formula: Σ(Delivered Quantity × Selling Price per delivery)</small>
+                            </div>
+                            <div class="mb-3">
+                              <strong>Average Price/L:</strong> ₹<%= (@total_delivered && @total_delivered > 0) ? number_with_delimiter((@total_revenue.to_f / @total_delivered).round(2)) : '0' %><br>
+                              <small class="text-muted">Formula: Total Revenue ÷ Total Delivered</small>
+                            </div>
+                            
+                            <% if @delivery_summary&.any? %>
+                              <div class="delivery-status-breakdown">
+                                <strong>Status Breakdown:</strong>
+                                <% @delivery_summary.each do |delivery| %>
+                                  <div class="small mt-1">
+                                    <span class="badge bg-<%= delivery[:status] == 'completed' ? 'success' : 'warning' %> me-2">
+                                      <%= delivery[:status].titleize %>
+                                    </span>
+                                    <%= delivery[:count] %> orders, 
+                                    <%= number_with_delimiter(delivery[:quantity]) %>L, 
+                                    ₹<%= number_with_delimiter(delivery[:revenue]) %>
+                                  </div>
+                                <% end %>
+                              </div>
+                            <% end %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Utilization Analysis -->
+                    <div class="col-lg-6 mb-4">
+                      <div class="card bg-light border-0">
+                        <div class="card-body">
+                          <h6 class="card-title text-warning">📊 Utilization Metrics</h6>
+                          <div class="calculation-breakdown">
+                            <% 
+                              utilization_rate = (@total_liters && @total_liters > 0) ? ((@total_delivered.to_f / @total_liters) * 100).round(2) : 0
+                              wastage_quantity = (@total_liters || 0) - (@total_delivered || 0)
+                              wastage_percentage = (@total_liters && @total_liters > 0) ? ((wastage_quantity.to_f / @total_liters) * 100).round(2) : 0
+                              wastage_cost = (@total_liters && @total_liters > 0) ? (wastage_quantity * (@total_cost.to_f / @total_liters)).round(2) : 0
+                            %>
+                            
+                            <div class="mb-3">
+                              <strong>Utilization Rate:</strong> 
+                              <span class="<%= utilization_rate > 80 ? 'text-success' : utilization_rate > 50 ? 'text-warning' : 'text-danger' %>">
+                                <%= utilization_rate %>%
+                              </span><br>
+                              <small class="text-muted">Formula: (Delivered ÷ Procured) × 100</small><br>
+                              <small class="text-muted">Calculation: (<%= @total_delivered %>L ÷ <%= @total_liters %>L) × 100 = <%= utilization_rate %>%</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                              <strong>Wastage Analysis:</strong><br>
+                              <span class="text-danger">
+                                Quantity: <%= number_with_delimiter(wastage_quantity) %>L (<%= wastage_percentage %>%)
+                              </span><br>
+                              <span class="text-danger">
+                                Cost Impact: ₹<%= number_with_delimiter(wastage_cost) %>
+                              </span><br>
+                              <small class="text-muted">Formula: Procured - Delivered = Wastage</small><br>
+                              <small class="text-muted">Calculation: <%= @total_liters %>L - <%= @total_delivered %>L = <%= wastage_quantity %>L</small>
+                            </div>
+
+                            <div class="efficiency-score">
+                              <% efficiency_score = case utilization_rate
+                                   when 80..100 then "Excellent"
+                                   when 60..79 then "Good" 
+                                   when 40..59 then "Average"
+                                   when 20..39 then "Poor"
+                                   else "Critical"
+                                   end
+                                 efficiency_color = case utilization_rate
+                                   when 80..100 then "success"
+                                   when 60..79 then "info"
+                                   when 40..59 then "warning" 
+                                   when 20..39 then "danger"
+                                   else "dark"
+                                   end %>
+                              <strong>Efficiency Score:</strong>
+                              <span class="badge bg-<%= efficiency_color %> fs-6"><%= efficiency_score %></span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-4">
-              <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-              <p class="text-muted">All assignments completed!</p>
+
+              <!-- Profit/Loss Detailed Analysis -->
+              <div class="row mb-4">
+                <div class="col-12">
+                  <h6 class="text-primary fw-bold mb-3">
+                    <i class="fas fa-chart-line me-2"></i>💹 Profit/Loss Detailed Analysis
+                  </h6>
+                  
+                  <div class="row">
+                    <!-- Financial Summary -->
+                    <div class="col-lg-8 mb-4">
+                      <div class="card border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <div class="card-body">
+                          <h6 class="card-title text-dark">🧮 Complete Financial Formula</h6>
+                          
+                          <div class="formula-breakdown bg-white p-3 rounded border">
+                            <div class="row">
+                              <div class="col-md-6">
+                                <h6 class="text-info">📥 COSTS (Input)</h6>
+                                <div class="mb-2">
+                                  <strong>Total Procurement Cost:</strong><br>
+                                  <code class="bg-light p-1 rounded">₹<%= number_with_delimiter(@total_cost || 0) %></code>
+                                </div>
+                                <small class="text-muted">
+                                  Formula: Σ(Vendor Quantity × Buying Price)<br>
+                                  <% if @vendor_summary&.any? %>
+                                    <% @vendor_summary.each do |vendor| %>
+                                      + <%= vendor[:name] %>: <%= number_with_delimiter(vendor[:quantity]) %>L × ₹90 = ₹<%= number_with_delimiter(vendor[:amount]) %><br>
+                                    <% end %>
+                                  <% end %>
+                                </small>
+                              </div>
+                              
+                              <div class="col-md-6">
+                                <h6 class="text-success">📤 REVENUE (Output)</h6>
+                                <div class="mb-2">
+                                  <strong>Total Delivery Revenue:</strong><br>
+                                  <code class="bg-light p-1 rounded">₹<%= number_with_delimiter(@total_revenue || 0) %></code>
+                                </div>
+                                <small class="text-muted">
+                                  Formula: Σ(Delivered Quantity × Selling Price)<br>
+                                  <%= @total_delivered %>L × ₹100 = ₹<%= number_with_delimiter(@total_revenue || 0) %>
+                                </small>
+                              </div>
+                            </div>
+                            
+                            <hr class="my-3">
+                            
+                            <div class="text-center">
+                              <h6 class="<%= (@total_profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">
+                                <i class="fas fa-<%= (@total_profit || 0) >= 0 ? 'arrow-up' : 'arrow-down' %> me-2"></i>
+                                NET PROFIT/LOSS
+                              </h6>
+                              <div class="display-6 fw-bold <%= (@total_profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">
+                                ₹<%= number_with_delimiter((@total_profit || 0).abs) %> 
+                                <small class="fs-6"><%= (@total_profit || 0) >= 0 ? 'PROFIT' : 'LOSS' %></small>
+                              </div>
+                              <div class="mt-2">
+                                <code class="fs-6">Revenue - Cost = ₹<%= number_with_delimiter(@total_revenue || 0) %> - ₹<%= number_with_delimiter(@total_cost || 0) %> = ₹<%= number_with_delimiter(@total_profit || 0) %></code>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- Additional Metrics -->
+                          <div class="row mt-4">
+                            <div class="col-md-4 text-center">
+                              <div class="border rounded p-3">
+                                <h6 class="text-muted">Profit Margin</h6>
+                                <% profit_margin = (@total_revenue && @total_revenue > 0) ? (((@total_profit || 0).to_f / @total_revenue) * 100).round(2) : 0 %>
+                                <div class="h4 <%= profit_margin >= 0 ? 'text-success' : 'text-danger' %>">
+                                  <%= profit_margin %>%
+                                </div>
+                                <small class="text-muted">Profit ÷ Revenue × 100</small>
+                              </div>
+                            </div>
+                            
+                            <div class="col-md-4 text-center">
+                              <div class="border rounded p-3">
+                                <h6 class="text-muted">Cost Recovery</h6>
+                                <% cost_recovery = (@total_cost && @total_cost > 0) ? ((@total_revenue.to_f / @total_cost) * 100).round(2) : 0 %>
+                                <div class="h4 <%= cost_recovery >= 100 ? 'text-success' : 'text-danger' %>">
+                                  <%= cost_recovery %>%
+                                </div>
+                                <small class="text-muted">Revenue ÷ Cost × 100</small>
+                              </div>
+                            </div>
+                            
+                            <div class="col-md-4 text-center">
+                              <div class="border rounded p-3">
+                                <h6 class="text-muted">Break-even Need</h6>
+                                <% breakeven_liters = (@total_cost && @total_cost > 0) ? (@total_cost.to_f / 100).round(0) : 0 %>
+                                <div class="h4 text-info">
+                                  <%= number_with_delimiter(breakeven_liters) %>L
+                                </div>
+                                <small class="text-muted">Cost ÷ ₹100/L</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Optimization Recommendations -->
+                    <div class="col-lg-4 mb-4">
+                      <div class="card border-0 bg-warning bg-opacity-10">
+                        <div class="card-body">
+                          <h6 class="card-title text-warning">💡 Optimization Insights</h6>
+                          
+                          <% if (@total_profit || 0) < 0 %>
+                            <div class="alert alert-danger">
+                              <strong>⚠️ LOSS SITUATION</strong><br>
+                              Current loss: ₹<%= number_with_delimiter((@total_profit || 0).abs) %>
+                            </div>
+                            
+                            <div class="recommendations">
+                              <h6 class="small text-muted">IMMEDIATE ACTIONS:</h6>
+                              <ul class="small">
+                                <li>Reduce procurement to <%= breakeven_liters %>L (break-even)</li>
+                                <li>Find <%= ((breakeven_liters - (@total_delivered || 0))).round(0) %>L more customers</li>
+                                <li>Reduce wastage from <%= wastage_percentage %>% to <20%</li>
+                                <li>Potential savings: ₹<%= number_with_delimiter((wastage_cost * 0.8).round(0)) %></li>
+                              </ul>
+                            </div>
+                          <% else %>
+                            <div class="alert alert-success">
+                              <strong>✅ PROFITABLE</strong><br>
+                              Keep up the good work!
+                            </div>
+                          <% end %>
+                          
+                          <div class="mt-3">
+                            <h6 class="small text-muted">EFFICIENCY TARGETS:</h6>
+                            <div class="progress mb-2">
+                              <div class="progress-bar bg-success" style="width: <%= [utilization_rate, 100].min %>%"></div>
+                            </div>
+                            <small>Utilization: <%= utilization_rate %>% (Target: 80%+)</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
-          <% end %>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="col-xl-4 col-lg-4">
-      <div class="card border-0 shadow-lg mb-4">
-        <div class="card-header py-4">
-          <div class="d-flex align-items-center">
-            <div class="icon-circle bg-info bg-opacity-10 me-3">
-              <i class="fas fa-bolt text-info"></i>
-            </div>
-            <div>
-              <h5 class="m-0 font-weight-bold text-primary">Quick Actions</h5>
-              <p class="text-muted mb-0 small">Essential operations</p>
+    <!-- Reports Tab -->
+    <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+      <!-- Report Selection and Filters -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body py-3">
+              <div class="row align-items-center">
+                <div class="col-md-3">
+                  <label class="form-label mb-0 fw-bold text-muted">📋 Report Type:</label>
+                  <select id="reportType" class="form-select" onchange="updateReportFilters()">
+                    <option value="daily">Daily Procurement vs Delivery</option>
+                    <option value="vendor">Vendor Performance Report</option>
+                    <option value="profit">Profit/Loss Statement</option>
+                    <option value="wastage">Milk Wastage Analysis</option>
+                    <option value="monthly">Monthly Summary Report</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label mb-0 fw-bold text-muted">📅 Period:</label>
+                  <select id="reportPeriod" class="form-select" onchange="updateDateFields()">
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                </div>
+                <div class="col-md-2 custom-date-fields d-none">
+                  <label class="form-label mb-0 fw-bold text-muted">From:</label>
+                  <input type="date" id="reportFromDate" class="form-control form-control-sm" value="<%= Date.current %>">
+                </div>
+                <div class="col-md-2 custom-date-fields d-none">
+                  <label class="form-label mb-0 fw-bold text-muted">To:</label>
+                  <input type="date" id="reportToDate" class="form-control form-control-sm" value="<%= Date.current %>">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label mb-0">&nbsp;</label>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="generateReport()">
+                      <i class="fas fa-chart-bar me-1"></i>Generate
+                    </button>
+                    <div class="dropdown">
+                      <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-1"></i>Export
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="exportReport('pdf')"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportReport('excel')"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportReport('csv')"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="card-body p-4">
-          <div class="d-grid gap-3">
-            <%= link_to new_procurement_schedule_path, class: "btn btn-primary d-flex align-items-center justify-content-start" do %>
-              <div class="icon-circle bg-white bg-opacity-20 me-3">
-                <i class="fas fa-plus text-white"></i>
+      </div>
+
+      <!-- Report Content Area -->
+      <div id="reportContent">
+        <!-- Daily Procurement vs Delivery Report -->
+        <div id="dailyReport" class="report-section">
+          <div class="row">
+            <div class="col-12">
+              <div class="card border-0 shadow-lg">
+                <div class="card-header py-4">
+                  <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-comparison me-2"></i>Daily Procurement vs Delivery Report
+                  </h5>
+                  <p class="text-muted mb-0 small">Compare daily milk procurement against deliveries</p>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-hover" id="dailyReportTable">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Date</th>
+                          <th>Vendor</th>
+                          <th>Planned (L)</th>
+                          <th>Actual (L)</th>
+                          <th>Delivered (L)</th>
+                          <th>Remaining (L)</th>
+                          <th>Utilization %</th>
+                          <th>Cost (₹)</th>
+                          <th>Revenue (₹)</th>
+                          <th>Profit (₹)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                            <span class="text-muted">Click "Generate" to load report data</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-              <div class="text-start">
-                <div class="fw-bold">New Schedule</div>
-                <small class="opacity-75">Create procurement schedule</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vendor Performance Report -->
+        <div id="vendorReport" class="report-section d-none">
+          <div class="row">
+            <div class="col-12">
+              <div class="card border-0 shadow-lg">
+                <div class="card-header py-4">
+                  <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-users me-2"></i>Vendor Performance Report
+                  </h5>
+                  <p class="text-muted mb-0 small">Analyze vendor reliability, quality, and profitability</p>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-hover" id="vendorReportTable">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Vendor Name</th>
+                          <th>Total Orders</th>
+                          <th>Completed</th>
+                          <th>Reliability %</th>
+                          <th>Avg Price (₹/L)</th>
+                          <th>Total Quantity (L)</th>
+                          <th>Total Cost (₹)</th>
+                          <th>Total Profit (₹)</th>
+                          <th>Performance Score</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                            <span class="text-muted">Click "Generate" to load vendor performance data</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-            <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profit/Loss Statement -->
+        <div id="profitReport" class="report-section d-none">
+          <div class="row">
+            <!-- Summary Cards -->
+            <div class="col-lg-3 col-md-6 mb-4">
+              <div class="card border-0 shadow-lg h-100 gradient-info">
+                <div class="card-body p-4 text-center">
+                  <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                    <i class="fas fa-shopping-cart fa-2x text-white"></i>
+                  </div>
+                  <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                    Total Procurement Cost
+                  </div>
+                  <div class="h4 mb-0 font-weight-bold text-white" id="totalProcurementCost">
+                    ₹0
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+              <div class="card border-0 shadow-lg h-100 gradient-success">
+                <div class="card-body p-4 text-center">
+                  <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                    <i class="fas fa-rupee-sign fa-2x text-white"></i>
+                  </div>
+                  <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                    Total Revenue
+                  </div>
+                  <div class="h4 mb-0 font-weight-bold text-white" id="totalRevenue">
+                    ₹0
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+              <div class="card border-0 shadow-lg h-100 gradient-warning">
+                <div class="card-body p-4 text-center">
+                  <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                    <i class="fas fa-chart-line fa-2x text-white"></i>
+                  </div>
+                  <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                    Gross Profit
+                  </div>
+                  <div class="h4 mb-0 font-weight-bold text-white" id="grossProfit">
+                    ₹0
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+              <div class="card border-0 shadow-lg h-100 gradient-primary">
+                <div class="card-body p-4 text-center">
+                  <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
+                    <i class="fas fa-percentage fa-2x text-white"></i>
+                  </div>
+                  <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
+                    Profit Margin
+                  </div>
+                  <div class="h4 mb-0 font-weight-bold text-white" id="profitMargin">
+                    0%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed P&L Table -->
+          <div class="row">
+            <div class="col-12">
+              <div class="card border-0 shadow-lg">
+                <div class="card-header py-4">
+                  <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-calculator me-2"></i>Detailed Profit & Loss Statement
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-hover" id="profitLossTable">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Period</th>
+                          <th>Procurement Cost (₹)</th>
+                          <th>Delivery Revenue (₹)</th>
+                          <th>Gross Profit (₹)</th>
+                          <th>Wastage Loss (₹)</th>
+                          <th>Net Profit (₹)</th>
+                          <th>Margin %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                            <span class="text-muted">Click "Generate" to load profit/loss data</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wastage Analysis -->
+        <div id="wastageReport" class="report-section d-none">
+          <div class="row">
+            <div class="col-12">
+              <div class="card border-0 shadow-lg">
+                <div class="card-header py-4">
+                  <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Milk Wastage Analysis
+                  </h5>
+                  <p class="text-muted mb-0 small">Track milk wastage and identify improvement opportunities</p>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-hover" id="wastageReportTable">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Date</th>
+                          <th>Procured (L)</th>
+                          <th>Delivered (L)</th>
+                          <th>Wasted (L)</th>
+                          <th>Wastage %</th>
+                          <th>Wastage Cost (₹)</th>
+                          <th>Reason</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                            <span class="text-muted">Click "Generate" to load wastage analysis</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Summary -->
+        <div id="monthlyReport" class="report-section d-none">
+          <div class="row">
+            <div class="col-12">
+              <div class="card border-0 shadow-lg">
+                <div class="card-header py-4">
+                  <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-calendar-check me-2"></i>Monthly Summary Report
+                  </h5>
+                  <p class="text-muted mb-0 small">Comprehensive monthly overview of procurement operations</p>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-hover" id="monthlyReportTable">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Month</th>
+                          <th>Total Vendors</th>
+                          <th>Procurement (L)</th>
+                          <th>Deliveries (L)</th>
+                          <th>Utilization %</th>
+                          <th>Cost (₹)</th>
+                          <th>Revenue (₹)</th>
+                          <th>Profit (₹)</th>
+                          <th>Growth %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                            <span class="text-muted">Click "Generate" to load monthly summary</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Procurement Tab -->
+    <div class="tab-pane fade" id="procurement" role="tabpanel" aria-labelledby="procurement-tab">
+      <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+          <div class="card border-0 shadow-lg">
+            <div class="card-header py-4">
+              <h5 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-plus-circle me-2"></i>Create New Procurement Schedule
+              </h5>
+              <p class="text-muted mb-0 small">Set up daily milk procurement from vendors</p>
+            </div>
             
-            <%= link_to calendar_view_milk_analytics_path, class: "btn btn-outline-primary d-flex align-items-center justify-content-start" do %>
-              <div class="icon-circle bg-primary bg-opacity-10 me-3">
-                <i class="fas fa-calendar text-primary"></i>
+            <div class="card-body">
+              <%= form_with model: ProcurementSchedule.new, url: procurement_schedules_path, local: true, class: "row g-3" do |form| %>
+                <!-- Vendor Information -->
+                <div class="col-md-6">
+                  <%= form.label :vendor_name, "Vendor/Farm Name", class: "form-label fw-bold" %>
+                  <%= form.text_field :vendor_name, 
+                      class: "form-control",
+                      placeholder: "e.g., Nandi Milk Goshala",
+                      required: true %>
+                  <div class="form-text">
+                    <i class="fas fa-info-circle me-1"></i>Name of the farm or milk vendor
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <%= form.label :unit, "Unit of Measurement", class: "form-label fw-bold" %>
+                  <%= form.select :unit, 
+                      options_for_select([
+                        ['Liters', 'liters'],
+                        ['Gallons', 'gallons']
+                      ], 'liters'), 
+                      {}, { class: "form-select", required: true } %>
+                </div>
+
+                <!-- Date Range -->
+                <div class="col-md-6">
+                  <%= form.label :from_date, "From Date", class: "form-label fw-bold" %>
+                  <%= form.date_field :from_date, class: "form-control", required: true, 
+                      value: Date.current %>
+                </div>
+
+                <div class="col-md-6">
+                  <%= form.label :to_date, "To Date", class: "form-label fw-bold" %>
+                  <%= form.date_field :to_date, class: "form-control", required: true,
+                      value: Date.current + 30.days %>
+                </div>
+
+                <!-- Quantities and Pricing -->
+                <div class="col-md-4">
+                  <%= form.label :quantity, "Daily Quantity", class: "form-label fw-bold" %>
+                  <%= form.number_field :quantity, 
+                      class: "form-control",
+                      placeholder: "100.00",
+                      step: 0.01,
+                      min: 0.01,
+                      required: true %>
+                  <div class="form-text">Liters per day</div>
+                </div>
+
+                <div class="col-md-4">
+                  <%= form.label :buying_price, "Buying Price (₹/L)", class: "form-label fw-bold" %>
+                  <%= form.number_field :buying_price, 
+                      class: "form-control",
+                      placeholder: "90.00",
+                      step: 0.01,
+                      min: 0.01,
+                      required: true %>
+                  <div class="form-text">Cost per liter</div>
+                </div>
+
+                <div class="col-md-4">
+                  <%= form.label :selling_price, "Selling Price (₹/L)", class: "form-label fw-bold" %>
+                  <%= form.number_field :selling_price, 
+                      class: "form-control",
+                      placeholder: "100.00",
+                      step: 0.01,
+                      min: 0.01,
+                      required: true %>
+                  <div class="form-text">Price per liter to customers</div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="col-12">
+                  <%= form.label :notes, "Notes (Optional)", class: "form-label fw-bold" %>
+                  <%= form.text_area :notes, class: "form-control", rows: 3,
+                      placeholder: "Any additional notes about this procurement schedule..." %>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="col-12">
+                  <div class="d-flex gap-2">
+                    <%= form.submit "Create Procurement Schedule", class: "btn btn-primary btn-lg" %>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="resetProcurementForm()">
+                      Reset Form
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+
+              <!-- Info Box -->
+              <div class="alert alert-info mt-4">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>How it works:</strong> When you create a procurement schedule, the system will automatically generate daily procurement assignments for each day in the date range. Each assignment will have the planned quantity and prices you specify.
               </div>
-              <div class="text-start">
-                <div class="fw-bold">Calendar View</div>
-                <small class="text-muted">View schedule calendar</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Procurement Calendar Tab -->
+    <div class="tab-pane fade" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
+      <div class="row">
+        <div class="col-12">
+          <div class="card border-0 shadow-lg">
+            <div class="card-header py-4">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-calendar-alt me-2"></i>Procurement Assignment Calendar
+                  </h5>
+                  <p class="text-muted mb-0 small">Click on any date to edit procurement assignments</p>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-outline-primary" onclick="previousMonth()">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" onclick="nextMonth()">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="goToToday()">
+                    Today
+                  </button>
+                </div>
               </div>
-            <% end %>
+            </div>
             
-            <%= link_to vendor_analysis_milk_analytics_path, class: "btn btn-outline-info d-flex align-items-center justify-content-start" do %>
-              <div class="icon-circle bg-info bg-opacity-10 me-3">
-                <i class="fas fa-chart-bar text-info"></i>
+            <div class="card-body">
+              <div id="procurementCalendar">
+                <!-- Calendar will be rendered here -->
+                <div class="text-center py-5">
+                  <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
+                  <h4>Calendar Loading...</h4>
+                  <p class="text-muted">Please wait while we load your procurement calendar</p>
+                </div>
               </div>
-              <div class="text-start">
-                <div class="fw-bold">Vendor Analysis</div>
-                <small class="text-muted">Performance insights</small>
-              </div>
-            <% end %>
-            
-            <%= link_to profit_analysis_milk_analytics_path, class: "btn btn-outline-success d-flex align-items-center justify-content-start" do %>
-              <div class="icon-circle bg-success bg-opacity-10 me-3">
-                <i class="fas fa-chart-line text-success"></i>
-              </div>
-              <div class="text-start">
-                <div class="fw-bold">Profit Analysis</div>
-                <small class="text-muted">Financial reports</small>
-              </div>
-            <% end %>
-            
-            <%= link_to inventory_analysis_milk_analytics_path, class: "btn btn-outline-warning d-flex align-items-center justify-content-start" do %>
-              <div class="icon-circle bg-warning bg-opacity-10 me-3">
-                <i class="fas fa-boxes text-warning"></i>
-              </div>
-              <div class="text-start">
-                <div class="fw-bold">Inventory Analysis</div>
-                <small class="text-muted">Stock management</small>
-              </div>
-            <% end %>
+            </div>
           </div>
         </div>
       </div>
@@ -704,548 +1264,505 @@
   </div>
 </div>
 
-<!-- Chart.js Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Custom Date Range Functionality
-  const customRangeOption = document.getElementById('customRangeOption');
-  const customDateRange = document.getElementById('customDateRange');
-  const clearCustomRange = document.getElementById('clearCustomRange');
-  const dateRangeForm = document.getElementById('dateRangeForm');
-  
-  // Show custom date range when option is clicked
-  if (customRangeOption) {
-    customRangeOption.addEventListener('click', function(e) {
-      e.preventDefault();
-      customDateRange.style.display = 'flex';
-      // Set focus to the first date input
-      const fromDateInput = customDateRange.querySelector('input[name="from_date"]');
-      if (fromDateInput) {
-        fromDateInput.focus();
-      }
-    });
-  }
-  
-  // Clear custom range and hide the form
-  if (clearCustomRange) {
-    clearCustomRange.addEventListener('click', function() {
-      // Redirect to default month view
-      window.location.href = '<%= milk_analytics_path(date_range: 'month') %>';
-    });
-  }
-  
-  // Validate date range before submission
-  if (dateRangeForm) {
-    dateRangeForm.addEventListener('submit', function(e) {
-      const fromDate = document.querySelector('input[name="from_date"]').value;
-      const toDate = document.querySelector('input[name="to_date"]').value;
-      
-      if (!fromDate || !toDate) {
-        e.preventDefault();
-        alert('Please select both From and To dates.');
-        return false;
-      }
-      
-      if (new Date(fromDate) > new Date(toDate)) {
-        e.preventDefault();
-        alert('From date cannot be later than To date.');
-        return false;
-      }
-    });
-  }
-
-  // Chart data with fallbacks for empty data
-  const dailyChartData = <%= raw @daily_chart_data.to_json %> || [];
-  const vendorChartData = <%= raw @vendor_chart_data.to_json %> || [];
-
-  // Daily Procurement Chart
-  const dailyCtx = document.getElementById('dailyProcurementChart');
-  if (dailyCtx) {
-    let dailyChart;
-    
-    if (dailyChartData.length === 0) {
-      // Show empty state message
-      dailyCtx.style.display = 'none';
-      const emptyMessage = document.createElement('div');
-      emptyMessage.className = 'text-center py-5';
-      emptyMessage.innerHTML = `
-        <div class="text-muted">
-          <i class="fas fa-chart-line fa-3x mb-3 opacity-50"></i>
-          <h5>No Procurement Data Available</h5>
-          <p>Start by creating procurement schedules to see daily trends</p>
-          <a href="<%= new_procurement_schedule_path %>" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Create First Schedule
-          </a>
-        </div>
-      `;
-      dailyCtx.parentNode.appendChild(emptyMessage);
-    } else {
-      dailyChart = new Chart(dailyCtx, {
-        type: 'line',
-        data: {
-          labels: dailyChartData.map(d => {
-            const date = new Date(d.date);
-            return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-          }),
-          datasets: [{
-            label: 'Planned Quantity (L)',
-            data: dailyChartData.map(d => d.planned_quantity || 0),
-            borderColor: 'rgb(54, 162, 235)',
-            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }, {
-            label: 'Actual Quantity (L)',
-            data: dailyChartData.map(d => d.actual_quantity || 0),
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            intersect: false,
-            mode: 'index'
-          },
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                usePointStyle: true,
-                padding: 20
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              titleColor: 'white',
-              bodyColor: 'white',
-              borderColor: 'rgba(255, 255, 255, 0.2)',
-              borderWidth: 1,
-              callbacks: {
-                title: function(context) {
-                  const dataIndex = context[0].dataIndex;
-                  const date = new Date(dailyChartData[dataIndex].date);
-                  return date.toLocaleDateString('en-IN', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  });
-                },
-                afterBody: function(context) {
-                  const dataIndex = context[0].dataIndex;
-                  const data = dailyChartData[dataIndex];
-                  return [
-                    `Cost: ₹${(data.cost || 0).toLocaleString('en-IN')}`,
-                    `Revenue: ₹${(data.revenue || 0).toLocaleString('en-IN')}`,
-                    `Profit: ₹${(data.profit || 0).toLocaleString('en-IN')}`
-                  ];
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: {
-                color: 'rgba(0, 0, 0, 0.1)'
-              },
-              ticks: {
-                callback: function(value) {
-                  return value + 'L';
-                }
-              }
-            },
-            x: {
-              grid: {
-                color: 'rgba(0, 0, 0, 0.1)'
-              }
-            }
-          }
-        }
-      });
-    }
-  }
-
-  // Vendor Distribution Chart
-  const vendorCtx = document.getElementById('vendorDistributionChart');
-  if (vendorCtx) {
-    let vendorChart;
-    
-    if (vendorChartData.length === 0) {
-      // Show empty state message
-      vendorCtx.style.display = 'none';
-      const emptyMessage = document.createElement('div');
-      emptyMessage.className = 'text-center py-4';
-      emptyMessage.innerHTML = `
-        <div class="text-muted">
-          <i class="fas fa-chart-pie fa-3x mb-3 opacity-50"></i>
-          <h6>No Vendor Data Available</h6>
-          <p class="small">Add procurement schedules to see vendor distribution</p>
-        </div>
-      `;
-      vendorCtx.parentNode.appendChild(emptyMessage);
-    } else {
-      const colors = [
-        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', 
-        '#858796', '#5a5c69', '#2e59d9', '#17a2b8', '#ffc107'
-      ];
-      
-      vendorChart = new Chart(vendorCtx, {
-        type: 'doughnut',
-        data: {
-          labels: vendorChartData.map(v => v.vendor || 'Unknown'),
-          datasets: [{
-            data: vendorChartData.map(v => v.quantity || 0),
-            backgroundColor: colors.slice(0, vendorChartData.length),
-            borderWidth: 2,
-            borderColor: '#ffffff',
-            hoverBorderWidth: 3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                padding: 15,
-                usePointStyle: true,
-                font: {
-                  size: 12
-                }
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              titleColor: 'white',
-              bodyColor: 'white',
-              borderColor: 'rgba(255, 255, 255, 0.2)',
-              borderWidth: 1,
-              callbacks: {
-                label: function(context) {
-                  const dataIndex = context.dataIndex;
-                  const data = vendorChartData[dataIndex];
-                  const total = vendorChartData.reduce((sum, v) => sum + (v.quantity || 0), 0);
-                  const percentage = total > 0 ? ((data.quantity || 0) / total * 100).toFixed(1) : 0;
-                  
-                  return [
-                    `${data.vendor}: ${(data.quantity || 0).toLocaleString('en-IN')}L (${percentage}%)`,
-                    `Cost: ₹${(data.cost || 0).toLocaleString('en-IN')}`,
-                    `Profit: ₹${(data.profit || 0).toLocaleString('en-IN')}`
-                  ];
-                }
-              }
-            }
-          },
-          cutout: '60%',
-          animation: {
-            animateScale: true,
-            animateRotate: true
-          }
-        }
-      });
-    }
-  }
-
-  // Real-time data refresh functionality
-  function refreshChartData() {
-    fetch(window.location.href, {
-      headers: {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      // Update daily chart if it exists
-      if (dailyChart && data.daily_chart_data) {
-        dailyChart.data.labels = data.daily_chart_data.map(d => {
-          const date = new Date(d.date);
-          return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-        });
-        dailyChart.data.datasets[0].data = data.daily_chart_data.map(d => d.planned_quantity || 0);
-        dailyChart.data.datasets[1].data = data.daily_chart_data.map(d => d.actual_quantity || 0);
-        dailyChart.update('none'); // Smooth update without animation
-      }
-
-      // Update vendor chart if it exists
-      if (vendorChart && data.vendor_chart_data) {
-        vendorChart.data.labels = data.vendor_chart_data.map(v => v.vendor || 'Unknown');
-        vendorChart.data.datasets[0].data = data.vendor_chart_data.map(v => v.quantity || 0);
-        vendorChart.update('none'); // Smooth update without animation
-      }
-
-      console.log('Charts updated with real-time data');
-    })
-    .catch(error => {
-      console.log('Real-time update not available:', error);
-      // Fail silently - real-time updates are optional
-    });
-  }
-
-  // Auto-refresh every 30 seconds (optional - can be disabled)
-  const enableAutoRefresh = false; // Set to true to enable auto-refresh
-  if (enableAutoRefresh) {
-    setInterval(refreshChartData, 30000);
-  }
-
-  // Manual refresh button (if you want to add one)
-  const refreshButton = document.getElementById('refreshChartsBtn');
-  if (refreshButton) {
-    refreshButton.addEventListener('click', function() {
-      refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
-      refreshButton.disabled = true;
-      
-      setTimeout(() => {
-        refreshChartData();
-        refreshButton.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh Data';
-        refreshButton.disabled = false;
-      }, 1000);
-    });
-  }
-});
-</script>
-
+<!-- Custom Styles -->
 <style>
-.icon-circle {
-  height: 2.5rem;
-  width: 2.5rem;
-  border-radius: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Tab Pills Styling */
+.nav-pills .nav-link {
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  margin: 0 0.25rem;
+  font-weight: 600;
+  color: #6c757d;
+  background: transparent;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
 }
 
-.icon-circle-lg {
-  height: 3.5rem;
-  width: 3.5rem;
-  border-radius: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.nav-pills .nav-link:hover {
+  background: rgba(108, 117, 125, 0.1);
+  color: #495057;
 }
 
-.border-left-primary {
-  border-left: 0.25rem solid #4e73df!important;
-}
-
-.border-left-success {
-  border-left: 0.25rem solid #1cc88a!important;
-}
-
-.border-left-info {
-  border-left: 0.25rem solid #36b9cc!important;
-}
-
-.border-left-warning {
-  border-left: 0.25rem solid #f6c23e!important;
-}
-
-.progress-sm {
-  height: 0.5rem;
-}
-
-.progress-modern {
-  height: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 0.25rem;
-}
-
-.progress-modern .progress-bar {
-  background-color: white;
-  border-radius: 0.25rem;
-}
-
-.chart-area {
-  position: relative;
-  height: 20rem;
-  width: 100%;
-}
-
-.chart-pie {
-  position: relative;
-  height: 15rem;
-  width: 100%;
-}
-
-/* Modern Gradient Backgrounds */
-.gradient-primary {
+.nav-pills .nav-link.active {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(102, 126, 234, 0.25);
 }
 
-.gradient-success {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
+/* Gradient Card Styles */
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .gradient-info {
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-  color: white;
+  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
 }
 
 .gradient-warning {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
+  background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #55a3ff 0%, #003d82 100%);
 }
 
 .gradient-danger {
-  background: linear-gradient(135deg, #e74a3b 0%, #c0392b 100%);
-  color: white;
+  background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
 }
 
-/* Enhanced Card Styling */
-.card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 1rem;
+/* Icon Circle */
+.icon-circle-lg {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+/* Form Enhancements */
+.form-control:focus,
+.form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
 }
 
-/* Modern Button Styling */
-.btn-lg {
-  border-radius: 0.75rem;
-  font-weight: 600;
+/* Table Styling */
+.table-hover tbody tr:hover {
+  background-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Custom Date Fields Toggle */
+.custom-dates {
   transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-}
-
-.btn-outline-primary:hover {
-  transform: translateY(-2px);
-}
-
-/* Enhanced Chart Cards */
-.card-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 1rem 1rem 0 0 !important;
-  border-bottom: none;
-}
-
-/* Badge Styling */
-.badge-light {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-/* Text Enhancements */
-.text-dark {
-  color: #2d3748 !important;
-}
-
-.fw-bold {
-  font-weight: 700 !important;
-}
-
-/* Metric Cards */
-.metric-card {
-  transition: transform 0.2s ease;
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.metric-card:hover {
-  transform: scale(1.02);
-}
-
-/* Vendor Performance Items */
-.vendor-performance-item {
-  transition: all 0.3s ease;
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.vendor-performance-item:hover {
-  transform: translateX(5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.progress-modern-vendor {
-  height: 0.5rem;
-  background-color: rgba(0,0,0,0.1);
-  border-radius: 0.25rem;
-}
-
-.progress-modern-vendor .progress-bar {
-  border-radius: 0.25rem;
-}
-
-/* Enhanced Shadows */
-.shadow-lg {
-  box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 3px 10px rgba(0,0,0,0.05) !important;
-}
-
-/* Improved Typography */
-.h4 {
-  font-weight: 700;
-}
-
-.h5 {
-  font-weight: 600;
-}
-
-/* Background Utilities */
-.bg-opacity-10 {
-  --bs-bg-opacity: 0.1;
-}
-
-/* Animation for cards */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.card {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .h2 {
-    font-size: 1.5rem;
-  }
-  
-  .btn-lg {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-  
-  .icon-circle-lg {
-    height: 2.5rem;
-    width: 2.5rem;
-  }
-  
-  .metric-card {
-    margin-bottom: 1rem;
-  }
-  
-  .vendor-performance-item {
-    margin-bottom: 1rem;
-  }
-  
-  .schedule-item, .assignment-item {
-    padding: 0.5rem;
-  }
+.custom-dates.show {
+  display: flex !important;
 }
 </style>
+
+<!-- JavaScript for Tab and Form Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize date range selector
+  const dateRangeSelect = document.querySelector('select[name="date_range"]');
+  if (dateRangeSelect) {
+    toggleCustomDates();
+  }
+});
+
+function toggleCustomDates() {
+  const dateRangeSelect = document.querySelector('select[name="date_range"]');
+  const customDates = document.querySelector('.custom-dates');
+  
+  if (dateRangeSelect && customDates) {
+    if (dateRangeSelect.value === 'custom') {
+      customDates.classList.remove('d-none');
+      customDates.classList.add('show');
+    } else {
+      customDates.classList.add('d-none');
+      customDates.classList.remove('show');
+    }
+  }
+}
+
+function resetProcurementForm() {
+  const form = document.querySelector('#procurement form');
+  if (form) {
+    form.reset();
+    // Reset to default values
+    document.querySelector('#procurement_schedule_from_date').value = '<%= Date.current %>';
+    document.querySelector('#procurement_schedule_to_date').value = '<%= Date.current + 30.days %>';
+  }
+}
+
+// Calendar Navigation Functions
+function previousMonth() {
+  // Calendar navigation logic will be implemented
+  console.log('Previous month');
+}
+
+function nextMonth() {
+  // Calendar navigation logic will be implemented  
+  console.log('Next month');
+}
+
+function goToToday() {
+  // Go to today logic will be implemented
+  console.log('Go to today');
+}
+
+// Auto-submit form when date range changes (except custom)
+document.addEventListener('change', function(e) {
+  if (e.target.name === 'date_range' && e.target.value !== 'custom') {
+    e.target.closest('form').submit();
+  }
+});
+
+// Reports Tab Functionality
+function updateReportFilters() {
+  const reportType = document.getElementById('reportType').value;
+  
+  // Hide all report sections
+  document.querySelectorAll('.report-section').forEach(section => {
+    section.classList.add('d-none');
+  });
+  
+  // Show selected report section
+  const sectionMap = {
+    'daily': 'dailyReport',
+    'vendor': 'vendorReport', 
+    'profit': 'profitReport',
+    'wastage': 'wastageReport',
+    'monthly': 'monthlyReport'
+  };
+  
+  const targetSection = document.getElementById(sectionMap[reportType]);
+  if (targetSection) {
+    targetSection.classList.remove('d-none');
+  }
+}
+
+function updateDateFields() {
+  const period = document.getElementById('reportPeriod').value;
+  const customFields = document.querySelectorAll('.custom-date-fields');
+  
+  if (period === 'custom') {
+    customFields.forEach(field => field.classList.remove('d-none'));
+  } else {
+    customFields.forEach(field => field.classList.add('d-none'));
+  }
+}
+
+function generateReport() {
+  const reportType = document.getElementById('reportType').value;
+  const period = document.getElementById('reportPeriod').value;
+  let fromDate, toDate;
+  
+  // Calculate date range based on period
+  const today = new Date();
+  switch(period) {
+    case 'today':
+      fromDate = toDate = today.toISOString().split('T')[0];
+      break;
+    case 'week':
+      const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+      fromDate = weekStart.toISOString().split('T')[0];
+      toDate = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      break;
+    case 'month':
+      fromDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+      toDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+      break;
+    case 'custom':
+      fromDate = document.getElementById('reportFromDate').value;
+      toDate = document.getElementById('reportToDate').value;
+      break;
+  }
+  
+  if (!fromDate || !toDate) {
+    alert('Please select valid dates');
+    return;
+  }
+  
+  // Show loading state
+  showReportLoading(reportType);
+  
+  // Make API call to generate report
+  const url = `/milk-supply-analytics/generate_reports?report_type=${getReportTypeParam(reportType)}&from_date=${fromDate}&to_date=${toDate}`;
+  
+  fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    populateReportData(reportType, data);
+  })
+  .catch(error => {
+    console.error('Error generating report:', error);
+    showReportError(reportType);
+  });
+}
+
+function getReportTypeParam(reportType) {
+  const paramMap = {
+    'daily': 'daily_procurement_delivery',
+    'vendor': 'vendor_performance',
+    'profit': 'profit_loss',
+    'wastage': 'wastage_analysis',
+    'monthly': 'monthly_summary'
+  };
+  return paramMap[reportType];
+}
+
+function showReportLoading(reportType) {
+  const tableMap = {
+    'daily': 'dailyReportTable',
+    'vendor': 'vendorReportTable',
+    'profit': 'profitLossTable',
+    'wastage': 'wastageReportTable',
+    'monthly': 'monthlyReportTable'
+  };
+  
+  const table = document.getElementById(tableMap[reportType]);
+  if (table) {
+    const tbody = table.getElementsByTagName('tbody')[0];
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+          <span class="text-muted">Generating report...</span>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function showReportError(reportType) {
+  const tableMap = {
+    'daily': 'dailyReportTable',
+    'vendor': 'vendorReportTable', 
+    'profit': 'profitLossTable',
+    'wastage': 'wastageReportTable',
+    'monthly': 'monthlyReportTable'
+  };
+  
+  const table = document.getElementById(tableMap[reportType]);
+  if (table) {
+    const tbody = table.getElementsByTagName('tbody')[0];
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="text-center py-4">
+          <i class="fas fa-exclamation-triangle fa-2x mb-2 text-danger"></i><br>
+          <span class="text-danger">Error generating report. Please try again.</span>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function populateReportData(reportType, data) {
+  switch(reportType) {
+    case 'daily':
+      populateDailyReport(data);
+      break;
+    case 'vendor':
+      populateVendorReport(data);
+      break;
+    case 'profit':
+      populateProfitReport(data);
+      break;
+    case 'wastage':
+      populateWastageReport(data);
+      break;
+    case 'monthly':
+      populateMonthlyReport(data);
+      break;
+  }
+}
+
+function populateDailyReport(data) {
+  const tbody = document.querySelector('#dailyReportTable tbody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="text-center py-4">
+          <i class="fas fa-info-circle fa-2x mb-2 text-info"></i><br>
+          <span class="text-muted">No data available for the selected period</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  let html = '';
+  data.forEach(row => {
+    const utilizationClass = row.utilization_rate > 80 ? 'text-success' : row.utilization_rate > 60 ? 'text-warning' : 'text-danger';
+    const profitClass = row.profit >= 0 ? 'text-success' : 'text-danger';
+    
+    html += `
+      <tr>
+        <td>${row.date}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>${row.procurement_liters.toFixed(2)}</td>
+        <td>${row.delivery_liters.toFixed(2)}</td>
+        <td>${row.wastage_liters.toFixed(2)}</td>
+        <td><span class="${utilizationClass}">${row.utilization_rate}%</span></td>
+        <td>₹${row.procurement_cost.toFixed(2)}</td>
+        <td>₹${row.delivery_revenue.toFixed(2)}</td>
+        <td><span class="${profitClass}">₹${row.profit.toFixed(2)}</span></td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+
+function populateVendorReport(data) {
+  const tbody = document.querySelector('#vendorReportTable tbody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="text-center py-4">
+          <i class="fas fa-info-circle fa-2x mb-2 text-info"></i><br>
+          <span class="text-muted">No vendor data available for the selected period</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  let html = '';
+  data.forEach(vendor => {
+    const reliabilityClass = vendor.reliability_percentage > 80 ? 'text-success' : vendor.reliability_percentage > 60 ? 'text-warning' : 'text-danger';
+    const scoreClass = vendor.performance_score > 80 ? 'text-success' : vendor.performance_score > 60 ? 'text-warning' : 'text-danger';
+    
+    html += `
+      <tr>
+        <td><strong>${vendor.vendor_name}</strong></td>
+        <td>${vendor.total_assignments}</td>
+        <td>${vendor.completed_assignments}</td>
+        <td><span class="${reliabilityClass}">${vendor.reliability_percentage}%</span></td>
+        <td>₹${vendor.average_price}</td>
+        <td>${vendor.total_quantity.toFixed(2)} L</td>
+        <td>₹${vendor.total_cost.toFixed(2)}</td>
+        <td>₹${vendor.total_cost.toFixed(2)}</td>
+        <td><span class="${scoreClass}">${vendor.performance_score}%</span></td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+
+function populateProfitReport(data) {
+  // Update summary cards
+  document.getElementById('totalProcurementCost').textContent = `₹${data.summary.total_cost.toFixed(2)}`;
+  document.getElementById('totalRevenue').textContent = `₹${data.summary.total_revenue.toFixed(2)}`;
+  document.getElementById('grossProfit').textContent = `₹${data.summary.gross_profit.toFixed(2)}`;
+  document.getElementById('profitMargin').textContent = `${data.summary.profit_margin}%`;
+  
+  // Update table
+  const tbody = document.querySelector('#profitLossTable tbody');
+  if (!data.daily_breakdown || data.daily_breakdown.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center py-4">
+          <i class="fas fa-info-circle fa-2x mb-2 text-info"></i><br>
+          <span class="text-muted">No profit/loss data available for the selected period</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  let html = '';
+  data.daily_breakdown.forEach(day => {
+    const profitClass = day.profit >= 0 ? 'text-success' : 'text-danger';
+    const margin = day.revenue > 0 ? ((day.profit / day.revenue) * 100).toFixed(2) : 0;
+    
+    html += `
+      <tr>
+        <td>${day.date}</td>
+        <td>₹${day.cost.toFixed(2)}</td>
+        <td>₹${day.revenue.toFixed(2)}</td>
+        <td><span class="${profitClass}">₹${day.profit.toFixed(2)}</span></td>
+        <td>₹0.00</td>
+        <td><span class="${profitClass}">₹${day.profit.toFixed(2)}</span></td>
+        <td>${margin}%</td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+
+function populateWastageReport(data) {
+  const tbody = document.querySelector('#wastageReportTable tbody');
+  if (!data.daily_data || data.daily_data.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center py-4">
+          <i class="fas fa-info-circle fa-2x mb-2 text-info"></i><br>
+          <span class="text-muted">No wastage data available for the selected period</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  let html = '';
+  data.daily_data.forEach(day => {
+    const wastageClass = day.wastage_percentage > 20 ? 'text-danger' : day.wastage_percentage > 10 ? 'text-warning' : 'text-success';
+    
+    html += `
+      <tr>
+        <td>${day.date}</td>
+        <td>${day.procurement_liters.toFixed(2)} L</td>
+        <td>${day.delivery_liters.toFixed(2)} L</td>
+        <td>${day.wastage_liters.toFixed(2)} L</td>
+        <td><span class="${wastageClass}">${day.wastage_percentage}%</span></td>
+        <td>₹${day.wastage_cost.toFixed(2)}</td>
+        <td>Excess procurement</td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+
+function populateMonthlyReport(data) {
+  const tbody = document.querySelector('#monthlyReportTable tbody');
+  if (!data || Object.keys(data).length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="text-center py-4">
+          <i class="fas fa-info-circle fa-2x mb-2 text-info"></i><br>
+          <span class="text-muted">No monthly data available for the selected period</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  let html = '';
+  Object.entries(data).forEach(([month, monthData]) => {
+    const profitClass = monthData.profit >= 0 ? 'text-success' : 'text-danger';
+    
+    html += `
+      <tr>
+        <td><strong>${month}</strong></td>
+        <td>-</td>
+        <td>${monthData.procurement_liters.toFixed(2)} L</td>
+        <td>${monthData.delivery_liters.toFixed(2)} L</td>
+        <td>${monthData.utilization_rate}%</td>
+        <td>₹${monthData.procurement_cost.toFixed(2)}</td>
+        <td>₹${monthData.delivery_revenue.toFixed(2)}</td>
+        <td><span class="${profitClass}">₹${monthData.profit.toFixed(2)}</span></td>
+        <td>-</td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+
+function exportReport(format) {
+  const reportType = document.getElementById('reportType').value;
+  alert(`Export to ${format.toUpperCase()} functionality will be implemented soon for ${reportType} report.`);
+}
+
+// Initialize report sections on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateReportFilters();
+  updateDateFields();
+});
+</script>

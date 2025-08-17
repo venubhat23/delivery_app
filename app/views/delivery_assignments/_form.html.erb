@@ -16,64 +16,115 @@
             </div>
           <% end %>
 
-          <!-- Customer Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search customers (e.g., 'pr' for Pramod, Pradeep)...">
-            <%= form.label :customer_id, class: "form-label" %>
-            <%= form.select :customer_id, 
-                options_for_select([['Search and select customer...', '']] + @customers.map { |c| [c.name, c.id] }, @delivery_assignment.customer_id), 
-                {}, { 
-                  class: "form-select", 
-                  required: true,
-                  data: { "searchable-select-target" => "select" }
-                } %>
+          <!-- Customer Search Dropdown -->
+          <div class="col-md-6">
+            <%= form.label :customer_id, class: "form-label fw-bold" %>
+            <%= form.hidden_field :customer_id, id: "selected_customer_id" %>
+            <div class="position-relative">
+              <input type="text" 
+                     class="form-control" 
+                     id="customer_search_input"
+                     placeholder="Search by name, phone, email, or member ID..." 
+                     autocomplete="off"
+                     value="<%= @delivery_assignment.customer&.name %>"
+                     required>
+              <div class="search-results-dropdown d-none" id="customer_search_results">
+                <div class="search-loading d-none">
+                  <div class="p-3 text-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Searching customers...dsdsdsdd
+                  </div>
+                </div>
+                <div class="search-results-list"></div>
+                <div class="search-no-results d-none">
+                  <div class="p-3 text-muted text-center">
+                    <i class="fas fa-search me-2"></i>No customers found
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="form-text">
-              <small>Start typing to search customers by name</small>
+              <small><i class="fas fa-info-circle me-1"></i>Start typing to search customers by name, phone, email, or member ID</small>
             </div>
           </div>
 
-          <!-- Delivery Person Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search delivery people...">
-            <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
-            <%= form.select :delivery_person_id, 
-                options_for_select([['Search and select delivery person...', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, @delivery_assignment.user_id), 
-                {}, { 
-                  class: "form-select", 
-                  required: true,
-                  data: { "searchable-select-target" => "select" }
-                } %>
+          <!-- Delivery Person Search Dropdown -->
+          <div class="col-md-6">
+            <%= form.label :delivery_person_id, "Delivery Person", class: "form-label fw-bold" %>
+            <%= form.hidden_field :delivery_person_id, id: "selected_delivery_person_id" %>
+            <div class="position-relative">
+              <input type="text" 
+                     class="form-control" 
+                     id="delivery_person_search_input"
+                     placeholder="Search delivery people by name..." 
+                     autocomplete="off"
+                     value="<%= @delivery_assignment.user&.name %>"
+                     required>
+              <div class="search-results-dropdown d-none" id="delivery_person_search_results">
+                <div class="search-loading d-none">
+                  <div class="p-3 text-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Searching delivery people...
+                  </div>
+                </div>
+                <div class="search-results-list"></div>
+                <div class="search-no-results d-none">
+                  <div class="p-3 text-muted text-center">
+                    <i class="fas fa-truck me-2"></i>No delivery people found
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-text">
+              <small><i class="fas fa-info-circle me-1"></i>Start typing to search delivery people by name</small>
+            </div>
           </div>
 
-          <!-- Product Selection with Search -->
-          <div class="col-md-6" data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search products...">
-            <%= form.label :product_id, class: "form-label" %>
-            <%= form.select :product_id, 
-                options_for_select([['Search and select product...', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }, @delivery_assignment.product_id), 
-                {}, { 
-                  class: "form-select", 
-                  required: true,
-                  data: { "searchable-select-target" => "select" }
-                } %>
+          <!-- Product Search Dropdown -->
+          <div class="col-md-6">
+            <%= form.label :product_id, class: "form-label fw-bold" %>
+            <%= form.hidden_field :product_id, id: "selected_product_id" %>
+            <div class="position-relative">
+              <input type="text" 
+                     class="form-control" 
+                     id="product_search_input"
+                     placeholder="Search products by name..." 
+                     autocomplete="off"
+                     value="<%= @delivery_assignment.product&.name %>"
+                     required>
+              <div class="search-results-dropdown d-none" id="product_search_results">
+                <div class="search-loading d-none">
+                  <div class="p-3 text-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Searching products...
+                  </div>
+                </div>
+                <div class="search-results-list"></div>
+                <div class="search-no-results d-none">
+                  <div class="p-3 text-muted text-center">
+                    <i class="fas fa-search me-2"></i>No products found
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="form-text">
-              <small>Start typing to search products by name</small>
+              <small><i class="fas fa-info-circle me-1"></i>Start typing to search products by name</small>
             </div>
           </div>
 
           <div class="col-md-6">
-            <%= form.label :quantity, class: "form-label" %>
+            <%= form.label :quantity, class: "form-label fw-bold" %>
             <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
           </div>
 
           <!-- Enhanced Date Picker -->
-          <div class="col-md-6" data-controller="date-picker">
-            <%= form.label :scheduled_date, "Delivery Date", class: "form-label" %>
-            <%= form.date_field :scheduled_date, 
-                class: "form-control", 
-                required: true,
-                data: { "date-picker-target" => "input" } %>
+          <div class="col-md-6">
+            <%= form.label :scheduled_date, "Delivery Date", class: "form-label fw-bold" %>
+            <%= form.date_field :scheduled_date, class: "form-control", required: true %>
           </div>
 
           <div class="col-md-6">
-            <%= form.label :status, class: "form-label" %>
+            <%= form.label :status, class: "form-label fw-bold" %>
             <%= form.select :status, 
                 options_for_select([
                   ['Pending', 'pending'],
@@ -85,7 +136,7 @@
           </div>
 
           <div class="col-12">
-            <%= form.label :special_instructions, class: "form-label" %>
+            <%= form.label :special_instructions, class: "form-label fw-bold" %>
             <%= form.text_area :special_instructions, class: "form-control", rows: 3, 
                 placeholder: "Any special delivery instructions..." %>
           </div>
@@ -163,5 +214,668 @@
         </div>
       </div>
     </div>
+
+    <!-- Additional Info Card -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-lightbulb me-2"></i>Quick Tips
+        </h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled small">
+          <li class="mb-2">
+            <i class="fas fa-search text-primary me-2"></i>
+            <span>Use search boxes to quickly find and change customers, products, and delivery people</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-calendar text-warning me-2"></i>
+            <span>Changing the delivery date will update the schedule</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-edit text-info me-2"></i>
+            <span>All fields can be modified except assignment ID</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-save text-success me-2"></i>
+            <span>Changes are saved immediately when you click Update</span>
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </div>
+
+<script>
+// Available products data
+const availableProducts = [
+  <% @products.each_with_index do |p, index| %>
+    {
+      id: <%= p.id %>,
+      name: "<%= j(p.name) %>",
+      price: "<%= p.price %>",
+      unit_type: "<%= p.unit_type %>"
+    }<%= index < @products.count - 1 ? ',' : '' %>
+  <% end %>
+];
+
+let currentCustomerRequest = null;
+let currentDeliveryPersonRequest = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  initializeEditForm();
+});
+
+function initializeEditForm() {
+  // Set initial hidden field values
+  document.getElementById('selected_customer_id').value = '<%= @delivery_assignment.customer_id %>';
+  document.getElementById('selected_delivery_person_id').value = '<%= @delivery_assignment.user_id %>';
+  document.getElementById('selected_product_id').value = '<%= @delivery_assignment.product_id %>';
+  
+  // Initialize search functionality
+  initializeCustomerSearch();
+  initializeDeliveryPersonSearch();
+  initializeProductSearch();
+}
+
+// Customer Search
+function initializeCustomerSearch() {
+  const searchInput = document.getElementById('customer_search_input');
+  const searchResults = document.getElementById('customer_search_results');
+  const hiddenField = document.getElementById('selected_customer_id');
+  
+  if (!searchInput || !searchResults || !hiddenField) return;
+  
+  let searchTimeout = null;
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    if (currentCustomerRequest) {
+      currentCustomerRequest.abort();
+    }
+    
+    if (query.length < 2) {
+      hideSearchResults(searchResults);
+      return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+      performCustomerSearch(query, searchInput, searchResults, hiddenField);
+    }, 300);
+  });
+  
+  // Clear hidden field when input is cleared
+  searchInput.addEventListener('input', function() {
+    if (this.value.trim() === '') {
+      hiddenField.value = '';
+    }
+  });
+  
+  // Hide results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      hideSearchResults(searchResults);
+    }
+  });
+}
+
+function performCustomerSearch(query, searchInput, searchResults, hiddenField) {
+  showSearchLoading(searchResults);
+  
+  currentCustomerRequest = fetch(`/api/customers/search?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    currentCustomerRequest = null;
+    hideSearchLoading(searchResults);
+    
+    if (data && data.results && data.results.length > 0) {
+      displayCustomerResults(data.results, searchInput, searchResults, hiddenField);
+    } else {
+      showNoResults(searchResults, 'customers');
+    }
+  })
+  .catch(error => {
+    currentCustomerRequest = null;
+    hideSearchLoading(searchResults);
+    if (error.name !== 'AbortError') {
+      console.error('Customer search error:', error);
+      showNoResults(searchResults, 'customers');
+    }
+  });
+}
+
+function displayCustomerResults(customers, searchInput, searchResults, hiddenField) {
+  const resultsList = searchResults.querySelector('.search-results-list');
+  resultsList.innerHTML = '';
+  
+  customers.forEach(customer => {
+    const resultItem = document.createElement('div');
+    resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
+    resultItem.innerHTML = `
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <div class="avatar-circle">
+            ${customer.name.charAt(0).toUpperCase()}
+          </div>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-bold">${customer.name}</div>
+          <div class="text-muted small">
+            ${customer.phone ? `<i class="fas fa-phone me-1"></i>${customer.phone}` : ''}
+            ${customer.member_id ? `<i class="fas fa-id-card me-1 ms-2"></i>${customer.member_id}` : ''}
+          </div>
+          ${customer.address ? `<div class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>${customer.address}</div>` : ''}
+        </div>
+      </div>
+    `;
+    
+    resultItem.addEventListener('click', function() {
+      selectCustomer(customer, searchInput, searchResults, hiddenField);
+    });
+    
+    resultsList.appendChild(resultItem);
+  });
+  
+  showSearchResults(searchResults);
+}
+
+function selectCustomer(customer, searchInput, searchResults, hiddenField) {
+  searchInput.value = customer.name;
+  hiddenField.value = customer.id;
+  hideSearchResults(searchResults);
+}
+
+// Delivery Person Search
+function initializeDeliveryPersonSearch() {
+  const searchInput = document.getElementById('delivery_person_search_input');
+  const searchResults = document.getElementById('delivery_person_search_results');
+  const hiddenField = document.getElementById('selected_delivery_person_id');
+  
+  if (!searchInput || !searchResults || !hiddenField) return;
+  
+  let searchTimeout = null;
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    if (currentDeliveryPersonRequest) {
+      currentDeliveryPersonRequest.abort();
+    }
+    
+    if (query.length < 2) {
+      hideSearchResults(searchResults);
+      return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+      performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField);
+    }, 300);
+  });
+  
+  // Clear hidden field when input is cleared
+  searchInput.addEventListener('input', function() {
+    if (this.value.trim() === '') {
+      hiddenField.value = '';
+    }
+  });
+  
+  // Hide results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      hideSearchResults(searchResults);
+    }
+  });
+}
+
+function performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField) {
+  showSearchLoading(searchResults);
+  
+  currentDeliveryPersonRequest = fetch(`/api/delivery_people/search?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    currentDeliveryPersonRequest = null;
+    hideSearchLoading(searchResults);
+    
+    if (data && data.results && data.results.length > 0) {
+      displayDeliveryPersonResults(data.results, searchInput, searchResults, hiddenField);
+    } else {
+      showNoResults(searchResults, 'delivery people');
+    }
+  })
+  .catch(error => {
+    currentDeliveryPersonRequest = null;
+    hideSearchLoading(searchResults);
+    if (error.name !== 'AbortError') {
+      console.error('Delivery person search error:', error);
+      showNoResults(searchResults, 'delivery people');
+    }
+  });
+}
+
+function displayDeliveryPersonResults(deliveryPeople, searchInput, searchResults, hiddenField) {
+  const resultsList = searchResults.querySelector('.search-results-list');
+  resultsList.innerHTML = '';
+  
+  deliveryPeople.forEach(person => {
+    const resultItem = document.createElement('div');
+    resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
+    
+    const name = person.data ? person.data.name : person.name;
+    const email = person.data ? person.data.email : person.email;
+    
+    resultItem.innerHTML = `
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <div class="avatar-circle bg-info">
+            ${name.charAt(0).toUpperCase()}
+          </div>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-bold">${name}</div>
+          <div class="text-muted small">
+            ${email ? `<i class="fas fa-envelope me-1"></i>${email}` : ''}
+          </div>
+          <div class="text-muted small">
+            <i class="fas fa-truck me-1"></i>Delivery Person
+          </div>
+        </div>
+      </div>
+    `;
+    
+    resultItem.addEventListener('click', function() {
+      selectDeliveryPerson(person, searchInput, searchResults, hiddenField);
+    });
+    
+    resultsList.appendChild(resultItem);
+  });
+  
+  showSearchResults(searchResults);
+}
+
+function selectDeliveryPerson(person, searchInput, searchResults, hiddenField) {
+  const name = person.data ? person.data.name : person.name;
+  searchInput.value = name;
+  hiddenField.value = person.id;
+  hideSearchResults(searchResults);
+}
+
+// Product Search
+function initializeProductSearch() {
+  const searchInput = document.getElementById('product_search_input');
+  const searchResults = document.getElementById('product_search_results');
+  const hiddenField = document.getElementById('selected_product_id');
+  
+  if (!searchInput || !searchResults || !hiddenField) return;
+  
+  let searchTimeout = null;
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    if (query.length < 1) {
+      hideSearchResults(searchResults);
+      return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+      performProductSearch(query, searchInput, searchResults, hiddenField);
+    }, 200);
+  });
+  
+  // Clear hidden field when input is cleared
+  searchInput.addEventListener('input', function() {
+    if (this.value.trim() === '') {
+      hiddenField.value = '';
+    }
+  });
+  
+  // Hide results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      hideSearchResults(searchResults);
+    }
+  });
+}
+
+function performProductSearch(query, searchInput, searchResults, hiddenField) {
+  const filteredProducts = availableProducts.filter(product =>
+    product.name.toLowerCase().includes(query.toLowerCase())
+  );
+  
+  if (filteredProducts.length > 0) {
+    displayProductResults(filteredProducts, searchInput, searchResults, hiddenField);
+  } else {
+    showNoResults(searchResults, 'products');
+  }
+}
+
+function displayProductResults(products, searchInput, searchResults, hiddenField) {
+  const resultsList = searchResults.querySelector('.search-results-list');
+  resultsList.innerHTML = '';
+  
+  products.forEach(product => {
+    const resultItem = document.createElement('div');
+    resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
+    resultItem.innerHTML = `
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <div class="avatar-circle bg-success">
+            ${product.name.charAt(0).toUpperCase()}
+          </div>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-bold">${product.name}</div>
+          <div class="text-muted small">
+            <i class="fas fa-rupee-sign me-1"></i>Rs ${product.price}
+            <i class="fas fa-balance-scale me-1 ms-2"></i>${product.unit_type}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    resultItem.addEventListener('click', function() {
+      selectProduct(product, searchInput, searchResults, hiddenField);
+    });
+    
+    resultsList.appendChild(resultItem);
+  });
+  
+  showSearchResults(searchResults);
+}
+
+function selectProduct(product, searchInput, searchResults, hiddenField) {
+  searchInput.value = product.name;
+  hiddenField.value = product.id;
+  hideSearchResults(searchResults);
+}
+
+// Search Helper Functions
+function showSearchLoading(searchResults) {
+  searchResults.classList.remove('d-none');
+  searchResults.querySelector('.search-loading').classList.remove('d-none');
+  searchResults.querySelector('.search-results-list').innerHTML = '';
+  searchResults.querySelector('.search-no-results').classList.add('d-none');
+}
+
+function hideSearchLoading(searchResults) {
+  searchResults.querySelector('.search-loading').classList.add('d-none');
+}
+
+function showSearchResults(searchResults) {
+  searchResults.classList.remove('d-none');
+  searchResults.querySelector('.search-no-results').classList.add('d-none');
+}
+
+function showNoResults(searchResults, type = 'items') {
+  searchResults.classList.remove('d-none');
+  const noResultsDiv = searchResults.querySelector('.search-no-results');
+  noResultsDiv.classList.remove('d-none');
+  noResultsDiv.innerHTML = `
+    <div class="p-3 text-muted text-center">
+      <i class="fas fa-search me-2"></i>No ${type} found
+    </div>
+  `;
+  searchResults.querySelector('.search-results-list').innerHTML = '';
+}
+
+function hideSearchResults(searchResults) {
+  searchResults.classList.add('d-none');
+}
+</script>
+
+<style>
+/* Form Styles */
+.form-label.fw-bold {
+  color: #5a5c69;
+  font-weight: 600;
+}
+
+/* Search Dropdown Styles */
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.search-result-item:hover {
+  background-color: #f8f9fc;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+/* Avatar Styles */
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.avatar-circle.bg-info {
+  background: linear-gradient(45deg, #36b9cc, #258391);
+}
+
+.avatar-circle.bg-success {
+  background: linear-gradient(45deg, #1cc88a, #13855c);
+}
+
+/* Search Input Focus */
+.form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Loading Styles */
+.search-loading {
+  color: #6c757d;
+}
+
+.search-no-results {
+  color: #6c757d;
+}
+
+/* Utility Classes */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Card Enhancement */
+.card {
+  border: 1px solid #e3e6f0;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+/* Alert Styles */
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffecb3;
+  color: #856404;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: #4e73df;
+  border-color: #4e73df;
+}
+
+.btn-primary:hover {
+  background-color: #2e59d9;
+  border-color: #2653d4;
+}
+
+.btn-secondary {
+  background-color: #858796;
+  border-color: #858796;
+}
+
+.btn-secondary:hover {
+  background-color: #717384;
+  border-color: #6c757d;
+}
+
+.btn-success {
+  background-color: #1cc88a;
+  border-color: #1cc88a;
+}
+
+.btn-success:hover {
+  background-color: #17a673;
+  border-color: #169b6b;
+}
+
+.btn-info {
+  background-color: #36b9cc;
+  border-color: #36b9cc;
+}
+
+.btn-info:hover {
+  background-color: #2c9faf;
+  border-color: #2a96a5;
+}
+
+/* Status Badge Styles */
+.badge {
+  font-size: 0.875em;
+  font-weight: 500;
+  padding: 0.5em 0.75em;
+  border-radius: 0.35rem;
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .search-results-dropdown {
+    max-height: 200px;
+  }
+  
+  .avatar-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .form-text small {
+    font-size: 0.75rem;
+  }
+}
+
+/* Spinner Animation */
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-border {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: text-bottom;
+  border: 0.125em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border 0.75s linear infinite;
+}
+
+.spinner-border-sm {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-width: 0.1em;
+}
+
+/* Form Group Spacing */
+.row.g-3 > * {
+  padding-right: calc(var(--bs-gutter-x) * 0.5);
+  padding-left: calc(var(--bs-gutter-x) * 0.5);
+  margin-top: var(--bs-gutter-y);
+}
+
+/* Input Group Styling */
+.position-relative {
+  position: relative;
+}
+
+/* Custom Select Styling */
+.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+}
+
+.form-select:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Text Area Styling */
+.form-control[rows] {
+  resize: vertical;
+}
+
+/* Code Styling */
+code {
+  color: #e83e8c;
+  font-size: 87.5%;
+  word-wrap: break-word;
+  background-color: #f8f9fa;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+</style>

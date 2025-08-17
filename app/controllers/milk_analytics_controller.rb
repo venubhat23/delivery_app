@@ -2,59 +2,43 @@ class MilkAnalyticsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    @date_range = params[:date_range] || 'month'
-    @from_date = params[:from_date]
-    @to_date = params[:to_date]
+    # Determine date range based on parameters
+    @date_range = params[:date_range] || 'today'
     
-    # Use custom date range if provided, otherwise use predefined range
-    if @from_date.present? && @to_date.present?
-      @start_date = Date.parse(@from_date)
-      @end_date = Date.parse(@to_date)
-      @date_range = 'custom'
+    case @date_range
+    when 'today'
+      @start_date = Date.current
+      @end_date = Date.current
+    when 'week'
+      @start_date = Date.current.beginning_of_week
+      @end_date = Date.current.end_of_week
+    when 'month'
+      @start_date = Date.current.beginning_of_month
+      @end_date = Date.current.end_of_month
+    when 'custom'
+      @start_date = params[:from_date].present? ? Date.parse(params[:from_date]) : Date.current
+      @end_date = params[:to_date].present? ? Date.parse(params[:to_date]) : Date.current
     else
-      # Default to today's date if no custom dates provided
-      if @from_date.blank? && @to_date.blank?
-        @start_date = Date.current
-        @end_date = Date.current
-        @from_date = Date.current.to_s
-        @to_date = Date.current.to_s
-      else
-        @start_date, @end_date = calculate_date_range(@date_range)
-      end
+      @start_date = Date.current
+      @end_date = Date.current
     end
     
-    # Main KPIs
-    @kpis = calculate_main_kpis(@start_date, @end_date)
+    # Calculate KPI metrics
+    calculate_kpi_metrics
     
-    # Chart data
-    @daily_chart_data = generate_daily_chart_data(@start_date, @end_date)
-    @vendor_chart_data = generate_vendor_chart_data(@start_date, @end_date)
-    @profit_trend_data = generate_profit_trend_data(@start_date, @end_date)
+    # Calculate summaries
+    calculate_summaries
     
-    # Comparison with delivery data
-    @milk_comparison = calculate_milk_comparison(@start_date, @end_date)
-    
-    # Recent activities
-    @recent_schedules = current_user.procurement_schedules.recent.limit(5)
-    @pending_assignments = current_user.procurement_assignments.pending.limit(10)
-    @overdue_assignments = current_user.procurement_assignments.select(&:is_overdue?).first(5)
-    
-    # Vendor performance
-    @vendor_performance = calculate_vendor_performance(@start_date, @end_date)
-    
-    # Monthly summary for calendar
-    @monthly_summary = generate_monthly_summary(@start_date, @end_date)
-    
-    # Respond to JSON requests for real-time updates
     respond_to do |format|
       format.html
       format.json do
         render json: {
-          daily_chart_data: @daily_chart_data,
-          vendor_chart_data: @vendor_chart_data,
-          kpis: @kpis,
-          milk_comparison: @milk_comparison,
-          vendor_performance: @vendor_performance
+          total_vendors: @total_vendors,
+          total_liters: @total_liters,
+          total_cost: @total_cost,
+          total_delivered: @total_delivered,
+          total_revenue: @total_revenue,
+          total_profit: @total_profit
         }
       end
     end
@@ -337,6 +321,32 @@ class MilkAnalyticsController < ApplicationController
         delivered: daily_delivered,
         remaining: daily_purchased - daily_delivered
       }
+    end
+  end
+
+  def generate_reports
+    @report_type = params[:report_type] || 'daily_procurement_delivery'
+    @from_date = params[:from_date]&.to_date || Date.current.beginning_of_month
+    @to_date = params[:to_date]&.to_date || Date.current
+    
+    case @report_type
+    when 'daily_procurement_delivery'
+      @report_data = generate_daily_procurement_delivery_report(@from_date, @to_date)
+    when 'vendor_performance'
+      @report_data = generate_vendor_performance_report(@from_date, @to_date)
+    when 'profit_loss'
+      @report_data = generate_profit_loss_report(@from_date, @to_date)
+    when 'wastage_analysis'
+      @report_data = generate_wastage_analysis_report(@from_date, @to_date)
+    when 'monthly_summary'
+      @report_data = generate_monthly_summary_report(@from_date, @to_date)
+    else
+      @report_data = []
+    end
+    
+    respond_to do |format|
+      format.json { render json: @report_data }
+      format.html { redirect_to milk_analytics_index_path }
     end
   end
 
@@ -634,6 +644,332 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def authenticate_user!
-    # Add your authentication logic here
+    require_login
+  end
+
+  def calculate_kpi_metrics
+    begin
+      # Get procurement assignments for the date range
+      procurement_assignments = ProcurementAssignment.for_date_range(@start_date, @end_date)
+      
+      # Calculate basic metrics with safe defaults
+      @total_vendors = procurement_assignments.distinct.count(:vendor_name) || 0
+      @total_liters = procurement_assignments.sum('COALESCE(actual_quantity, planned_quantity)') || 0
+      @total_cost = procurement_assignments.sum { |a| a.actual_quantity ? (a.actual_cost || 0) : (a.planned_cost || 0) }
+      
+      # Get delivery data for milk products with error handling
+      if Product.table_exists?
+        delivery_assignments = DeliveryAssignment.joins(:product)
+                                               .where(scheduled_date: @start_date..@end_date)
+                                               .where("products.name ILIKE ?", '%milk%')
+      else
+        delivery_assignments = DeliveryAssignment.where(scheduled_date: @start_date..@end_date)
+      end
+      
+      completed_deliveries = delivery_assignments.where(status: 'completed')
+      @total_delivered = completed_deliveries.sum(:quantity) || 0
+      
+      # Handle final_amount_after_discount being nil
+      @total_revenue = 0
+      completed_deliveries.find_each do |delivery|
+        @total_revenue += delivery.final_amount_after_discount || 0
+      end
+      
+      @total_profit = @total_revenue - @total_cost
+      
+    rescue => e
+      Rails.logger.error "Error calculating KPI metrics: #{e.message}"
+      # Set safe defaults
+      @total_vendors = 0
+      @total_liters = 0
+      @total_cost = 0
+      @total_delivered = 0
+      @total_revenue = 0
+      @total_profit = 0
+    end
+  end
+
+  def generate_reports
+    @report_type = params[:report_type] || 'daily_procurement_delivery'
+    @from_date = params[:from_date]&.to_date || Date.current.beginning_of_month
+    @to_date = params[:to_date]&.to_date || Date.current
+    
+    case @report_type
+    when 'daily_procurement_delivery'
+      @report_data = generate_daily_procurement_delivery_report(@from_date, @to_date)
+    when 'vendor_performance'
+      @report_data = generate_vendor_performance_report(@from_date, @to_date)
+    when 'profit_loss'
+      @report_data = generate_profit_loss_report(@from_date, @to_date)
+    when 'wastage_analysis'
+      @report_data = generate_wastage_analysis_report(@from_date, @to_date)
+    when 'monthly_summary'
+      @report_data = generate_monthly_summary_report(@from_date, @to_date)
+    else
+      @report_data = []
+    end
+    
+    respond_to do |format|
+      format.json { render json: @report_data }
+      format.html { redirect_to milk_analytics_index_path }
+    end
+  end
+
+  def calculate_summaries
+    # Vendor summary with safe nil handling
+    procurement_data = ProcurementAssignment.for_date_range(@start_date, @end_date)
+    
+    if procurement_data.any?
+      @vendor_summary = procurement_data.group_by(&:vendor_name)
+                                      .map do |vendor_name, assignments|
+        {
+          name: vendor_name || 'Unknown Vendor',
+          quantity: assignments.sum { |a| (a.actual_quantity || a.planned_quantity) || 0 },
+          amount: assignments.sum { |a| a.actual_quantity ? (a.actual_cost || 0) : (a.planned_cost || 0) }
+        }
+      end
+    else
+      @vendor_summary = []
+    end
+    
+    # Delivery summary with safe nil handling and error recovery
+    begin
+      if Product.table_exists?
+        delivery_data = DeliveryAssignment.joins(:product)
+                                        .where(scheduled_date: @start_date..@end_date)
+                                        .where("products.name ILIKE ?", '%milk%')
+      else
+        delivery_data = DeliveryAssignment.where(scheduled_date: @start_date..@end_date)
+      end
+      
+      if delivery_data.any?
+        @delivery_summary = delivery_data.group_by(&:status)
+                                        .map do |status, assignments|
+          # Calculate revenue safely
+          total_revenue = 0
+          assignments.each do |assignment|
+            total_revenue += assignment.final_amount_after_discount || 0
+          end
+          
+          {
+            status: status || 'unknown',
+            count: assignments.count,
+            quantity: assignments.sum { |a| a.quantity || 0 },
+            revenue: total_revenue
+          }
+        end
+      else
+        @delivery_summary = []
+      end
+    rescue => e
+      Rails.logger.error "Error calculating delivery summary: #{e.message}"
+      @delivery_summary = []
+    end
+  end
+
+  def generate_daily_procurement_delivery_report(from_date, to_date)
+    report_data = []
+    
+    (from_date..to_date).each do |date|
+      # Procurement data
+      procurement_assignments = ProcurementAssignment.for_date(date)
+      total_procurement = procurement_assignments.sum { |a| a.actual_quantity || a.planned_quantity || 0 }
+      procurement_cost = procurement_assignments.sum { |a| a.actual_quantity ? a.actual_cost : a.planned_cost }
+      
+      # Delivery data
+      if Product.table_exists?
+        delivery_assignments = DeliveryAssignment.joins(:product)
+                                               .where(scheduled_date: date)
+                                               .where("products.name ILIKE ?", '%milk%')
+      else
+        delivery_assignments = DeliveryAssignment.where(scheduled_date: date)
+      end
+      
+      total_delivery = delivery_assignments.sum(:quantity) || 0
+      delivery_revenue = 0
+      delivery_assignments.each { |d| delivery_revenue += d.final_amount_after_discount || 0 }
+      
+      # Calculate metrics
+      wastage = total_procurement - total_delivery
+      utilization_rate = total_procurement > 0 ? (total_delivery.to_f / total_procurement * 100).round(2) : 0
+      profit = delivery_revenue - procurement_cost
+      
+      report_data << {
+        date: date.strftime('%Y-%m-%d'),
+        procurement_liters: total_procurement,
+        procurement_cost: procurement_cost,
+        delivery_liters: total_delivery,
+        delivery_revenue: delivery_revenue,
+        wastage_liters: wastage,
+        utilization_rate: utilization_rate,
+        profit: profit
+      }
+    end
+    
+    report_data
+  end
+
+  def generate_vendor_performance_report(from_date, to_date)
+    vendors_data = ProcurementAssignment.for_date_range(from_date, to_date)
+                                       .group_by(&:vendor_name)
+                                       .map do |vendor_name, assignments|
+      total_assignments = assignments.count
+      completed_assignments = assignments.count { |a| a.status == 'completed' }
+      reliability = total_assignments > 0 ? (completed_assignments.to_f / total_assignments * 100).round(2) : 0
+      
+      total_quantity = assignments.sum { |a| a.actual_quantity || a.planned_quantity || 0 }
+      total_cost = assignments.sum { |a| a.actual_quantity ? a.actual_cost : a.planned_cost }
+      avg_price = assignments.map(&:buying_price).sum / assignments.count if assignments.count > 0
+      
+      {
+        vendor_name: vendor_name || 'Unknown',
+        total_assignments: total_assignments,
+        completed_assignments: completed_assignments,
+        reliability_percentage: reliability,
+        total_quantity: total_quantity,
+        total_cost: total_cost,
+        average_price: avg_price&.round(2) || 0,
+        performance_score: ((reliability + (total_quantity > 0 ? 100 : 0)) / 2).round(2)
+      }
+    end
+    
+    vendors_data.sort_by { |v| -v[:performance_score] }
+  end
+
+  def generate_profit_loss_report(from_date, to_date)
+    # Procurement costs
+    procurement_assignments = ProcurementAssignment.for_date_range(from_date, to_date)
+    total_procurement_cost = procurement_assignments.sum { |a| a.actual_quantity ? a.actual_cost : a.planned_cost }
+    
+    # Delivery revenue
+    if Product.table_exists?
+      delivery_assignments = DeliveryAssignment.joins(:product)
+                                             .where(scheduled_date: from_date..to_date)
+                                             .where("products.name ILIKE ?", '%milk%')
+    else
+      delivery_assignments = DeliveryAssignment.where(scheduled_date: from_date..to_date)
+    end
+    
+    total_delivery_revenue = 0
+    delivery_assignments.each { |d| total_delivery_revenue += d.final_amount_after_discount || 0 }
+    
+    # Calculate profit/loss metrics
+    gross_profit = total_delivery_revenue - total_procurement_cost
+    profit_margin = total_delivery_revenue > 0 ? (gross_profit / total_delivery_revenue * 100).round(2) : 0
+    
+    # Daily breakdown
+    daily_breakdown = (from_date..to_date).map do |date|
+      daily_procurement_cost = procurement_assignments.select { |a| a.date == date }
+                                                     .sum { |a| a.actual_quantity ? a.actual_cost : a.planned_cost }
+      
+      daily_deliveries = delivery_assignments.select { |d| d.scheduled_date == date }
+      daily_revenue = 0
+      daily_deliveries.each { |d| daily_revenue += d.final_amount_after_discount || 0 }
+      
+      {
+        date: date.strftime('%Y-%m-%d'),
+        cost: daily_procurement_cost,
+        revenue: daily_revenue,
+        profit: daily_revenue - daily_procurement_cost
+      }
+    end
+    
+    {
+      summary: {
+        total_cost: total_procurement_cost,
+        total_revenue: total_delivery_revenue,
+        gross_profit: gross_profit,
+        profit_margin: profit_margin
+      },
+      daily_breakdown: daily_breakdown
+    }
+  end
+
+  def generate_wastage_analysis_report(from_date, to_date)
+    wastage_data = (from_date..to_date).map do |date|
+      # Procurement data
+      procurement_assignments = ProcurementAssignment.for_date(date)
+      total_procurement = procurement_assignments.sum { |a| a.actual_quantity || a.planned_quantity || 0 }
+      
+      # Delivery data
+      if Product.table_exists?
+        delivery_assignments = DeliveryAssignment.joins(:product)
+                                               .where(scheduled_date: date)
+                                               .where("products.name ILIKE ?", '%milk%')
+      else
+        delivery_assignments = DeliveryAssignment.where(scheduled_date: date)
+      end
+      
+      total_delivery = delivery_assignments.sum(:quantity) || 0
+      wastage = total_procurement - total_delivery
+      wastage_percentage = total_procurement > 0 ? (wastage / total_procurement * 100).round(2) : 0
+      
+      # Calculate wastage cost
+      avg_procurement_cost = procurement_assignments.map(&:buying_price).sum / procurement_assignments.count if procurement_assignments.count > 0
+      wastage_cost = wastage * (avg_procurement_cost || 0)
+      
+      {
+        date: date.strftime('%Y-%m-%d'),
+        procurement_liters: total_procurement,
+        delivery_liters: total_delivery,
+        wastage_liters: wastage,
+        wastage_percentage: wastage_percentage,
+        wastage_cost: wastage_cost
+      }
+    end
+    
+    # Summary
+    total_wastage = wastage_data.sum { |d| d[:wastage_liters] }
+    total_procurement = wastage_data.sum { |d| d[:procurement_liters] }
+    overall_wastage_percentage = total_procurement > 0 ? (total_wastage / total_procurement * 100).round(2) : 0
+    total_wastage_cost = wastage_data.sum { |d| d[:wastage_cost] }
+    
+    {
+      summary: {
+        total_wastage_liters: total_wastage,
+        total_procurement_liters: total_procurement,
+        overall_wastage_percentage: overall_wastage_percentage,
+        total_wastage_cost: total_wastage_cost
+      },
+      daily_data: wastage_data
+    }
+  end
+
+  def generate_monthly_summary_report(from_date, to_date)
+    monthly_data = {}
+    
+    (from_date..to_date).group_by(&:month).each do |month, dates|
+      month_start = dates.min
+      month_end = dates.max
+      
+      # Procurement data
+      procurement_assignments = ProcurementAssignment.for_date_range(month_start, month_end)
+      total_procurement = procurement_assignments.sum { |a| a.actual_quantity || a.planned_quantity || 0 }
+      total_cost = procurement_assignments.sum { |a| a.actual_quantity ? a.actual_cost : a.planned_cost }
+      
+      # Delivery data
+      if Product.table_exists?
+        delivery_assignments = DeliveryAssignment.joins(:product)
+                                               .where(scheduled_date: month_start..month_end)
+                                               .where("products.name ILIKE ?", '%milk%')
+      else
+        delivery_assignments = DeliveryAssignment.where(scheduled_date: month_start..month_end)
+      end
+      
+      total_delivery = delivery_assignments.sum(:quantity) || 0
+      total_revenue = 0
+      delivery_assignments.each { |d| total_revenue += d.final_amount_after_discount || 0 }
+      
+      monthly_data[Date::MONTHNAMES[month]] = {
+        procurement_liters: total_procurement,
+        procurement_cost: total_cost,
+        delivery_liters: total_delivery,
+        delivery_revenue: total_revenue,
+        profit: total_revenue - total_cost,
+        utilization_rate: total_procurement > 0 ? (total_delivery.to_f / total_procurement * 100).round(2) : 0
+      }
+    end
+    
+    monthly_data
   end
 end

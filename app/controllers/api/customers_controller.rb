@@ -22,7 +22,8 @@ class Api::CustomersController < Api::BaseController
           text: [customer.name, customer.phone_number.presence || customer.alt_phone_number, (customer.member_id.present? ? "ID: #{customer.member_id}" : nil)].compact.join(" · "),
           name: customer.name,
           phone: customer.phone_number.presence || customer.alt_phone_number,
-          member_id: customer.member_id
+          member_id: customer.member_id,
+          address: customer.address
         }
       },
       pagination: { more: customers.next_page.present? }
