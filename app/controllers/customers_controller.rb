@@ -95,7 +95,24 @@ class CustomersController < ApplicationController
     params_to_update[:member_id] = nil if params_to_update[:member_id].blank?
     
     if @customer.update(params_to_update)
-      redirect_to @customer, notice: 'Customer was successfully updated.'
+      # Check if we should redirect back to index with filters
+      if params[:return_to_index].present?
+        redirect_url = customers_path
+        if params[:filters].present?
+          begin
+            filter_params = JSON.parse(params[:filters])
+            query_params = []
+            query_params << "search=#{CGI.escape(filter_params['search'])}" if filter_params['search'].present?
+            query_params << "delivery_person_id=#{CGI.escape(filter_params['delivery_person_id'])}" if filter_params['delivery_person_id'].present? && filter_params['delivery_person_id'] != 'all'
+            redirect_url += "?#{query_params.join('&')}" if query_params.any?
+          rescue JSON::ParserError
+            # If filters can't be parsed, just redirect to index
+          end
+        end
+        redirect_to redirect_url, notice: 'Customer was successfully updated.'
+      else
+        redirect_to @customer, notice: 'Customer was successfully updated.'
+      end
     else
       render :edit, status: :unprocessable_entity
     end

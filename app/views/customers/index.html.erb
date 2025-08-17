@@ -93,6 +93,81 @@
           <%= form.submit "Search & Filter", class: "btn btn-outline-primary d-none", id: "customer-search-submit" %>
         <% end %>
         <script>
+          // Filter persistence using sessionStorage
+          const CUSTOMER_FILTERS_KEY = 'customer_index_filters';
+
+          function saveFilters() {
+            const searchInput = document.getElementById('customer-live-search');
+            const deliveryPersonSelect = document.getElementById('delivery_person_filter');
+            
+            if (searchInput && deliveryPersonSelect) {
+              const filters = {
+                search: searchInput.value,
+                delivery_person_id: deliveryPersonSelect.value,
+                timestamp: Date.now()
+              };
+              sessionStorage.setItem(CUSTOMER_FILTERS_KEY, JSON.stringify(filters));
+            }
+          }
+
+          function restoreFilters() {
+            const savedFilters = sessionStorage.getItem(CUSTOMER_FILTERS_KEY);
+            if (!savedFilters) return false;
+
+            try {
+              const filters = JSON.parse(savedFilters);
+              
+              // Check if filters are not too old (1 hour max)
+              const oneHour = 60 * 60 * 1000;
+              if (Date.now() - filters.timestamp > oneHour) {
+                sessionStorage.removeItem(CUSTOMER_FILTERS_KEY);
+                return false;
+              }
+
+              const searchInput = document.getElementById('customer-live-search');
+              const deliveryPersonSelect = document.getElementById('delivery_person_filter');
+              
+              // Check if current URL already has filters to avoid conflicts
+              const urlParams = new URLSearchParams(window.location.search);
+              const hasFiltersInUrl = urlParams.has('search') || urlParams.has('delivery_person_id');
+              
+              if (hasFiltersInUrl) {
+                // Update sessionStorage with current URL filters
+                saveFilters();
+                return false;
+              }
+
+              // Apply saved filters if form elements exist and no URL filters
+              if (searchInput && filters.search && filters.search !== searchInput.value) {
+                searchInput.value = filters.search;
+              }
+              
+              if (deliveryPersonSelect && filters.delivery_person_id && filters.delivery_person_id !== deliveryPersonSelect.value) {
+                deliveryPersonSelect.value = filters.delivery_person_id;
+              }
+
+              // Submit form if we have filters to apply
+              if (filters.search || (filters.delivery_person_id && filters.delivery_person_id !== 'all')) {
+                const form = searchInput?.closest('form');
+                if (form) {
+                  setTimeout(() => {
+                    if (typeof form.requestSubmit === 'function') {
+                      form.requestSubmit();
+                    } else {
+                      form.submit();
+                    }
+                  }, 100);
+                  return true;
+                }
+              }
+              
+              return false;
+            } catch (e) {
+              sessionStorage.removeItem(CUSTOMER_FILTERS_KEY);
+              return false;
+            }
+          }
+
           function initCustomerLiveSearch() {
             const input = document.getElementById('customer-live-search');
             const submit = document.getElementById('customer-search-submit');
@@ -102,6 +177,7 @@
             input.addEventListener('input', function() {
               if (debounceTimer) clearTimeout(debounceTimer);
               debounceTimer = setTimeout(function() {
+                saveFilters();
                 submit.click();
               }, 400);
             });
@@ -109,6 +185,7 @@
             input.addEventListener('keydown', function(e) {
               if (e.key === 'Enter') {
                 e.preventDefault();
+                saveFilters();
               }
             });
           }
@@ -125,6 +202,7 @@
             if (oldHandler) select.removeEventListener('change', oldHandler);
 
             const handleChange = function() {
+              saveFilters();
               if (typeof form.requestSubmit === 'function') {
                 form.requestSubmit();
               } else {
@@ -136,11 +214,32 @@
             select[handlerKey] = handleChange;
           }
 
+          function initFilterPersistence() {
+            // Save filters when form is submitted manually
+            const form = document.querySelector('form[action*="customers"]');
+            if (form) {
+              form.addEventListener('submit', saveFilters);
+            }
+
+            // Save filters when Clear All is clicked
+            const clearButton = document.querySelector('a[href*="customers"][href$="customers"]');
+            if (clearButton) {
+              clearButton.addEventListener('click', function() {
+                sessionStorage.removeItem(CUSTOMER_FILTERS_KEY);
+              });
+            }
+
+            // Try to restore filters on page load
+            restoreFilters();
+          }
+
           document.addEventListener('turbo:load', initCustomerLiveSearch);
           document.addEventListener('DOMContentLoaded', initCustomerLiveSearch);
           document.addEventListener('turbo:load', initDeliveryPersonFilter);
           document.addEventListener('turbo:render', initDeliveryPersonFilter);
           document.addEventListener('DOMContentLoaded', initDeliveryPersonFilter);
+          document.addEventListener('turbo:load', initFilterPersistence);
+          document.addEventListener('DOMContentLoaded', initFilterPersistence);
         </script>
       </div>
       <div class="col-md-4 text-end">

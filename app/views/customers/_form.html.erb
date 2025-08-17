@@ -211,14 +211,23 @@
     </div>
   </div>
 
+  <!-- Hidden fields for filter persistence -->
+  <input type="hidden" name="return_to_index" id="returnToIndex" value="">
+  <input type="hidden" name="filters" id="filtersData" value="">
+
   <div class="d-flex justify-content-between align-items-center mt-4">
     <div class="form-actions">
-      <%= form.submit class: "btn btn-primary me-2" do %>
+      <%= form.submit class: "btn btn-primary me-2", id: "updateCustomerBtn" do %>
         <i class="fas fa-save me-2"></i><%= customer.new_record? ? 'Create Customer' : 'Update Customer' %>
       <% end %>
-      <%= link_to customers_path, class: "btn btn-secondary" do %>
-        <i class="fas fa-times me-2"></i>Cancel
+      <% unless customer.new_record? %>
+        <button type="button" class="btn btn-success me-2" id="updateAndReturnBtn">
+          <i class="fas fa-save me-2"></i>Update & Return to List
+        </button>
       <% end %>
+      <a href="#" id="cancelBtn" class="btn btn-secondary">
+        <i class="fas fa-times me-2"></i>Cancel
+      </a>
     </div>
     <small class="text-muted">
       <i class="fas fa-info-circle me-1"></i>
@@ -261,7 +270,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize multi-product functionality
   initializeMultiProductDelivery();
+
+  // Initialize filter persistence for forms
+  initializeFormFilterPersistence();
 });
+
+function initializeFormFilterPersistence() {
+  const updateAndReturnBtn = document.getElementById('updateAndReturnBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const returnToIndexField = document.getElementById('returnToIndex');
+  const filtersDataField = document.getElementById('filtersData');
+
+  // Handle "Update & Return to List" button
+  if (updateAndReturnBtn && returnToIndexField && filtersDataField) {
+    updateAndReturnBtn.addEventListener('click', function() {
+      const savedFilters = sessionStorage.getItem('customer_index_filters');
+      
+      returnToIndexField.value = 'true';
+      if (savedFilters) {
+        filtersDataField.value = savedFilters;
+      }
+      
+      // Submit the form
+      const form = this.closest('form');
+      if (form) {
+        form.submit();
+      }
+    });
+  }
+
+  // Handle cancel button
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Try to get saved filters from sessionStorage
+      const savedFilters = sessionStorage.getItem('customer_index_filters');
+      let url = '<%= customers_path %>';
+      
+      if (savedFilters) {
+        try {
+          const filters = JSON.parse(savedFilters);
+          const params = new URLSearchParams();
+          
+          if (filters.search && filters.search.trim()) {
+            params.append('search', filters.search);
+          }
+          
+          if (filters.delivery_person_id && filters.delivery_person_id !== 'all') {
+            params.append('delivery_person_id', filters.delivery_person_id);
+          }
+          
+          if (params.toString()) {
+            url += '?' + params.toString();
+          }
+        } catch (e) {
+          // If there's an error parsing, just go to the default customers path
+        }
+      }
+      
+      window.location.href = url;
+    });
+  }
+}
 
 // Multi-product delivery functionality
 let productRowCounter = 0;
