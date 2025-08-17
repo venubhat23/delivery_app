@@ -1,0 +1,487 @@
+<% content_for :title, "#{@procurement_schedule.vendor_name} - Procurement Schedule" %>
+
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-eye text-primary me-2"></i>
+        Procurement Schedule Details
+      </h1>
+      <p class="text-muted mb-0">
+        <strong><%= @procurement_schedule.vendor_name %></strong> 
+        • <%= @procurement_schedule.from_date.strftime('%b %d, %Y') %> to <%= @procurement_schedule.to_date.strftime('%b %d, %Y') %>
+      </p>
+    </div>
+    
+    <div class="d-flex gap-2">
+      <%= link_to procurement_schedules_path, class: "btn btn-outline-secondary" do %>
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Schedules
+      <% end %>
+      
+      <% if @procurement_schedule.can_be_edited? %>
+        <%= link_to edit_procurement_schedule_path(@procurement_schedule), class: "btn btn-warning" do %>
+          <i class="fas fa-edit me-1"></i>
+          Edit Schedule
+        <% end %>
+      <% end %>
+      
+      <% unless @procurement_schedule.procurement_assignments.exists? %>
+        <%= link_to generate_assignments_procurement_schedule_path(@procurement_schedule), 
+            method: :post, 
+            class: "btn btn-success",
+            data: { confirm: "Generate daily procurement assignments for this schedule?" } do %>
+          <i class="fas fa-calendar-plus me-1"></i>
+          Generate Assignments
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Schedule Information Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Schedule Status
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <% case @procurement_schedule.status %>
+                <% when 'active' %>
+                  <span class="badge badge-success fs-6">Active</span>
+                <% when 'inactive' %>
+                  <span class="badge badge-secondary fs-6">Inactive</span>
+                <% when 'completed' %>
+                  <span class="badge badge-primary fs-6">Completed</span>
+                <% when 'cancelled' %>
+                  <span class="badge badge-danger fs-6">Cancelled</span>
+                <% end %>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-info-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Duration
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= @procurement_schedule.duration_in_days %> days
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-calendar fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Daily Quantity
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= number_with_delimiter(@procurement_schedule.quantity) %> <%= @procurement_schedule.unit %>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-tint fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Completion Rate
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <%= @procurement_schedule.completion_percentage %>%
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-percentage fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Details -->
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-info-circle me-2"></i>
+            Schedule Information
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <strong class="text-muted">Vendor/Farm:</strong>
+                <br>
+                <span class="h5 text-primary"><%= @procurement_schedule.vendor_name %></span>
+              </div>
+              <div class="mb-3">
+                <strong class="text-muted">Period:</strong>
+                <br>
+                <%= @procurement_schedule.from_date.strftime('%B %d, %Y') %> to 
+                <%= @procurement_schedule.to_date.strftime('%B %d, %Y') %>
+                <br>
+                <small class="badge badge-light"><%= @procurement_schedule.duration_in_days %> days</small>
+              </div>
+              <div class="mb-3">
+                <strong class="text-muted">Daily Quantity:</strong>
+                <br>
+                <%= number_with_delimiter(@procurement_schedule.quantity) %> <%= @procurement_schedule.unit.capitalize %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <strong class="text-muted">Buying Price:</strong>
+                <br>
+                <span class="text-danger h6">₹<%= number_with_delimiter(@procurement_schedule.buying_price) %> per <%= @procurement_schedule.unit.singularize %></span>
+              </div>
+              <div class="mb-3">
+                <strong class="text-muted">Selling Price:</strong>
+                <br>
+                <span class="text-success h6">₹<%= number_with_delimiter(@procurement_schedule.selling_price) %> per <%= @procurement_schedule.unit.singularize %></span>
+              </div>
+              <div class="mb-3">
+                <strong class="text-muted">Profit Margin:</strong>
+                <br>
+                <span class="<%= @procurement_schedule.planned_profit >= 0 ? 'text-success' : 'text-danger' %> h6">
+                  <%= @procurement_schedule.profit_margin_percentage %>%
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <% if @procurement_schedule.notes.present? %>
+            <div class="mt-4">
+              <strong class="text-muted">Notes:</strong>
+              <div class="mt-2 p-3 bg-light rounded">
+                <%= simple_format(@procurement_schedule.notes) %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Panel -->
+    <div class="col-lg-4">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-success">
+            <i class="fas fa-chart-bar me-2"></i>
+            Financial Summary
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Total Planned Quantity:</span>
+              <strong><%= number_with_delimiter(@analytics[:total_planned_quantity]) %> <%= @procurement_schedule.unit %></strong>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Total Planned Cost:</span>
+              <strong class="text-danger">₹<%= number_with_delimiter(@analytics[:total_planned_cost].round(2)) %></strong>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Total Planned Revenue:</span>
+              <strong class="text-success">₹<%= number_with_delimiter(@analytics[:total_planned_revenue].round(2)) %></strong>
+            </div>
+          </div>
+          
+          <hr>
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Expected Profit:</span>
+              <strong class="<%= @analytics[:planned_profit] >= 0 ? 'text-success' : 'text-danger' %>">
+                ₹<%= number_with_delimiter(@analytics[:planned_profit].round(2)) %>
+              </strong>
+            </div>
+          </div>
+          
+          <% if @analytics[:total_actual_quantity] > 0 %>
+            <hr>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Actual Quantity:</span>
+                <strong><%= number_with_delimiter(@analytics[:total_actual_quantity]) %> <%= @procurement_schedule.unit %></strong>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Actual Profit:</span>
+                <strong class="<%= @analytics[:actual_profit] >= 0 ? 'text-success' : 'text-danger' %>">
+                  ₹<%= number_with_delimiter(@analytics[:actual_profit].round(2)) %>
+                </strong>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Progress Card -->
+      <div class="card shadow">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-info">
+            <i class="fas fa-tasks me-2"></i>
+            Progress Overview
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <small class="text-muted">Completion Progress</small>
+            <div class="progress mb-2" style="height: 20px;">
+              <div class="progress-bar bg-info" role="progressbar" 
+                   style="width: <%= @analytics[:completion_percentage] %>%" 
+                   aria-valuenow="<%= @analytics[:completion_percentage] %>" 
+                   aria-valuemin="0" aria-valuemax="100">
+                <%= @analytics[:completion_percentage] %>%
+              </div>
+            </div>
+          </div>
+          
+          <div class="row text-center">
+            <div class="col-4">
+              <div class="text-success">
+                <i class="fas fa-check-circle"></i>
+                <div class="mt-1"><strong><%= @analytics[:completed_assignments] %></strong></div>
+                <small class="text-muted">Completed</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="text-warning">
+                <i class="fas fa-clock"></i>
+                <div class="mt-1"><strong><%= @analytics[:pending_assignments] %></strong></div>
+                <small class="text-muted">Pending</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="text-primary">
+                <i class="fas fa-calendar"></i>
+                <div class="mt-1"><strong><%= @analytics[:total_assignments] %></strong></div>
+                <small class="text-muted">Total</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Procurement Assignments -->
+  <% if @assignments.any? %>
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-tasks me-2"></i>
+            Daily Procurement Assignments
+          </h6>
+          <span class="badge badge-info"><%= @assignments.count %> assignments</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Planned Quantity</th>
+                <th>Actual Quantity</th>
+                <th>Planned Cost</th>
+                <th>Actual Cost</th>
+                <th>Status</th>
+                <th>Assignment Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @assignments.each do |assignment| %>
+                <tr>
+                  <td>
+                    <div class="font-weight-bold"><%= assignment.date.strftime('%b %d, %Y') %></div>
+                    <small class="text-muted"><%= assignment.date.strftime('%A') %></small>
+                  </td>
+                  <td>
+                    <span class="font-weight-bold"><%= number_with_delimiter(assignment.planned_quantity) %></span>
+                    <small class="text-muted"><%= @procurement_schedule.unit %></small>
+                  </td>
+                  <td>
+                    <% if assignment.actual_quantity.present? %>
+                      <span class="font-weight-bold text-success"><%= number_with_delimiter(assignment.actual_quantity) %></span>
+                      <small class="text-muted"><%= @procurement_schedule.unit %></small>
+                    <% else %>
+                      <span class="text-muted">-</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <span class="text-danger">₹<%= number_with_delimiter(assignment.planned_cost.round(2)) %></span>
+                  </td>
+                  <td>
+                    <% if assignment.actual_cost.present? %>
+                      <span class="text-success">₹<%= number_with_delimiter(assignment.actual_cost.round(2)) %></span>
+                    <% else %>
+                      <span class="text-muted">-</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% case assignment.status %>
+                    <% when 'completed' %>
+                      <span class="badge badge-success">Completed</span>
+                    <% when 'pending' %>
+                      <span class="badge badge-warning">Pending</span>
+                    <% when 'cancelled' %>
+                      <span class="badge badge-danger">Cancelled</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if assignment.status == 'pending' %>
+                      <span class="badge badge-warning">Pending Update</span>
+                    <% elsif assignment.status == 'completed' %>
+                      <span class="badge badge-success">
+                        <i class="fas fa-check me-1"></i>Complete
+                      </span>
+                    <% else %>
+                      <span class="badge badge-secondary"><%= assignment.status.humanize %></span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="card shadow">
+      <div class="card-body text-center py-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No Assignments Generated</h5>
+        <p class="text-muted mb-4">Daily procurement assignments haven't been generated for this schedule yet.</p>
+        <%= link_to generate_assignments_procurement_schedule_path(@procurement_schedule), 
+            method: :post, 
+            class: "btn btn-primary",
+            data: { confirm: "Generate daily procurement assignments for this schedule?" } do %>
+          <i class="fas fa-calendar-plus me-1"></i>
+          Generate Assignments Now
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<style>
+.border-left-primary {
+  border-left: 0.25rem solid #4e73df!important;
+}
+
+.border-left-success {
+  border-left: 0.25rem solid #1cc88a!important;
+}
+
+.border-left-info {
+  border-left: 0.25rem solid #36b9cc!important;
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid #f6c23e!important;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.badge {
+  font-size: 0.75em;
+  padding: 0.375em 0.75em;
+}
+
+.badge-success {
+  background-color: #1cc88a;
+}
+
+.badge-warning {
+  background-color: #f6c23e;
+}
+
+.badge-danger {
+  background-color: #e74a3b;
+}
+
+.badge-info {
+  background-color: #36b9cc;
+}
+
+.badge-primary {
+  background-color: #4e73df;
+}
+
+.badge-secondary {
+  background-color: #858796;
+}
+
+.badge-light {
+  background-color: #f8f9fc;
+  color: #5a5c69;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #5a5c69;
+  background-color: #f8f9fc;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.progress {
+  background-color: #e9ecef;
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+</style>

@@ -63,25 +63,31 @@
           </div>
 
           <!-- Customer Search -->
-          <div class="col-md-6">
+          <div class="col-md-6" 
+               data-controller="searchable-dropdown" 
+               data-searchable-dropdown-url-value="/api/customers/search"
+               data-searchable-dropdown-display-format-value="name+email"
+               data-searchable-dropdown-placeholder-value="Search by name, phone, email, or member ID..."
+               data-searchable-dropdown-required-value="true"
+               data-action="searchable-dropdown:itemSelected->delivery-assignment-form#customerSelected">
             <%= form.label :customer_id, class: "form-label fw-bold" %>
-            <%= form.hidden_field :customer_id, id: "selected_customer_id" %>
+            <%= form.hidden_field :customer_id, data: { "searchable-dropdown-target" => "hiddenField" } %>
             <div class="position-relative">
               <input type="text" 
                      class="form-control" 
-                     id="customer_search_input" 
                      placeholder="Search by name, phone, email, or member ID (e.g., 9632)..." 
                      autocomplete="off"
-                     required>
-              <div class="search-results-dropdown d-none" id="customer_search_results">
-                <div class="search-loading d-none">
+                     required
+                     data-searchable-dropdown-target="input">
+              <div class="search-results-dropdown d-none" data-searchable-dropdown-target="dropdown">
+                <div class="search-loading d-none" data-searchable-dropdown-target="loadingIndicator">
                   <div class="p-3 text-center">
                     <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                     Searching customers...
                   </div>
                 </div>
-                <div class="search-results-list"></div>
-                <div class="search-no-results d-none">
+                <div class="search-results-list" data-searchable-dropdown-target="resultsList"></div>
+                <div class="search-no-results d-none" data-searchable-dropdown-target="noResults">
                   <div class="p-3 text-muted text-center">
                     <i class="fas fa-search me-2"></i>No customers found
                   </div>
@@ -94,25 +100,30 @@
           </div>
 
           <!-- Delivery Person Search -->
-          <div class="col-md-6">
+          <div class="col-md-6" 
+               data-controller="searchable-dropdown" 
+               data-searchable-dropdown-url-value="/api/delivery_people/search"
+               data-searchable-dropdown-display-format-value="name+phone"
+               data-searchable-dropdown-placeholder-value="Search delivery people by name..."
+               data-searchable-dropdown-required-value="true">
             <%= form.label :delivery_person_id, "Delivery Person", class: "form-label fw-bold" %>
-            <%= form.hidden_field :delivery_person_id, id: "selected_delivery_person_id" %>
+            <%= form.hidden_field :delivery_person_id, data: { "searchable-dropdown-target" => "hiddenField" } %>
             <div class="position-relative">
               <input type="text" 
                      class="form-control" 
-                     id="delivery_person_search_input" 
                      placeholder="Search delivery people by name..." 
                      autocomplete="off"
-                     required>
-              <div class="search-results-dropdown d-none" id="delivery_person_search_results">
-                <div class="search-loading d-none">
+                     required
+                     data-searchable-dropdown-target="input">
+              <div class="search-results-dropdown d-none" data-searchable-dropdown-target="dropdown">
+                <div class="search-loading d-none" data-searchable-dropdown-target="loadingIndicator">
                   <div class="p-3 text-center">
                     <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                     Searching delivery people...
                   </div>
                 </div>
-                <div class="search-results-list"></div>
-                <div class="search-no-results d-none">
+                <div class="search-results-list" data-searchable-dropdown-target="resultsList"></div>
+                <div class="search-no-results d-none" data-searchable-dropdown-target="noResults">
                   <div class="p-3 text-muted text-center">
                     <i class="fas fa-truck me-2"></i>No delivery people found
                   </div>
@@ -334,8 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize multi-product functionality
   initializeMultiProductAssignments();
   
-  // Initialize search functionality
-  initializeSearchDropdowns();
+  // Search functionality is now handled by Stimulus controllers
 
   function updateSchedulePreview() {
     const startDate = startDateField?.value;
@@ -952,7 +962,77 @@ function hideSearchResults(searchResults) {
   color: #6c757d;
 }
 
+/* Enhanced Searchable Dropdown Styles */
+.search-result-item {
+  transition: background-color 0.2s ease;
+}
+
+.search-result-item:hover,
+.search-result-item.active {
+  background-color: #f8f9fc;
+}
+
+.search-result-item.active {
+  border-left: 3px solid #4e73df;
+}
+
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.avatar-circle-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.customer-preview {
+  border: 1px solid #e3e6f0;
+  transition: all 0.3s ease;
+}
+
+.customer-preview:hover {
+  border-color: #4e73df;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(78, 115, 223, 0.15);
+}
+
 /* Form input focus styles */
+[data-searchable-dropdown-target="input"]:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Legacy support for old IDs (during transition) */
 #customer_search_input:focus,
 #delivery_person_search_input:focus {
   border-color: #4e73df;

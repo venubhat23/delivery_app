@@ -231,6 +231,52 @@ export default class extends Controller {
     })
   }
 
+  // Handle customer selection and update preview
+  customerSelected(event) {
+    const customer = event.detail.item
+    
+    // Update the schedule preview to show customer info
+    this.updateCustomerPreview(customer)
+    
+    // Dispatch custom event for other controllers that might need to know
+    this.dispatch('customerChanged', { 
+      detail: { 
+        customer: customer,
+        customerId: customer.id
+      } 
+    })
+  }
+
+  updateCustomerPreview(customer) {
+    // Find or create customer preview section
+    let customerPreview = this.element.querySelector('.customer-preview')
+    if (!customerPreview && this.hasSchedulePreviewTarget) {
+      customerPreview = document.createElement('div')
+      customerPreview.className = 'customer-preview mb-3 p-3 bg-light rounded'
+      this.schedulePreviewTarget.prepend(customerPreview)
+    }
+
+    if (customerPreview) {
+      customerPreview.innerHTML = `
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <div class="avatar-circle-sm">
+              ${customer.name.charAt(0).toUpperCase()}
+            </div>
+          </div>
+          <div>
+            <div class="fw-bold text-primary">${customer.name}</div>
+            <div class="text-muted small">
+              ${customer.phone ? `<i class="fas fa-phone me-1"></i>${customer.phone}` : ''}
+              ${customer.email ? `<i class="fas fa-envelope me-1 ms-2"></i>${customer.email}` : ''}
+            </div>
+            ${customer.address ? `<div class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>${customer.address}</div>` : ''}
+          </div>
+        </div>
+      `
+    }
+  }
+
   // Handle form submission
   submitForm(event) {
     if (this.deliveryTypeValue === 'scheduled') {
