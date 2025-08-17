@@ -207,7 +207,12 @@ Rails.application.routes.draw do
   get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download', defaults: { format: :pdf }
   
   # Admin Settings
-  resources :admin_settings, path: 'admin-settings'
+  resources :admin_settings, path: 'admin-settings' do
+    collection do
+      post :cleanup_tokens
+      get :export_data
+    end
+  end
   
   # Reports
   resources :reports, only: [:index, :show] do

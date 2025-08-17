@@ -48,6 +48,38 @@ class AdminSettingsController < ApplicationController
     redirect_to admin_settings_path, notice: 'Admin settings were successfully deleted.'
   end
 
+  def cleanup_tokens
+    count = RefreshToken.expired.destroy_all.size
+    render json: { success: true, count: count }
+  rescue => e
+    render json: { success: false, error: e.message }
+  end
+
+  def export_data
+    respond_to do |format|
+      format.csv do
+        csv_data = generate_system_export_csv
+        send_data csv_data, filename: "system_data_#{Date.current}.csv", type: 'text/csv'
+      end
+      format.json do
+        data = {
+          admin_settings: @admin_setting.as_json,
+          statistics: {
+            customers: Customer.count,
+            users: User.count,
+            refresh_tokens: RefreshToken.count,
+            support_tickets: SupportTicket.count,
+            cms_pages: CmsPage.count,
+            faqs: Faq.count,
+            referral_codes: ReferralCode.count
+          },
+          generated_at: Time.current
+        }
+        render json: data
+      end
+    end
+  end
+
   private
 
   def set_admin_setting
@@ -89,5 +121,28 @@ class AdminSettingsController < ApplicationController
     File.write(Rails.root.join('public', 'qr_codes', "upi_qr_#{@admin_setting.id}.svg"), svg)
     
     @admin_setting.update(qr_code_path: "/qr_codes/upi_qr_#{@admin_setting.id}.svg")
+  end
+
+  def generate_system_export_csv
+    require 'csv'
+    
+    CSV.generate(headers: true) do |csv|
+      # Admin Settings
+      csv << ['Section', 'Field', 'Value']
+      csv << ['Admin Settings', 'Business Name', @admin_setting.business_name]
+      csv << ['Admin Settings', 'Email', @admin_setting.email]
+      csv << ['Admin Settings', 'Mobile', @admin_setting.mobile]
+      
+      # Statistics
+      csv << ['Statistics', 'Total Customers', Customer.count]
+      csv << ['Statistics', 'Total Users', User.count]
+      csv << ['Statistics', 'Active Tokens', RefreshToken.valid.count]
+      csv << ['Statistics', 'Expired Tokens', RefreshToken.expired.count]
+      csv << ['Statistics', 'Support Tickets', SupportTicket.count]
+      csv << ['Statistics', 'CMS Pages', CmsPage.count]
+      csv << ['Statistics', 'FAQ Items', Faq.count]
+      csv << ['Statistics', 'Referral Codes', ReferralCode.count]
+      csv << ['Statistics', 'Export Generated', Time.current]
+    end
   end
 end

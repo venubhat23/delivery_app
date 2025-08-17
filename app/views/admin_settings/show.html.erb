@@ -10,12 +10,45 @@
           <%= link_to "Back to Dashboard", root_path, class: "btn btn-secondary" %>
         </div>
       </div>
+      
+      <!-- Navigation Tabs -->
+      <ul class="nav nav-pills nav-fill mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="basic-settings-tab" data-bs-toggle="pill" data-bs-target="#basic-settings" 
+                  type="button" role="tab" aria-controls="basic-settings" aria-selected="true">
+            <i class="fas fa-building me-2"></i>Basic Settings
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="content-management-tab" data-bs-toggle="pill" data-bs-target="#content-management" 
+                  type="button" role="tab" aria-controls="content-management" aria-selected="false">
+            <i class="fas fa-file-alt me-2"></i>Content Management
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="customer-features-tab" data-bs-toggle="pill" data-bs-target="#customer-features" 
+                  type="button" role="tab" aria-controls="customer-features" aria-selected="false">
+            <i class="fas fa-users me-2"></i>Customer Features
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="system-management-tab" data-bs-toggle="pill" data-bs-target="#system-management" 
+                  type="button" role="tab" aria-controls="system-management" aria-selected="false">
+            <i class="fas fa-server me-2"></i>System Management
+          </button>
+        </li>
+      </ul>
     </div>
   </div>
 
-  <div class="row">
-    <!-- Business Details -->
-    <div class="col-md-6 mb-4">
+  <!-- Tab Content -->
+  <div class="tab-content" id="adminTabContent">
+    
+    <!-- Basic Settings Tab -->
+    <div class="tab-pane fade show active" id="basic-settings" role="tabpanel" aria-labelledby="basic-settings-tab">
+      <div class="row">
+        <!-- Business Details -->
+        <div class="col-md-6 mb-4">
       <div class="card">
         <div class="card-header">
           <h4><i class="fas fa-building me-2"></i>Brand & Business Details</h4>
@@ -128,21 +161,257 @@
     </div>
   <% end %>
 
-  <!-- Terms and Conditions -->
-  <div class="row">
-    <div class="col-md-12 mb-4">
-      <div class="card">
-        <div class="card-header">
-          <h4><i class="fas fa-file-contract me-2"></i>Terms and Conditions</h4>
+      <!-- Terms and Conditions -->
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h4><i class="fas fa-file-contract me-2"></i>Terms and Conditions</h4>
+            </div>
+            <div class="card-body">
+              <% if @admin_setting.terms_and_conditions.present? %>
+                <% @admin_setting.formatted_terms_and_conditions.each do |term| %>
+                  <p><%= term %></p>
+                <% end %>
+              <% else %>
+                <p class="text-muted">No terms and conditions specified.</p>
+              <% end %>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <% if @admin_setting.terms_and_conditions.present? %>
-            <% @admin_setting.formatted_terms_and_conditions.each do |term| %>
-              <p><%= term %></p>
-            <% end %>
-          <% else %>
-            <p class="text-muted">No terms and conditions specified.</p>
-          <% end %>
+      </div>
+    </div>
+    
+    <!-- Content Management Tab -->
+    <div class="tab-pane fade" id="content-management" role="tabpanel" aria-labelledby="content-management-tab">
+      <div class="row">
+        <!-- CMS Pages Management -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h4><i class="fas fa-file-alt me-2"></i>CMS Pages</h4>
+              <span class="badge bg-primary"><%= CmsPage.count %></span>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Manage website content pages like About Us, Privacy Policy, etc.</p>
+              <div class="row">
+                <div class="col-6">
+                  <div class="text-center">
+                    <h5 class="text-success"><%= CmsPage.published.count %></h5>
+                    <small class="text-muted">Published</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="text-center">
+                    <h5 class="text-warning"><%= CmsPage.unpublished.count %></h5>
+                    <small class="text-muted">Draft</small>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <a href="#" class="btn btn-primary btn-sm">
+                  <i class="fas fa-plus me-1"></i>Create Page
+                </a>
+                <a href="#" class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-list me-1"></i>Manage Pages
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Management -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h4><i class="fas fa-question-circle me-2"></i>FAQ Management</h4>
+              <span class="badge bg-info"><%= Faq.count %></span>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Manage frequently asked questions for customer support.</p>
+              <div class="row">
+                <div class="col-6">
+                  <div class="text-center">
+                    <h5 class="text-success"><%= Faq.active.count %></h5>
+                    <small class="text-muted">Active</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="text-center">
+                    <h5 class="text-secondary"><%= Faq.inactive.count %></h5>
+                    <small class="text-muted">Inactive</small>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <small class="text-muted d-block">Categories: <%= Faq.categories_for_locale('en').count %></small>
+                <small class="text-muted d-block">Languages: <%= Faq.available_locales.count %></small>
+              </div>
+              <div class="mt-3">
+                <a href="#" class="btn btn-info btn-sm">
+                  <i class="fas fa-plus me-1"></i>Add FAQ
+                </a>
+                <a href="#" class="btn btn-outline-info btn-sm">
+                  <i class="fas fa-list me-1"></i>Manage FAQs
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Features Tab -->
+    <div class="tab-pane fade" id="customer-features" role="tabpanel" aria-labelledby="customer-features-tab">
+      <div class="row">
+        <!-- Support Tickets -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h4><i class="fas fa-life-ring me-2"></i>Support Tickets</h4>
+              <span class="badge bg-warning"><%= SupportTicket.active.count %></span>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Customer support ticket management system.</p>
+              <div class="row text-center">
+                <div class="col-3">
+                  <h6 class="text-danger"><%= SupportTicket.open.count %></h6>
+                  <small class="text-muted">Open</small>
+                </div>
+                <div class="col-3">
+                  <h6 class="text-warning"><%= SupportTicket.in_progress.count %></h6>
+                  <small class="text-muted">In Progress</small>
+                </div>
+                <div class="col-3">
+                  <h6 class="text-success"><%= SupportTicket.resolved.count %></h6>
+                  <small class="text-muted">Resolved</small>
+                </div>
+                <div class="col-3">
+                  <h6 class="text-secondary"><%= SupportTicket.closed.count %></h6>
+                  <small class="text-muted">Closed</small>
+                </div>
+              </div>
+              <div class="mt-3">
+                <a href="#" class="btn btn-warning btn-sm">
+                  <i class="fas fa-eye me-1"></i>View Tickets
+                </a>
+                <a href="#" class="btn btn-outline-warning btn-sm">
+                  <i class="fas fa-chart-bar me-1"></i>Reports
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referral Codes -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h4><i class="fas fa-gift me-2"></i>Referral Program</h4>
+              <span class="badge bg-success"><%= ReferralCode.count %></span>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Customer referral codes and rewards management.</p>
+              <div class="row text-center">
+                <div class="col-6">
+                  <h6 class="text-success"><%= ReferralCode.total_referrals_count %></h6>
+                  <small class="text-muted">Total Referrals</small>
+                </div>
+                <div class="col-6">
+                  <h6 class="text-info"><%= ReferralCode.total_credits_distributed %></h6>
+                  <small class="text-muted">Credits Distributed</small>
+                </div>
+              </div>
+              <div class="mt-3">
+                <small class="text-muted d-block">Active Codes: <%= ReferralCode.active.count %></small>
+                <small class="text-muted d-block">With Referrals: <%= ReferralCode.with_referrals.count %></small>
+              </div>
+              <div class="mt-3">
+                <a href="#" class="btn btn-success btn-sm">
+                  <i class="fas fa-users me-1"></i>Manage Codes
+                </a>
+                <a href="#" class="btn btn-outline-success btn-sm">
+                  <i class="fas fa-trophy me-1"></i>Leaderboard
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Management Tab -->
+    <div class="tab-pane fade" id="system-management" role="tabpanel" aria-labelledby="system-management-tab">
+      <div class="row">
+        <!-- Refresh Tokens -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h4><i class="fas fa-key me-2"></i>Authentication Tokens</h4>
+              <span class="badge bg-primary"><%= RefreshToken.count %></span>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Manage user and customer authentication refresh tokens.</p>
+              <div class="row text-center">
+                <div class="col-4">
+                  <h6 class="text-success"><%= RefreshToken.valid.count %></h6>
+                  <small class="text-muted">Active</small>
+                </div>
+                <div class="col-4">
+                  <h6 class="text-warning"><%= RefreshToken.expired.count %></h6>
+                  <small class="text-muted">Expired</small>
+                </div>
+                <div class="col-4">
+                  <h6 class="text-danger"><%= RefreshToken.where.not(revoked_at: nil).count %></h6>
+                  <small class="text-muted">Revoked</small>
+                </div>
+              </div>
+              <div class="mt-3">
+                <a href="#" class="btn btn-primary btn-sm">
+                  <i class="fas fa-list me-1"></i>View Tokens
+                </a>
+                <a href="#" class="btn btn-outline-danger btn-sm" onclick="cleanupTokens()">
+                  <i class="fas fa-trash me-1"></i>Cleanup Expired
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Statistics -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h4><i class="fas fa-chart-pie me-2"></i>System Overview</h4>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Overall system statistics and health metrics.</p>
+              <div class="row text-center">
+                <div class="col-6">
+                  <h6 class="text-info"><%= Customer.count %></h6>
+                  <small class="text-muted">Total Customers</small>
+                </div>
+                <div class="col-6">
+                  <h6 class="text-primary"><%= User.count %></h6>
+                  <small class="text-muted">Total Users</small>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div class="progress mb-2">
+                  <div class="progress-bar bg-success" style="width: <%= RefreshToken.valid.count.to_f / RefreshToken.count * 100 if RefreshToken.count > 0 %>%"></div>
+                </div>
+                <small class="text-muted">Token Health: <%= ((RefreshToken.valid.count.to_f / RefreshToken.count * 100).round(1) if RefreshToken.count > 0) || 0 %>%</small>
+              </div>
+              <div class="mt-3">
+                <a href="#" class="btn btn-info btn-sm">
+                  <i class="fas fa-chart-bar me-1"></i>Analytics
+                </a>
+                <a href="#" class="btn btn-outline-secondary btn-sm">
+                  <i class="fas fa-download me-1"></i>Export Data
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -150,6 +419,7 @@
 </div>
 
 <script>
+// UPI Functions
 function copyUpiId() {
   const upiId = document.getElementById('upi-id').textContent;
   navigator.clipboard.writeText(upiId).then(function() {
@@ -169,5 +439,62 @@ function shareQRCode() {
   } else {
     alert('Sharing not supported on this device');
   }
+}
+
+// Token Management Functions
+function cleanupTokens() {
+  if (confirm('Are you sure you want to cleanup all expired tokens? This action cannot be undone.')) {
+    fetch('/admin_settings/cleanup_tokens', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(`Successfully cleaned up ${data.count} expired tokens`);
+        location.reload();
+      } else {
+        alert('Failed to cleanup tokens');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while cleaning up tokens');
+    });
+  }
+}
+
+// Tab Management
+document.addEventListener('DOMContentLoaded', function() {
+  // Store active tab in localStorage
+  const tabs = document.querySelectorAll('#adminTabs button[data-bs-toggle="pill"]');
+  const activeTab = localStorage.getItem('adminActiveTab');
+  
+  if (activeTab) {
+    const tabButton = document.querySelector(`#adminTabs button[data-bs-target="${activeTab}"]`);
+    if (tabButton) {
+      const tab = new bootstrap.Tab(tabButton);
+      tab.show();
+    }
+  }
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('shown.bs.tab', function(e) {
+      localStorage.setItem('adminActiveTab', e.target.getAttribute('data-bs-target'));
+    });
+  });
+});
+
+// Refresh statistics
+function refreshStats() {
+  location.reload();
+}
+
+// Export functionality
+function exportSystemData() {
+  window.open('/admin_settings/export_data', '_blank');
 }
 </script>
