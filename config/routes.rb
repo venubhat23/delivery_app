@@ -257,6 +257,11 @@ Rails.application.routes.draw do
       get :profit_analysis
       get :inventory_analysis
       get :generate_reports
+      get :saved_reports
+    end
+    
+    member do
+      get :show_report
     end
   end
 

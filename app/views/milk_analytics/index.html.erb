@@ -40,6 +40,12 @@
             <i class="fas fa-calendar-alt me-2"></i>📅 Procurement Calendar
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="saved-reports-tab" data-bs-toggle="pill" data-bs-target="#saved-reports" 
+                  type="button" role="tab" aria-controls="saved-reports" aria-selected="false">
+            <i class="fas fa-history me-2"></i>📋 Saved Reports
+          </button>
+        </li>
       </ul>
     </div>
   </div>
@@ -1220,6 +1226,40 @@
       </div>
     </div>
 
+    <!-- Saved Reports Tab -->
+    <div class="tab-pane fade" id="saved-reports" role="tabpanel" aria-labelledby="saved-reports-tab">
+      <div class="row">
+        <div class="col-12">
+          <div class="card border-0 shadow-lg">
+            <div class="card-header py-4">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-history me-2"></i>Saved Reports
+                  </h5>
+                  <p class="text-muted mb-0 small">Previously generated milk analytics reports</p>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="loadSavedReports()">
+                  <i class="fas fa-refresh me-1"></i>Refresh
+                </button>
+              </div>
+            </div>
+            
+            <div class="card-body">
+              <div id="savedReportsContainer">
+                <!-- Saved reports will be loaded here -->
+                <div class="text-center py-5">
+                  <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                  <h4>Saved Reports Loading...</h4>
+                  <p class="text-muted">Please wait while we load your saved reports</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Procurement Calendar Tab -->
     <div class="tab-pane fade" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
       <div class="row">
@@ -1380,19 +1420,74 @@ function resetProcurementForm() {
 }
 
 // Calendar Navigation Functions
+let currentCalendarDate = new Date();
+
 function previousMonth() {
-  // Calendar navigation logic will be implemented
-  console.log('Previous month');
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+  loadCalendarData();
 }
 
 function nextMonth() {
-  // Calendar navigation logic will be implemented  
-  console.log('Next month');
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+  loadCalendarData();
 }
 
 function goToToday() {
-  // Go to today logic will be implemented
-  console.log('Go to today');
+  currentCalendarDate = new Date();
+  loadCalendarData();
+}
+
+function loadCalendarData() {
+  const calendarContainer = document.getElementById('procurementCalendar');
+  if (!calendarContainer) return;
+
+  // Show loading state
+  calendarContainer.innerHTML = `
+    <div class="text-center py-5">
+      <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+      <h4>Loading Calendar...</h4>
+      <p class="text-muted">Please wait while we load your procurement calendar</p>
+    </div>
+  `;
+
+  // Format date for API call
+  const dateStr = currentCalendarDate.toISOString().split('T')[0];
+  
+  // Fetch calendar data
+  fetch(`/milk-supply-analytics/calendar_view?date=${dateStr}&view_type=month`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'text/html',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.text())
+  .then(html => {
+    // Create a temporary container to parse the response
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Extract just the calendar content (everything inside the main container)
+    const calendarContent = tempDiv.querySelector('.container-fluid');
+    if (calendarContent) {
+      calendarContainer.innerHTML = calendarContent.innerHTML;
+    } else {
+      throw new Error('Calendar content not found in response');
+    }
+  })
+  .catch(error => {
+    console.error('Error loading calendar:', error);
+    calendarContainer.innerHTML = `
+      <div class="text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+        <h4>Error Loading Calendar</h4>
+        <p class="text-muted">Failed to load calendar data. Please try again.</p>
+        <button class="btn btn-primary" onclick="loadCalendarData()">
+          <i class="fas fa-refresh me-1"></i>Retry
+        </button>
+      </div>
+    `;
+  });
 }
 
 // Auto-submit form when date range changes (except custom)
@@ -1483,11 +1578,19 @@ function generateReport() {
   })
   .then(response => response.json())
   .then(data => {
-    populateReportData(reportType, data);
+    if (data.success) {
+      populateReportData(reportType, data.data);
+      // Show success message
+      if (data.message) {
+        showReportSuccess(data.message);
+      }
+    } else {
+      throw new Error(data.error || 'Unknown error');
+    }
   })
   .catch(error => {
     console.error('Error generating report:', error);
-    showReportError(reportType);
+    showReportError(reportType, error.message);
   });
 }
 
@@ -1525,7 +1628,7 @@ function showReportLoading(reportType) {
   }
 }
 
-function showReportError(reportType) {
+function showReportError(reportType, errorMessage = 'Error generating report. Please try again.') {
   const tableMap = {
     'daily': 'dailyReportTable',
     'vendor': 'vendorReportTable', 
@@ -1541,11 +1644,38 @@ function showReportError(reportType) {
       <tr>
         <td colspan="10" class="text-center py-4">
           <i class="fas fa-exclamation-triangle fa-2x mb-2 text-danger"></i><br>
-          <span class="text-danger">Error generating report. Please try again.</span>
+          <span class="text-danger">${errorMessage}</span>
         </td>
       </tr>
     `;
   }
+}
+
+function showReportSuccess(message) {
+  // Create a toast notification for success
+  const toast = document.createElement('div');
+  toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed';
+  toast.style.cssText = 'top: 20px; right: 20px; z-index: 1055;';
+  toast.setAttribute('role', 'alert');
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas fa-check-circle me-2"></i>${message}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Initialize and show the toast
+  const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+  bsToast.show();
+  
+  // Remove from DOM after it's hidden
+  toast.addEventListener('hidden.bs.toast', function() {
+    toast.remove();
+  });
 }
 
 function populateReportData(reportType, data) {
@@ -1760,9 +1890,159 @@ function exportReport(format) {
   alert(`Export to ${format.toUpperCase()} functionality will be implemented soon for ${reportType} report.`);
 }
 
+// Saved Reports Functions
+function loadSavedReports() {
+  const container = document.getElementById('savedReportsContainer');
+  if (!container) return;
+
+  // Show loading state
+  container.innerHTML = `
+    <div class="text-center py-5">
+      <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+      <h4>Loading Saved Reports...</h4>
+      <p class="text-muted">Please wait while we load your saved reports</p>
+    </div>
+  `;
+
+  // Fetch saved reports
+  fetch('/milk-supply-analytics/saved_reports', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(reports => {
+    displaySavedReports(reports);
+  })
+  .catch(error => {
+    console.error('Error loading saved reports:', error);
+    container.innerHTML = `
+      <div class="text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+        <h4>Error Loading Saved Reports</h4>
+        <p class="text-muted">Failed to load saved reports. Please try again.</p>
+        <button class="btn btn-primary" onclick="loadSavedReports()">
+          <i class="fas fa-refresh me-1"></i>Retry
+        </button>
+      </div>
+    `;
+  });
+}
+
+function displaySavedReports(reports) {
+  const container = document.getElementById('savedReportsContainer');
+  
+  if (!reports || reports.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <h4>No Saved Reports</h4>
+        <p class="text-muted">Generate some reports first, and they will appear here for future reference.</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Report Name</th>
+            <th>Type</th>
+            <th>Date Range</th>
+            <th>Generated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  reports.forEach(report => {
+    const reportTypeNames = {
+      'daily_procurement_delivery': 'Daily Procurement vs Delivery',
+      'vendor_performance': 'Vendor Performance',
+      'profit_loss': 'Profit & Loss',
+      'wastage_analysis': 'Wastage Analysis',
+      'monthly_summary': 'Monthly Summary'
+    };
+
+    const typeName = reportTypeNames[report.report_type] || report.report_type;
+    const generatedDate = new Date(report.created_at).toLocaleDateString();
+    
+    html += `
+      <tr>
+        <td>
+          <strong>${report.name}</strong>
+        </td>
+        <td>
+          <span class="badge bg-primary">${typeName}</span>
+        </td>
+        <td>${report.from_date} to ${report.to_date}</td>
+        <td>${generatedDate}</td>
+        <td>
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" onclick="viewSavedReport(${report.id})" title="View Report">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn btn-outline-success" onclick="downloadSavedReport(${report.id})" title="Download">
+              <i class="fas fa-download"></i>
+            </button>
+            <button class="btn btn-outline-danger" onclick="deleteSavedReport(${report.id})" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+function viewSavedReport(reportId) {
+  // For now, show an alert. In the future, this could open a modal or new page
+  alert(`Viewing report ${reportId}. This functionality will open the full report view.`);
+}
+
+function downloadSavedReport(reportId) {
+  // For now, show an alert. In the future, this could trigger a download
+  alert(`Downloading report ${reportId}. This functionality will be implemented soon.`);
+}
+
+function deleteSavedReport(reportId) {
+  if (confirm('Are you sure you want to delete this saved report?')) {
+    alert(`Deleting report ${reportId}. This functionality will be implemented soon.`);
+  }
+}
+
 // Initialize report sections on page load
 document.addEventListener('DOMContentLoaded', function() {
   updateReportFilters();
   updateDateFields();
+  
+  // Load calendar when calendar tab is clicked
+  const calendarTab = document.getElementById('calendar-tab');
+  if (calendarTab) {
+    calendarTab.addEventListener('shown.bs.tab', function() {
+      loadCalendarData();
+    });
+  }
+  
+  // Load saved reports when saved reports tab is clicked
+  const savedReportsTab = document.getElementById('saved-reports-tab');
+  if (savedReportsTab) {
+    savedReportsTab.addEventListener('shown.bs.tab', function() {
+      loadSavedReports();
+    });
+  }
 });
 </script>

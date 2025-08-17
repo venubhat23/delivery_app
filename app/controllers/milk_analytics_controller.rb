@@ -324,29 +324,72 @@ class MilkAnalyticsController < ApplicationController
     end
   end
 
+  def saved_reports
+    @saved_reports = current_user.reports.milk_analytics_reports.recent.limit(50)
+    
+    respond_to do |format|
+      format.json { render json: @saved_reports }
+      format.html # saved_reports.html.erb view
+    end
+  end
+  
+  def show_report
+    @report = current_user.reports.find(params[:id])
+    
+    respond_to do |format|
+      format.json { render json: { report: @report, data: @report.content } }
+      format.html # show_report.html.erb view
+    end
+  rescue ActiveRecord::RecordNotFound
+    respond_to do |format|
+      format.json { render json: { error: 'Report not found' }, status: 404 }
+      format.html { 
+        flash[:alert] = 'Report not found'
+        redirect_to milk_analytics_path 
+      }
+    end
+  end
+
   def generate_reports
     @report_type = params[:report_type] || 'daily_procurement_delivery'
     @from_date = params[:from_date]&.to_date || Date.current.beginning_of_month
     @to_date = params[:to_date]&.to_date || Date.current
     
-    case @report_type
-    when 'daily_procurement_delivery'
-      @report_data = generate_daily_procurement_delivery_report(@from_date, @to_date)
-    when 'vendor_performance'
-      @report_data = generate_vendor_performance_report(@from_date, @to_date)
-    when 'profit_loss'
-      @report_data = generate_profit_loss_report(@from_date, @to_date)
-    when 'wastage_analysis'
-      @report_data = generate_wastage_analysis_report(@from_date, @to_date)
-    when 'monthly_summary'
-      @report_data = generate_monthly_summary_report(@from_date, @to_date)
-    else
-      @report_data = []
-    end
-    
-    respond_to do |format|
-      format.json { render json: @report_data }
-      format.html { redirect_to milk_analytics_index_path }
+    begin
+      case @report_type
+      when 'daily_procurement_delivery'
+        @report_data = generate_daily_procurement_delivery_report(@from_date, @to_date)
+      when 'vendor_performance'
+        @report_data = generate_vendor_performance_report(@from_date, @to_date)
+      when 'profit_loss'
+        @report_data = generate_profit_loss_report(@from_date, @to_date)
+      when 'wastage_analysis'
+        @report_data = generate_wastage_analysis_report(@from_date, @to_date)
+      when 'monthly_summary'
+        @report_data = generate_monthly_summary_report(@from_date, @to_date)
+      else
+        @report_data = []
+      end
+      
+      # Save report to database
+      save_report_to_database(@report_type, @from_date, @to_date, @report_data)
+      
+      respond_to do |format|
+        format.json { render json: { success: true, data: @report_data, message: 'Report generated and saved successfully' } }
+        format.html { redirect_to milk_analytics_index_path }
+      end
+      
+    rescue => e
+      Rails.logger.error "Error generating report: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      
+      respond_to do |format|
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+        format.html { 
+          flash[:alert] = "Error generating report: #{e.message}"
+          redirect_to milk_analytics_index_path 
+        }
+      end
     end
   end
 
@@ -646,6 +689,45 @@ class MilkAnalyticsController < ApplicationController
   def authenticate_user!
     require_login
   end
+  
+  def save_report_to_database(report_type, from_date, to_date, report_data)
+    # Generate a descriptive name for the report
+    report_name = generate_report_name(report_type, from_date, to_date)
+    
+    # Create and save the report
+    Report.create!(
+      name: report_name,
+      report_type: report_type,
+      from_date: from_date,
+      to_date: to_date,
+      content: report_data,
+      user: current_user
+    )
+    
+    Rails.logger.info "Report saved: #{report_name} (#{report_type}) for user #{current_user.id}"
+  rescue => e
+    Rails.logger.error "Failed to save report: #{e.message}"
+    # Don't raise the error - saving to DB shouldn't break the report generation
+  end
+  
+  def generate_report_name(report_type, from_date, to_date)
+    type_names = {
+      'daily_procurement_delivery' => 'Daily Procurement vs Delivery',
+      'vendor_performance' => 'Vendor Performance',
+      'profit_loss' => 'Profit & Loss',
+      'wastage_analysis' => 'Wastage Analysis',
+      'monthly_summary' => 'Monthly Summary'
+    }
+    
+    type_name = type_names[report_type] || report_type.humanize
+    date_range = if from_date == to_date
+      from_date.strftime('%b %d, %Y')
+    else
+      "#{from_date.strftime('%b %d')} - #{to_date.strftime('%b %d, %Y')}"
+    end
+    
+    "#{type_name} Report (#{date_range})"
+  end
 
   def calculate_kpi_metrics
     begin
@@ -686,32 +768,6 @@ class MilkAnalyticsController < ApplicationController
       @total_delivered = 0
       @total_revenue = 0
       @total_profit = 0
-    end
-  end
-
-  def generate_reports
-    @report_type = params[:report_type] || 'daily_procurement_delivery'
-    @from_date = params[:from_date]&.to_date || Date.current.beginning_of_month
-    @to_date = params[:to_date]&.to_date || Date.current
-    
-    case @report_type
-    when 'daily_procurement_delivery'
-      @report_data = generate_daily_procurement_delivery_report(@from_date, @to_date)
-    when 'vendor_performance'
-      @report_data = generate_vendor_performance_report(@from_date, @to_date)
-    when 'profit_loss'
-      @report_data = generate_profit_loss_report(@from_date, @to_date)
-    when 'wastage_analysis'
-      @report_data = generate_wastage_analysis_report(@from_date, @to_date)
-    when 'monthly_summary'
-      @report_data = generate_monthly_summary_report(@from_date, @to_date)
-    else
-      @report_data = []
-    end
-    
-    respond_to do |format|
-      format.json { render json: @report_data }
-      format.html { redirect_to milk_analytics_index_path }
     end
   end
 

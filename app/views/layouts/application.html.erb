@@ -295,6 +295,11 @@
         transform: translateZ(0);
       }
       
+      /* Milk Analytics Sidebar Adjustment - Move slightly to the left */
+      body[data-controller="milk_analytics"] .sidebar {
+        left: -10px;
+      }
+      
       .sidebar::-webkit-scrollbar {
         width: 6px;
       }
@@ -717,7 +722,7 @@
     </style>
   </head>
 
-  <body>
+  <body data-controller="<%= controller_name %>" data-action="<%= action_name %>">
     <% if logged_in? %>
       <div class="main-wrapper">
         <!-- Modern Header -->

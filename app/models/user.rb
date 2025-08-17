@@ -11,6 +11,9 @@ class User < ApplicationRecord
   has_many :procurement_schedules, dependent: :destroy
   has_many :procurement_assignments, dependent: :destroy
   
+  # Reports association
+  has_many :reports, dependent: :destroy
+  
   # New associations for delivery person functionality
   has_many :assigned_customers, class_name: 'Customer', foreign_key: 'delivery_person_id', dependent: :nullify
   has_many :deliveries, foreign_key: 'delivery_person_id', dependent: :destroy

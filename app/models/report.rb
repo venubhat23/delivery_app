@@ -7,7 +7,11 @@ class Report < ApplicationRecord
   validates :from_date, presence: true
   validates :to_date, presence: true
   
+  # Serialize content as JSON for milk analytics reports
+  serialize :content, JSON
+  
   scope :gst_reports, -> { where(report_type: 'gst') }
+  scope :milk_analytics_reports, -> { where(report_type: %w[daily_procurement_delivery vendor_performance profit_loss wastage_analysis monthly_summary]) }
   scope :recent, -> { order(created_at: :desc) }
   scope :by_user, ->(user) { where(user: user) }
   
