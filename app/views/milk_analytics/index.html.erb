@@ -69,7 +69,7 @@
                         ['This Week', 'week'], 
                         ['This Month', 'month'],
                         ['Custom Range', 'custom']
-                      ], params[:date_range] || 'today'), 
+                      ], params[:date_range] || 'month'), 
                       {}, { class: "form-select", style: "width: 150px;", onchange: "toggleCustomDates()" } %>
                 </div>
                 <div class="custom-dates d-none">

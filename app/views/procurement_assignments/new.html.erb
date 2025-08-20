@@ -1,0 +1,82 @@
+<% content_for :title, "New Procurement Assignment" %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow">
+        <div class="card-header">
+          <h6 class="m-0 font-weight-bold text-primary">New Procurement Assignment</h6>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @assignment, url: procurement_assignments_path, local: true do |form| %>
+            <% if @assignment.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@assignment.errors.count, "error") %> prohibited this assignment from being saved:</h4>
+                <ul class="mb-0">
+                  <% @assignment.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :date, class: 'form-label' %>
+                <%= form.date_field :date, class: 'form-control', required: true %>
+              </div>
+              <div class="col-md-6 mb-3">
+                <%= form.label :vendor_name, class: 'form-label' %>
+                <%= form.text_field :vendor_name, class: 'form-control', required: true %>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <%= form.label :planned_quantity, "Planned Quantity (L)", class: 'form-label' %>
+                <%= form.number_field :planned_quantity, step: 0.01, class: 'form-control', required: true %>
+              </div>
+              <div class="col-md-4 mb-3">
+                <%= form.label :buying_price, "Buying Price (₹/L)", class: 'form-label' %>
+                <%= form.number_field :buying_price, step: 0.01, class: 'form-control', required: true %>
+              </div>
+              <div class="col-md-4 mb-3">
+                <%= form.label :selling_price, "Selling Price (₹/L)", class: 'form-label' %>
+                <%= form.number_field :selling_price, step: 0.01, class: 'form-control', required: true %>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :unit, class: 'form-label' %>
+                <%= form.select :unit, options_for_select([['Liters', 'liters'], ['Kilograms', 'kg']]), {}, 
+                                {class: 'form-select', required: true} %>
+              </div>
+              <div class="col-md-6 mb-3">
+                <%= form.label :status, class: 'form-label' %>
+                <%= form.select :status, options_for_select([['Pending', 'pending'], ['Completed', 'completed']]), {}, 
+                                {class: 'form-select', required: true} %>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <%= form.label :actual_quantity, "Actual Quantity (L)", class: 'form-label' %>
+              <%= form.number_field :actual_quantity, step: 0.01, class: 'form-control' %>
+              <div class="form-text">Leave blank if not yet completed</div>
+            </div>
+            
+            <%= form.hidden_field :user_id, value: current_user&.id %>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to calendar_view_milk_analytics_path, class: "btn btn-secondary" do %>
+                <i class="fas fa-arrow-left me-1"></i> Back to Calendar
+              <% end %>
+              
+              <%= form.submit "Create Assignment", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

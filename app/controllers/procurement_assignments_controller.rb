@@ -1,6 +1,40 @@
 class ProcurementAssignmentsController < ApplicationController
   before_action :set_procurement_assignment, only: [:show, :edit, :update, :destroy, :complete, :cancel]
   before_action :authenticate_user!
+  
+  def new
+    @assignment = ProcurementAssignment.new
+    @assignment.date = params[:date] ? Date.parse(params[:date]) : Date.current
+  end
+  
+  def create
+    @assignment = current_user.procurement_assignments.build(create_procurement_assignment_params)
+    
+    # Set default procurement_schedule_id if not provided
+    unless @assignment.procurement_schedule_id
+      schedule = current_user.procurement_schedules.first_or_create!(
+        vendor_name: @assignment.vendor_name || "Default Vendor",
+        from_date: @assignment.date || Date.current,
+        to_date: @assignment.date || Date.current,
+        quantity: @assignment.planned_quantity || 1,
+        buying_price: @assignment.buying_price || 0,
+        selling_price: @assignment.selling_price || 0,
+        unit: @assignment.unit || "liters",
+        status: "active"
+      )
+      @assignment.procurement_schedule_id = schedule.id
+    end
+    
+    respond_to do |format|
+      if @assignment.save
+        format.html { redirect_to calendar_view_milk_analytics_path, notice: 'Procurement assignment was successfully created.' }
+        format.json { render json: @assignment, status: :created }
+      else
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: @assignment.errors, status: :unprocessable_entity }
+      end
+    end
+  end
 
   def index
     @assignments = current_user.procurement_assignments.includes(:procurement_schedule)
@@ -32,6 +66,11 @@ class ProcurementAssignmentsController < ApplicationController
 
   def show
     @schedule = @assignment.procurement_schedule
+    
+    respond_to do |format|
+      format.html
+      format.json { render json: @assignment }
+    end
   end
 
   def edit
@@ -41,16 +80,24 @@ class ProcurementAssignmentsController < ApplicationController
   end
 
   def update
-    if @assignment.update(procurement_assignment_params)
-      redirect_to @assignment, notice: 'Procurement assignment was successfully updated.'
-    else
-      render :edit, status: :unprocessable_entity
+    respond_to do |format|
+      if @assignment.update(update_procurement_assignment_params)
+        format.html { redirect_to calendar_view_milk_analytics_path, notice: 'Procurement assignment was successfully updated.' }
+        format.json { render json: @assignment }
+      else
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: @assignment.errors, status: :unprocessable_entity }
+      end
     end
   end
 
   def destroy
     @assignment.destroy
-    redirect_to procurement_assignments_url, notice: 'Procurement assignment was successfully deleted.'
+    
+    respond_to do |format|
+      format.html { redirect_to calendar_view_milk_analytics_path, notice: 'Procurement assignment was successfully deleted.' }
+      format.json { head :no_content }
+    end
   end
 
   def complete
@@ -190,6 +237,20 @@ class ProcurementAssignmentsController < ApplicationController
     @assignment = current_user.procurement_assignments.find(params[:id])
   end
 
+  def create_procurement_assignment_params
+    params.require(:procurement_assignment).permit(
+      :date, :vendor_name, :planned_quantity, :buying_price, :selling_price,
+      :actual_quantity, :unit, :status, :procurement_schedule_id, :user_id
+    )
+  end
+  
+  def update_procurement_assignment_params
+    params.require(:procurement_assignment).permit(
+      :date, :vendor_name, :planned_quantity, :buying_price, :selling_price,
+      :actual_quantity, :unit, :status
+    )
+  end
+  
   def procurement_assignment_params
     params.require(:procurement_assignment).permit(:actual_quantity, :notes, :status)
   end

@@ -2,8 +2,8 @@ class MilkAnalyticsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # Determine date range based on parameters
-    @date_range = params[:date_range] || 'today'
+    # Determine date range based on parameters - default to this month instead of today
+    @date_range = params[:date_range] || 'month'
     
     case @date_range
     when 'today'
@@ -16,11 +16,11 @@ class MilkAnalyticsController < ApplicationController
       @start_date = Date.current.beginning_of_month
       @end_date = Date.current.end_of_month
     when 'custom'
-      @start_date = params[:from_date].present? ? Date.parse(params[:from_date]) : Date.current
-      @end_date = params[:to_date].present? ? Date.parse(params[:to_date]) : Date.current
+      @start_date = params[:from_date].present? ? Date.parse(params[:from_date]) : Date.current.beginning_of_month
+      @end_date = params[:to_date].present? ? Date.parse(params[:to_date]) : Date.current.end_of_month
     else
-      @start_date = Date.current
-      @end_date = Date.current
+      @start_date = Date.current.beginning_of_month
+      @end_date = Date.current.end_of_month
     end
     
     # Calculate KPI metrics
@@ -60,10 +60,23 @@ class MilkAnalyticsController < ApplicationController
       @end_date = @date
     end
     
-    # Get assignments for the date range
-    @assignments = current_user.procurement_assignments
-                              .for_date_range(@start_date, @end_date)
-                              .includes(:procurement_schedule)
+    # Debug info (remove in production)
+    Rails.logger.info "Calendar View Debug: User ID: #{current_user&.id}, Date Range: #{@start_date} to #{@end_date}"
+    
+    # Get assignments for the date range with fallback for demo
+    if current_user
+      @assignments = current_user.procurement_assignments
+                                .for_date_range(@start_date, @end_date)
+                                .includes(:procurement_schedule)
+    else
+      # Fallback for demo - get first user's assignments if no current user
+      first_user = User.first
+      @assignments = first_user&.procurement_assignments
+                               &.for_date_range(@start_date, @end_date)
+                               &.includes(:procurement_schedule) || []
+    end
+    
+    Rails.logger.info "Calendar View Debug: Found #{@assignments.count} assignments"
     
     # Group by date for calendar display
     @assignments_by_date = @assignments.group_by(&:date)
@@ -731,8 +744,8 @@ class MilkAnalyticsController < ApplicationController
 
   def calculate_kpi_metrics
     begin
-      # Get procurement assignments for the date range
-      procurement_assignments = ProcurementAssignment.for_date_range(@start_date, @end_date)
+      # Get procurement assignments for the date range - filter by current user
+      procurement_assignments = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
       
       # Calculate basic metrics with safe defaults
       @total_vendors = procurement_assignments.distinct.count(:vendor_name) || 0
@@ -772,8 +785,8 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def calculate_summaries
-    # Vendor summary with safe nil handling
-    procurement_data = ProcurementAssignment.for_date_range(@start_date, @end_date)
+    # Vendor summary with safe nil handling - filter by current user
+    procurement_data = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
     
     if procurement_data.any?
       @vendor_summary = procurement_data.group_by(&:vendor_name)
