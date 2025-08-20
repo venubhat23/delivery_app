@@ -29,6 +29,9 @@ class MilkAnalyticsController < ApplicationController
     # Calculate summaries
     calculate_summaries
     
+    # Calculate daily calculations for the simple report
+    calculate_daily_calculations
+    
     respond_to do |format|
       format.html
       format.json do
@@ -1040,5 +1043,77 @@ class MilkAnalyticsController < ApplicationController
     end
     
     monthly_data
+  end
+  
+  def calculate_daily_calculations
+    begin
+      @daily_calculations = (@start_date..@end_date).map do |date|
+        # Get procurement assignments for this date
+        daily_procurement = current_user.procurement_assignments.for_date_range(date, date)
+        
+        # Calculate procurement totals using both actual and planned data
+        procured_liters = 0
+        total_cost = 0
+        
+        daily_procurement.each do |assignment|
+          if assignment.actual_quantity.present?
+            procured_liters += assignment.actual_quantity
+            total_cost += assignment.actual_cost || 0
+          else
+            procured_liters += assignment.planned_quantity || 0
+            total_cost += assignment.planned_cost || 0
+          end
+        end
+        
+        # Get delivery data for milk products
+        delivered_liters = 0
+        total_revenue = 0
+        
+        begin
+          if Product.table_exists?
+            deliveries = DeliveryAssignment.joins(:product)
+                                         .where(scheduled_date: date)
+                                         .where(status: 'completed')
+                                         .where("products.name ILIKE ?", '%milk%')
+          else
+            deliveries = DeliveryAssignment.where(scheduled_date: date, status: 'completed')
+          end
+          
+          deliveries.each do |delivery|
+            delivered_liters += delivery.quantity || 0
+            total_revenue += delivery.final_amount_after_discount || 0
+          end
+        rescue => e
+          Rails.logger.error "Error calculating deliveries for #{date}: #{e.message}"
+          # Use defaults if there's an error
+          delivered_liters = 0
+          total_revenue = 0
+        end
+        
+        # Calculate metrics
+        profit = total_revenue - total_cost
+        utilization = procured_liters > 0 ? (delivered_liters.to_f / procured_liters * 100).round(1) : 0
+        wastage = procured_liters - delivered_liters
+        
+        {
+          date: date,
+          procured: procured_liters.round(1),
+          cost: total_cost.round(2),
+          delivered: delivered_liters.round(1),
+          revenue: total_revenue.round(2),
+          profit: profit.round(2),
+          utilization: utilization,
+          wastage: wastage.round(1)
+        }
+      end
+      
+      # Filter out days with no activity to keep the report clean
+      @daily_calculations = @daily_calculations.select { |day| day[:procured] > 0 || day[:delivered] > 0 }
+      
+    rescue => e
+      Rails.logger.error "Error calculating daily calculations: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      @daily_calculations = []
+    end
   end
 end

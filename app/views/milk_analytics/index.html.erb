@@ -17,15 +17,15 @@
       <!-- Navigation Tabs -->
       <ul class="nav nav-pills nav-fill" id="milkAnalyticsTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" 
-                  type="button" role="tab" aria-controls="dashboard" aria-selected="true">
+          <button class="nav-link" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" 
+                  type="button" role="tab" aria-controls="dashboard" aria-selected="false">
             <i class="fas fa-chart-line me-2"></i>📈 Dashboard
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports" 
                   type="button" role="tab" aria-controls="reports" aria-selected="false">
-            <i class="fas fa-file-alt me-2"></i>📊 Reports
+            <i class="fas fa-file-alt me-2"></i>📊 Daily Report
           </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -35,8 +35,8 @@
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar" 
-                  type="button" role="tab" aria-controls="calendar" aria-selected="false">
+          <button class="nav-link active" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar" 
+                  type="button" role="tab" aria-controls="calendar" aria-selected="true">
             <i class="fas fa-calendar-alt me-2"></i>📅 Procurement Calendar
           </button>
         </li>
@@ -54,7 +54,7 @@
   <div class="tab-content" id="milkAnalyticsTabContent">
     
     <!-- Dashboard & Reports Tab -->
-    <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+    <div class="tab-pane fade" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
       <!-- Date Filter Section -->
       <div class="row mb-4">
         <div class="col-12">
@@ -843,9 +843,9 @@
               <div class="card border-0 shadow-lg">
                 <div class="card-header py-4">
                   <h5 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-chart-comparison me-2"></i>Daily Procurement vs Delivery Report
+                    <i class="fas fa-chart-comparison me-2"></i>Daily Calculations Report
                   </h5>
-                  <p class="text-muted mb-0 small">Compare daily milk procurement against deliveries</p>
+                  <p class="text-muted mb-0 small">Simple daily calculations for the selected date range</p>
                 </div>
                 <div class="card-body">
                   <div class="table-responsive">
@@ -853,27 +853,95 @@
                       <thead class="table-light">
                         <tr>
                           <th>Date</th>
-                          <th>Vendor</th>
-                          <th>Planned (L)</th>
-                          <th>Actual (L)</th>
-                          <th>Delivered (L)</th>
-                          <th>Remaining (L)</th>
-                          <th>Utilization %</th>
+                          <th>Procured (L)</th>
                           <th>Cost (₹)</th>
+                          <th>Delivered (L)</th>
                           <th>Revenue (₹)</th>
-                          <th>Profit (₹)</th>
+                          <th>Profit/Loss (₹)</th>
+                          <th>Utilization %</th>
+                          <th>Wastage (L)</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td colspan="10" class="text-center py-4">
-                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
-                            <span class="text-muted">Click "Generate" to load report data</span>
-                          </td>
-                        </tr>
+                        <% if @daily_calculations&.any? %>
+                          <% @daily_calculations.each do |day| %>
+                            <tr>
+                              <td><%= day[:date].strftime('%b %d, %Y') %></td>
+                              <td><%= number_with_delimiter(day[:procured]) %></td>
+                              <td>₹<%= number_with_delimiter(day[:cost]) %></td>
+                              <td><%= number_with_delimiter(day[:delivered]) %></td>
+                              <td>₹<%= number_with_delimiter(day[:revenue]) %></td>
+                              <td class="<%= day[:profit] >= 0 ? 'text-success' : 'text-danger' %>">
+                                <%= day[:profit] >= 0 ? '+' : '' %>₹<%= number_with_delimiter(day[:profit]) %>
+                              </td>
+                              <td>
+                                <span class="<%= day[:utilization] > 80 ? 'text-success' : day[:utilization] > 50 ? 'text-warning' : 'text-danger' %>">
+                                  <%= day[:utilization] %>%
+                                </span>
+                              </td>
+                              <td class="<%= day[:wastage] > 0 ? 'text-warning' : 'text-success' %>">
+                                <%= number_with_delimiter(day[:wastage]) %>
+                              </td>
+                            </tr>
+                          <% end %>
+                        <% else %>
+                          <tr>
+                            <td colspan="8" class="text-center py-4">
+                              <i class="fas fa-info-circle fa-2x mb-2 text-muted"></i><br>
+                              <span class="text-muted">No data available for the selected date range</span>
+                            </td>
+                          </tr>
+                        <% end %>
                       </tbody>
                     </table>
                   </div>
+                  
+                  <% if @daily_calculations&.any? %>
+                    <!-- Summary Row -->
+                    <div class="row mt-4">
+                      <div class="col-12">
+                        <div class="card bg-light">
+                          <div class="card-body">
+                            <h6 class="card-title">Summary for <%= @start_date.strftime('%b %d') %> - <%= @end_date.strftime('%b %d, %Y') %></h6>
+                            <div class="row">
+                              <div class="col-md-2">
+                                <strong>Total Procured:</strong><br>
+                                <%= number_with_delimiter(@daily_calculations.sum { |d| d[:procured] }) %> L
+                              </div>
+                              <div class="col-md-2">
+                                <strong>Total Cost:</strong><br>
+                                ₹<%= number_with_delimiter(@daily_calculations.sum { |d| d[:cost] }) %>
+                              </div>
+                              <div class="col-md-2">
+                                <strong>Total Delivered:</strong><br>
+                                <%= number_with_delimiter(@daily_calculations.sum { |d| d[:delivered] }) %> L
+                              </div>
+                              <div class="col-md-2">
+                                <strong>Total Revenue:</strong><br>
+                                ₹<%= number_with_delimiter(@daily_calculations.sum { |d| d[:revenue] }) %>
+                              </div>
+                              <div class="col-md-2">
+                                <% total_profit = @daily_calculations.sum { |d| d[:profit] } %>
+                                <strong>Net <%= total_profit >= 0 ? 'Profit' : 'Loss' %>:</strong><br>
+                                <span class="<%= total_profit >= 0 ? 'text-success' : 'text-danger' %>">
+                                  ₹<%= number_with_delimiter(total_profit.abs) %>
+                                </span>
+                              </div>
+                              <div class="col-md-2">
+                                <% total_procured = @daily_calculations.sum { |d| d[:procured] } %>
+                                <% total_delivered = @daily_calculations.sum { |d| d[:delivered] } %>
+                                <% avg_utilization = total_procured > 0 ? (total_delivered / total_procured * 100).round(1) : 0 %>
+                                <strong>Avg Utilization:</strong><br>
+                                <span class="<%= avg_utilization > 80 ? 'text-success' : avg_utilization > 50 ? 'text-warning' : 'text-danger' %>">
+                                  <%= avg_utilization %>%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
                 </div>
               </div>
             </div>
@@ -1261,42 +1329,27 @@
     </div>
 
     <!-- Procurement Calendar Tab -->
-    <div class="tab-pane fade" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
-      <div class="row">
-        <div class="col-12">
-          <div class="card border-0 shadow-lg">
-            <div class="card-header py-4">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h5 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-calendar-alt me-2"></i>Procurement Assignment Calendar
-                  </h5>
-                  <p class="text-muted mb-0 small">Click on any date to edit procurement assignments</p>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-outline-primary" onclick="previousMonth()">
-                    <i class="fas fa-chevron-left"></i>
-                  </button>
-                  <button type="button" class="btn btn-outline-primary" onclick="nextMonth()">
-                    <i class="fas fa-chevron-right"></i>
-                  </button>
-                  <button type="button" class="btn btn-primary" onclick="goToToday()">
-                    Today
-                  </button>
-                </div>
-              </div>
+    <div class="tab-pane fade show active" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
+      <div class="card border-0 shadow-lg">
+        <div class="card-header py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-calendar-alt me-2"></i>Procurement Calendar
+              </h5>
+              <p class="text-muted mb-0 small">Manage your milk procurement assignments</p>
             </div>
-            
-            <div class="card-body">
-              <div id="procurementCalendar">
-                <!-- Calendar will be rendered here -->
-                <div class="text-center py-5">
-                  <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
-                  <h4>Calendar Loading...</h4>
-                  <p class="text-muted">Please wait while we load your procurement calendar</p>
-                </div>
-              </div>
+          </div>
+        </div>
+        
+        <div class="card-body p-0" id="calendarContent">
+          <!-- Calendar will be loaded here dynamically -->
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Loading...</span>
             </div>
+            <h4 class="mt-3">Loading Procurement Calendar...</h4>
+            <p class="text-muted">Please wait while we load your calendar</p>
           </div>
         </div>
       </div>
@@ -1438,41 +1491,70 @@ function goToToday() {
 }
 
 function loadCalendarData() {
-  const calendarContainer = document.getElementById('procurementCalendar');
-  if (!calendarContainer) return;
+  console.log('loadCalendarData called');
+  const calendarContainer = document.getElementById('calendarContent');
+  
+  if (!calendarContainer) {
+    console.error('calendarContent element not found');
+    return;
+  }
+
+  console.log('Calendar container found, showing loading state');
 
   // Show loading state
   calendarContainer.innerHTML = `
     <div class="text-center py-5">
-      <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
-      <h4>Loading Calendar...</h4>
-      <p class="text-muted">Please wait while we load your procurement calendar</p>
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h4 class="mt-3">Loading Procurement Calendar...</h4>
+      <p class="text-muted">Please wait while we load your calendar</p>
     </div>
   `;
 
   // Format date for API call
-  const dateStr = currentCalendarDate.toISOString().split('T')[0];
+  const dateStr = currentCalendarDate ? currentCalendarDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+  const url = `/milk-supply-analytics/calendar_view?date=${dateStr}&view_type=month`;
   
-  // Fetch calendar data
-  fetch(`/milk-supply-analytics/calendar_view?date=${dateStr}&view_type=month`, {
+  console.log('Fetching calendar data from:', url);
+  
+  // Fetch calendar data from our modern calendar view
+  fetch(url, {
     method: 'GET',
     headers: {
       'Accept': 'text/html',
-      'X-Requested-With': 'XMLHttpRequest'
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
     }
   })
-  .then(response => response.text())
+  .then(response => {
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.text();
+  })
   .then(html => {
+    console.log('HTML response length:', html.length);
+    
     // Create a temporary container to parse the response
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     
-    // Extract just the calendar content (everything inside the main container)
+    // Extract the calendar content (everything inside the main container)
     const calendarContent = tempDiv.querySelector('.container-fluid');
     if (calendarContent) {
+      console.log('Calendar content found, updating container');
       calendarContainer.innerHTML = calendarContent.innerHTML;
+      
+      // Initialize any JavaScript functionality after loading
+      initializeCalendarFeatures();
     } else {
-      throw new Error('Calendar content not found in response');
+      console.error('Calendar content not found in response');
+      // Try to show the entire response for debugging
+      calendarContainer.innerHTML = html;
     }
   })
   .catch(error => {
@@ -1481,13 +1563,188 @@ function loadCalendarData() {
       <div class="text-center py-5">
         <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
         <h4>Error Loading Calendar</h4>
-        <p class="text-muted">Failed to load calendar data. Please try again.</p>
-        <button class="btn btn-primary" onclick="loadCalendarData()">
-          <i class="fas fa-refresh me-1"></i>Retry
-        </button>
+        <p class="text-muted">Failed to load calendar data. Please try refreshing the page or try again.</p>
+        <div class="mt-3">
+          <button class="btn btn-primary me-2" onclick="loadCalendarData()">
+            <i class="fas fa-refresh me-1"></i>Retry
+          </button>
+          <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+            <i class="fas fa-sync-alt me-1"></i>Refresh Page
+          </button>
+          <button class="btn btn-outline-info" onclick="window.open('/milk-supply-analytics/calendar_view', '_blank')">
+            <i class="fas fa-external-link-alt me-1"></i>Open in New Tab
+          </button>
+        </div>
+        <small class="text-muted d-block mt-2">Error: ${error.message}</small>
+        <small class="text-muted d-block">URL: /milk-supply-analytics/calendar_view?date=${dateStr}&view_type=month</small>
       </div>
     `;
   });
+}
+
+// Initialize calendar features after dynamic loading
+function initializeCalendarFeatures() {
+  // Initialize Bootstrap tooltips
+  if (typeof bootstrap !== 'undefined') {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+  
+  // Re-attach event listeners for editable fields
+  document.querySelectorAll('.editable-field').forEach(field => {
+    field.addEventListener('click', function() {
+      const assignmentId = this.dataset.assignmentId;
+      const fieldName = this.dataset.field;
+      quickEditField(assignmentId, fieldName);
+    });
+  });
+}
+
+// Helper function for inline editing (if not already defined in calendar view)
+function quickEditField(assignmentId, fieldName) {
+  const fieldElement = document.querySelector(`[data-assignment-id="${assignmentId}"] [data-field="${fieldName}"]`);
+  if (!fieldElement) return;
+  
+  const currentValue = fieldElement.textContent.replace('L', '').replace('Click to add', '').trim();
+  
+  // Create inline input
+  const input = document.createElement('input');
+  input.type = fieldName === 'actual_quantity' ? 'number' : 'text';
+  input.value = currentValue;
+  input.className = 'form-control form-control-sm';
+  input.style.width = '80px';
+  input.style.display = 'inline-block';
+  
+  // Replace content with input
+  const originalContent = fieldElement.innerHTML;
+  fieldElement.innerHTML = '';
+  fieldElement.appendChild(input);
+  input.focus();
+  input.select();
+  
+  // Handle save/cancel
+  function saveField() {
+    const newValue = input.value;
+    if (newValue !== currentValue) {
+      const data = {};
+      data[fieldName] = parseFloat(newValue) || newValue;
+      
+      // Update via API
+      fetch(`/milk-assignments/${assignmentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ procurement_assignment: data })
+      })
+      .then(response => {
+        if (response.ok) {
+          fieldElement.innerHTML = newValue ? `${newValue}L` : '<span class="text-muted">Click to add</span>';
+          showToast('Assignment updated successfully!', 'success');
+        } else {
+          throw new Error('Update failed');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        fieldElement.innerHTML = originalContent;
+        showToast('Error updating assignment', 'error');
+      });
+    } else {
+      fieldElement.innerHTML = originalContent;
+    }
+  }
+  
+  function cancelEdit() {
+    fieldElement.innerHTML = originalContent;
+  }
+  
+  input.addEventListener('blur', saveField);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      saveField();
+    } else if (e.key === 'Escape') {
+      cancelEdit();
+    }
+  });
+}
+
+// Toast notification helper
+function showToast(message, type = 'info') {
+  // Simple toast notification
+  const toastHtml = `
+    <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0" style="position: fixed; top: 20px; right: 20px; z-index: 1050;">
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', toastHtml);
+  
+  const toastElement = document.body.lastElementChild;
+  if (typeof bootstrap !== 'undefined') {
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => {
+      toastElement.remove();
+    });
+  } else {
+    setTimeout(() => {
+      toastElement.remove();
+    }, 3000);
+  }
+}
+
+// Fallback function to load calendar via iframe
+function loadCalendarFallback() {
+  console.log('Loading calendar via iframe fallback');
+  const calendarContainer = document.getElementById('calendarContent');
+  if (!calendarContainer) return;
+
+  calendarContainer.innerHTML = `
+    <div class="text-center py-3 mb-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading calendar...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading calendar in frame...</p>
+    </div>
+  `;
+
+  // Create iframe to load calendar with loading handling
+  setTimeout(() => {
+    calendarContainer.innerHTML = `
+      <div class="position-relative" style="min-height: 800px;">
+        <iframe src="/milk-supply-analytics/calendar_view" 
+                width="100%" 
+                height="800" 
+                frameborder="0" 
+                style="border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                onload="console.log('Calendar iframe loaded successfully')"
+                onerror="console.error('Calendar iframe failed to load')">
+          <p>Your browser does not support iframes. <a href="/milk-supply-analytics/calendar_view" target="_blank">Click here to open the calendar</a></p>
+        </iframe>
+      </div>
+    `;
+  }, 500);
+}
+
+// Manual calendar load function for testing
+function loadCalendarManual() {
+  console.log('Manual calendar load triggered');
+  const calendarContainer = document.getElementById('calendarContent');
+  if (!calendarContainer) {
+    console.error('Calendar container not found');
+    return;
+  }
+
+  // Direct navigation approach
+  window.location.href = '/milk-supply-analytics/calendar_view';
 }
 
 // Auto-submit form when date range changes (except custom)
@@ -2026,14 +2283,25 @@ function deleteSavedReport(reportId) {
 
 // Initialize report sections on page load
 document.addEventListener('DOMContentLoaded', function() {
+  // Show the daily report by default
   updateReportFilters();
   updateDateFields();
+  
+  // Set daily report as default visible
+  document.querySelectorAll('.report-section').forEach(section => {
+    section.classList.add('d-none');
+  });
+  const dailyReport = document.getElementById('dailyReport');
+  if (dailyReport) {
+    dailyReport.classList.remove('d-none');
+  }
   
   // Load calendar when calendar tab is clicked
   const calendarTab = document.getElementById('calendar-tab');
   if (calendarTab) {
     calendarTab.addEventListener('shown.bs.tab', function() {
-      loadCalendarData();
+      console.log('Calendar tab shown, loading calendar...');
+      loadCalendarFallback(); // Use iframe method which is more reliable
     });
   }
   
@@ -2044,5 +2312,11 @@ document.addEventListener('DOMContentLoaded', function() {
       loadSavedReports();
     });
   }
+  
+  // Load calendar immediately since it's the default active tab
+  setTimeout(() => {
+    console.log('Loading calendar automatically on page load...');
+    loadCalendarFallback(); // Use iframe method which is more reliable
+  }, 500);
 });
 </script>
