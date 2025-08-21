@@ -45,12 +45,12 @@ class User < ApplicationRecord
   
   def can_take_customers?
     return false unless delivery_person?
-    assigned_customers.count < 50
+    assigned_customers.count < 200
   end
   
   def available_customer_slots
     return 0 unless delivery_person?
-    [50 - assigned_customers.count, 0].max
+    [200 - assigned_customers.count, 0].max
   end
   
   def customer_count
@@ -62,11 +62,11 @@ class User < ApplicationRecord
     Customer.where(delivery_person_id: nil)
   end
   
-  # Get available delivery people (those with less than 50 customers)
+  # Get available delivery people (those with less than 200 customers)
   def self.available_delivery_people
     delivery_people.joins("LEFT JOIN customers ON customers.delivery_person_id = users.id")
                    .group("users.id")
-                   .having("COUNT(customers.id) < 50")
+                   .having("COUNT(customers.id) < 200")
   end
   
   # Add image_url method for delivery people

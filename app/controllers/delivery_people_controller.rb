@@ -138,7 +138,7 @@
 #       assigned_customers: Customer.assigned.count,
 #       unassigned_customers: Customer.unassigned.count,
 #       average_customers_per_person: Customer.assigned.count.to_f / [User.delivery_people.count, 1].max,
-#       capacity_utilization: (Customer.assigned.count.to_f / (User.delivery_people.count * 50) * 100).round(2)
+#       capacity_utilization: (Customer.assigned.count.to_f / (User.delivery_people.count * 200) * 100).round(2)
 #     }
 #   end
 
@@ -233,9 +233,9 @@ class DeliveryPeopleController < ApplicationController
     # Validate capacity
     total_after_assignment = @delivery_person.assigned_customers.count + customer_ids.length
     
-    if total_after_assignment > 50
+    if total_after_assignment > 200
       redirect_to assign_customers_delivery_person_path(@delivery_person), 
-                  alert: "Cannot assign customers. This would exceed the limit of 50 customers per delivery person."
+                  alert: "Cannot assign customers. This would exceed the limit of 200 customers per delivery person."
       return
     end
 
@@ -318,10 +318,10 @@ class DeliveryPeopleController < ApplicationController
     
     # Check capacity
     current_count = delivery_person.assigned_customers.count
-    if current_count + customer_ids.length > 50
+    if current_count + customer_ids.length > 200
       render json: { 
         success: false, 
-        message: "Cannot assign #{customer_ids.length} customers. Delivery person has #{50 - current_count} slots available." 
+        message: "Cannot assign #{customer_ids.length} customers. Delivery person has #{200 - current_count} slots available." 
       }
       return
     end
@@ -350,7 +350,7 @@ class DeliveryPeopleController < ApplicationController
       assigned_customers: Customer.assigned.count,
       unassigned_customers: Customer.unassigned.count,
       average_customers_per_person: Customer.assigned.count.to_f / [User.delivery_people.count, 1].max,
-      capacity_utilization: (Customer.assigned.count.to_f / (User.delivery_people.count * 50) * 100).round(2)
+      capacity_utilization: (Customer.assigned.count.to_f / (User.delivery_people.count * 200) * 100).round(2)
     }
   end
 
