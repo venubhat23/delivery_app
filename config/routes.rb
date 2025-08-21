@@ -128,6 +128,7 @@ Rails.application.routes.draw do
     member do
       get :assign_customers
       patch :update_assignments
+      patch :unassign_customers
       get :manage_customers
       patch :update_customer_assignments
       delete :unassign_customer

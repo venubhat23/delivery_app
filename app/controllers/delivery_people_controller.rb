@@ -157,7 +157,7 @@
 
 class DeliveryPeopleController < ApplicationController
   before_action :require_login
-  before_action :set_delivery_person, only: [:show, :edit, :update, :destroy, :assign_customers, :update_assignments, :manage_customers, :update_customer_assignments]
+  before_action :set_delivery_person, only: [:show, :edit, :update, :destroy, :assign_customers, :update_assignments, :unassign_customers, :manage_customers, :update_customer_assignments, :unassign_customer]
 
   def index
     @delivery_people = User.delivery_people.includes(:assigned_customers)
@@ -295,6 +295,34 @@ class DeliveryPeopleController < ApplicationController
     rescue ActiveRecord::RecordInvalid => e
       redirect_to manage_customers_delivery_person_path(@delivery_person), 
                   alert: "Error updating customer assignments: #{e.message}"
+    end
+  end
+
+  # New action to handle unassignments from assign_customers page
+  def unassign_customers
+    customer_ids_to_unassign = params[:unassign_customer_ids] || []
+    
+    begin
+      ActiveRecord::Base.transaction do
+        # Unassign selected customers
+        if customer_ids_to_unassign.any?
+          Customer.where(id: customer_ids_to_unassign, delivery_person_id: @delivery_person.id)
+                  .update_all(delivery_person_id: nil)
+        end
+      end
+
+      unassigned_count = customer_ids_to_unassign.length
+      if unassigned_count > 0
+        redirect_to assign_customers_delivery_person_path(@delivery_person), 
+                    notice: "Successfully unassigned #{unassigned_count} customer(s) from #{@delivery_person.name}."
+      else
+        redirect_to assign_customers_delivery_person_path(@delivery_person), 
+                    notice: "No customers were selected for unassignment."
+      end
+                    
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to assign_customers_delivery_person_path(@delivery_person), 
+                  alert: "Error unassigning customers: #{e.message}"
     end
   end
 
