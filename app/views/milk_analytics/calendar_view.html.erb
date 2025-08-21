@@ -1,75 +1,88 @@
-<% content_for :title, "Calendar View - Milk Supply & Analytics" %>
+<% content_for :title, "Procurement Calendar" %>
 
 <div class="container-fluid">
-  <!-- Header Section -->
+  <!-- Header with Filters -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="h3 mb-0 text-gray-800">
-        <i class="fas fa-calendar text-primary me-2"></i>
-        Calendar View
-      </h1>
-      <p class="text-muted mb-0">Calendar-based milk procurement overview with CRUD operations</p>
-      
-      <!-- Debug Info - Remove in production -->
-      <% if Rails.env.development? %>
-        <div class="alert alert-info mt-2">
-          <strong>Debug:</strong> 
-          Assignments: <%= @assignments&.count || 0 %> | 
-          Daily Summaries: <%= @daily_summaries&.count || 0 %> | 
-          Date Range: <%= @start_date %> to <%= @end_date %>
-        </div>
-      <% end %>
     </div>
     
-    <div class="d-flex gap-2 align-items-center flex-wrap">
-      <!-- View Type Filter -->
-      <div class="dropdown">
-        <button class="btn btn-outline-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
-          <i class="fas fa-eye me-1"></i>
-          <%= @view_type.capitalize %> View
-        </button>
-        <ul class="dropdown-menu">
-          <li><%= link_to "Day", calendar_view_milk_analytics_path(view_type: 'day', date: @date), class: "dropdown-item #{'active' if @view_type == 'day'}" %></li>
-          <li><%= link_to "Week", calendar_view_milk_analytics_path(view_type: 'week', date: @date), class: "dropdown-item #{'active' if @view_type == 'week'}" %></li>
-          <li><%= link_to "Month", calendar_view_milk_analytics_path(view_type: 'month', date: @date), class: "dropdown-item #{'active' if @view_type == 'month'}" %></li>
-        </ul>
-      </div>
-      
-      <!-- Date Navigation -->
-      <div class="btn-group" role="group">
-        <%= link_to calendar_view_milk_analytics_path(date: @date - 1.send(@view_type == 'month' ? :month : @view_type == 'week' ? :week : :day), view_type: @view_type), 
-                    class: "btn btn-outline-secondary" do %>
-          <i class="fas fa-chevron-left"></i>
-        <% end %>
-        
-        <%= form_with url: calendar_view_milk_analytics_path, method: :get, local: true, class: "d-inline" do |form| %>
-          <%= form.hidden_field :view_type, value: @view_type %>
-          <%= form.date_field :date, value: @date, onchange: "this.form.submit()", class: "btn btn-outline-primary border-0 text-center", style: "width: 150px;" %>
-        <% end %>
-        
-        <%= link_to calendar_view_milk_analytics_path(date: @date + 1.send(@view_type == 'month' ? :month : @view_type == 'week' ? :week : :day), view_type: @view_type), 
-                    class: "btn btn-outline-secondary" do %>
-          <i class="fas fa-chevron-right"></i>
-        <% end %>
-      </div>
-      
-      <!-- Today Button -->
-      <%= link_to calendar_view_milk_analytics_path(view_type: @view_type), class: "btn btn-primary" do %>
-        <i class="fas fa-home me-1"></i>
-        Today
-      <% end %>
-      
+    <div class="d-flex gap-2 align-items-center">
       <!-- Add New Assignment Button -->
       <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newAssignmentModal">
         <i class="fas fa-plus me-1"></i>
         New Assignment
       </button>
-      
-      <!-- Back Button -->
-      <%= link_to milk_analytics_path, class: "btn btn-outline-secondary" do %>
-        <i class="fas fa-arrow-left me-1"></i>
-        Back to Dashboard
-      <% end %>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-body">
+          <%= form_with url: calendar_view_milk_analytics_path, method: :get, local: true, class: "row g-3 align-items-end" do |form| %>
+            <div class="col-md-3">
+              <%= form.label :view_type, "View Type", class: "form-label fw-bold" %>
+              <%= form.select :view_type, 
+                  options_for_select([
+                    ['Monthly View', 'month'],
+                    ['Weekly View', 'week'],
+                    ['Today Only', 'today'],
+                    ['Custom Range', 'custom']
+                  ], params[:view_type] || 'month'), 
+                  {}, 
+                  {class: "form-select", id: "view_type_select", onchange: "handleViewTypeChange()"} %>
+            </div>
+            
+            <!-- Single date field - only shown for Today Only -->
+            <div class="col-md-2" id="single_date_field" style="<%= 'display: none;' unless params[:view_type] == 'today' %>">
+              <%= form.label :date, "Select Date", class: "form-label fw-bold" %>
+              <%= form.date_field :date, 
+                  value: params[:date] || Date.current, 
+                  class: "form-control", 
+                  onchange: "this.form.submit()" %>
+            </div>
+            
+            <!-- Custom date range fields -->
+            <div class="col-md-2" id="start_date_field" style="<%= 'display: none;' unless params[:view_type] == 'custom' %>">
+              <%= form.label :start_date, "Start Date", class: "form-label fw-bold" %>
+              <%= form.date_field :start_date, 
+                  value: params[:start_date], 
+                  class: "form-control" %>
+            </div>
+            
+            <div class="col-md-2" id="end_date_field" style="<%= 'display: none;' unless params[:view_type] == 'custom' %>">
+              <%= form.label :end_date, "End Date", class: "form-label fw-bold" %>
+              <%= form.date_field :end_date, 
+                  value: params[:end_date], 
+                  class: "form-control" %>
+            </div>
+            
+            <div class="col-md-3">
+              <%= form.label :vendor_filter, "Filter by Customer/Vendor", class: "form-label fw-bold" %>
+              <%= form.select :vendor_filter, 
+                  options_for_select([['All Customers', '']] + 
+                    (@assignments.map(&:vendor_name).compact.uniq.sort.map { |v| [v, v] }), 
+                    params[:vendor_filter]), 
+                  {}, 
+                  {class: "form-select", onchange: "this.form.submit()"} %>
+            </div>
+            
+            <div class="col-md-2">
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-search me-1"></i>
+                  Apply Filters
+                </button>
+                <%= link_to calendar_view_milk_analytics_path, class: "btn btn-outline-secondary" do %>
+                  <i class="fas fa-refresh me-1"></i>
+                  Reset
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -77,177 +90,51 @@
   <div class="row mb-4">
     <div class="col-12">
       <div class="card shadow">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <% case @view_type %>
-              <% when 'day' %>
-                <%= @date.strftime('%A, %B %d, %Y') %>
-              <% when 'week' %>
-                Week of <%= @start_date.strftime('%B %d') %> - <%= @end_date.strftime('%B %d, %Y') %>
-              <% when 'month' %>
-                <%= @date.strftime('%B %Y') %>
-              <% end %>
-            </h5>
-            <div class="text-muted">
-              Showing <%= @view_type %> view from <%= @start_date.strftime('%b %d') %> to <%= @end_date.strftime('%b %d, %Y') %>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modern Calendar Grid -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card shadow-lg border-0">
-        <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
-          <h6 class="m-0 font-weight-bold">
-            <i class="fas fa-calendar-alt me-2"></i>
-            Procurement Calendar
-          </h6>
-          <div class="d-flex gap-2 align-items-center">
-            <!-- Filter Dropdown -->
-            <div class="dropdown">
-              <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-filter me-1"></i>Filter
-              </button>
-              <ul class="dropdown-menu shadow">
-                <li><a class="dropdown-item" href="#" onclick="filterByStatus('all')">
-                  <i class="fas fa-list me-2"></i>All Assignments
-                </a></li>
-                <li><a class="dropdown-item" href="#" onclick="filterByStatus('pending')">
-                  <i class="fas fa-clock me-2 text-warning"></i>Pending Only
-                </a></li>
-                <li><a class="dropdown-item" href="#" onclick="filterByStatus('completed')">
-                  <i class="fas fa-check me-2 text-success"></i>Completed Only
-                </a></li>
-              </ul>
-            </div>
-            <!-- Legend -->
-            <div class="d-flex gap-3 small">
-              <span class="text-light"><i class="fas fa-circle text-success me-1"></i>Completed</span>
-              <span class="text-light"><i class="fas fa-circle text-warning me-1"></i>Pending</span>
-              <span class="text-light"><i class="fas fa-circle text-info me-1"></i>Today</span>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-0">
-          <% if @view_type == 'month' %>
-            <!-- Month View Calendar -->
-            <div class="modern-calendar-wrapper">
-              <!-- Week Headers -->
-              <div class="calendar-week-headers">
-                <% %w[Sunday Monday Tuesday Wednesday Thursday Friday Saturday].each do |day| %>
-                  <div class="week-header"><%= day.first(3) %></div>
-                <% end %>
-              </div>
-              
-              <!-- Calendar Days Grid -->
-              <div class="calendar-month-grid">
-                <% 
-                  month_start = @start_date.beginning_of_week(:sunday)
-                  month_end = @end_date.end_of_week(:sunday)
-                  (month_start..month_end).each do |date|
-                %>
-                  <% summary = @daily_summaries.find { |s| s[:date] == date } || { date: date, assignments_count: 0, total_actual: 0, profit: 0, completed_count: 0 } %>
-                  <div class="calendar-day-cell 
-                              <%= 'other-month' if date.month != @date.month %>
-                              <%= 'today' if date == Date.current %>
-                              <%= 'has-assignments' if summary[:assignments_count] > 0 %>" 
-                       data-date="<%= date.strftime('%Y-%m-%d') %>" 
-                       onclick="showDayDetails('<%= date.strftime('%Y-%m-%d') %>')">
-                    <div class="day-number"><%= date.day %></div>
-                    <% if summary[:assignments_count] > 0 %>
-                      <div class="day-indicators">
-                        <div class="assignment-badge">
-                          <span class="badge badge-info"><%= summary[:assignments_count] %></span>
-                        </div>
-                        <div class="metrics-mini">
-                          <div class="metric-item">
-                            <i class="fas fa-tint text-primary"></i>
-                            <span><%= summary[:total_actual] %>L</span>
-                          </div>
-                          <div class="metric-item profit-indicator <%= summary[:profit] >= 0 ? 'positive' : 'negative' %>">
-                            <i class="fas fa-rupee-sign"></i>
-                            <span><%= summary[:profit].round(0) %></span>
-                          </div>
-                        </div>
-                        <div class="completion-indicator">
-                          <div class="progress-mini">
-                            <div class="progress-fill" style="width: <%= summary[:assignments_count] > 0 ? (summary[:completed_count].to_f / summary[:assignments_count] * 100) : 0 %>%"></div>
-                          </div>
-                        </div>
-                      </div>
-                    <% else %>
-                      <div class="add-assignment-hint" onclick="event.stopPropagation(); openNewAssignmentModal('<%= date.strftime('%Y-%m-%d') %>')">
-                        <i class="fas fa-plus-circle text-muted"></i>
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
+        <div class="card-body text-center">
+          <h4 class="mb-2">
+            <% case params[:view_type] || 'month' %>
+            <% when 'week' %>
+              <i class="fas fa-calendar-week text-primary me-2"></i>
+              Week of <%= @start_date.strftime('%B %d') %> - <%= @end_date.strftime('%B %d, %Y') %>
+            <% when 'today' %>
+              <i class="fas fa-calendar-day text-primary me-2"></i>
+              <%= Date.current.strftime('%A, %B %d, %Y') %>
+            <% when 'custom' %>
+              <i class="fas fa-calendar-range text-primary me-2"></i>
+              <%= @start_date.strftime('%B %d, %Y') %> - <%= @end_date.strftime('%B %d, %Y') %>
+            <% else %>
+              <i class="fas fa-calendar-month text-primary me-2"></i>
+              <%= @date.strftime('%B %Y') %>
+            <% end %>
+          </h4>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="metric-summary">
+                <div class="metric-value text-primary"><%= @assignments.count %></div>
+                <div class="metric-label">Total Assignments</div>
               </div>
             </div>
-          <% else %>
-            <!-- Week/Day View -->
-            <div class="calendar-linear-view">
-              <% @daily_summaries.each do |summary| %>
-                <div class="calendar-day-linear <%= 'today' if summary[:date] == Date.current %> <%= 'has-assignments' if summary[:assignments_count] > 0 %>" 
-                     data-date="<%= summary[:date].strftime('%Y-%m-%d') %>" 
-                     onclick="showDayDetails('<%= summary[:date].strftime('%Y-%m-%d') %>')">
-                  <div class="day-info">
-                    <div class="day-header-linear">
-                      <div class="day-name-linear"><%= summary[:date].strftime('%A') %></div>
-                      <div class="day-number-linear"><%= summary[:date].strftime('%d') %></div>
-                      <div class="day-month-linear"><%= summary[:date].strftime('%b') %></div>
-                    </div>
-                  </div>
-                  
-                  <div class="day-content-linear">
-                    <% if summary[:assignments_count] > 0 %>
-                      <div class="assignments-summary">
-                        <div class="assignment-count-linear">
-                          <span class="badge badge-primary"><%= summary[:assignments_count] %> assignments</span>
-                        </div>
-                        <div class="metrics-linear">
-                          <div class="metric-card">
-                            <i class="fas fa-tint text-primary"></i>
-                            <div>
-                              <div class="metric-value"><%= summary[:total_actual] %>L</div>
-                              <div class="metric-label">Actual</div>
-                            </div>
-                          </div>
-                          <div class="metric-card">
-                            <i class="fas fa-rupee-sign <%= summary[:profit] >= 0 ? 'text-success' : 'text-danger' %>"></i>
-                            <div>
-                              <div class="metric-value">₹<%= summary[:profit].round(0) %></div>
-                              <div class="metric-label">Profit</div>
-                            </div>
-                          </div>
-                          <div class="metric-card">
-                            <i class="fas fa-chart-pie text-info"></i>
-                            <div>
-                              <div class="metric-value"><%= summary[:assignments_count] > 0 ? (summary[:completed_count].to_f / summary[:assignments_count] * 100).round(0) : 0 %>%</div>
-                              <div class="metric-label">Complete</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    <% else %>
-                      <div class="no-assignments-linear">
-                        <button class="btn btn-outline-primary btn-add-linear" 
-                                onclick="event.stopPropagation(); openNewAssignmentModal('<%= summary[:date].strftime('%Y-%m-%d') %>')">
-                          <i class="fas fa-plus me-2"></i>
-                          Add Assignment
-                        </button>
-                      </div>
-                    <% end %>
-                  </div>
+            <div class="col-md-3">
+              <div class="metric-summary">
+                <div class="metric-value text-success"><%= @assignments.sum { |a| a.actual_quantity || a.planned_quantity || 0 } %>L</div>
+                <div class="metric-label">Total Quantity</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="metric-summary">
+                <div class="metric-value text-info">₹<%= @assignments.sum { |a| a.actual_quantity ? (a.actual_cost || 0) : (a.planned_cost || 0) } %></div>
+                <div class="metric-label">Total Cost</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="metric-summary">
+                <div class="metric-value <%= @assignments.sum { |a| a.actual_quantity ? (a.actual_profit || 0) : (a.planned_profit || 0) } >= 0 ? 'text-success' : 'text-danger' %>">
+                  ₹<%= @assignments.sum { |a| a.actual_quantity ? (a.actual_profit || 0) : (a.planned_profit || 0) } %>
                 </div>
-              <% end %>
+                <div class="metric-label">Total Profit</div>
+              </div>
             </div>
-          <% end %>
+          </div>
         </div>
       </div>
     </div>
@@ -257,13 +144,8 @@
   <div class="row">
     <div class="col-12">
       <div class="card shadow">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h6 class="m-0 font-weight-bold text-primary">Assignment Management</h6>
-          <div>
-            <button class="btn btn-sm btn-success" onclick="openBulkEditModal()">
-              <i class="fas fa-edit me-1"></i>Bulk Edit
-            </button>
-          </div>
+        <div class="card-header">
+          <h6 class="m-0 font-weight-bold text-primary">Assignment Details</h6>
         </div>
         <div class="card-body" id="assignmentDetails">
           <% if @assignments_by_date.any? %>
@@ -282,51 +164,37 @@
                 
                 <div class="assignments-grid">
                   <% assignments.each do |assignment| %>
-                    <div class="assignment-card-modern <%= assignment.status %>" data-id="<%= assignment.id %>">
-                      <div class="assignment-header-modern">
+                    <div class="assignment-card <%= assignment.status %>" data-id="<%= assignment.id %>">
+                      <div class="assignment-header">
                         <div class="vendor-info">
-                          <div class="vendor-name-modern">
+                          <div class="vendor-name">
                             <i class="fas fa-store me-2 text-primary"></i>
                             <%= assignment.vendor_name %>
                           </div>
-                          <div class="assignment-date-modern">
+                          <div class="assignment-date">
                             <i class="fas fa-calendar-day me-1"></i>
                             <%= assignment.date.strftime('%b %d') %>
                           </div>
                         </div>
-                        <div class="assignment-actions-modern">
+                        <div class="assignment-actions">
                           <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-success" 
-                                    onclick="quickUpdateAssignment(<%= assignment.id %>, 'actual_quantity')" 
-                                    title="Quick Update"
-                                    data-bs-toggle="tooltip">
-                              <i class="fas fa-bolt"></i>
-                            </button>
-                            <a href="/milk-assignments/<%= assignment.id %>/edit" 
-                               class="btn btn-sm btn-outline-primary" 
-                               title="Edit Details"
-                               data-bs-toggle="tooltip">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="editAssignmentModal(<%= assignment.id %>)" 
+                                    title="Edit Assignment">
                               <i class="fas fa-edit"></i>
-                            </a>
-                            <%= form_with model: assignment, url: procurement_assignment_path(assignment), method: :delete, local: true, 
-                                          onsubmit: "return confirm('Are you sure you want to delete this assignment for #{assignment.vendor_name}?')",
-                                          style: "display: inline;" do |form| %>
-                              <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                      title="Delete Assignment"
-                                      data-bs-toggle="tooltip">
-                                <i class="fas fa-trash"></i>
-                              </button>
-                            <% end %>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="deleteAssignmentConfirm(<%= assignment.id %>, '<%= assignment.vendor_name %>')" 
+                                    title="Delete Assignment">
+                              <i class="fas fa-trash"></i>
+                            </button>
                           </div>
                         </div>
                       </div>
                       
-                      <div class="assignment-body-modern">
+                      <div class="assignment-body">
                         <div class="metrics-row">
                           <div class="metric-box planned">
-                            <div class="metric-icon">
-                              <i class="fas fa-clipboard-list"></i>
-                            </div>
                             <div class="metric-details">
                               <div class="metric-value"><%= assignment.planned_quantity %>L</div>
                               <div class="metric-label">Planned</div>
@@ -335,9 +203,6 @@
                           </div>
                           
                           <div class="metric-box actual">
-                            <div class="metric-icon">
-                              <i class="fas fa-check-circle"></i>
-                            </div>
                             <div class="metric-details">
                               <div class="metric-value editable-field" 
                                    data-field="actual_quantity" 
@@ -356,16 +221,11 @@
                         
                         <div class="summary-row">
                           <div class="profit-summary">
-                            <div class="profit-icon">
-                              <i class="fas fa-chart-line <%= (assignment.actual_quantity.present? ? assignment.actual_profit : assignment.planned_profit) >= 0 ? 'text-success' : 'text-danger' %>"></i>
+                            <div class="profit-value <%= (assignment.actual_quantity.present? ? assignment.actual_profit : assignment.planned_profit) >= 0 ? 'text-success' : 'text-danger' %>">
+                              ₹<%= number_with_delimiter((assignment.actual_quantity.present? ? assignment.actual_profit : assignment.planned_profit).round(2)) %>
                             </div>
-                            <div class="profit-details">
-                              <div class="profit-value <%= (assignment.actual_quantity.present? ? assignment.actual_profit : assignment.planned_profit) >= 0 ? 'text-success' : 'text-danger' %>">
-                                ₹<%= number_with_delimiter((assignment.actual_quantity.present? ? assignment.actual_profit : assignment.planned_profit).round(2)) %>
-                              </div>
-                              <div class="profit-label">
-                                <%= assignment.actual_quantity.present? ? 'Actual' : 'Expected' %> Profit
-                              </div>
+                            <div class="profit-label">
+                              <%= assignment.actual_quantity.present? ? 'Actual' : 'Expected' %> Profit
                             </div>
                           </div>
                           
@@ -379,27 +239,6 @@
                                                end %> me-1"></i>
                               <%= assignment.status.humanize %>
                             </span>
-                            <% if assignment.is_overdue? %>
-                              <span class="overdue-indicator" title="Overdue">
-                                <i class="fas fa-exclamation-triangle text-danger"></i>
-                              </span>
-                            <% end %>
-                          </div>
-                        </div>
-                        
-                        <!-- Progress Indicator -->
-                        <div class="progress-indicator-modern">
-                          <div class="progress-bar-modern">
-                            <div class="progress-fill-modern <%= assignment.status %>" 
-                                 style="width: <%= assignment.status == 'completed' ? '100' : assignment.status == 'cancelled' ? '0' : '50' %>%">
-                            </div>
-                          </div>
-                          <div class="progress-text">
-                            <%= case assignment.status
-                                when 'completed' then 'Completed'
-                                when 'cancelled' then 'Cancelled'
-                                else 'In Progress'
-                                end %>
                           </div>
                         </div>
                       </div>
@@ -411,7 +250,7 @@
           <% else %>
             <div class="text-center py-5">
               <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-              <p class="text-muted">No assignments found for the selected period.</p>
+              <p class="text-muted">No assignments found for this month.</p>
               <button class="btn btn-primary" onclick="openNewAssignmentModal()">
                 <i class="fas fa-plus me-1"></i>
                 Create New Assignment
@@ -563,249 +402,34 @@
 </div>
 
 <style>
-/* Modern Calendar Styles */
-.bg-gradient-primary {
-  background: linear-gradient(45deg, #4e73df 0%, #224abe 100%);
-}
-
-/* Month View Calendar */
-.modern-calendar-wrapper {
-  padding: 0;
-}
-
-.calendar-week-headers {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  background: #f8f9fc;
-  border-bottom: 2px solid #e3e6f0;
-}
-
-.week-header {
-  padding: 12px 8px;
+/* Metric Summary Styles */
+.metric-summary {
   text-align: center;
-  font-weight: 600;
-  color: #5a5c69;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.calendar-month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  min-height: 400px;
-}
-
-.calendar-day-cell {
-  border: 1px solid #e3e6f0;
-  padding: 8px;
-  min-height: 100px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: white;
-  position: relative;
-}
-
-.calendar-day-cell:hover {
-  background: #f8f9fc;
-  border-color: #4e73df;
-  box-shadow: inset 0 0 0 1px #4e73df;
-}
-
-.calendar-day-cell.today {
-  background: linear-gradient(135deg, #1cc88a08, #1cc88a15);
-  border-color: #1cc88a;
-  font-weight: 600;
-}
-
-.calendar-day-cell.has-assignments {
-  background: linear-gradient(135deg, #4e73df08, #4e73df15);
-}
-
-.calendar-day-cell.other-month {
-  background: #f8f9fc;
-  color: #858796;
-}
-
-.calendar-day-cell .day-number {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 5px;
-}
-
-.day-indicators {
-  position: absolute;
-  bottom: 4px;
-  left: 4px;
-  right: 4px;
-}
-
-.assignment-badge .badge {
-  font-size: 0.7rem;
-  padding: 2px 6px;
-}
-
-.metrics-mini {
-  display: flex;
-  justify-content: space-between;
-  margin: 2px 0;
-}
-
-.metric-item {
-  display: flex;
-  align-items: center;
-  font-size: 0.7rem;
-  gap: 2px;
-}
-
-.metric-item span {
-  font-weight: 600;
-}
-
-.profit-indicator.positive {
-  color: #1cc88a;
-}
-
-.profit-indicator.negative {
-  color: #e74a3b;
-}
-
-.completion-indicator {
-  margin-top: 3px;
-}
-
-.progress-mini {
-  height: 3px;
-  background: #e3e6f0;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #1cc88a;
-  transition: width 0.3s ease;
-}
-
-.add-assignment-hint {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.5rem;
-  opacity: 0.3;
-  transition: opacity 0.2s ease;
-}
-
-.calendar-day-cell:hover .add-assignment-hint {
-  opacity: 0.8;
-}
-
-/* Linear View (Week/Day) */
-.calendar-linear-view {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  padding: 20px;
-}
-
-.calendar-day-linear {
-  display: flex;
-  align-items: center;
-  background: white;
-  border: 1px solid #e3e6f0;
-  border-radius: 12px;
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 100px;
-}
-
-.calendar-day-linear:hover {
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-  transform: translateY(-2px);
-  border-color: #4e73df;
-}
-
-.calendar-day-linear.today {
-  border-color: #1cc88a;
-  background: linear-gradient(135deg, #1cc88a05, #1cc88a10);
-}
-
-.day-header-linear {
-  text-align: center;
-  min-width: 120px;
-  margin-right: 30px;
-}
-
-.day-name-linear {
-  font-size: 0.9rem;
-  color: #6c757d;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.day-number-linear {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #2c3e50;
-  line-height: 1;
-}
-
-.day-month-linear {
-  font-size: 0.8rem;
-  color: #858796;
-  text-transform: uppercase;
-}
-
-.day-content-linear {
-  flex: 1;
-}
-
-.metrics-linear {
-  display: flex;
-  gap: 30px;
-  align-items: center;
-}
-
-.metric-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.metric-card i {
-  font-size: 1.5rem;
+  padding: 1rem;
 }
 
 .metric-value {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
 }
 
 .metric-label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #6c757d;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
-.btn-add-linear {
-  padding: 15px 30px;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-/* Modern Assignment Cards */
+/* Assignment Cards */
 .assignments-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 20px;
 }
 
-.assignment-card-modern {
+.assignment-card {
   background: white;
   border: 1px solid #e3e6f0;
   border-radius: 12px;
@@ -814,49 +438,45 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.assignment-card-modern:hover {
+.assignment-card:hover {
   box-shadow: 0 8px 25px rgba(0,0,0,0.15);
   transform: translateY(-3px);
 }
 
-.assignment-card-modern.completed {
+.assignment-card.completed {
   border-left: 4px solid #1cc88a;
 }
 
-.assignment-card-modern.pending {
+.assignment-card.pending {
   border-left: 4px solid #f6c23e;
 }
 
-.assignment-card-modern.cancelled {
+.assignment-card.cancelled {
   border-left: 4px solid #e74a3b;
 }
 
-.assignment-header-modern {
+.assignment-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: 20px;
   background: #f8f9fc;
   border-bottom: 1px solid #e3e6f0;
 }
 
-.vendor-info {
-  flex: 1;
-}
-
-.vendor-name-modern {
+.vendor-name {
   font-size: 1.1rem;
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 4px;
 }
 
-.assignment-date-modern {
+.assignment-date {
   font-size: 0.85rem;
   color: #6c757d;
 }
 
-.assignment-body-modern {
+.assignment-body {
   padding: 20px;
 }
 
@@ -868,48 +488,25 @@
 }
 
 .metric-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   padding: 15px;
   background: #f8f9fc;
   border-radius: 8px;
   border: 1px solid #e3e6f0;
 }
 
-.metric-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.metric-icon i {
-  font-size: 1.2rem;
-  color: #4e73df;
-}
-
-.metric-details {
-  flex: 1;
-}
-
-.metric-value {
+.metric-details .metric-value {
   font-size: 1.1rem;
   font-weight: bold;
   color: #2c3e50;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
-.metric-label {
+.metric-details .metric-label {
   font-size: 0.8rem;
   color: #6c757d;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .metric-price, .metric-selling {
@@ -921,23 +518,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-}
-
-.profit-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.profit-icon i {
-  font-size: 1.5rem;
 }
 
 .profit-value {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .profit-label {
@@ -946,7 +532,7 @@
 }
 
 .status-badge {
-  padding: 6px 12px;
+  padding: 8px 15px;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -969,42 +555,6 @@
   color: #721c24;
 }
 
-.progress-indicator-modern {
-  margin-top: 15px;
-}
-
-.progress-bar-modern {
-  height: 6px;
-  background: #e3e6f0;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 5px;
-}
-
-.progress-fill-modern {
-  height: 100%;
-  transition: width 0.3s ease;
-  border-radius: 3px;
-}
-
-.progress-fill-modern.completed {
-  background: linear-gradient(90deg, #1cc88a, #17a673);
-}
-
-.progress-fill-modern.pending {
-  background: linear-gradient(90deg, #f6c23e, #dda20a);
-}
-
-.progress-fill-modern.cancelled {
-  background: linear-gradient(90deg, #e74a3b, #c82333);
-}
-
-.progress-text {
-  font-size: 0.8rem;
-  color: #6c757d;
-  text-align: center;
-}
-
 .editable-field {
   cursor: pointer;
   padding: 4px 8px;
@@ -1025,57 +575,15 @@
   color: #4e73df !important;
 }
 
-.overdue-indicator {
-  margin-left: 8px;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-/* Badge Styles */
-.badge-info {
-  background-color: #36b9cc;
-  color: white;
-}
-
-.badge-success {
-  background-color: #1cc88a;
-  color: white;
-}
-
-.badge-warning {
-  background-color: #f6c23e;
-  color: white;
-}
-
-.badge-secondary {
-  background-color: #858796;
-  color: white;
-}
-
-.badge-danger {
-  background-color: #e74a3b;
-  color: white;
-}
-
-.badge-primary {
-  background-color: #4e73df;
-  color: white;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .calendar-month-grid {
-    min-height: 300px;
+    min-height: 400px;
   }
   
   .calendar-day-cell {
-    min-height: 60px;
-    padding: 4px;
+    min-height: 80px;
+    padding: 8px;
   }
   
   .assignments-grid {
@@ -1086,34 +594,6 @@
     grid-template-columns: 1fr;
     gap: 10px;
   }
-  
-  .metrics-linear {
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .calendar-day-linear {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .day-header-linear {
-    margin-right: 0;
-    margin-bottom: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .assignment-card-modern {
-    margin: 0 -10px;
-    border-radius: 8px;
-  }
-  
-  .summary-row {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
 }
 </style>
 
@@ -1121,14 +601,8 @@
 // Store CSRF token globally for easy access
 window.csrfToken = '<%= form_authenticity_token %>';
 
-// Initialize tooltips when document is ready
+// Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize Bootstrap tooltips
-  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl);
-  });
-  
   // Add click handlers for editable fields
   document.querySelectorAll('.editable-field').forEach(field => {
     field.addEventListener('click', function() {
@@ -1139,22 +613,37 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-function showDayDetails(date) {
-  // Scroll to the assignment details for this date
-  const daySection = document.querySelector(`.assignment-day-section[data-date="${date}"]`);
-  if (daySection) {
-    daySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // Highlight the section briefly
-    daySection.style.background = 'linear-gradient(135deg, #4e73df08, #4e73df15)';
-    daySection.style.borderRadius = '8px';
-    daySection.style.padding = '10px';
-    setTimeout(() => {
-      daySection.style.background = '';
-      daySection.style.borderRadius = '';
-      daySection.style.padding = '';
-    }, 1500);
+// Handle view type change to show/hide date fields
+function handleViewTypeChange() {
+  const viewType = document.getElementById('view_type_select').value;
+  const singleDateField = document.getElementById('single_date_field');
+  const startDateField = document.getElementById('start_date_field');
+  const endDateField = document.getElementById('end_date_field');
+  
+  if (viewType === 'custom') {
+    // Show custom date range fields
+    singleDateField.style.display = 'none';
+    startDateField.style.display = 'block';
+    endDateField.style.display = 'block';
+  } else if (viewType === 'today') {
+    // Show single date field only for today view
+    singleDateField.style.display = 'block';
+    startDateField.style.display = 'none';
+    endDateField.style.display = 'none';
+    
+    // Auto-submit for today view
+    document.querySelector('form').submit();
+  } else {
+    // For monthly and weekly views, hide all date fields
+    singleDateField.style.display = 'none';
+    startDateField.style.display = 'none';
+    endDateField.style.display = 'none';
+    
+    // Auto-submit for monthly and weekly views
+    document.querySelector('form').submit();
   }
 }
+
 
 function openNewAssignmentModal(date = null) {
   // Pre-fill the date if provided
@@ -1190,22 +679,8 @@ function editAssignmentModal(assignmentId) {
     })
     .catch(error => {
       console.error('Error fetching assignment data:', error);
-      // Fallback to redirect
-      window.location.href = `/milk-assignments/${assignmentId}/edit`;
+      showNotification('Error loading assignment data', 'error');
     });
-}
-
-function quickUpdateAssignment(assignmentId, field) {
-  const currentValue = document.querySelector(`[data-assignment-id="${assignmentId}"] [data-field="${field}"]`).textContent.replace('L', '').trim();
-  
-  const newValue = prompt(`Update ${field.replace('_', ' ')}:`, currentValue === 'Click to add' ? '' : currentValue);
-  
-  if (newValue !== null && newValue !== currentValue) {
-    const data = {};
-    data[field] = parseFloat(newValue) || newValue;
-    
-    updateAssignmentField(assignmentId, data);
-  }
 }
 
 function quickEditField(assignmentId, fieldName) {
@@ -1217,7 +692,7 @@ function quickEditField(assignmentId, fieldName) {
   input.type = fieldName === 'actual_quantity' ? 'number' : 'text';
   input.value = currentValue;
   input.style.width = '80px';
-  input.style.padding = '2px 4px';
+  input.style.padding = '4px 8px';
   input.style.border = '1px solid #4e73df';
   input.style.borderRadius = '4px';
   input.style.fontSize = '0.9rem';
@@ -1265,11 +740,7 @@ function quickEditField(assignmentId, fieldName) {
 function updateAssignmentField(assignmentId, data) {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window.csrfToken;
   
-  console.log('Updating assignment:', assignmentId, 'with data:', data);
-  console.log('CSRF token:', csrfToken ? 'Found' : 'Missing');
-  
   if (!csrfToken) {
-    console.error('CSRF token not found');
     showNotification('Security token not found. Please refresh the page.', 'error');
     return Promise.reject(new Error('CSRF token not found'));
   }
@@ -1284,35 +755,22 @@ function updateAssignmentField(assignmentId, data) {
     body: JSON.stringify({ procurement_assignment: data })
   })
   .then(response => {
-    console.log('Update response status:', response.status);
-    
     if (!response.ok) {
-      return response.text().then(text => {
-        console.error('Update failed with response:', text);
-        throw new Error(`Update failed: ${response.status} - ${text}`);
-      });
+      throw new Error(`Update failed: ${response.status}`);
     }
     
-    // Handle both JSON and empty responses
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       return response.json();
     } else {
-      return {}; // Empty response is OK for successful update
+      return {};
     }
   })
   .then(data => {
-    console.log('Update successful:', data);
-    // Show success feedback
     showNotification('Assignment updated successfully!', 'success');
-    
-    // Update related UI elements if needed
-    updateRelatedMetrics(assignmentId);
-    
     return data;
   })
   .catch(error => {
-    console.error('Error updating assignment:', error);
     showNotification(`Error updating assignment: ${error.message}`, 'error');
     throw error;
   });
@@ -1346,10 +804,7 @@ function updateAssignment() {
 }
 
 function deleteAssignmentConfirm(assignmentId, vendorName) {
-  // Create a more attractive confirmation dialog
-  const confirmed = confirm(`Are you sure you want to delete the assignment for "${vendorName}"?\n\nThis action cannot be undone.`);
-  
-  if (confirmed) {
+  if (confirm(`Are you sure you want to delete the assignment for "${vendorName}"?\n\nThis action cannot be undone.`)) {
     deleteAssignment(assignmentId);
   }
 }
@@ -1357,11 +812,7 @@ function deleteAssignmentConfirm(assignmentId, vendorName) {
 function deleteAssignment(assignmentId) {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window.csrfToken;
   
-  console.log('Deleting assignment:', assignmentId);
-  console.log('CSRF token:', csrfToken ? 'Found' : 'Missing');
-  
   if (!csrfToken) {
-    console.error('CSRF token not found for delete');
     showNotification('Security token not found. Please refresh the page.', 'error');
     return;
   }
@@ -1381,8 +832,6 @@ function deleteAssignment(assignmentId) {
     }
   })
   .then(response => {
-    console.log('Delete response status:', response.status);
-    
     if (response.ok) {
       // Animate card removal
       if (assignmentCard) {
@@ -1393,7 +842,7 @@ function deleteAssignment(assignmentId) {
           assignmentCard.remove();
           showNotification('Assignment deleted successfully!', 'success');
           
-          // Refresh to update counters and metrics
+          // Refresh to update counters
           setTimeout(() => {
             location.reload();
           }, 1000);
@@ -1405,14 +854,10 @@ function deleteAssignment(assignmentId) {
         }, 1000);
       }
     } else {
-      return response.text().then(text => {
-        console.error('Delete failed with response:', text);
-        throw new Error(`Delete failed: ${response.status} - ${text}`);
-      });
+      throw new Error(`Delete failed: ${response.status}`);
     }
   })
   .catch(error => {
-    console.error('Error deleting assignment:', error);
     showNotification(`Error deleting assignment: ${error.message}`, 'error');
     
     // Restore card state
@@ -1421,43 +866,6 @@ function deleteAssignment(assignmentId) {
       assignmentCard.style.pointerEvents = 'auto';
     }
   });
-}
-
-function filterByStatus(status) {
-  const cards = document.querySelectorAll('.assignment-card-modern');
-  cards.forEach(card => {
-    if (status === 'all') {
-      card.style.display = 'block';
-    } else {
-      card.style.display = card.classList.contains(status) ? 'block' : 'none';
-    }
-  });
-  
-  // Update filter button text
-  const filterButton = document.querySelector('.dropdown-toggle');
-  const statusText = status === 'all' ? 'All Assignments' : 
-                     status === 'pending' ? 'Pending Only' : 
-                     'Completed Only';
-  filterButton.innerHTML = `<i class="fas fa-filter me-1"></i>${statusText}`;
-}
-
-function openBulkEditModal() {
-  // Implementation for bulk editing assignments
-  showNotification('Bulk edit functionality coming soon!', 'info');
-}
-
-function updateRelatedMetrics(assignmentId) {
-  // Update any related metrics or summary displays
-  // This could include updating totals, progress bars, etc.
-  const card = document.querySelector(`[data-id="${assignmentId}"]`);
-  if (card) {
-    // You could fetch updated data and refresh specific parts
-    // For now, we'll just mark it as updated
-    card.style.borderColor = '#1cc88a';
-    setTimeout(() => {
-      card.style.borderColor = '';
-    }, 2000);
-  }
 }
 
 function showNotification(message, type = 'info') {
@@ -1494,43 +902,5 @@ function createToastContainer() {
   container.style.zIndex = '1050';
   document.body.appendChild(container);
   return container;
-}
-
-// Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-  if (e.ctrlKey || e.metaKey) {
-    switch(e.key) {
-      case 'n':
-        e.preventDefault();
-        openNewAssignmentModal();
-        break;
-      case 'm':
-        e.preventDefault();
-        // Toggle between month and week view
-        const currentView = new URLSearchParams(window.location.search).get('view_type') || 'month';
-        const newView = currentView === 'month' ? 'week' : 'month';
-        window.location.href = updateUrlParameter(window.location.href, 'view_type', newView);
-        break;
-    }
-  }
-});
-
-function updateUrlParameter(url, param, paramVal) {
-  var newAdditionalURL = "";
-  var tempArray = url.split("?");
-  var baseURL = tempArray[0];
-  var additionalURL = tempArray[1];
-  var temp = "";
-  if (additionalURL) {
-    tempArray = additionalURL.split("&");
-    for (var i = 0; i < tempArray.length; i++) {
-      if (tempArray[i].split('=')[0] != param) {
-        newAdditionalURL += temp + tempArray[i];
-        temp = "&";
-      }
-    }
-  }
-  var rows_txt = temp + "" + param + "=" + paramVal;
-  return baseURL + "?" + newAdditionalURL + rows_txt;
 }
 </script>

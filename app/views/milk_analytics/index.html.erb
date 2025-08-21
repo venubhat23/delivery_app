@@ -40,12 +40,6 @@
             <i class="fas fa-calendar-alt me-2"></i>📅 Procurement Calendar
           </button>
         </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="saved-reports-tab" data-bs-toggle="pill" data-bs-target="#saved-reports" 
-                  type="button" role="tab" aria-controls="saved-reports" aria-selected="false">
-            <i class="fas fa-history me-2"></i>📋 Saved Reports
-          </button>
-        </li>
       </ul>
     </div>
   </div>
@@ -783,8 +777,8 @@
           <div class="card border-0 shadow-sm">
             <div class="card-body py-3">
               <div class="row align-items-center">
-                <div class="col-md-3">
-                  <label class="form-label mb-0 fw-bold text-muted">📋 Report Type:</label>
+                <!-- Report Type and Period filters removed as requested -->
+                <div class="col-md-3" style="display: none;">
                   <select id="reportType" class="form-select" onchange="updateReportFilters()">
                     <option value="daily">Daily Procurement vs Delivery</option>
                     <option value="vendor">Vendor Performance Report</option>
@@ -793,8 +787,7 @@
                     <option value="monthly">Monthly Summary Report</option>
                   </select>
                 </div>
-                <div class="col-md-2">
-                  <label class="form-label mb-0 fw-bold text-muted">📅 Period:</label>
+                <div class="col-md-2" style="display: none;">
                   <select id="reportPeriod" class="form-select" onchange="updateDateFields()">
                     <option value="today">Today</option>
                     <option value="week">This Week</option>
@@ -810,24 +803,7 @@
                   <label class="form-label mb-0 fw-bold text-muted">To:</label>
                   <input type="date" id="reportToDate" class="form-control form-control-sm" value="<%= Date.current %>">
                 </div>
-                <div class="col-md-2">
-                  <label class="form-label mb-0">&nbsp;</label>
-                  <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="generateReport()">
-                      <i class="fas fa-chart-bar me-1"></i>Generate
-                    </button>
-                    <div class="dropdown">
-                      <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-download me-1"></i>Export
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="exportReport('pdf')"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="exportReport('excel')"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="exportReport('csv')"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
+                <!-- Generate and Export buttons removed as requested -->
               </div>
             </div>
           </div>
@@ -1294,53 +1270,11 @@
       </div>
     </div>
 
-    <!-- Saved Reports Tab -->
-    <div class="tab-pane fade" id="saved-reports" role="tabpanel" aria-labelledby="saved-reports-tab">
-      <div class="row">
-        <div class="col-12">
-          <div class="card border-0 shadow-lg">
-            <div class="card-header py-4">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h5 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-history me-2"></i>Saved Reports
-                  </h5>
-                  <p class="text-muted mb-0 small">Previously generated milk analytics reports</p>
-                </div>
-                <button type="button" class="btn btn-primary" onclick="loadSavedReports()">
-                  <i class="fas fa-refresh me-1"></i>Refresh
-                </button>
-              </div>
-            </div>
-            
-            <div class="card-body">
-              <div id="savedReportsContainer">
-                <!-- Saved reports will be loaded here -->
-                <div class="text-center py-5">
-                  <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-                  <h4>Saved Reports Loading...</h4>
-                  <p class="text-muted">Please wait while we load your saved reports</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Procurement Calendar Tab -->
     <div class="tab-pane fade show active" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
       <div class="card border-0 shadow-lg">
-        <div class="card-header py-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-calendar-alt me-2"></i>Procurement Calendar
-              </h5>
-              <p class="text-muted mb-0 small">Manage your milk procurement assignments</p>
-            </div>
-          </div>
-        </div>
+        <!-- Card header removed to prevent duplicate heading -->
         
         <div class="card-body p-0" id="calendarContent">
           <!-- Calendar will be loaded here dynamically -->

@@ -48,19 +48,44 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def calendar_view
-    @date = params[:date] ? Date.parse(params[:date]) : Date.current
-    @view_type = params[:view_type] || 'month'
+    # Parse date with error handling
+    begin
+      @date = params[:date].present? ? Date.parse(params[:date]) : Date.current
+    rescue Date::Error
+      @date = Date.current
+    end
     
+    @view_type = params[:view_type] || 'month' # Default to monthly, but allow user selection
+    
+    # Set date range based on view type
     case @view_type
     when 'week'
       @start_date = @date.beginning_of_week
       @end_date = @date.end_of_week
-    when 'month'
-      @start_date = @date.beginning_of_month
-      @end_date = @date.end_of_month
-    else
+    when 'today'
       @start_date = @date
       @end_date = @date
+    when 'custom'
+      # Use custom date range if provided, with error handling
+      begin
+        @start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : Date.current.beginning_of_month
+      rescue Date::Error
+        @start_date = Date.current.beginning_of_month
+      end
+      
+      begin
+        @end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : Date.current.end_of_month
+      rescue Date::Error
+        @end_date = Date.current.end_of_month
+      end
+      
+      # Ensure start_date is not after end_date
+      if @start_date > @end_date
+        @start_date = @end_date
+      end
+    else # 'month'
+      @start_date = @date.beginning_of_month
+      @end_date = @date.end_of_month
     end
     
     # Debug info (remove in production)
@@ -77,6 +102,11 @@ class MilkAnalyticsController < ApplicationController
       @assignments = first_user&.procurement_assignments
                                &.for_date_range(@start_date, @end_date)
                                &.includes(:procurement_schedule) || []
+    end
+    
+    # Apply vendor filter if specified
+    if params[:vendor_filter].present?
+      @assignments = @assignments.where(vendor_name: params[:vendor_filter])
     end
     
     Rails.logger.info "Calendar View Debug: Found #{@assignments.count} assignments"
@@ -122,6 +152,9 @@ class MilkAnalyticsController < ApplicationController
         completed_count: daily_assignments.count { |a| a.is_completed? }
       }
     end
+    
+    # Use a minimal layout without sidebar for iframe loading
+    render layout: 'public'
   end
 
   def vendor_analysis

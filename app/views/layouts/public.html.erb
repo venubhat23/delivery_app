@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice - <%= @invoice&.formatted_number %></title>
+  <title><%= content_for(:title) || "Procurement Calendar" %></title>
   
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
     body {
       background-color: #f8f9fa;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
     }
     .invoice-container {
       background: white;
@@ -69,12 +72,15 @@
     <%= yield %>
   </div>
   
-  <!-- Print Button -->
-  <button class="btn btn-primary btn-lg print-btn no-print" onclick="window.print()">
-    <i class="fas fa-print me-2"></i>Print Invoice
-  </button>
+  <!-- Print Button (only for invoice pages) -->
+  <% if content_for(:title)&.include?("Invoice") %>
+    <button class="btn btn-primary btn-lg print-btn no-print" onclick="window.print()">
+      <i class="fas fa-print me-2"></i>Print Invoice
+    </button>
+  <% end %>
   
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </body>
 </html>
