@@ -96,12 +96,14 @@ class MilkAnalyticsController < ApplicationController
       @assignments = current_user.procurement_assignments
                                 .for_date_range(@start_date, @end_date)
                                 .includes(:procurement_schedule)
+                                .order(:date, :created_at)
     else
       # Fallback for demo - get first user's assignments if no current user
       first_user = User.first
       @assignments = first_user&.procurement_assignments
                                &.for_date_range(@start_date, @end_date)
-                               &.includes(:procurement_schedule) || []
+                               &.includes(:procurement_schedule)
+                               &.order(:date, :created_at) || []
     end
     
     # Apply vendor filter if specified
@@ -111,8 +113,8 @@ class MilkAnalyticsController < ApplicationController
     
     Rails.logger.info "Calendar View Debug: Found #{@assignments.count} assignments"
     
-    # Group by date for calendar display
-    @assignments_by_date = @assignments.group_by(&:date)
+    # Group by date for calendar display - maintain chronological order
+    @assignments_by_date = @assignments.group_by(&:date).sort_by { |date, _| date }
     
     # Daily summaries with improved calculations
     @daily_summaries = (@start_date..@end_date).map do |date|
