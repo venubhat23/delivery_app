@@ -16,9 +16,9 @@
     <div class="card border-left-info shadow">
       <div class="card-body">
         <h6 class="text-info">Current Capacity</h6>
-        <h4><%= @current_count %> / 50 customers</h4>
+        <h4><%= @current_count %> / 200 customers</h4>
         <div class="progress mt-2">
-          <div class="progress-bar bg-info" style="width: <%= (@current_count.to_f / 50 * 100).round(1) %>%"></div>
+          <div class="progress-bar bg-info" style="width: <%= (@current_count.to_f / 200 * 100).round(1) %>%"></div>
         </div>
       </div>
     </div>
@@ -128,7 +128,7 @@
       <% if @available_slots <= 0 %>
         <i class="fas fa-users-slash fa-4x text-warning mb-3"></i>
         <h4 class="text-warning">Capacity Full</h4>
-        <p class="text-muted">This delivery person has reached the maximum capacity of 50 customers.</p>
+        <p class="text-muted">This delivery person has reached the maximum capacity of 200 customers.</p>
       <% else %>
         <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
         <h4 class="text-muted">No Available Customers</h4>

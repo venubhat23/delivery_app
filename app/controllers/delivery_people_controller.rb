@@ -60,9 +60,9 @@
 #     # Validate capacity
 #     total_after_assignment = @delivery_person.assigned_customers.count + customer_ids.length
     
-#     if total_after_assignment > 50
+#     if total_after_assignment > 200
 #       redirect_to assign_customers_delivery_person_path(@delivery_person), 
-#                   alert: "Cannot assign customers. This would exceed the limit of 50 customers per delivery person."
+#                   alert: "Cannot assign customers. This would exceed the limit of 200 customers per delivery person."
 #       return
 #     end
 

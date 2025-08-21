@@ -206,9 +206,9 @@ class Customer < ApplicationRecord
         return result
       end
       
-      # Check user limit (maximum 50 customers)
-      if csv.length > 50
-        result[:message] = "Maximum 50 customers allowed per bulk import. Your file contains #{csv.length} rows."
+      # Check user limit (maximum 200 customers)
+      if csv.length > 200
+        result[:message] = "Maximum 200 customers allowed per bulk import. Your file contains #{csv.length} rows."
         return result
       end
       
