@@ -42,6 +42,64 @@
               </div>
             <% end %>
 
+            <!-- Product Selection Row -->
+            <div class="row">
+              <div class="col-md-12 mb-4">
+                <div class="card bg-light border-primary">
+                  <div class="card-body">
+                    <h6 class="card-title text-primary">
+                      <i class="fas fa-box me-2"></i>Product Selection
+                    </h6>
+                    <%= form.label :product_id, "Select Product", class: "form-label fw-bold" %>
+                    
+                    <!-- Search Input for Product -->
+                    <div class="position-relative mb-3">
+                      <input type="text" id="product-search" class="form-control form-control-lg" 
+                             placeholder="🔍 Start typing to search products (e.g., 'milk', 'butter', 'cheese')..." 
+                             autocomplete="off">
+                      <div id="product-search-results" class="position-absolute w-100" style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto; margin-top: 4px;">
+                        <!-- Search results will be populated here -->
+                      </div>
+                    </div>
+                    
+                    <!-- Hidden select for form submission -->
+                    <%= form.hidden_field :product_id, id: "selected-product-id" %>
+                    
+                    <!-- Selected Product Display -->
+                    <div id="selected-product-display" class="alert alert-success border-success" style="display: none;">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div id="selected-product-info">
+                          <!-- Product info will be displayed here -->
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearProductSelection()">
+                          <i class="fas fa-times"></i> Change Product
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- Fallback Product Dropdown -->
+                    <div id="product-dropdown-container">
+                      <%= form.select :product_id, 
+                          options_from_collection_for_select(Product.all, :id, 
+                            ->(product) { "#{product.name} (#{product.unit_type}) - ₹#{product.price}" }, 
+                            @procurement_schedule.product_id),
+                          { prompt: "Or select from dropdown (#{Product.count} available products)" },
+                          { class: "form-select #{'is-invalid' if @procurement_schedule.errors[:product_id].any?}",
+                            id: "product-dropdown-fallback" } %>
+                      <div class="invalid-feedback">
+                        <%= @procurement_schedule.errors[:product_id].first %>
+                      </div>
+                    </div>
+                    
+                    <small class="form-text text-muted mt-2">
+                      <i class="fas fa-lightbulb text-warning me-1"></i>
+                      <strong>Selecting a product will automatically set the unit type and suggested pricing.</strong>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="row">
               <!-- Vendor Information -->
               <div class="col-md-6 mb-3">
@@ -55,7 +113,9 @@
                 </div>
                 <small class="form-text text-muted">Enter the name of the farm or vendor</small>
               </div>
+            </div>
 
+            <div class="row">
               <!-- Unit Selection -->
               <div class="col-md-6 mb-3">
                 <%= form.label :unit, "Unit", class: "form-label fw-bold" %>
@@ -247,6 +307,35 @@ document.addEventListener('DOMContentLoaded', function() {
   const toDateField = document.getElementById('procurement_schedule_to_date');
   const unitField = document.getElementById('procurement_schedule_unit');
   const calculationPreview = document.getElementById('calculation-preview');
+  const productSelect = document.getElementById('product-dropdown-fallback');
+  const productSearch = document.getElementById('product-search');
+  
+  // Initialize product search
+  initializeProductSearch();
+  
+  // Handle product selection
+  function handleProductSelection() {
+    const selectedOption = productSelect.selectedOptions[0];
+    if (selectedOption && selectedOption.value) {
+      // Extract unit and price from the option text
+      const optionText = selectedOption.textContent;
+      const unitMatch = optionText.match(/\(([^)]+)\)/);
+      const priceMatch = optionText.match(/₹([\d.]+)/);
+      
+      if (unitMatch && unitField) {
+        const productUnit = unitMatch[1].toLowerCase();
+        unitField.value = productUnit;
+        updateUnitDisplay();
+      }
+      
+      // Optionally pre-fill selling price based on product price
+      if (priceMatch && !sellingPriceField.value) {
+        sellingPriceField.value = priceMatch[1];
+      }
+      
+      updateCalculationPreview();
+    }
+  }
   
   // Update unit display
   function updateUnitDisplay() {
@@ -291,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Event listeners
   unitField.addEventListener('change', updateUnitDisplay);
+  productSelect.addEventListener('change', handleProductSelection);
   [quantityField, buyingPriceField, sellingPriceField, fromDateField, toDateField].forEach(field => {
     field.addEventListener('input', updateCalculationPreview);
     field.addEventListener('change', updateCalculationPreview);
@@ -308,12 +398,214 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize
   updateUnitDisplay();
   updateCalculationPreview();
+  
+  // Product Search Functions
+  let productSearchTimeout;
+  let availableProducts = [
+    <% Product.all.each_with_index do |product, index| %>
+      {
+        id: <%= product.id %>,
+        name: "<%= product.name.gsub('"', '\\"') %>",
+        unit_type: "<%= product.unit_type %>",
+        price: "<%= product.price %>",
+        available_quantity: "<%= product.available_quantity || 0 %>",
+        description: "<%= product.description&.gsub('"', '\\"') || 'No description' %>",
+        category: "<%= product.category_name.gsub('"', '\\"') %>"
+      }<%= index < Product.all.count - 1 ? ',' : '' %>
+    <% end %>
+  ];
+  
+  function initializeProductSearch() {
+    const searchInput = document.getElementById('product-search');
+    const resultsContainer = document.getElementById('product-search-results');
+    const fallbackDropdown = document.getElementById('product-dropdown-fallback');
+
+    if (!searchInput) return;
+
+    // Handle search input
+    searchInput.addEventListener('input', function() {
+      clearTimeout(productSearchTimeout);
+      const query = this.value.trim().toLowerCase();
+      
+      if (query.length < 2) {
+        resultsContainer.style.display = 'none';
+        return;
+      }
+
+      productSearchTimeout = setTimeout(() => {
+        searchProducts(query);
+      }, 300);
+    });
+
+    // Handle fallback dropdown selection
+    if (fallbackDropdown) {
+      fallbackDropdown.addEventListener('change', function() {
+        if (this.value) {
+          const product = availableProducts.find(p => p.id == this.value);
+          if (product) {
+            selectProduct(product);
+          }
+        }
+      });
+    }
+
+    // Hide results when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!searchInput.contains(event.target) && !resultsContainer.contains(event.target)) {
+        resultsContainer.style.display = 'none';
+      }
+    });
+  }
+
+  function searchProducts(query) {
+    const resultsContainer = document.getElementById('product-search-results');
+    
+    const filteredProducts = availableProducts.filter(product => 
+      product.name.toLowerCase().includes(query) ||
+      product.description.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query) ||
+      product.unit_type.toLowerCase().includes(query)
+    );
+
+    if (filteredProducts.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="card shadow-sm">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-search fa-2x text-muted mb-2"></i>
+            <p class="mb-0 text-muted">No products found for "${query}"</p>
+            <small class="text-muted">Try searching with different keywords</small>
+          </div>
+        </div>
+      `;
+    } else {
+      resultsContainer.innerHTML = `
+        <div class="card shadow-lg border-primary">
+          <div class="card-header bg-primary text-white py-2">
+            <small><i class="fas fa-search me-1"></i>Found ${filteredProducts.length} product(s)</small>
+          </div>
+          <div class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;">
+            ${filteredProducts.map(product => `
+              <div class="list-group-item list-group-item-action cursor-pointer product-option" 
+                   onclick="selectProduct(${JSON.stringify(product).replace(/"/g, '&quot;')})">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1 text-primary fw-bold">${product.name}</h6>
+                    <p class="mb-1 small text-muted">${product.description}</p>
+                    <div class="d-flex gap-3 flex-wrap">
+                      <small class="text-success"><i class="fas fa-tag me-1"></i><strong>₹${product.price}/${product.unit_type}</strong></small>
+                      <small class="text-info"><i class="fas fa-box me-1"></i>${product.available_quantity} ${product.unit_type}</small>
+                      <small class="text-warning"><i class="fas fa-folder me-1"></i>${product.category}</small>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge ${product.available_quantity > 0 ? 'bg-success' : 'bg-warning'}">
+                      ${product.available_quantity > 0 ? 'Available' : 'Low Stock'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    resultsContainer.style.display = 'block';
+  }
+
+  window.selectProduct = function(product) {
+    const searchInput = document.getElementById('product-search');
+    const resultsContainer = document.getElementById('product-search-results');
+    const selectedDisplay = document.getElementById('selected-product-display');
+    const selectedInfo = document.getElementById('selected-product-info');
+    const selectedProductId = document.getElementById('selected-product-id');
+    const dropdownContainer = document.getElementById('product-dropdown-container');
+
+    // Update hidden field
+    selectedProductId.value = product.id;
+
+    // Update search input
+    searchInput.value = product.name;
+
+    // Show selected product info
+    selectedInfo.innerHTML = `
+      <div>
+        <h6 class="mb-1 text-success"><i class="fas fa-check-circle me-2"></i>Selected: ${product.name}</h6>
+        <div class="d-flex gap-3 small flex-wrap">
+          <span class="text-muted"><i class="fas fa-tag me-1"></i>Price: ₹${product.price}/${product.unit_type}</span>
+          <span class="text-muted"><i class="fas fa-box me-1"></i>Available: ${product.available_quantity} ${product.unit_type}</span>
+          <span class="text-muted"><i class="fas fa-folder me-1"></i>Category: ${product.category}</span>
+        </div>
+      </div>
+    `;
+
+    // Auto-fill form fields based on product selection
+    if (unitField) {
+      const unitMapping = {
+        'liters': 'liters',
+        'gallons': 'gallons', 
+        'kg': 'kg',
+        'pounds': 'pounds',
+        'pieces': 'pieces'
+      };
+      unitField.value = unitMapping[product.unit_type] || 'liters';
+      updateUnitDisplay();
+    }
+
+    if (sellingPriceField && !sellingPriceField.value) {
+      // Suggest selling price (add 10-15% margin to product price)
+      const suggestedPrice = (parseFloat(product.price) * 1.12).toFixed(2);
+      sellingPriceField.value = suggestedPrice;
+    }
+
+    // Hide elements
+    resultsContainer.style.display = 'none';
+    selectedDisplay.style.display = 'block';
+    dropdownContainer.style.display = 'none';
+
+    // Update calculation preview
+    updateCalculationPreview();
+  }
+
+  window.clearProductSelection = function() {
+    const searchInput = document.getElementById('product-search');
+    const selectedDisplay = document.getElementById('selected-product-display');
+    const selectedProductId = document.getElementById('selected-product-id');
+    const dropdownContainer = document.getElementById('product-dropdown-container');
+    const fallbackDropdown = document.getElementById('product-dropdown-fallback');
+
+    // Clear values
+    searchInput.value = '';
+    selectedProductId.value = '';
+    if (fallbackDropdown) fallbackDropdown.value = '';
+
+    // Reset display
+    selectedDisplay.style.display = 'none';
+    dropdownContainer.style.display = 'block';
+
+    // Focus back to search
+    searchInput.focus();
+  }
 });
 </script>
 
 <style>
 .form-label.fw-bold {
   font-weight: 600 !important;
+}
+
+.card.bg-light {
+  background-color: #f8f9fc !important;
+  border: 2px dashed #4e73df;
+}
+
+.form-select-lg {
+  font-size: 1.1rem;
+  padding: 0.75rem 1rem;
+}
+
+#product-dropdown {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234e73df' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
 }
 
 .card {
@@ -347,5 +639,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .border-left-primary {
   border-left: 0.25rem solid #4e73df !important;
+}
+
+/* Product Search Styling */
+#product-search {
+  border: 2px solid #4e73df;
+  font-size: 1.1rem;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
+}
+
+#product-search:focus {
+  border-color: #2e59d9;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+#product-search-results {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.product-option {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none !important;
+}
+
+.product-option:hover {
+  background-color: rgba(78, 115, 223, 0.08) !important;
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#selected-product-display {
+  border: 2px solid #28a745;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+}
+
+.card.bg-light.border-primary {
+  border: 2px solid #4e73df !important;
+  background: linear-gradient(135deg, rgba(78, 115, 223, 0.05) 0%, rgba(78, 115, 223, 0.02) 100%) !important;
 }
 </style>

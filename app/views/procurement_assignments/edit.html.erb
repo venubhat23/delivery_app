@@ -21,13 +21,21 @@
             <% end %>
 
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-md-4 mb-3">
                 <%= form.label :date, class: 'form-label' %>
                 <%= form.date_field :date, class: 'form-control', required: true %>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-md-4 mb-3">
                 <%= form.label :vendor_name, class: 'form-label' %>
                 <%= form.text_field :vendor_name, class: 'form-control', required: true %>
+              </div>
+              <div class="col-md-4 mb-3">
+                <%= form.label :product_id, "Product", class: 'form-label' %>
+                <%= form.select :product_id, 
+                    options_from_collection_for_select(Product.all, :id, :name, @assignment.product_id),
+                    { prompt: "Select a product" },
+                    { class: 'form-select' } %>
+                <div class="form-text">Select the product to procure</div>
               </div>
             </div>
             

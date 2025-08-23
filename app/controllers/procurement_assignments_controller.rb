@@ -20,6 +20,7 @@ class ProcurementAssignmentsController < ApplicationController
         buying_price: @assignment.buying_price || 0,
         selling_price: @assignment.selling_price || 0,
         unit: @assignment.unit || "liters",
+        product_id: @assignment.product_id,
         status: "active"
       )
       @assignment.procurement_schedule_id = schedule.id
@@ -240,14 +241,14 @@ class ProcurementAssignmentsController < ApplicationController
   def create_procurement_assignment_params
     params.require(:procurement_assignment).permit(
       :date, :vendor_name, :planned_quantity, :buying_price, :selling_price,
-      :actual_quantity, :unit, :status, :procurement_schedule_id, :user_id
+      :actual_quantity, :unit, :status, :procurement_schedule_id, :user_id, :product_id
     )
   end
   
   def update_procurement_assignment_params
     params.require(:procurement_assignment).permit(
       :date, :vendor_name, :planned_quantity, :buying_price, :selling_price,
-      :actual_quantity, :unit, :status
+      :actual_quantity, :unit, :status, :product_id
     )
   end
   

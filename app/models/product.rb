@@ -18,6 +18,8 @@ class Product < ApplicationRecord
   has_many :delivery_assignments, dependent: :destroy
   has_many :invoice_items, dependent: :destroy
   has_many :invoices, through: :invoice_items
+  has_many :procurement_schedules, dependent: :destroy
+  has_many :procurement_assignments, dependent: :destroy
 
   # Scopes
   scope :low_stock, -> { where('available_quantity < ?', 10) }

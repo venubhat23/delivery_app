@@ -134,14 +134,31 @@ end
       failure_count = 0
       errors = []
       
-      results.each do |result|
+      # Process results in batches to avoid overwhelming the system
+      whatsapp_success_count = 0
+      whatsapp_failure_count = 0
+      
+      results.each_with_index do |result, index|
         if result[:result][:success]
           success_count += 1
+          invoice = result[:result][:invoice]
+          
           # Send WhatsApp message for successful invoice
           begin
-            send_whatsapp_invoice(result[:result][:invoice])
+            if send_whatsapp_invoice(invoice)
+              whatsapp_success_count += 1
+            else
+              whatsapp_failure_count += 1
+            end
           rescue => e
-            Rails.logger.error "WhatsApp sending failed for invoice #{result[:result][:invoice].id}: #{e.message}"
+            Rails.logger.error "WhatsApp sending failed for invoice #{invoice.id}: #{e.message}"
+            whatsapp_failure_count += 1
+          end
+          
+          # Add a small delay after every 10 messages to avoid rate limiting
+          if (index + 1) % 10 == 0
+            sleep(2)
+            Rails.logger.info "Processed #{index + 1} invoices. Pausing briefly to respect rate limits..."
           end
         else
           failure_count += 1
@@ -149,16 +166,33 @@ end
         end
       end
       
+      # Build comprehensive status message
+      message_parts = []
+      
       if success_count > 0
-        flash[:notice] = "Successfully generated #{success_count} invoices and sent WhatsApp notifications."
+        message_parts << "✅ Generated #{success_count} invoices successfully"
+        message_parts << "📱 WhatsApp sent: #{whatsapp_success_count} successful"
+        
+        if whatsapp_failure_count > 0
+          message_parts << "⚠️ WhatsApp failed: #{whatsapp_failure_count} (customers may not have valid WhatsApp numbers)"
+        end
       end
       
       if failure_count > 0
-        flash[:alert] = "#{failure_count} invoices could not be generated. #{errors.join(', ')}"
+        message_parts << "❌ #{failure_count} invoices could not be generated: #{errors.join(', ')}"
       end
       
       if success_count == 0 && failure_count == 0
-        flash[:alert] = "No customers with completed deliveries found for #{Date::MONTHNAMES[month]} #{year}"
+        message_parts << "ℹ️ No customers with completed deliveries found for #{Date::MONTHNAMES[month]} #{year}"
+      end
+      
+      # Display appropriate flash message
+      if success_count > 0 && failure_count == 0 && whatsapp_failure_count == 0
+        flash[:notice] = message_parts.join(" | ")
+      elsif success_count > 0
+        flash[:warning] = message_parts.join(" | ")
+      else
+        flash[:alert] = message_parts.join(" | ")
       end
       
     rescue => e
@@ -418,6 +452,58 @@ end
 
   def build_whatsapp_message(invoice, public_url)
     "Hello #{invoice.customer.name}, your invoice #{invoice.formatted_number} for ₹#{invoice.total_amount} is ready. View/download: #{public_url}"
+  end
+
+  # Method to send invoice via WhatsApp
+  def send_whatsapp_invoice(invoice)
+    return false unless invoice&.customer&.phone_number.present?
+    
+    begin
+      # Create public URL for the invoice
+      public_url = public_invoice_url(invoice.share_token)
+      
+      # Initialize WhatsApp service
+      whatsapp_service = WhatsappService.new
+      
+      # Build message with public URL
+      message = build_enhanced_invoice_message(invoice, public_url)
+      
+      # Send WhatsApp message with invoice link
+      whatsapp_service.send_text(invoice.customer.phone_number, message)
+      
+      # Mark invoice as shared
+      invoice.update(shared_at: Time.current) if invoice.shared_at.blank?
+      
+      Rails.logger.info "Invoice WhatsApp sent successfully to #{invoice.customer.name} (#{invoice.customer.phone_number})"
+      true
+    rescue => e
+      Rails.logger.error "Failed to send invoice WhatsApp to #{invoice.customer.name}: #{e.message}"
+      false
+    end
+  end
+
+  # Enhanced message for invoice with better formatting
+  def build_enhanced_invoice_message(invoice, public_url)
+    month_year = invoice.invoice_date.strftime("%B %Y")
+    formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}"
+    due_date = invoice.due_date.strftime('%d %B %Y')
+    
+    <<~MESSAGE.strip
+      Hello #{invoice.customer.name}! 👋
+
+      Your #{month_year} invoice is ready! 📋
+
+      📄 Invoice #: #{invoice.formatted_number}
+      💰 Total Amount: #{formatted_amount}
+      📅 Due Date: #{due_date}
+
+      📱 View/Download your invoice: #{public_url}
+
+      Thank you for your continued business! 🙏
+
+      For any queries, please contact us.
+      - Atma Nirbhar Farm
+    MESSAGE
   end
 
   def generate_pdf_response

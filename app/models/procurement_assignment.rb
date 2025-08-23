@@ -1,6 +1,7 @@
 class ProcurementAssignment < ApplicationRecord
   belongs_to :procurement_schedule
   belongs_to :user
+  belongs_to :product, optional: true
 
   validates :vendor_name, presence: true
   validates :date, presence: true, uniqueness: { scope: [:procurement_schedule_id, :vendor_name] }

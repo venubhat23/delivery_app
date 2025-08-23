@@ -525,6 +525,15 @@ class Customer < ApplicationRecord
       errors.add(:base, "Both latitude and longitude must be provided together")
     end
   end
+  
+  # Check if customer has a valid WhatsApp number
+  def has_whatsapp?
+    return false if phone_number.blank?
+    
+    # Use WhatsApp service to validate number
+    whatsapp_service = WhatsappService.new
+    whatsapp_service.valid_whatsapp_number?(phone_number)
+  end
 
   def generate_assignments_for_schedule(schedule)
     return [] unless schedule.persisted?

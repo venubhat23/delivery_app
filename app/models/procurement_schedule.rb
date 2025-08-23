@@ -1,5 +1,6 @@
 class ProcurementSchedule < ApplicationRecord
   belongs_to :user
+  belongs_to :product, optional: true
   has_many :procurement_assignments, dependent: :destroy
 
   validates :vendor_name, presence: true, length: { minimum: 2, maximum: 100 }
@@ -102,6 +103,7 @@ class ProcurementSchedule < ApplicationRecord
         selling_price: selling_price,
         unit: unit,
         user: user,
+        product: product,
         status: 'pending'
       )
     end

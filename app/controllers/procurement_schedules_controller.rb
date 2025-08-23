@@ -110,7 +110,7 @@ class ProcurementSchedulesController < ApplicationController
 
   def procurement_schedule_params
     params.require(:procurement_schedule).permit(:vendor_name, :from_date, :to_date, :quantity, 
-                                                  :buying_price, :selling_price, :status, :unit, :notes)
+                                                  :buying_price, :selling_price, :status, :unit, :notes, :product_id)
   end
 
   def authenticate_user!

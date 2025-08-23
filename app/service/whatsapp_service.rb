@@ -14,15 +14,20 @@ class WhatsappService
   # Send a plain text WhatsApp message
   def send_text(to_number, message)
     formatted_number = format_phone_number(to_number)
+    
+    # Return false if number is invalid
+    return false unless formatted_number
+    
     @client.messages.create(
       from: FROM_NUMBER,
       to: "whatsapp:#{formatted_number}",
       body: message
     )
-
+    
+    true
   rescue Twilio::REST::RestError => e
-    Rails.logger.error "WhatsApp text sending failed: #{e.message}"
-    raise e
+    Rails.logger.error "WhatsApp text sending failed to #{to_number}: #{e.message}"
+    false
   end
   
   # Send a PDF (or other media) via WhatsApp
@@ -53,17 +58,35 @@ class WhatsappService
     end
   end
   
+  # Check if phone number is valid for WhatsApp
+  def valid_whatsapp_number?(number)
+    formatted = format_phone_number(number)
+    !formatted.nil?
+  end
+  
   private
   
   # Format phone number to ensure it has country code
   def format_phone_number(number)
-    # Remove any existing 'whatsapp:' prefix
-    clean_number = number.to_s.gsub(/^whatsapp:/, '')
+    return nil if number.blank?
+    
+    # Remove any existing 'whatsapp:' prefix and non-numeric characters except +
+    clean_number = number.to_s.gsub(/^whatsapp:/, '').gsub(/[^\d+]/, '')
+    
+    # Return nil if number is too short or invalid
+    return nil if clean_number.length < 10
     
     # Add +91 if it doesn't start with + (assuming Indian numbers)
     unless clean_number.start_with?('+')
-      clean_number = "+919632850872"
+      # Handle Indian numbers (remove leading 0 if present)
+      clean_number = clean_number.sub(/^0/, '')
+      
+      # Add country code for Indian numbers
+      clean_number = "+91#{clean_number}"
     end
+    
+    # Validate final number format (should be 13 characters for Indian numbers: +91xxxxxxxxxx)
+    return nil unless clean_number.match(/^\+91\d{10}$/)
     
     clean_number
   end
