@@ -196,18 +196,21 @@
                         <div class="metrics-row">
                           <div class="metric-box delivery">
                             <div class="metric-details">
-                              <div class="metric-value"><%= assignment.planned_quantity || 0 %>L</div>
-                              <div class="metric-label">Liters Delivered</div>
-                              <div class="metric-price">Buying: ₹<%= assignment.buying_price %></div>
+                              <div class="metric-value"><%= (assignment.actual_quantity || assignment.planned_quantity || 0).to_f %>L</div>
+                              <div class="metric-label">
+                                <%= assignment.actual_quantity.present? ? 'Actual Received (L)' : 'Planned Quantity (L)' %>
+                              </div>
+                              <div class="metric-price">Buying Price: ₹<%= assignment.buying_price %>/L</div>
                             </div>
                           </div>
                           
                           <div class="metric-box pricing">
                             <div class="metric-details">
-                              <div class="metric-value">₹<%= assignment.selling_price %></div>
+                              <div class="metric-value">₹<%= assignment.selling_price %>/L</div>
                               <div class="metric-label">Selling Price</div>
                               <div class="metric-profit">
-                                Profit: ₹<%= ((assignment.planned_quantity || 0) * (assignment.selling_price - assignment.buying_price)).round(2) %>
+                                <% qty_for_profit = (assignment.actual_quantity || assignment.planned_quantity || 0).to_f %>
+                                Profit: ₹<%= (qty_for_profit * (assignment.selling_price - assignment.buying_price)).round(2) %>
                               </div>
                             </div>
                           </div>

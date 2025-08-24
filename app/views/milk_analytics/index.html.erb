@@ -15,27 +15,28 @@
       </div>
       
       <!-- Navigation Tabs -->
+      <% active_tab = params[:tab].presence || 'dashboard' %>
       <ul class="nav nav-pills nav-fill" id="milkAnalyticsTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" 
+          <button class="nav-link <%= 'active' if active_tab == 'dashboard' %>" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" 
                   type="button" role="tab" aria-controls="dashboard" aria-selected="false">
             <i class="fas fa-chart-line me-2"></i>📈 Dashboard
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports" 
+          <button class="nav-link <%= 'active' if active_tab == 'reports' %>" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports" 
                   type="button" role="tab" aria-controls="reports" aria-selected="false">
             <i class="fas fa-file-alt me-2"></i>📊 Daily Report
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="procurement-tab" data-bs-toggle="pill" data-bs-target="#procurement" 
+          <button class="nav-link <%= 'active' if active_tab == 'procurement' %>" id="procurement-tab" data-bs-toggle="pill" data-bs-target="#procurement" 
                   type="button" role="tab" aria-controls="procurement" aria-selected="false">
             <i class="fas fa-plus me-2"></i>➕ Create Procurement
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar" 
+          <button class="nav-link <%= 'active' if active_tab == 'calendar' %>" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar" 
                   type="button" role="tab" aria-controls="calendar" aria-selected="true">
             <i class="fas fa-calendar-alt me-2"></i>📅 Procurement Calendar
           </button>
@@ -48,7 +49,7 @@
   <div class="tab-content" id="milkAnalyticsTabContent">
     
     <!-- Dashboard & Reports Tab -->
-    <div class="tab-pane fade" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+    <div class="tab-pane fade <%= 'show active' if active_tab == 'dashboard' %>" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
       <!-- Filter Section -->
       <div class="row mb-4">
         <div class="col-12">
@@ -751,7 +752,7 @@
     </div>
 
     <!-- Reports Tab -->
-    <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+    <div class="tab-pane fade <%= 'show active' if active_tab == 'reports' %>" id="reports" role="tabpanel" aria-labelledby="reports-tab">
       <!-- Report Selection and Filters -->
       <div class="row mb-4">
         <div class="col-12">
@@ -1140,7 +1141,7 @@
     </div>
 
     <!-- Create Procurement Tab -->
-    <div class="tab-pane fade" id="procurement" role="tabpanel" aria-labelledby="procurement-tab">
+    <div class="tab-pane fade <%= 'show active' if active_tab == 'procurement' %>" id="procurement" role="tabpanel" aria-labelledby="procurement-tab">
       <div class="row justify-content-center">
         <div class="col-xl-8 col-lg-10">
           <div class="card border-0 shadow-lg">
@@ -1302,7 +1303,7 @@
 
 
     <!-- Procurement Calendar Tab -->
-    <div class="tab-pane fade show active" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
+    <div class="tab-pane fade <%= 'show active' if active_tab == 'calendar' %>" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
       <div class="card border-0 shadow-lg">
         <!-- Card header removed to prevent duplicate heading -->
         
