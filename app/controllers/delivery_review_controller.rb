@@ -35,31 +35,52 @@ class DeliveryReviewController < ApplicationController
   def export
     @deliveries = filtered_deliveries
     
-    respond_to do |format|
-      format.csv do
-        csv_data = CSV.generate(headers: true) do |csv|
-          csv << [
-            'Date', 'Customer Name', 'Product', 'Quantity', 'Amount', 'Status', 'Delivery Person'
-          ]
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << [
+        'Date', 'Customer Name', 'Product', 'Quantity', 'Amount', 'Status', 'Delivery Person'
+      ]
 
-          @deliveries.find_each do |delivery|
-            csv << [
-              delivery.scheduled_date.strftime('%b %d, %Y'),
-              delivery.customer&.name,
-              delivery.product&.name,
-              "#{delivery.quantity} #{delivery.unit}",
-              delivery.final_amount_after_discount.to_f,
-              delivery.status,
-              delivery.delivery_person&.name || 'Not Assigned'
-            ]
-          end
-        end
-
-        send_data csv_data,
-                  filename: "delivery_review_#{Date.current.strftime('%Y%m%d')}.csv",
-                  type: 'text/csv'
+      @deliveries.find_each do |delivery|
+        csv << [
+          delivery.scheduled_date.strftime('%b %d, %Y'),
+          delivery.customer&.name,
+          delivery.product&.name,
+          "#{delivery.quantity} #{delivery.unit}",
+          delivery.final_amount_after_discount.to_f,
+          delivery.status,
+          delivery.delivery_person&.name || 'Not Assigned'
+        ]
       end
     end
+
+    send_data csv_data,
+              filename: "delivery_review_#{Date.current.strftime('%Y%m%d')}.csv",
+              type: 'text/csv',
+              disposition: 'attachment'
+  end
+
+  def update
+    @delivery = DeliveryAssignment.find(params[:id])
+    
+    if @delivery.update(delivery_params)
+      render json: { success: true, message: 'Delivery updated successfully' }
+    else
+      render json: { success: false, errors: @delivery.errors.full_messages }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Delivery not found' }, status: 404
+  end
+
+  def destroy
+    @delivery = DeliveryAssignment.find(params[:id])
+    
+    if @delivery.destroy
+      render json: { success: true, message: 'Delivery deleted successfully' }
+    else
+      render json: { success: false, message: 'Failed to delete delivery' }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Delivery not found' }, status: 404
   end
 
   private
@@ -174,5 +195,9 @@ class DeliveryReviewController < ApplicationController
         special_instructions: delivery.special_instructions
       }
     end
+  end
+
+  def delivery_params
+    params.require(:delivery_assignment).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
   end
 end

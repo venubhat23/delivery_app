@@ -284,4 +284,6 @@ Rails.application.routes.draw do
   get '/delivery-review', to: 'delivery_review#index'
   get '/delivery-review/data', to: 'delivery_review#data'
   post '/delivery-review/export', to: 'delivery_review#export'
+  patch '/delivery-review/:id', to: 'delivery_review#update'
+  delete '/delivery-review/:id', to: 'delivery_review#destroy'
 end

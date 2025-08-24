@@ -34,6 +34,8 @@ class MilkAnalyticsController < ApplicationController
     
     # Always calculate dashboard statistics
     calculate_dashboard_stats
+    # Always calculate summaries for tables
+    calculate_summaries
     # Always prepare daily calculations so the Daily Report tab has data ready
     calculate_daily_calculations
     
@@ -831,13 +833,21 @@ class MilkAnalyticsController < ApplicationController
     # Vendor summary with safe nil handling - filter by current user
     procurement_data = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
     
+    # Apply product filter if specified
+    if @product_id.present?
+      procurement_data = procurement_data.where(product_id: @product_id)
+    end
+    
     if procurement_data.any?
       @vendor_summary = procurement_data.group_by(&:vendor_name)
                                       .map do |vendor_name, assignments|
+        # Use ONLY planned quantities - not actual
+        planned_quantity = assignments.sum { |a| a.planned_quantity || 0 }
+        planned_amount = assignments.sum { |a| (a.planned_quantity || 0) * a.buying_price }
         {
           name: vendor_name || 'Unknown Vendor',
-          quantity: assignments.sum { |a| (a.actual_quantity || a.planned_quantity) || 0 },
-          amount: assignments.sum { |a| a.actual_quantity ? (a.actual_cost || 0) : (a.planned_cost || 0) }
+          quantity: planned_quantity,
+          amount: planned_amount
         }
       end
     else
@@ -846,12 +856,11 @@ class MilkAnalyticsController < ApplicationController
     
     # Delivery summary with safe nil handling and error recovery
     begin
-      if Product.table_exists?
-        delivery_data = DeliveryAssignment.joins(:product)
-                                        .where(scheduled_date: @start_date..@end_date)
-                                        .where("products.name ILIKE ?", '%milk%')
-      else
-        delivery_data = DeliveryAssignment.where(scheduled_date: @start_date..@end_date)
+      delivery_data = DeliveryAssignment.where(scheduled_date: @start_date..@end_date)
+      
+      # Apply product filter if specified
+      if @product_id.present?
+        delivery_data = delivery_data.where(product_id: @product_id)
       end
       
       if delivery_data.any?
@@ -1172,11 +1181,11 @@ class MilkAnalyticsController < ApplicationController
       # 1. Total Vendors - COUNT(DISTINCT vendor_name)
       total_vendors = assignments_query.distinct.count(:vendor_name)
       
-      # 2. Liters Purchased - Use planned_quantity primarily, fallback to actual_quantity
-      liters_purchased = assignments_query.sum('COALESCE(planned_quantity, actual_quantity)') || 0
+      # 2. Liters Purchased - Use ONLY planned_quantity
+      liters_purchased = assignments_query.sum('planned_quantity') || 0
       
       # 3. Total Purchased Amount - SUM(planned_quantity × buying_price)
-      total_purchased_amount = assignments_query.sum('COALESCE(planned_quantity, actual_quantity) * buying_price') || 0
+      total_purchased_amount = assignments_query.sum('planned_quantity * buying_price') || 0
       
       # 4. Liters Delivered - From delivery_assignments with product and date filters
       delivery_query = get_delivery_query(@start_date, @end_date)
@@ -1185,20 +1194,20 @@ class MilkAnalyticsController < ApplicationController
       end
       liters_delivered = delivery_query.sum(:quantity) || 0
       
-      # 5. Total Pending Liters - Purchased - Delivered
-      total_pending_liters = liters_purchased - liters_delivered
+      # 5. Pending Quantity - Total Received - Total Delivered
+      total_pending_quantity = liters_purchased - liters_delivered
       
-      # 6. Total Revenue Received - SUM(final_amount_after_discount)
-      total_revenue = delivery_query.sum(:final_amount_after_discount) || 0
+      # 6. Total Amount Collected - SUM(final_amount_after_discount) from completed deliveries
+      total_amount_collected = delivery_query.sum(:final_amount_after_discount) || 0
       
       # 7 & 8. Profit/Loss Calculation
       profit_amount = 0
       loss_amount = 0
       
-      if total_revenue > total_purchased_amount
-        profit_amount = total_revenue - total_purchased_amount
+      if total_amount_collected > total_purchased_amount
+        profit_amount = total_amount_collected - total_purchased_amount
       else
-        loss_amount = total_purchased_amount - total_revenue
+        loss_amount = total_purchased_amount - total_amount_collected
       end
       
       # Additional metrics
@@ -1209,12 +1218,30 @@ class MilkAnalyticsController < ApplicationController
         liters_purchased: liters_purchased,
         total_purchased_amount: total_purchased_amount,
         liters_delivered: liters_delivered,
-        total_pending_liters: total_pending_liters,
-        total_revenue: total_revenue,
+        total_pending_quantity: total_pending_quantity,
+        total_amount_collected: total_amount_collected,
         profit_amount: profit_amount,
         loss_amount: loss_amount,
         utilization_rate: utilization_rate
       }
+      
+      # Set instance variables for detailed calculations view
+      @total_liters = liters_purchased
+      @total_cost = total_purchased_amount  
+      @total_delivered = liters_delivered
+      @total_revenue = total_amount_collected
+      @total_profit = total_amount_collected - total_purchased_amount
+      
+      # Calculate planned procurement (not actual)
+      @planned_liters = assignments_query.sum(:planned_quantity) || 0
+      @planned_cost = assignments_query.sum('planned_quantity * buying_price') || 0
+      
+      # Calculate milk left (planned - delivered)
+      @milk_left = @planned_liters - liters_delivered
+      @milk_left_cost = @milk_left > 0 ? (@planned_cost.to_f / @planned_liters * @milk_left).round(2) : 0
+      
+      # Recalculate profit using planned values
+      @planned_profit = total_amount_collected - @planned_cost
       
       # Calculate summary sections
       calculate_procurement_summary(assignments_query)
@@ -1231,8 +1258,8 @@ class MilkAnalyticsController < ApplicationController
         liters_purchased: 0,
         total_purchased_amount: 0,
         liters_delivered: 0,
-        total_pending_liters: 0,
-        total_revenue: 0,
+        total_pending_quantity: 0,
+        total_amount_collected: 0,
         profit_amount: 0,
         loss_amount: 0,
         utilization_rate: 0
@@ -1256,6 +1283,18 @@ class MilkAnalyticsController < ApplicationController
       @vendor_analysis = []
       @daily_procurement = []
       @daily_delivery = []
+      
+      # Set fallback instance variables for detailed calculations view
+      @total_liters = 0
+      @total_cost = 0  
+      @total_delivered = 0
+      @total_revenue = 0
+      @total_profit = 0
+      @planned_liters = 0
+      @planned_cost = 0
+      @milk_left = 0
+      @milk_left_cost = 0
+      @planned_profit = 0
     end
   end
   
@@ -1273,8 +1312,8 @@ class MilkAnalyticsController < ApplicationController
   def calculate_procurement_summary(assignments_query)
     @procurement_summary = {
       total_vendors: assignments_query.distinct.count(:vendor_name),
-      total_quantity: assignments_query.sum('COALESCE(planned_quantity, actual_quantity)') || 0,
-      total_amount: assignments_query.sum('COALESCE(planned_quantity, actual_quantity) * buying_price') || 0,
+      total_quantity: assignments_query.sum('planned_quantity') || 0,
+      total_amount: assignments_query.sum('planned_quantity * buying_price') || 0,
       average_price: assignments_query.average('buying_price')&.round(2) || 0
     }
   end

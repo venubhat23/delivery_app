@@ -230,35 +230,36 @@
           </div>
         </div>
 
-        <!-- Card 5: Pending -->
+        <!-- Card 5: Pending Quantity -->
         <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-          <div class="card gradient-secondary text-white shadow-lg h-100">
+          <div class="card gradient-warning text-white shadow-lg h-100">
             <div class="card-body p-4">
               <div class="d-flex align-items-center">
                 <div class="flex-grow-1">
-                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Pending Liters</div>
-                  <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:total_pending_liters] || 0).round(2)) %>L</div>
-                  <div class="text-white-75 small">Purchased - Delivered</div>
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Pending Quantity</div>
+                  <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:total_pending_quantity] || 0).round(1)) %>L</div>
+                  <div class="text-white-75 small">Received - Delivered</div>
                 </div>
                 <div class="ms-3">
-                  <i class="fas fa-clock fa-2x text-white opacity-75"></i>
+                  <i class="fas fa-balance-scale fa-2x text-white opacity-75"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Card 6: Revenue -->
+        <!-- Card 6: Total Amount Collected -->
         <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
           <div class="card gradient-teal text-white shadow-lg h-100">
             <div class="card-body p-4">
               <div class="d-flex align-items-center">
                 <div class="flex-grow-1">
-                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Revenue</div>
-                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_revenue] || 0).round(1)) %></div>
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Amount Collected</div>
+                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_amount_collected] || 0).round(1)) %></div>
+                  <div class="text-white-75 small">From delivery final amounts</div>
                 </div>
                 <div class="ms-3">
-                  <i class="fas fa-chart-line fa-2x text-white opacity-75"></i>
+                  <i class="fas fa-money-bill-wave fa-2x text-white opacity-75"></i>
                 </div>
               </div>
             </div>
@@ -418,74 +419,55 @@
                     <i class="fas fa-shopping-cart me-2"></i>🛒 Procurement Cost Analysis
                   </h6>
                   
-                  <div class="row">
-                    <!-- Planned vs Actual Procurement -->
-                    <div class="col-lg-6 mb-4">
+                  <div class="row justify-content-center">
+                    <!-- Only Planned Procurement -->
+                    <div class="col-lg-8 mb-4">
                       <div class="card bg-light border-0">
                         <div class="card-body">
-                          <h6 class="card-title text-info">📋 Planned Procurement</h6>
+                          <h6 class="card-title text-info">📋 Planned Procurement Analysis</h6>
                           <div class="calculation-breakdown">
-                            <% planned_total_quantity = 0 %>
-                            <% planned_total_cost = 0 %>
-                            <% if @vendor_summary&.any? %>
-                              <% @vendor_summary.each do |vendor| %>
-                                <% 
-                                  # Calculate planned quantities (assuming these are planned values)
-                                  planned_quantity = vendor[:quantity] || 0
-                                  planned_cost = vendor[:amount] || 0
-                                  planned_total_quantity += planned_quantity
-                                  planned_total_cost += planned_cost
-                                %>
-                                <div class="mb-2">
-                                  <strong><%= vendor[:name] %>:</strong><br>
-                                  <small class="text-muted">
-                                    Planned: <%= number_with_delimiter(planned_quantity) %>L × ₹90/L = ₹<%= number_with_delimiter(planned_cost) %>
-                                  </small>
+                            <div class="row">
+                              <div class="col-md-8">
+                                <h6 class="text-muted mb-3">Vendor-wise Planned Procurement:</h6>
+                                <% if @vendor_summary&.any? %>
+                                  <% @vendor_summary.each do |vendor| %>
+                                    <% 
+                                      # These are planned quantities from vendor_summary
+                                      planned_quantity = vendor[:quantity] || 0
+                                      planned_cost = vendor[:amount] || 0
+                                      avg_price = planned_quantity > 0 ? (planned_cost / planned_quantity).round(2) : 0
+                                    %>
+                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
+                                      <div>
+                                        <strong><%= vendor[:name] %></strong><br>
+                                        <small class="text-muted">
+                                          <%= number_with_delimiter(planned_quantity) %>L × ₹<%= avg_price %>/L
+                                        </small>
+                                      </div>
+                                      <div class="text-end">
+                                        <strong class="text-info">₹<%= number_with_delimiter(planned_cost) %></strong>
+                                      </div>
+                                    </div>
+                                  <% end %>
+                                <% end %>
+                              </div>
+                              <div class="col-md-4">
+                                <div class="bg-white p-3 rounded text-center">
+                                  <h6 class="text-muted">Total Planned:</h6>
+                                  <div class="mb-2">
+                                    <strong class="text-primary h4"><%= number_with_delimiter(@planned_liters || 0) %>L</strong><br>
+                                    <small class="text-muted">Planned Quantity</small>
+                                  </div>
+                                  <div class="mb-2">
+                                    <strong class="text-success h4">₹<%= number_with_delimiter(@planned_cost || 0) %></strong><br>
+                                    <small class="text-muted">Planned Cost</small>
+                                  </div>
+                                  <div>
+                                    <strong class="text-info">₹<%= (@planned_liters && @planned_liters > 0) ? number_with_delimiter((@planned_cost.to_f / @planned_liters).round(2)) : '0' %>/L</strong><br>
+                                    <small class="text-muted">Average Cost</small>
+                                  </div>
                                 </div>
-                              <% end %>
-                            <% end %>
-                            <hr>
-                            <div class="fw-bold">
-                              <strong>Total Planned:</strong><br>
-                              Quantity: <%= number_with_delimiter(planned_total_quantity) %>L<br>
-                              Cost: ₹<%= number_with_delimiter(planned_total_cost) %>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Actual Procurement -->
-                    <div class="col-lg-6 mb-4">
-                      <div class="card bg-light border-0">
-                        <div class="card-body">
-                          <h6 class="card-title text-success">✅ Actual Procurement</h6>
-                          <div class="calculation-breakdown">
-                            <div class="mb-2">
-                              <strong>Total Received:</strong> <%= number_with_delimiter(@total_liters || 0) %>L<br>
-                              <small class="text-muted">Formula: Sum of all actual quantities received from vendors</small>
-                            </div>
-                            <div class="mb-2">
-                              <strong>Total Cost:</strong> ₹<%= number_with_delimiter(@total_cost || 0) %><br>
-                              <small class="text-muted">Formula: Σ(Actual Quantity × Buying Price per vendor)</small>
-                            </div>
-                            <div class="mb-2">
-                              <strong>Average Cost/L:</strong> ₹<%= (@total_liters && @total_liters > 0) ? number_with_delimiter((@total_cost.to_f / @total_liters).round(2)) : '0' %><br>
-                              <small class="text-muted">Formula: Total Cost ÷ Total Liters</small>
-                            </div>
-                            <div class="variance-analysis">
-                              <% 
-                                variance_quantity = (@total_liters || 0) - planned_total_quantity
-                                variance_cost = (@total_cost || 0) - planned_total_cost
-                                variance_percentage = planned_total_quantity > 0 ? ((variance_quantity.to_f / planned_total_quantity) * 100).round(2) : 0
-                              %>
-                              <strong>Variance Analysis:</strong><br>
-                              <span class="<%= variance_quantity >= 0 ? 'text-success' : 'text-danger' %>">
-                                Quantity: <%= variance_quantity >= 0 ? '+' : '' %><%= number_with_delimiter(variance_quantity) %>L (<%= variance_percentage %>%)
-                              </span><br>
-                              <span class="<%= variance_cost >= 0 ? 'text-danger' : 'text-success' %>">
-                                Cost: <%= variance_cost >= 0 ? '+' : '' %>₹<%= number_with_delimiter(variance_cost) %>
-                              </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -618,31 +600,49 @@
                           
                           <div class="formula-breakdown bg-white p-3 rounded border">
                             <div class="row">
-                              <div class="col-md-6">
-                                <h6 class="text-info">📥 COSTS (Input)</h6>
+                              <div class="col-md-4">
+                                <h6 class="text-info">📥 PLANNED COSTS</h6>
                                 <div class="mb-2">
-                                  <strong>Total Procurement Cost:</strong><br>
-                                  <code class="bg-light p-1 rounded">₹<%= number_with_delimiter(@total_cost || 0) %></code>
+                                  <strong>Planned Procurement:</strong><br>
+                                  <code class="bg-light p-1 rounded">₹<%= number_with_delimiter(@planned_cost || 0) %></code>
                                 </div>
                                 <small class="text-muted">
-                                  Formula: Σ(Vendor Quantity × Buying Price)<br>
+                                  Formula: Σ(Planned Quantity × Buying Price)<br>
+                                  <strong>Planned:</strong> <%= number_with_delimiter(@planned_liters || 0) %>L<br>
                                   <% if @vendor_summary&.any? %>
-                                    <% @vendor_summary.each do |vendor| %>
-                                      + <%= vendor[:name] %>: <%= number_with_delimiter(vendor[:quantity]) %>L × ₹90 = ₹<%= number_with_delimiter(vendor[:amount]) %><br>
+                                    <% @vendor_summary.first(2).each do |vendor| %>
+                                      + <%= vendor[:name] %>: <%= number_with_delimiter(vendor[:quantity]) %>L<br>
+                                    <% end %>
+                                    <% if @vendor_summary.count > 2 %>
+                                      + <%= @vendor_summary.count - 2 %> more vendors...
                                     <% end %>
                                   <% end %>
                                 </small>
                               </div>
                               
-                              <div class="col-md-6">
-                                <h6 class="text-success">📤 REVENUE (Output)</h6>
+                              <div class="col-md-4">
+                                <h6 class="text-success">📤 ACTUAL REVENUE</h6>
                                 <div class="mb-2">
-                                  <strong>Total Delivery Revenue:</strong><br>
+                                  <strong>Delivery Revenue:</strong><br>
                                   <code class="bg-light p-1 rounded">₹<%= number_with_delimiter(@total_revenue || 0) %></code>
                                 </div>
                                 <small class="text-muted">
-                                  Formula: Σ(Delivered Quantity × Selling Price)<br>
-                                  <%= @total_delivered %>L × ₹100 = ₹<%= number_with_delimiter(@total_revenue || 0) %>
+                                  Formula: Σ(Final Amount After Discount)<br>
+                                  <strong>Delivered:</strong> <%= number_with_delimiter(@total_delivered || 0) %>L<br>
+                                  Average: ₹<%= (@total_delivered && @total_delivered > 0) ? number_with_delimiter((@total_revenue.to_f / @total_delivered).round(2)) : '0' %>/L
+                                </small>
+                              </div>
+                              
+                              <div class="col-md-4">
+                                <h6 class="text-warning">🥛 MILK LEFT</h6>
+                                <div class="mb-2">
+                                  <strong>Remaining Milk:</strong><br>
+                                  <code class="bg-light p-1 rounded"><%= number_with_delimiter(@milk_left || 0) %>L</code>
+                                </div>
+                                <small class="text-muted">
+                                  Formula: Planned - Delivered<br>
+                                  <%= number_with_delimiter(@planned_liters || 0) %>L - <%= number_with_delimiter(@total_delivered || 0) %>L<br>
+                                  <strong>Cost Value:</strong> ₹<%= number_with_delimiter(@milk_left_cost || 0) %>
                                 </small>
                               </div>
                             </div>
@@ -650,52 +650,71 @@
                             <hr class="my-3">
                             
                             <div class="text-center">
-                              <h6 class="<%= (@total_profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">
-                                <i class="fas fa-<%= (@total_profit || 0) >= 0 ? 'arrow-up' : 'arrow-down' %> me-2"></i>
-                                NET PROFIT/LOSS
+                              <h6 class="<%= (@planned_profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">
+                                <i class="fas fa-<%= (@planned_profit || 0) >= 0 ? 'arrow-up' : 'arrow-down' %> me-2"></i>
+                                NET PROFIT/LOSS (Based on Planned)
                               </h6>
-                              <div class="display-6 fw-bold <%= (@total_profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">
-                                ₹<%= number_with_delimiter((@total_profit || 0).abs) %> 
-                                <small class="fs-6"><%= (@total_profit || 0) >= 0 ? 'PROFIT' : 'LOSS' %></small>
+                              <div class="display-6 fw-bold <%= (@planned_profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">
+                                ₹<%= number_with_delimiter((@planned_profit || 0).abs) %> 
+                                <small class="fs-6"><%= (@planned_profit || 0) >= 0 ? 'PROFIT' : 'LOSS' %></small>
                               </div>
                               <div class="mt-2">
-                                <code class="fs-6">Revenue - Cost = ₹<%= number_with_delimiter(@total_revenue || 0) %> - ₹<%= number_with_delimiter(@total_cost || 0) %> = ₹<%= number_with_delimiter(@total_profit || 0) %></code>
+                                <code class="fs-6">Revenue - Planned Cost = ₹<%= number_with_delimiter(@total_revenue || 0) %> - ₹<%= number_with_delimiter(@planned_cost || 0) %> = ₹<%= number_with_delimiter(@planned_profit || 0) %></code>
+                              </div>
+                              
+                              <!-- Milk Left Impact -->
+                              <div class="mt-3 p-2 bg-light rounded">
+                                <h6 class="text-warning mb-2">🥛 Unsold Milk Impact</h6>
+                                <div class="row text-center">
+                                  <div class="col-md-4">
+                                    <small class="text-muted">Milk Left</small><br>
+                                    <strong><%= number_with_delimiter(@milk_left || 0) %>L</strong>
+                                  </div>
+                                  <div class="col-md-4">
+                                    <small class="text-muted">Cost Value</small><br>
+                                    <strong class="text-danger">₹<%= number_with_delimiter(@milk_left_cost || 0) %></strong>
+                                  </div>
+                                  <div class="col-md-4">
+                                    <small class="text-muted">Potential Loss</small><br>
+                                    <strong class="text-danger">₹<%= number_with_delimiter(@milk_left_cost || 0) %></strong>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
                           
-                          <!-- Additional Metrics -->
+                          <!-- Additional Metrics (Using Planned Values) -->
                           <div class="row mt-4">
                             <div class="col-md-4 text-center">
                               <div class="border rounded p-3">
-                                <h6 class="text-muted">Profit Margin</h6>
-                                <% profit_margin = (@total_revenue && @total_revenue > 0) ? (((@total_profit || 0).to_f / @total_revenue) * 100).round(2) : 0 %>
-                                <div class="h4 <%= profit_margin >= 0 ? 'text-success' : 'text-danger' %>">
-                                  <%= profit_margin %>%
+                                <h6 class="text-muted">Planned Profit Margin</h6>
+                                <% planned_profit_margin = (@total_revenue && @total_revenue > 0) ? (((@planned_profit || 0).to_f / @total_revenue) * 100).round(2) : 0 %>
+                                <div class="h4 <%= planned_profit_margin >= 0 ? 'text-success' : 'text-danger' %>">
+                                  <%= planned_profit_margin %>%
                                 </div>
-                                <small class="text-muted">Profit ÷ Revenue × 100</small>
+                                <small class="text-muted">Planned Profit ÷ Revenue × 100</small>
                               </div>
                             </div>
                             
                             <div class="col-md-4 text-center">
                               <div class="border rounded p-3">
-                                <h6 class="text-muted">Cost Recovery</h6>
-                                <% cost_recovery = (@total_cost && @total_cost > 0) ? ((@total_revenue.to_f / @total_cost) * 100).round(2) : 0 %>
-                                <div class="h4 <%= cost_recovery >= 100 ? 'text-success' : 'text-danger' %>">
-                                  <%= cost_recovery %>%
+                                <h6 class="text-muted">Planned Cost Recovery</h6>
+                                <% planned_cost_recovery = (@planned_cost && @planned_cost > 0) ? ((@total_revenue.to_f / @planned_cost) * 100).round(2) : 0 %>
+                                <div class="h4 <%= planned_cost_recovery >= 100 ? 'text-success' : 'text-danger' %>">
+                                  <%= planned_cost_recovery %>%
                                 </div>
-                                <small class="text-muted">Revenue ÷ Cost × 100</small>
+                                <small class="text-muted">Revenue ÷ Planned Cost × 100</small>
                               </div>
                             </div>
                             
                             <div class="col-md-4 text-center">
                               <div class="border rounded p-3">
-                                <h6 class="text-muted">Break-even Need</h6>
-                                <% breakeven_liters = (@total_cost && @total_cost > 0) ? (@total_cost.to_f / 100).round(0) : 0 %>
-                                <div class="h4 text-info">
-                                  <%= number_with_delimiter(breakeven_liters) %>L
+                                <h6 class="text-muted">Milk Utilization</h6>
+                                <% milk_utilization = (@planned_liters && @planned_liters > 0) ? ((@total_delivered.to_f / @planned_liters) * 100).round(2) : 0 %>
+                                <div class="h4 <%= milk_utilization >= 80 ? 'text-success' : milk_utilization >= 60 ? 'text-warning' : 'text-danger' %>">
+                                  <%= milk_utilization %>%
                                 </div>
-                                <small class="text-muted">Cost ÷ ₹100/L</small>
+                                <small class="text-muted">Delivered ÷ Planned × 100</small>
                               </div>
                             </div>
                           </div>
@@ -709,34 +728,47 @@
                         <div class="card-body">
                           <h6 class="card-title text-warning">💡 Optimization Insights</h6>
                           
-                          <% if (@total_profit || 0) < 0 %>
+                          <% if (@planned_profit || 0) < 0 %>
                             <div class="alert alert-danger">
-                              <strong>⚠️ LOSS SITUATION</strong><br>
-                              Current loss: ₹<%= number_with_delimiter((@total_profit || 0).abs) %>
+                              <strong>⚠️ PLANNED LOSS SITUATION</strong><br>
+                              Current planned loss: ₹<%= number_with_delimiter((@planned_profit || 0).abs) %>
                             </div>
                             
                             <div class="recommendations">
                               <h6 class="small text-muted">IMMEDIATE ACTIONS:</h6>
                               <ul class="small">
-                                <li>Reduce procurement to <%= breakeven_liters %>L (break-even)</li>
-                                <li>Find <%= ((breakeven_liters - (@total_delivered || 0))).round(0) %>L more customers</li>
-                                <li>Reduce wastage from <%= wastage_percentage %>% to <20%</li>
-                                <li>Potential savings: ₹<%= number_with_delimiter((wastage_cost * 0.8).round(0)) %></li>
+                                <li>Sell remaining <%= number_with_delimiter(@milk_left || 0) %>L milk</li>
+                                <li>Potential recovery: ₹<%= number_with_delimiter(@milk_left_cost || 0) %></li>
+                                <li>Reduce next procurement by <%= ((@milk_left || 0) * 0.8).round(0) %>L</li>
+                                <li>Focus on finding new customers for regular delivery</li>
                               </ul>
                             </div>
                           <% else %>
                             <div class="alert alert-success">
-                              <strong>✅ PROFITABLE</strong><br>
-                              Keep up the good work!
+                              <strong>✅ PLANNED PROFITABLE</strong><br>
+                              Great procurement planning!
+                            </div>
+                            
+                            <div class="recommendations">
+                              <h6 class="small text-muted">OPTIMIZATION TIPS:</h6>
+                              <ul class="small">
+                                <li>Try to sell remaining <%= number_with_delimiter(@milk_left || 0) %>L milk</li>
+                                <li>Could earn additional ₹<%= number_with_delimiter(@milk_left_cost || 0) %></li>
+                                <li>Maintain current vendor relationships</li>
+                              </ul>
                             </div>
                           <% end %>
                           
                           <div class="mt-3">
-                            <h6 class="small text-muted">EFFICIENCY TARGETS:</h6>
+                            <h6 class="small text-muted">MILK UTILIZATION:</h6>
                             <div class="progress mb-2">
-                              <div class="progress-bar bg-success" style="width: <%= [utilization_rate, 100].min %>%"></div>
+                              <div class="progress-bar bg-<%= milk_utilization >= 80 ? 'success' : milk_utilization >= 60 ? 'warning' : 'danger' %>" 
+                                   style="width: <%= [milk_utilization, 100].min %>%"></div>
                             </div>
-                            <small>Utilization: <%= utilization_rate %>% (Target: 80%+)</small>
+                            <small>Utilization: <%= milk_utilization %>% (Target: 80%+)</small><br>
+                            <small class="text-muted">
+                              <%= number_with_delimiter(@total_delivered || 0) %>L delivered of <%= number_with_delimiter(@planned_liters || 0) %>L planned
+                            </small>
                           </div>
                         </div>
                       </div>

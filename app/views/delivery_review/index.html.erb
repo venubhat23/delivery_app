@@ -132,10 +132,11 @@
               <th scope="col">Amount</th>
               <th scope="col">Status</th>
               <th scope="col">Delivery Person</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody id="deliveryTableBody">
-            <tr><td colspan="7" class="text-center text-muted">Use filters to load data</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">Use filters to load data</td></tr>
           </tbody>
         </table>
       </div>
@@ -199,18 +200,22 @@
     var tbody = document.getElementById('deliveryTableBody');
     tbody.innerHTML = '';
     if (!deliveries || deliveries.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No records found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No records found</td></tr>';
       return;
     }
     var rows = deliveries.map(function(d) {
-      return '<tr>' +
-        '<td>' + d.date + '</td>' +
+      return '<tr data-delivery-id="' + d.id + '">' +
+        '<td class="editable-date" data-field="scheduled_date">' + d.date + '</td>' +
         '<td>' + (d.customer_name || '-') + '</td>' +
-        '<td>' + (d.product || '-') + '</td>' +
-        '<td>' + (d.quantity || '-') + '</td>' +
-        '<td>' + formatINR(d.amount || 0) + '</td>' +
-        '<td>' + statusBadge(d.status) + '</td>' +
-        '<td>' + (d.delivery_person || '-') + '</td>' +
+        '<td class="editable-product" data-field="product_id">' + (d.product || '-') + '</td>' +
+        '<td class="editable-quantity" data-field="quantity">' + (d.quantity || '-') + '</td>' +
+        '<td class="editable-amount" data-field="final_amount_after_discount">' + formatINR(d.amount || 0) + '</td>' +
+        '<td class="editable-status" data-field="status">' + statusBadge(d.status) + '</td>' +
+        '<td class="editable-delivery-person" data-field="user_id">' + (d.delivery_person || '-') + '</td>' +
+        '<td>' +
+          '<button class="btn btn-sm btn-outline-primary me-1 edit-btn" data-id="' + d.id + '">Edit</button>' +
+          '<button class="btn btn-sm btn-outline-danger delete-btn" data-id="' + d.id + '">Delete</button>' +
+        '</td>' +
       '</tr>';
     }).join('');
     tbody.innerHTML = rows;
@@ -259,8 +264,188 @@
       setTimeout(function(){ document.body.removeChild(form); }, 1000);
     });
 
+    // Edit and Delete functionality
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('edit-btn')) {
+        handleEdit(e.target.dataset.id);
+      } else if (e.target.classList.contains('delete-btn')) {
+        handleDelete(e.target.dataset.id);
+      } else if (e.target.classList.contains('save-btn')) {
+        handleSave(e.target.dataset.id);
+      } else if (e.target.classList.contains('cancel-btn')) {
+        handleCancel(e.target.dataset.id);
+      }
+    });
+
     // Auto load defaults (Monthly + All Customers)
     fetchData();
   });
+
+  function handleEdit(deliveryId) {
+    var row = document.querySelector('tr[data-delivery-id="' + deliveryId + '"]');
+    if (!row) return;
+
+    // Store original values
+    row.setAttribute('data-editing', 'true');
+    var cells = row.querySelectorAll('td');
+    
+    // Convert editable cells to form inputs
+    convertCellToInput(cells[0], 'date', getDateValue(cells[0].textContent)); // Date
+    convertCellToSelect(cells[2], 'product', cells[2].textContent); // Product
+    convertCellToInput(cells[3], 'quantity', getQuantityValue(cells[3].textContent)); // Quantity
+    convertCellToInput(cells[4], 'amount', getAmountValue(cells[4].textContent)); // Amount
+    convertCellToSelect(cells[5], 'status', getStatusValue(cells[5].innerHTML)); // Status
+    convertCellToSelect(cells[6], 'delivery-person', cells[6].textContent); // Delivery Person
+
+    // Change action buttons
+    cells[7].innerHTML = 
+      '<button class="btn btn-sm btn-success me-1 save-btn" data-id="' + deliveryId + '">Save</button>' +
+      '<button class="btn btn-sm btn-secondary cancel-btn" data-id="' + deliveryId + '">Cancel</button>';
+  }
+
+  function convertCellToInput(cell, type, value) {
+    var field = cell.dataset.field;
+    var inputType = type === 'date' ? 'date' : type === 'amount' ? 'number' : 'text';
+    var step = type === 'amount' ? 'step="0.01"' : '';
+    cell.innerHTML = '<input type="' + inputType + '" class="form-control form-control-sm" value="' + value + '" data-field="' + field + '" ' + step + '>';
+  }
+
+  function convertCellToSelect(cell, type, currentValue) {
+    var field = cell.dataset.field;
+    var options = '';
+    
+    if (type === 'product') {
+      options = '<option value="">Select Product</option>';
+      // Add products from the filter dropdown
+      var productSelect = document.getElementById('filterProduct');
+      for (var i = 1; i < productSelect.options.length; i++) {
+        var option = productSelect.options[i];
+        var selected = option.text === currentValue ? 'selected' : '';
+        options += '<option value="' + option.value + '" ' + selected + '>' + option.text + '</option>';
+      }
+    } else if (type === 'status') {
+      var statusOptions = [
+        { value: 'pending', text: 'Pending' },
+        { value: 'completed', text: 'Completed' },
+        { value: 'cancelled', text: 'Cancelled' },
+        { value: 'in_progress', text: 'In Progress' }
+      ];
+      options = '<option value="">Select Status</option>';
+      statusOptions.forEach(function(opt) {
+        var selected = opt.text === currentValue ? 'selected' : '';
+        options += '<option value="' + opt.value + '" ' + selected + '>' + opt.text + '</option>';
+      });
+    } else if (type === 'delivery-person') {
+      options = '<option value="">Select Delivery Person</option>';
+      var deliverySelect = document.getElementById('filterDeliveryPerson');
+      for (var i = 1; i < deliverySelect.options.length; i++) {
+        var option = deliverySelect.options[i];
+        var selected = option.text === currentValue ? 'selected' : '';
+        options += '<option value="' + option.value + '" ' + selected + '>' + option.text + '</option>';
+      }
+    }
+    
+    cell.innerHTML = '<select class="form-select form-select-sm" data-field="' + field + '">' + options + '</select>';
+  }
+
+  function getDateValue(dateText) {
+    // Convert "Jan 15, 2024" format to "2024-01-15"
+    try {
+      var date = new Date(dateText);
+      return date.toISOString().split('T')[0];
+    } catch(e) {
+      return '';
+    }
+  }
+
+  function getQuantityValue(quantityText) {
+    // Extract number from "5 L" format
+    return quantityText.split(' ')[0] || '';
+  }
+
+  function getAmountValue(amountText) {
+    // Extract number from "₹150.00" format
+    return amountText.replace(/[₹,]/g, '') || '';
+  }
+
+  function getStatusValue(statusHtml) {
+    // Extract status from badge HTML
+    var tempDiv = document.createElement('div');
+    tempDiv.innerHTML = statusHtml;
+    var badge = tempDiv.querySelector('.badge');
+    return badge ? badge.textContent.trim() : '';
+  }
+
+  function handleSave(deliveryId) {
+    var row = document.querySelector('tr[data-delivery-id="' + deliveryId + '"]');
+    if (!row) return;
+
+    var data = {};
+    var inputs = row.querySelectorAll('input, select');
+    
+    inputs.forEach(function(input) {
+      var field = input.dataset.field;
+      if (field) {
+        data[field] = input.value;
+      }
+    });
+
+    // Send update request
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    fetch('/delivery-review/' + deliveryId, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf ? csrf.getAttribute('content') : ''
+      },
+      body: JSON.stringify({ delivery_assignment: data })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+      if (result.success) {
+        // Refresh the data to show updated values
+        fetchData();
+      } else {
+        alert('Error: ' + (result.errors ? result.errors.join(', ') : result.message));
+      }
+    })
+    .catch(function(error) {
+      console.error('Error:', error);
+      alert('Failed to update delivery');
+    });
+  }
+
+  function handleCancel(deliveryId) {
+    // Simply refresh the data to restore original values
+    fetchData();
+  }
+
+  function handleDelete(deliveryId) {
+    if (!confirm('Are you sure you want to delete this delivery assignment?')) {
+      return;
+    }
+
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    fetch('/delivery-review/' + deliveryId, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-Token': csrf ? csrf.getAttribute('content') : ''
+      }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+      if (result.success) {
+        // Refresh the data to remove deleted row
+        fetchData();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    })
+    .catch(function(error) {
+      console.error('Error:', error);
+      alert('Failed to delete delivery');
+    });
+  }
+
 })();
 </script>
