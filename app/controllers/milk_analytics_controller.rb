@@ -1245,12 +1245,13 @@ class MilkAnalyticsController < ApplicationController
         average_price: 0
       }
       
-      @delivery_summary = {
+      @delivery_totals = {
         total_deliveries: 0,
         total_customers: 0,
         total_quantity: 0,
         total_revenue: 0
       }
+      @delivery_summary = []
       
       @vendor_analysis = []
       @daily_procurement = []
@@ -1280,7 +1281,8 @@ class MilkAnalyticsController < ApplicationController
   
   def calculate_delivery_summary(delivery_query)
     begin
-      @delivery_summary = {
+      # Aggregate totals for quick stats
+      @delivery_totals = {
         total_deliveries: delivery_query.count,
         total_customers: begin
           delivery_query.joins(:customer).distinct.count(:customer_id)
@@ -1291,14 +1293,30 @@ class MilkAnalyticsController < ApplicationController
         total_quantity: delivery_query.sum(:quantity) || 0,
         total_revenue: delivery_query.sum(:final_amount_after_discount) || 0
       }
+
+      # Build status-wise summary expected by the view
+      grouped_by_status = delivery_query.group_by(&:status)
+      @delivery_summary = grouped_by_status.map do |status, assignments|
+        status_revenue = 0
+        assignments.each do |assignment|
+          status_revenue += assignment.final_amount_after_discount || 0
+        end
+        {
+          status: status || 'unknown',
+          count: assignments.count,
+          quantity: assignments.sum { |a| a.quantity || 0 },
+          revenue: status_revenue
+        }
+      end
     rescue => e
       Rails.logger.error "Error calculating delivery summary: #{e.message}"
-      @delivery_summary = {
+      @delivery_totals = {
         total_deliveries: 0,
         total_customers: 0,
         total_quantity: 0,
         total_revenue: 0
       }
+      @delivery_summary = []
     end
   end
   
