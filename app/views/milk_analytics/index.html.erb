@@ -49,275 +49,256 @@
     
     <!-- Dashboard & Reports Tab -->
     <div class="tab-pane fade" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
-      <!-- Date Filter Section -->
+      <!-- Filter Section -->
       <div class="row mb-4">
         <div class="col-12">
           <div class="card border-0 shadow-sm">
             <div class="card-body py-3">
-              <%= form_with url: milk_analytics_path, method: :get, local: true, class: "d-flex align-items-center gap-3 flex-wrap" do |form| %>
-                <div class="d-flex align-items-center gap-2">
-                  <label class="form-label mb-0 fw-bold text-muted">📅 Date Range:</label>
-                  <%= form.select :date_range, 
+              <%= form_with url: milk_analytics_path, method: :get, local: true, class: "row g-3 align-items-center" do |form| %>
+                <!-- Hidden field to maintain dashboard tab -->
+                <%= form.hidden_field :tab, value: 'dashboard' %>
+                <!-- Product Filter -->
+                <div class="col-xl-4 col-lg-6">
+                  <label class="form-label fw-bold text-primary mb-1">
+                    <i class="fas fa-box me-1"></i>Product Filter
+                  </label>
+                  
+                  <!-- Search Input for Product -->
+                  <div class="position-relative mb-3">
+                    <input type="text" id="product-search" class="form-control form-control-lg" 
+                           placeholder="🔍 Search products (e.g., 'mi' for milk)..." 
+                           autocomplete="off"
+                           value="<%= params[:product_id].present? ? (Product.find(params[:product_id]).name rescue '') : '' %>">
+                    <div id="product-search-results" class="position-absolute w-100" style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto; margin-top: 4px;">
+                      <!-- Search results will be populated here -->
+                    </div>
+                  </div>
+                  
+                  <!-- Hidden fields for form submission -->
+                  <%= form.hidden_field :product_id, id: "selected-product-id", value: params[:product_id] %>
+                  
+                  <!-- Selected Product Display -->
+                  <div id="selected-product-display" class="alert alert-success border-success" style="<%= params[:product_id].present? ? '' : 'display: none;' %>">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div id="selected-product-info">
+                        <% if params[:product_id].present? %>
+                          <% product = Product.find(params[:product_id]) rescue nil %>
+                          <% if product %>
+                            <small class="text-success fw-bold">
+                              <i class="fas fa-check-circle me-1"></i>
+                              Selected: <%= product.name %> (<%= product.unit_type %>)
+                            </small>
+                          <% end %>
+                        <% end %>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearMilkProductSelection()">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Fallback Product Dropdown -->
+                  <div id="product-dropdown-container">
+                    <%= form.select :product_id,
+                        options_for_select([['All Products', '']] + 
+                          Product.all.map { |p| ["#{p.name} (#{p.unit_type})", p.id] }, 
+                          params[:product_id]),
+                        {},
+                        { 
+                          class: "form-select",
+                          id: "product-dropdown-fallback",
+                          onchange: "handleRegularDropdownChange(); this.form.submit()"
+                        } %>
+                  </div>
+                </div>
+                
+                <!-- Date Range Filter -->
+                <div class="col-xl-3 col-lg-6">
+                  <label class="form-label fw-bold text-primary mb-1">
+                    <i class="fas fa-calendar me-1"></i>Date Range
+                  </label>
+                  <%= form.select :date_range,
                       options_for_select([
                         ['Today', 'today'],
-                        ['This Week', 'week'], 
-                        ['This Month', 'month'],
+                        ['Weekly', 'weekly'],
+                        ['Monthly', 'monthly'],
                         ['Custom Range', 'custom']
-                      ], params[:date_range] || 'month'), 
-                      {}, { class: "form-select", style: "width: 150px;", onchange: "toggleCustomDates()" } %>
+                      ], params[:date_range] || 'monthly'),
+                      {},
+                      { 
+                        class: "form-select",
+                        id: "date-range-select",
+                        onchange: "handleDateRangeChange(); toggleCustomDates(); this.form.submit()"
+                      } %>
                 </div>
-                <div class="custom-dates d-none">
-                  <div class="d-flex align-items-center gap-2">
-                    <label class="form-label mb-0 fw-bold text-muted">From:</label>
-                    <%= form.date_field :from_date, 
-                        value: params[:from_date] || Date.current, 
-                        class: "form-control form-control-sm", 
-                        style: "width: 150px;" %>
-                  </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <label class="form-label mb-0 fw-bold text-muted">To:</label>
-                    <%= form.date_field :to_date, 
-                        value: params[:to_date] || Date.current, 
-                        class: "form-control form-control-sm", 
-                        style: "width: 150px;" %>
+                
+                <!-- Custom Date Fields -->
+                <div class="col-xl-5 col-lg-12 custom-dates" style="<%= params[:date_range] == 'custom' ? '' : 'display: none;' %>">
+                  <label class="form-label fw-bold text-primary mb-1">Custom Date Range</label>
+                  <div class="row g-2">
+                    <div class="col">
+                      <%= form.date_field :from_date, 
+                          value: params[:from_date],
+                          class: "form-control",
+                          placeholder: "From Date" %>
+                    </div>
+                    <div class="col">
+                      <%= form.date_field :to_date, 
+                          value: params[:to_date],
+                          class: "form-control",
+                          placeholder: "To Date" %>
+                    </div>
+                    <div class="col-auto">
+                      <%= form.submit "Apply", class: "btn btn-primary" %>
+                    </div>
                   </div>
                 </div>
-                <%= form.submit "Apply Filter", class: "btn btn-primary btn-sm px-4" %>
               <% end %>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- KPI Cards Row -->
+      <!-- Procurement Dashboard - 8 Cards Only -->
       <div class="row mb-4">
         <!-- Card 1: Active Vendors -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-primary">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-users fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Active Vendors
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <%= @total_vendors || 0 %>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 2: Total Liters Procured -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-info">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-glass-milk fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Liters Procured
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <%= number_with_delimiter(@total_liters || 0) %>L
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-primary text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Vendors</div>
+                  <div class="h3 mb-0 fw-bold"><%= @dashboard_stats[:total_vendors] || 0 %></div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-users fa-2x text-white opacity-75"></i>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Card 3: Total Purchase Amount -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-warning">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-rupee-sign fa-2x text-white"></i>
+        <!-- Card 2: Liters Purchased -->
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-info text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Liters Purchased</div>
+                  <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_purchased] || 0).round(2)) %>L</div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-tint fa-2x text-white opacity-75"></i>
+                </div>
               </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Purchase Amount
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                ₹<%= number_with_delimiter(@total_cost || 0) %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Purchase Amount -->
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-warning text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Purchased Amount</div>
+                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_purchased_amount] || 0).round(1)) %></div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-rupee-sign fa-2x text-white opacity-75"></i>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Card 4: Liters Delivered -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-success">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-truck fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Liters Delivered
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <%= number_with_delimiter(@total_delivered || 0) %>L
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 5: Milk Pending -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-warning">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-hourglass-half fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Milk Pending
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <% milk_pending = (@total_liters || 0) - (@total_delivered || 0) %>
-                <%= number_with_delimiter(milk_pending) %>L
-              </div>
-              <div class="text-xs text-white opacity-75">
-                <% pending_percentage = (@total_liters && @total_liters > 0) ? ((milk_pending.to_f / @total_liters) * 100).round(1) : 0 %>
-                <%= pending_percentage %>% of procurement
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-success text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Liters Delivered</div>
+                  <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_delivered] || 0).round(1)) %>L</div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-truck fa-2x text-white opacity-75"></i>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Card 6: Revenue from Deliveries -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-success">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-chart-line fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Revenue
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                ₹<%= number_with_delimiter(@total_revenue || 0) %>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 7: Profit/Loss -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 <%= (@total_profit || 0) >= 0 ? 'gradient-success' : 'gradient-danger' %>">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-<%= (@total_profit || 0) >= 0 ? 'arrow-up' : 'arrow-down' %> fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                <%= (@total_profit || 0) >= 0 ? 'Profit' : 'Loss' %>
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                ₹<%= number_with_delimiter((@total_profit || 0).abs) %>
+        <!-- Card 5: Pending -->
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-secondary text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Pending Liters</div>
+                  <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:total_pending_liters] || 0).round(2)) %>L</div>
+                  <div class="text-white-75 small">Purchased - Delivered</div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-clock fa-2x text-white opacity-75"></i>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Card 8: Profit Margin -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-info">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-percentage fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Profit Margin
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <% profit_margin = (@total_revenue && @total_revenue > 0) ? (((@total_profit || 0).to_f / @total_revenue) * 100).round(1) : 0 %>
-                <%= profit_margin %>%
-              </div>
-              <div class="text-xs text-white opacity-75">
-                Profit ÷ Revenue × 100
+        <!-- Card 6: Revenue -->
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-teal text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Revenue</div>
+                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_revenue] || 0).round(1)) %></div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-chart-line fa-2x text-white opacity-75"></i>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Card 9: Cost Recovery -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 <%= (@total_cost && @total_cost > 0 && @total_revenue && (@total_revenue.to_f / @total_cost * 100) >= 100) ? 'gradient-success' : 'gradient-danger' %>">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-coins fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Cost Recovery
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <% cost_recovery = (@total_cost && @total_cost > 0) ? ((@total_revenue.to_f / @total_cost) * 100).round(2) : 0 %>
-                <%= cost_recovery %>%
-              </div>
-              <div class="text-xs text-white opacity-75">
-                Revenue ÷ Cost × 100
+        <!-- Card 7: Loss -->
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-danger text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Loss Amount</div>
+                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:loss_amount] || 0).round(1)) %></div>
+                  <div class="text-white-75 small">Cost exceeds revenue</div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-arrow-down fa-2x text-white opacity-75"></i>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Card 10: Break-even Need -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-warning">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-balance-scale fa-2x text-white"></i>
+        <!-- Card 8: Profit Amount -->
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card gradient-success text-white shadow-lg h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Profit Amount</div>
+                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:profit_amount] || 0).round(1)) %></div>
+                  <div class="text-white-75 small">Revenue exceeds cost</div>
+                </div>
+                <div class="ms-3">
+                  <i class="fas fa-arrow-up fa-2x text-white opacity-75"></i>
+                </div>
               </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Break-even Need
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <% breakeven_liters = (@total_cost && @total_cost > 0) ? (@total_cost.to_f / 100).round(0) : 0 %>
-                <%= number_with_delimiter(breakeven_liters) %>L
-              </div>
-              <div class="text-xs text-white opacity-75">
-                Cost ÷ ₹100/L
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 11: Utilization Rate -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-primary">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-chart-pie fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Utilization Rate
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <% utilization_rate = (@total_liters && @total_liters > 0) ? ((@total_delivered.to_f / @total_liters) * 100).round(1) : 0 %>
-                <%= utilization_rate %>%
-              </div>
-              <div class="text-xs text-white opacity-75">
-                Delivered ÷ Procured × 100
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 12: Wastage Cost -->
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-          <div class="card border-0 shadow-lg h-100 gradient-danger">
-            <div class="card-body p-4 text-center">
-              <div class="icon-circle-lg bg-white bg-opacity-25 mx-auto mb-3">
-                <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
-              </div>
-              <div class="text-xs font-weight-bold text-white text-uppercase mb-2 opacity-90">
-                Wastage Cost
-              </div>
-              <div class="h4 mb-0 font-weight-bold text-white">
-                <% 
-                  milk_pending = (@total_liters || 0) - (@total_delivered || 0)
-                  wastage_cost = (@total_liters && @total_liters > 0) ? (milk_pending * (@total_cost.to_f / @total_liters)).round(0) : 0
-                %>
-                ₹<%= number_with_delimiter(wastage_cost) %>
-              </div>
-              <div class="text-xs text-white opacity-75">
-                Pending × Avg Cost/L
+              <div class="mt-2">
+                <div class="text-white-75 small fw-bold">Utilization Rate</div>
+                <div class="h5 mb-0 fw-bold text-white"><%= (@dashboard_stats[:utilization_rate] || 0).round(1) %>%</div>
               </div>
             </div>
           </div>
@@ -1460,6 +1441,70 @@
   border: 2px solid #28a745;
   background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
 }
+
+/* Milk Analytics Product Search Styling */
+#milk-product-search {
+  border: 2px solid #4e73df !important;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 0.5rem !important;
+  background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
+  transition: all 0.3s ease;
+}
+
+#milk-product-search:focus {
+  border-color: #2e59d9 !important;
+  box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25) !important;
+  background: #ffffff;
+}
+
+#milk-product-search-results {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(78, 115, 223, 0.2);
+}
+
+.product-option-milk {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none !important;
+}
+
+.product-option-milk:hover {
+  background: linear-gradient(135deg, rgba(78, 115, 223, 0.08) 0%, rgba(78, 115, 223, 0.04) 100%) !important;
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-option-milk:active {
+  transform: translateX(1px);
+  background: linear-gradient(135deg, rgba(78, 115, 223, 0.12) 0%, rgba(78, 115, 223, 0.06) 100%) !important;
+}
+
+#selected-milk-product-display {
+  border: 2px solid #28a745;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+}
+
+#clear-product-search {
+  border-left: none !important;
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  transition: all 0.2s ease;
+}
+
+#clear-product-search:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.input-group-text.bg-primary {
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;
+  border: 2px solid #4e73df !important;
+  border-right: none !important;
+}
 </style>
 
 <!-- JavaScript for Tab and Form Functionality -->
@@ -1473,6 +1518,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize product search functionality
   initializeProductSearch();
+  
+  // Initialize milk analytics product search
+  initializeMilkProductSearch();
 });
 
 function toggleCustomDates() {
@@ -2569,6 +2617,293 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     });
+  }
+
+  // Product Search Functions (Simple Version)
+  let productSearchTimeout;
+  let availableProducts = [
+    <% Product.all.each_with_index do |product, index| %>
+      {
+        id: <%= product.id %>,
+        name: "<%= product.name.gsub('"', '\\"') %>",
+        unit_type: "<%= product.unit_type %>",
+        price: "<%= product.price %>",
+        available_quantity: "<%= product.available_quantity || 0 %>",
+        description: "<%= product.description&.gsub('"', '\\"') || 'No description' %>",
+        category: "<%= product.category&.name&.gsub('"', '\\"') || 'No category' %>"
+      }<%= index < Product.all.count - 1 ? ',' : '' %>
+    <% end %>
+  ];
+  
+  function initializeMilkProductSearch() {
+    const searchInput = document.getElementById('product-search');
+    const resultsContainer = document.getElementById('product-search-results');
+    const fallbackDropdown = document.getElementById('product-dropdown-fallback');
+
+    if (!searchInput) return;
+
+    // Handle search input
+    searchInput.addEventListener('input', function() {
+      clearTimeout(productSearchTimeout);
+      const query = this.value.trim().toLowerCase();
+      
+      if (query.length < 2) {
+        resultsContainer.style.display = 'none';
+        return;
+      }
+
+      productSearchTimeout = setTimeout(() => {
+        searchMilkProducts(query);
+      }, 300);
+    });
+
+    // Handle fallback dropdown selection
+    if (fallbackDropdown) {
+      fallbackDropdown.addEventListener('change', function() {
+        if (this.value) {
+          const product = availableProducts.find(p => p.id == this.value);
+          if (product) {
+            selectMilkProduct(product);
+          }
+        }
+      });
+    }
+
+    // Hide results when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!searchInput.contains(event.target) && !resultsContainer.contains(event.target)) {
+        resultsContainer.style.display = 'none';
+      }
+    });
+  }
+
+  function searchMilkProducts(query) {
+    const resultsContainer = document.getElementById('product-search-results');
+    
+    const filteredProducts = availableProducts.filter(product => 
+      product.name.toLowerCase().includes(query) ||
+      product.description.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query) ||
+      product.unit_type.toLowerCase().includes(query)
+    );
+
+    if (filteredProducts.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="card shadow-sm">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-search fa-2x text-muted mb-2"></i>
+            <p class="mb-0 text-muted">No products found for "${query}"</p>
+            <small class="text-muted">Try searching with different keywords</small>
+          </div>
+        </div>
+      `;
+    } else {
+      resultsContainer.innerHTML = `
+        <div class="card shadow-lg border-primary">
+          <div class="card-header bg-primary text-white py-2">
+            <small><i class="fas fa-search me-1"></i>Found ${filteredProducts.length} product(s)</small>
+          </div>
+          <div class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;">
+            ${filteredProducts.map(product => `
+              <div class="list-group-item list-group-item-action cursor-pointer product-option" 
+                   onclick="selectMilkProduct(${JSON.stringify(product).replace(/"/g, '&quot;')})">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1 text-primary fw-bold">${product.name}</h6>
+                    <p class="mb-1 small text-muted">${product.description}</p>
+                    <div class="d-flex gap-3 flex-wrap">
+                      <small class="text-success"><i class="fas fa-tag me-1"></i><strong>₹${product.price}/${product.unit_type}</strong></small>
+                      <small class="text-info"><i class="fas fa-box me-1"></i>${product.available_quantity} ${product.unit_type}</small>
+                      <small class="text-warning"><i class="fas fa-folder me-1"></i>${product.category}</small>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge ${product.available_quantity > 0 ? 'bg-success' : 'bg-warning'}">
+                      ${product.available_quantity > 0 ? 'Available' : 'Low Stock'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    resultsContainer.style.display = 'block';
+  }
+
+  window.selectMilkProduct = function(product) {
+    const searchInput = document.getElementById('product-search');
+    const resultsContainer = document.getElementById('product-search-results');
+    const selectedDisplay = document.getElementById('selected-product-display');
+    const selectedInfo = document.getElementById('selected-product-info');
+    const selectedProductId = document.getElementById('selected-product-id');
+    const dropdownContainer = document.getElementById('product-dropdown-container');
+    const form = searchInput.closest('form');
+
+    // Update hidden field
+    selectedProductId.value = product.id;
+
+    // Update search input
+    searchInput.value = product.name;
+
+    // Show selected product info
+    selectedInfo.innerHTML = `
+      <small class="text-success fw-bold">
+        <i class="fas fa-check-circle me-1"></i>
+        Selected: ${product.name} (${product.unit_type})
+      </small>
+    `;
+
+    // Hide/show elements
+    resultsContainer.style.display = 'none';
+    selectedDisplay.style.display = 'block';
+    dropdownContainer.style.display = 'none';
+
+    // Auto-submit form and stay on dashboard
+    if (form) {
+      const hiddenTabField = form.querySelector('input[name="tab"]');
+      if (hiddenTabField) {
+        hiddenTabField.value = 'dashboard';
+      }
+      form.submit();
+    }
+  }
+
+  window.clearMilkProductSelection = function() {
+    const searchInput = document.getElementById('product-search');
+    const selectedDisplay = document.getElementById('selected-product-display');
+    const selectedProductId = document.getElementById('selected-product-id');
+    const dropdownContainer = document.getElementById('product-dropdown-container');
+    const fallbackDropdown = document.getElementById('product-dropdown-fallback');
+    const form = searchInput.closest('form');
+
+    // Clear values
+    searchInput.value = '';
+    selectedProductId.value = '';
+    if (fallbackDropdown) fallbackDropdown.value = '';
+
+    // Reset display
+    selectedDisplay.style.display = 'none';
+    dropdownContainer.style.display = 'block';
+
+    // Auto-submit form to show all products and stay on dashboard
+    if (form) {
+      const hiddenTabField = form.querySelector('input[name="tab"]');
+      if (hiddenTabField) {
+        hiddenTabField.value = 'dashboard';
+      }
+      form.submit();
+    }
+
+    // Focus back to search
+    searchInput.focus();
+  }
+
+  window.handleRegularDropdownChange = function() {
+    const fallbackDropdown = document.getElementById('product-dropdown-fallback');
+    if (fallbackDropdown && fallbackDropdown.value) {
+      const product = availableProducts.find(p => p.id == fallbackDropdown.value);
+      if (product) {
+        selectMilkProduct(product);
+      }
+    }
+  }
+  
+  window.handleDateRangeChange = function() {
+    // Preserve selected product when changing date range
+    const form = document.querySelector('form');
+    const selectedProductId = document.getElementById('selected-product-id');
+    const hiddenTabField = form.querySelector('input[name="tab"]');
+    
+    if (hiddenTabField) {
+      hiddenTabField.value = 'dashboard';
+    }
+    
+    // The product_id will be preserved through the hidden field
+    // No additional action needed as the hidden field is already in the form
+  }
+  
+  // Add styling for product search (from working version)
+  const style = document.createElement('style');
+  style.textContent = `
+    .cursor-pointer {
+      cursor: pointer;
+    }
+    
+    /* Product Search Styling */
+    #product-search {
+      border: 2px solid #4e73df;
+      font-size: 1.1rem;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
+      width: 100%;
+    }
+
+    #product-search:focus {
+      border-color: #2e59d9;
+      box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    #product-search-results {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      border: 1px solid #dee2e6;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      margin-top: 2px;
+    }
+
+    .product-option {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none !important;
+    }
+
+    .product-option:hover {
+      background-color: rgba(78, 115, 223, 0.08) !important;
+      transform: translateX(3px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #selected-product-display {
+      border: 2px solid #28a745;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Handle tab activation based on URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const activeTab = urlParams.get('tab');
+  
+  if (activeTab === 'dashboard') {
+    // Activate dashboard tab
+    const dashboardTab = document.getElementById('dashboard-tab');
+    const dashboardPane = document.getElementById('dashboard');
+    
+    if (dashboardTab && dashboardPane) {
+      // Remove active from all tabs
+      document.querySelectorAll('.nav-link').forEach(tab => {
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+      });
+      
+      // Remove show active from all panes
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('show', 'active');
+      });
+      
+      // Activate dashboard tab
+      dashboardTab.classList.add('active');
+      dashboardTab.setAttribute('aria-selected', 'true');
+      dashboardPane.classList.add('show', 'active');
+    }
   }
 });
 </script>

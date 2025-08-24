@@ -194,27 +194,21 @@
                       
                       <div class="assignment-body">
                         <div class="metrics-row">
-                          <div class="metric-box planned">
+                          <div class="metric-box delivery">
                             <div class="metric-details">
-                              <div class="metric-value"><%= assignment.planned_quantity %>L</div>
-                              <div class="metric-label">Planned</div>
-                              <div class="metric-price">@ ₹<%= assignment.buying_price %></div>
+                              <div class="metric-value"><%= assignment.planned_quantity || 0 %>L</div>
+                              <div class="metric-label">Liters Delivered</div>
+                              <div class="metric-price">Buying: ₹<%= assignment.buying_price %></div>
                             </div>
                           </div>
                           
-                          <div class="metric-box actual">
+                          <div class="metric-box pricing">
                             <div class="metric-details">
-                              <div class="metric-value editable-field" 
-                                   data-field="actual_quantity" 
-                                   data-assignment-id="<%= assignment.id %>">
-                                <% if assignment.actual_quantity.present? %>
-                                  <%= assignment.actual_quantity %>L
-                                <% else %>
-                                  <span class="text-muted click-to-edit" title="Click to add">Click to add</span>
-                                <% end %>
+                              <div class="metric-value">₹<%= assignment.selling_price %></div>
+                              <div class="metric-label">Selling Price</div>
+                              <div class="metric-profit">
+                                Profit: ₹<%= ((assignment.planned_quantity || 0) * (assignment.selling_price - assignment.buying_price)).round(2) %>
                               </div>
-                              <div class="metric-label">Actual</div>
-                              <div class="metric-selling">@ ₹<%= assignment.selling_price %></div>
                             </div>
                           </div>
                         </div>

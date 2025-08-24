@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_22_053443) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
     t.datetime "updated_at", null: false
     t.index ["is_active"], name: "index_categories_on_is_active"
     t.index ["name"], name: "index_categories_on_name", unique: true
+  end
+
+  create_table "cms_pages", force: :cascade do |t|
+    t.string "slug", null: false
+    t.string "version", default: "v1.0", null: false
+    t.string "title", null: false
+    t.text "content", null: false
+    t.string "locale", default: "en", null: false
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["published_at"], name: "index_cms_pages_on_published_at"
+    t.index ["slug", "locale"], name: "index_cms_pages_on_slug_and_locale", unique: true
   end
 
   create_table "customers", force: :cascade do |t|
@@ -124,6 +137,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
     t.text "special_instructions"
     t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0"
     t.decimal "final_amount_after_discount", precision: 10, scale: 2
+    t.text "cancellation_reason"
+    t.index ["customer_id", "scheduled_date"], name: "index_delivery_assignments_on_customer_id_and_scheduled_date"
     t.index ["customer_id"], name: "index_delivery_assignments_on_customer_id"
     t.index ["delivery_schedule_id"], name: "index_delivery_assignments_on_delivery_schedule_id"
     t.index ["discount_amount"], name: "index_delivery_assignments_on_discount_amount"
@@ -163,6 +178,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
     t.index ["delivery_person_id"], name: "index_delivery_schedules_on_delivery_person_id"
     t.index ["product_id"], name: "index_delivery_schedules_on_product_id"
     t.index ["user_id"], name: "index_delivery_schedules_on_user_id"
+  end
+
+  create_table "faqs", force: :cascade do |t|
+    t.string "category"
+    t.text "question", null: false
+    t.text "answer", null: false
+    t.string "locale", default: "en", null: false
+    t.boolean "is_active", default: true, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category", "locale"], name: "index_faqs_on_category_and_locale"
+    t.index ["is_active"], name: "index_faqs_on_is_active"
+    t.index ["locale"], name: "index_faqs_on_locale"
+    t.index ["sort_order"], name: "index_faqs_on_sort_order"
   end
 
   create_table "invoice_items", force: :cascade do |t|
@@ -243,9 +273,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "product_id"
     t.index ["date"], name: "index_procurement_assignments_on_date"
     t.index ["procurement_schedule_id", "date"], name: "idx_on_procurement_schedule_id_date_cd15031368"
     t.index ["procurement_schedule_id"], name: "index_procurement_assignments_on_procurement_schedule_id"
+    t.index ["product_id"], name: "index_procurement_assignments_on_product_id"
     t.index ["status"], name: "index_procurement_assignments_on_status"
     t.index ["user_id"], name: "index_procurement_assignments_on_user_id"
     t.index ["vendor_name"], name: "index_procurement_assignments_on_vendor_name"
@@ -264,6 +296,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
     t.string "unit", default: "liters"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "product_id"
+    t.index ["product_id"], name: "index_procurement_schedules_on_product_id"
     t.index ["user_id"], name: "index_procurement_schedules_on_user_id"
   end
 
@@ -383,6 +417,35 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
     t.index ["name"], name: "index_purchase_products_on_name"
   end
 
+  create_table "referral_codes", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "code", null: false
+    t.integer "total_credits", default: 0, null: false
+    t.integer "total_referrals", default: 0, null: false
+    t.string "share_url_slug"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_referral_codes_on_code", unique: true
+    t.index ["customer_id"], name: "index_referral_codes_on_customer_id", unique: true
+  end
+
+  create_table "refresh_tokens", force: :cascade do |t|
+    t.string "token_hash", null: false
+    t.string "replaced_by_token_hash"
+    t.datetime "expires_at", null: false
+    t.datetime "revoked_at"
+    t.bigint "user_id"
+    t.bigint "customer_id"
+    t.string "user_agent"
+    t.string "created_by_ip"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_refresh_tokens_on_customer_id"
+    t.index ["replaced_by_token_hash"], name: "index_refresh_tokens_on_replaced_by_token_hash"
+    t.index ["token_hash"], name: "index_refresh_tokens_on_token_hash", unique: true
+    t.index ["user_id"], name: "index_refresh_tokens_on_user_id"
+  end
+
   create_table "reports", force: :cascade do |t|
     t.string "name", null: false
     t.string "report_type", null: false
@@ -496,6 +559,38 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
     t.index ["name"], name: "index_sales_products_on_name"
   end
 
+  create_table "support_tickets", force: :cascade do |t|
+    t.bigint "customer_id"
+    t.string "subject"
+    t.text "message", null: false
+    t.string "channel", default: "app", null: false
+    t.string "status", default: "open", null: false
+    t.string "external_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_support_tickets_on_customer_id"
+    t.index ["status"], name: "index_support_tickets_on_status"
+  end
+
+  create_table "user_vacations", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.date "start_date", null: false
+    t.date "end_date", null: false
+    t.string "status", default: "active", null: false
+    t.text "reason"
+    t.datetime "paused_at"
+    t.datetime "unpaused_at"
+    t.datetime "cancelled_at"
+    t.bigint "created_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by"], name: "index_user_vacations_on_created_by"
+    t.index ["customer_id", "end_date"], name: "index_user_vacations_on_customer_id_and_end_date"
+    t.index ["customer_id", "start_date"], name: "index_user_vacations_on_customer_id_and_start_date"
+    t.index ["customer_id"], name: "index_user_vacations_on_customer_id"
+    t.index ["status"], name: "index_user_vacations_on_status"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -528,13 +623,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_120000) do
   add_foreign_key "invoices", "customers"
   add_foreign_key "parties", "users"
   add_foreign_key "procurement_assignments", "procurement_schedules"
+  add_foreign_key "procurement_assignments", "products"
   add_foreign_key "procurement_assignments", "users"
+  add_foreign_key "procurement_schedules", "products"
   add_foreign_key "procurement_schedules", "users"
   add_foreign_key "products", "categories"
   add_foreign_key "purchase_invoice_items", "purchase_invoices"
   add_foreign_key "purchase_invoice_items", "purchase_products"
+  add_foreign_key "referral_codes", "customers"
+  add_foreign_key "refresh_tokens", "customers"
+  add_foreign_key "refresh_tokens", "users"
   add_foreign_key "reports", "users"
   add_foreign_key "sales_invoice_items", "products"
   add_foreign_key "sales_invoices", "customers"
   add_foreign_key "sales_invoices", "sales_customers"
+  add_foreign_key "support_tickets", "customers"
+  add_foreign_key "user_vacations", "customers"
 end

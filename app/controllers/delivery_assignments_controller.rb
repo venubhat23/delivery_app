@@ -42,8 +42,17 @@ class DeliveryAssignmentsController < ApplicationController
       @delivery_assignments = @delivery_assignments.search_by_customer(params[:search])
     end
 
+    # Store filtered assignments for statistics before pagination
+    @filtered_assignments = @delivery_assignments
+    
+    # Calculate statistics for all filtered assignments (not just current page)
+    @total_assignments = @filtered_assignments.count
+    @pending_assignments = @filtered_assignments.where(status: 'pending').count
+    @completed_assignments = @filtered_assignments.where(status: 'completed').count
+    @overdue_assignments = @filtered_assignments.where(status: 'pending').where('scheduled_date < ?', Date.current).count
+    @completion_rate = @total_assignments > 0 ? ((@completed_assignments.to_f / @total_assignments) * 100).round(1) : 0
+
     # Add pagination - 50 assignments per page
-    @total_assignments = @delivery_assignments.count
     @delivery_assignments = @delivery_assignments.page(params[:page]).per(50)
 
     @delivery_people = User.delivery_people.all
@@ -122,15 +131,43 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def bulk_complete
+    # Start with pending assignments
     pending_assignments = DeliveryAssignment.where(status: 'pending')
     
-    # Apply filters if they exist
+    # Apply date filter (default to current date as set in index method)
+    filter_date = Date.current
+    if params[:date].present?
+      begin
+        filter_date = Date.parse(params[:date])
+      rescue ArgumentError
+        filter_date = Date.current
+      end
+    end
+    pending_assignments = pending_assignments.where(scheduled_date: filter_date)
+    
+    # Apply other filters if they exist
     if params[:delivery_person_id].present?
       pending_assignments = pending_assignments.where(user_id: params[:delivery_person_id])
     end
     
-    # Only complete assignments for today or past dates to avoid completing future assignments
-    pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
+    if params[:search].present?
+      pending_assignments = pending_assignments.search_by_customer(params[:search])
+    end
+    
+    # Determine completion scope based on complete_type parameter
+    if params[:complete_type] == 'all'
+      # Complete all filtered assignments (across all pages)
+      # Only complete assignments for today or past dates to avoid completing future assignments
+      pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
+    else
+      # Complete only current page assignments (default behavior)
+      # Only complete assignments for today or past dates to avoid completing future assignments
+      pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
+      
+      # Get current page assignments only
+      page = params[:page] || 1
+      pending_assignments = pending_assignments.page(page).per(50)
+    end
     
     completed_count = 0
     failed_count = 0
@@ -147,9 +184,9 @@ class DeliveryAssignmentsController < ApplicationController
     if completed_count > 0
       message = "Successfully completed #{completed_count} delivery assignment(s)."
       message += " #{failed_count} failed to update." if failed_count > 0
-      redirect_to delivery_assignments_path, notice: message
+      redirect_to delivery_assignments_path(params.permit(:date, :status, :delivery_person_id, :search)), notice: message
     else
-      redirect_to delivery_assignments_path, alert: 'No pending assignments found to complete.'
+      redirect_to delivery_assignments_path(params.permit(:date, :status, :delivery_person_id, :search)), alert: 'No pending assignments found to complete.'
     end
   end
 

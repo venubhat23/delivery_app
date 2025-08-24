@@ -2,35 +2,50 @@ class MilkAnalyticsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # Determine date range based on parameters - default to this month instead of today
-    @date_range = params[:date_range] || 'month'
+    # Handle dashboard filters - Default to current month (1st to end of current month)
+    @product_id = params[:product_id]
+    @date_range = params[:date_range] || 'monthly'
     
     case @date_range
     when 'today'
       @start_date = Date.current
       @end_date = Date.current
-    when 'week'
+    when 'yesterday'
+      @start_date = 1.day.ago.to_date
+      @end_date = 1.day.ago.to_date
+    when 'weekly'
       @start_date = Date.current.beginning_of_week
       @end_date = Date.current.end_of_week
-    when 'month'
+    when 'monthly'
+      # Default: Current Month (1st to end of current month)
       @start_date = Date.current.beginning_of_month
       @end_date = Date.current.end_of_month
+    when 'last_month'
+      @start_date = 1.month.ago.beginning_of_month
+      @end_date = 1.month.ago.end_of_month
     when 'custom'
       @start_date = params[:from_date].present? ? Date.parse(params[:from_date]) : Date.current.beginning_of_month
       @end_date = params[:to_date].present? ? Date.parse(params[:to_date]) : Date.current.end_of_month
     else
+      # Default fallback: Current Month
       @start_date = Date.current.beginning_of_month
       @end_date = Date.current.end_of_month
     end
     
-    # Calculate KPI metrics
-    calculate_kpi_metrics
-    
-    # Calculate summaries
-    calculate_summaries
-    
-    # Calculate daily calculations for the simple report
-    calculate_daily_calculations
+    # Calculate dashboard statistics with product filtering
+    if params[:tab] == 'dashboard' || params[:tab].blank?
+      # Default to dashboard tab and always calculate dashboard stats
+      calculate_dashboard_stats
+    else
+      # Calculate KPI metrics for other tabs
+      calculate_kpi_metrics
+      
+      # Calculate summaries
+      calculate_summaries
+      
+      # Calculate daily calculations for the simple report
+      calculate_daily_calculations
+    end
     
     respond_to do |format|
       format.html
@@ -1083,35 +1098,34 @@ class MilkAnalyticsController < ApplicationController
   def calculate_daily_calculations
     begin
       @daily_calculations = (@start_date..@end_date).map do |date|
-        # Get procurement assignments for this date
+        # Get procurement assignments for this date - ALL PRODUCTS, not just milk
         daily_procurement = current_user.procurement_assignments.for_date_range(date, date)
         
-        # Calculate procurement totals using both actual and planned data
+        # Apply product filter if specified
+        if @product_id.present?
+          daily_procurement = daily_procurement.where(product_id: @product_id)
+        end
+        
+        # Calculate procurement totals using planned_quantity primarily, fallback to actual_quantity
         procured_liters = 0
         total_cost = 0
         
         daily_procurement.each do |assignment|
-          if assignment.actual_quantity.present?
-            procured_liters += assignment.actual_quantity
-            total_cost += assignment.actual_cost || 0
-          else
-            procured_liters += assignment.planned_quantity || 0
-            total_cost += assignment.planned_cost || 0
-          end
+          quantity = assignment.planned_quantity || assignment.actual_quantity || 0
+          procured_liters += quantity
+          total_cost += quantity * assignment.buying_price
         end
         
-        # Get delivery data for milk products
+        # Get delivery data for ALL PRODUCTS (not just milk)
         delivered_liters = 0
         total_revenue = 0
         
         begin
-          if Product.table_exists?
-            deliveries = DeliveryAssignment.joins(:product)
-                                         .where(scheduled_date: date)
-                                         .where(status: 'completed')
-                                         .where("products.name ILIKE ?", '%milk%')
-          else
-            deliveries = DeliveryAssignment.where(scheduled_date: date, status: 'completed')
+          deliveries = DeliveryAssignment.where(scheduled_date: date, status: 'completed')
+          
+          # Apply product filter if specified
+          if @product_id.present?
+            deliveries = deliveries.where(product_id: @product_id)
           end
           
           deliveries.each do |delivery|
@@ -1125,8 +1139,8 @@ class MilkAnalyticsController < ApplicationController
           total_revenue = 0
         end
         
-        # Calculate metrics
-        profit = total_revenue - total_cost
+        # Calculate metrics - Date, Procured (L), Cost (₹), Delivered (L), Revenue (₹), Profit/Loss (₹), Utilization %, Wastage (L)
+        profit_loss = total_revenue - total_cost
         utilization = procured_liters > 0 ? (delivered_liters.to_f / procured_liters * 100).round(1) : 0
         wastage = procured_liters - delivered_liters
         
@@ -1136,19 +1150,211 @@ class MilkAnalyticsController < ApplicationController
           cost: total_cost.round(2),
           delivered: delivered_liters.round(1),
           revenue: total_revenue.round(2),
-          profit: profit.round(2),
+          profit_loss: profit_loss.round(2),
           utilization: utilization,
           wastage: wastage.round(1)
         }
       end
       
-      # Filter out days with no activity to keep the report clean
-      @daily_calculations = @daily_calculations.select { |day| day[:procured] > 0 || day[:delivered] > 0 }
+      # Show all days from 1st to current date or end of month (don't filter out zero days for complete view)
       
     rescue => e
       Rails.logger.error "Error calculating daily calculations: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
       @daily_calculations = []
     end
+  end
+  
+  def calculate_dashboard_stats
+    begin
+      # Base query for procurement assignments with date filter
+      assignments_query = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
+      
+      # Apply product filter if specified
+      if @product_id.present?
+        assignments_query = assignments_query.where(product_id: @product_id)
+      end
+      
+      # 1. Total Vendors - COUNT(DISTINCT vendor_name)
+      total_vendors = assignments_query.distinct.count(:vendor_name)
+      
+      # 2. Liters Purchased - Use planned_quantity primarily, fallback to actual_quantity
+      liters_purchased = assignments_query.sum('COALESCE(planned_quantity, actual_quantity)') || 0
+      
+      # 3. Total Purchased Amount - SUM(planned_quantity × buying_price)
+      total_purchased_amount = assignments_query.sum('COALESCE(planned_quantity, actual_quantity) * buying_price') || 0
+      
+      # 4. Liters Delivered - From delivery_assignments with product and date filters
+      delivery_query = get_delivery_query(@start_date, @end_date)
+      if @product_id.present?
+        delivery_query = delivery_query.where(product_id: @product_id)
+      end
+      liters_delivered = delivery_query.sum(:quantity) || 0
+      
+      # 5. Total Pending Liters - Purchased - Delivered
+      total_pending_liters = liters_purchased - liters_delivered
+      
+      # 6. Total Revenue Received - SUM(final_amount_after_discount)
+      total_revenue = delivery_query.sum(:final_amount_after_discount) || 0
+      
+      # 7 & 8. Profit/Loss Calculation
+      profit_amount = 0
+      loss_amount = 0
+      
+      if total_revenue > total_purchased_amount
+        profit_amount = total_revenue - total_purchased_amount
+      else
+        loss_amount = total_purchased_amount - total_revenue
+      end
+      
+      # Additional metrics
+      utilization_rate = liters_purchased > 0 ? (liters_delivered.to_f / liters_purchased * 100).round(2) : 0
+      
+      @dashboard_stats = {
+        total_vendors: total_vendors,
+        liters_purchased: liters_purchased,
+        total_purchased_amount: total_purchased_amount,
+        liters_delivered: liters_delivered,
+        total_pending_liters: total_pending_liters,
+        total_revenue: total_revenue,
+        profit_amount: profit_amount,
+        loss_amount: loss_amount,
+        utilization_rate: utilization_rate
+      }
+      
+      # Calculate summary sections
+      calculate_procurement_summary(assignments_query)
+      calculate_delivery_summary(delivery_query)
+      calculate_detailed_analysis(assignments_query, delivery_query)
+      
+    rescue => e
+      Rails.logger.error "Error calculating dashboard stats: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      
+      # Fallback with default values
+      @dashboard_stats = {
+        total_vendors: 0,
+        liters_purchased: 0,
+        total_purchased_amount: 0,
+        liters_delivered: 0,
+        total_pending_liters: 0,
+        total_revenue: 0,
+        profit_amount: 0,
+        loss_amount: 0,
+        utilization_rate: 0
+      }
+      
+      @procurement_summary = {
+        total_vendors: 0,
+        total_quantity: 0,
+        total_amount: 0,
+        average_price: 0
+      }
+      
+      @delivery_summary = {
+        total_deliveries: 0,
+        total_customers: 0,
+        total_quantity: 0,
+        total_revenue: 0
+      }
+      
+      @vendor_analysis = []
+      @daily_procurement = []
+      @daily_delivery = []
+    end
+  end
+  
+  def get_delivery_query(start_date, end_date)
+    # Get delivery assignments for the date range
+    if defined?(DeliveryAssignment)
+      DeliveryAssignment.where(scheduled_date: start_date..end_date)
+                       .where(status: 'completed')
+    else
+      # Return empty relation if DeliveryAssignment doesn't exist
+      current_user.procurement_assignments.none
+    end
+  end
+  
+  def calculate_procurement_summary(assignments_query)
+    @procurement_summary = {
+      total_vendors: assignments_query.distinct.count(:vendor_name),
+      total_quantity: assignments_query.sum('COALESCE(planned_quantity, actual_quantity)') || 0,
+      total_amount: assignments_query.sum('COALESCE(planned_quantity, actual_quantity) * buying_price') || 0,
+      average_price: assignments_query.average('buying_price')&.round(2) || 0
+    }
+  end
+  
+  def calculate_delivery_summary(delivery_query)
+    begin
+      @delivery_summary = {
+        total_deliveries: delivery_query.count,
+        total_customers: begin
+          delivery_query.joins(:customer).distinct.count(:customer_id)
+        rescue => e
+          Rails.logger.warn "Cannot join customer table: #{e.message}"
+          delivery_query.distinct.count(:customer_id) rescue 0
+        end,
+        total_quantity: delivery_query.sum(:quantity) || 0,
+        total_revenue: delivery_query.sum(:final_amount_after_discount) || 0
+      }
+    rescue => e
+      Rails.logger.error "Error calculating delivery summary: #{e.message}"
+      @delivery_summary = {
+        total_deliveries: 0,
+        total_customers: 0,
+        total_quantity: 0,
+        total_revenue: 0
+      }
+    end
+  end
+  
+  def calculate_detailed_analysis(assignments_query, delivery_query)
+    # Vendor-wise spending analysis
+    assignments_array = assignments_query.to_a
+    @vendor_analysis = assignments_array.group_by(&:vendor_name).map do |vendor, assignments|
+      total_quantity = assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 }
+      total_amount = assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
+      
+      {
+        vendor_name: vendor,
+        total_liters: total_quantity,
+        total_amount: total_amount,
+        average_price: total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
+      }
+    end.sort_by { |v| -v[:total_amount] }
+    
+    # Daily procurement tracking
+    @daily_procurement = (@start_date..@end_date).map do |date|
+      daily_assignments = assignments_array.select { |a| a.date == date }
+      
+      {
+        date: date,
+        vendors_engaged: daily_assignments.map(&:vendor_name).uniq.count,
+        total_liters: daily_assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 },
+        total_amount: daily_assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
+      }
+    end.select { |day| day[:total_liters] > 0 }
+    
+    # Daily delivery information
+    @daily_delivery = (@start_date..@end_date).map do |date|
+      begin
+        daily_deliveries = delivery_query.where(scheduled_date: date)
+        
+        {
+          date: date,
+          customers_served: daily_deliveries.joins(:customer).distinct.count(:customer_id) rescue 0,
+          total_liters: daily_deliveries.sum(:quantity) || 0,
+          assignments_completed: daily_deliveries.count
+        }
+      rescue => e
+        Rails.logger.error "Error calculating daily deliveries for #{date}: #{e.message}"
+        {
+          date: date,
+          customers_served: 0,
+          total_liters: 0,
+          assignments_completed: 0
+        }
+      end
+    end.select { |day| day[:total_liters] > 0 }
   end
 end

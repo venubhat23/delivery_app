@@ -32,11 +32,11 @@
   </div>
 </div>
 
-<% total = @delivery_assignments.count %>
-<% completed = @delivery_assignments.count { |a| a.status == 'completed' } %>
-<% pending = @delivery_assignments.count { |a| a.status == 'pending' } %>
-<% overdue = @delivery_assignments.count { |a| a.overdue? } %>
-<% percentage = total > 0 ? ((completed.to_f / total) * 100).round(1) : 0 %>
+<% total = @total_assignments %>
+<% completed = @completed_assignments %>
+<% pending = @pending_assignments %>
+<% overdue = @overdue_assignments %>
+<% percentage = @completion_rate %>
 
 <!-- Enhanced Stats Cards -->
 <div class="row mb-4">
@@ -91,7 +91,7 @@
 <div class="card mb-4">
   <div class="card-body">
     <div class="row align-items-center">
-      <div class="col-md-10">
+      <div class="col-md-8">
         <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex align-items-center flex-wrap gap-3" do |form| %>
           <div>
             <%= form.text_field :search, 
@@ -122,8 +122,46 @@
           </div>
           <%= form.submit "Search & Filter", class: "btn btn-outline-primary" %>
         <% end %>
+        
+        <!-- Complete Buttons in Filter Section -->
+        <% current_page_pending = @delivery_assignments.count { |a| a.status == 'pending' && a.scheduled_date <= Date.current } %>
+        <% all_filtered_pending = @filtered_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current).count %>
+        
+        <% if current_page_pending > 0 || all_filtered_pending > 0 %>
+          <div class="d-flex gap-2">
+            <% if current_page_pending > 0 %>
+              <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline" do |form| %>
+                <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
+                <%= form.hidden_field :search, value: params[:search] %>
+                <%= form.hidden_field :date, value: params[:date] %>
+                <%= form.hidden_field :complete_type, value: "current" %>
+                <%= form.submit "Complete (#{current_page_pending})", 
+                    class: "btn btn-success btn-sm", 
+                    title: "Complete pending assignments on current page",
+                    data: { 
+                      confirm: "Are you sure you want to mark #{current_page_pending} pending assignment(s) on this page as completed? This action cannot be undone." 
+                    } %>
+              <% end %>
+            <% end %>
+            
+            <% if all_filtered_pending > 0 && all_filtered_pending != current_page_pending %>
+              <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline" do |form| %>
+                <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
+                <%= form.hidden_field :search, value: params[:search] %>
+                <%= form.hidden_field :date, value: params[:date] %>
+                <%= form.hidden_field :complete_type, value: "all" %>
+                <%= form.submit "Complete All (#{all_filtered_pending})", 
+                    class: "btn btn-outline-success btn-sm", 
+                    title: "Complete all pending assignments matching current filters for today",
+                    data: { 
+                      confirm: "Are you sure you want to mark all #{all_filtered_pending} pending assignment(s) matching your filters for today as completed? This action cannot be undone." 
+                    } %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
       </div>
-      <div class="col-md-2">
+      <div class="col-md-4">
         <div class="d-flex gap-2 justify-content-end">
           <% if params[:status].present? || params[:delivery_person_id].present? || params[:search].present? || (params[:date].present? && params[:date] != Date.today.to_s) %>
             <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary btn-sm" do %>
@@ -151,17 +189,6 @@
       </div>
       <div class="col-md-4 text-end">
         <div class="d-flex align-items-center justify-content-end gap-2">
-          <% pending_count = @delivery_assignments.count { |a| a.status == 'pending' && a.scheduled_date <= Date.current } %>
-          <% if pending_count > 0 %>
-            <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline" do |form| %>
-              <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
-              <%= form.submit "Complete All Pending (#{pending_count})", 
-                  class: "btn btn-success btn-sm", 
-                  data: { 
-                    confirm: "Are you sure you want to mark all #{pending_count} pending assignments as completed? This action cannot be undone." 
-                  } %>
-            <% end %>
-          <% end %>
           <span class="badge bg-primary me-2"><%= @delivery_assignments.count %> assignments</span>
           <div class="btn-group btn-group-sm" role="group">
             <button type="button" class="btn btn-outline-secondary active" id="tableView">

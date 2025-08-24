@@ -95,7 +95,7 @@
     </div>
   </div>
 
-  <!-- Dashboard Cards - 8 Cards Layout -->
+  <!-- Procurement Dashboard - 8 Cards Layout -->
   <div class="row mb-4">
     <!-- Card 1: Active Vendors -->
     <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
@@ -121,7 +121,7 @@
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
               <div class="text-white-75 text-uppercase mb-1 fw-bold small">Liters Purchased</div>
-              <div class="h4 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_purchased] || 0).round(2)) %>L</div>
+              <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_purchased] || 0).round(2)) %>L</div>
             </div>
             <div class="ms-3">
               <i class="fas fa-tint fa-2x text-white opacity-75"></i>
@@ -138,7 +138,7 @@
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
               <div class="text-white-75 text-uppercase mb-1 fw-bold small">Purchase Amount</div>
-              <div class="h4 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:purchase_amount] || 0).round(1)) %></div>
+              <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:purchase_amount] || 0).round(1)) %></div>
             </div>
             <div class="ms-3">
               <i class="fas fa-rupee-sign fa-2x text-white opacity-75"></i>
@@ -155,7 +155,7 @@
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
               <div class="text-white-75 text-uppercase mb-1 fw-bold small">Liters Delivered</div>
-              <div class="h4 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_delivered] || 0).round(1)) %>L</div>
+              <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_delivered] || 0).round(1)) %>L</div>
             </div>
             <div class="ms-3">
               <i class="fas fa-truck fa-2x text-white opacity-75"></i>
@@ -165,14 +165,14 @@
       </div>
     </div>
 
-    <!-- Card 5: Pending Quantity -->
+    <!-- Card 5: Pending -->
     <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
       <div class="card gradient-secondary text-white shadow-lg h-100">
         <div class="card-body p-4">
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
               <div class="text-white-75 text-uppercase mb-1 fw-bold small">Pending</div>
-              <div class="h4 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:pending_quantity] || 0).round(2)) %>L</div>
+              <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:pending_quantity] || 0).round(2)) %>L</div>
               <div class="text-white-75 small"><%= (@dashboard_stats[:pending_percentage] || 0).round(1) %>% of procurement</div>
             </div>
             <div class="ms-3">
@@ -190,7 +190,7 @@
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
               <div class="text-white-75 text-uppercase mb-1 fw-bold small">Revenue</div>
-              <div class="h4 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:revenue] || 0).round(0)) %></div>
+              <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:revenue] || 0).round(1)) %></div>
             </div>
             <div class="ms-3">
               <i class="fas fa-chart-line fa-2x text-white opacity-75"></i>
@@ -200,7 +200,7 @@
       </div>
     </div>
 
-    <!-- Card 7: Loss/Profit -->
+    <!-- Card 7: Loss -->
     <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
       <div class="card gradient-<%= (@dashboard_stats[:profit_loss] || 0) >= 0 ? 'success' : 'danger' %> text-white shadow-lg h-100">
         <div class="card-body p-4">
@@ -209,8 +209,8 @@
               <div class="text-white-75 text-uppercase mb-1 fw-bold small">
                 <%= (@dashboard_stats[:profit_loss] || 0) >= 0 ? 'Profit' : 'Loss' %>
               </div>
-              <div class="h4 mb-0 fw-bold">₹<%= number_with_delimiter(((@dashboard_stats[:profit_loss] || 0).abs).round(1)) %></div>
-              <div class="text-white-75 small">Margin: <%= (@dashboard_stats[:profit_margin] || 0).round(1) %>%</div>
+              <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter(((@dashboard_stats[:profit_loss] || 0).abs).round(1)) %></div>
+              <div class="text-white-75 small">Profit Margin <%= (@dashboard_stats[:profit_margin] || 0).round(1) %>%</div>
             </div>
             <div class="ms-3">
               <i class="fas fa-<%= (@dashboard_stats[:profit_loss] || 0) >= 0 ? 'arrow-up' : 'arrow-down' %> fa-2x text-white opacity-75"></i>
@@ -220,27 +220,23 @@
       </div>
     </div>
 
-    <!-- Card 8: Utilization Rate -->
+    <!-- Card 8: Utilization Rate & Wastage Cost -->
     <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
       <div class="card gradient-purple text-white shadow-lg h-100">
         <div class="card-body p-4">
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
               <div class="text-white-75 text-uppercase mb-1 fw-bold small">Utilization Rate</div>
-              <div class="h4 mb-0 fw-bold"><%= (@dashboard_stats[:utilization_rate] || 0).round(1) %>%</div>
+              <div class="h3 mb-0 fw-bold"><%= (@dashboard_stats[:utilization_rate] || 0).round(1) %>%</div>
               <div class="text-white-75 small">Delivered ÷ Procured × 100</div>
             </div>
             <div class="ms-3">
               <i class="fas fa-percentage fa-2x text-white opacity-75"></i>
             </div>
           </div>
-          <!-- Progress bar -->
-          <div class="progress mt-3" style="height: 4px;">
-            <div class="progress-bar bg-white" role="progressbar" 
-                 style="width: <%= [(@dashboard_stats[:utilization_rate] || 0), 100].min %>%" 
-                 aria-valuenow="<%= (@dashboard_stats[:utilization_rate] || 0) %>" 
-                 aria-valuemin="0" aria-valuemax="100">
-            </div>
+          <div class="mt-3">
+            <div class="text-white-75 small fw-bold">Wastage Cost</div>
+            <div class="h5 mb-0 fw-bold text-white">₹<%= number_with_delimiter((@dashboard_stats[:wastage_cost] || 0).round(0)) %></div>
           </div>
         </div>
       </div>
@@ -315,85 +311,104 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-.avatar {
-  width: 2.5rem;
-  height: 2.5rem;
+/* Dashboard Card Gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
 }
 
-.avatar-title {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  font-weight: 600;
+.gradient-info {
+  background: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
 }
 
-.table th {
-  border-top: none;
-  font-weight: 600;
-  color: #5a5c69;
-  background-color: #f8f9fc;
+.gradient-warning {
+  background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
 }
 
-.table td {
-  vertical-align: middle;
+.gradient-success {
+  background: linear-gradient(135deg, #1cc88a 0%, #17a673 100%);
 }
 
-.progress {
-  background-color: #e9ecef;
+.gradient-secondary {
+  background: linear-gradient(135deg, #858796 0%, #60616f 100%);
 }
 
-.badge {
-  font-size: 0.75em;
-  padding: 0.375em 0.75em;
+.gradient-teal {
+  background: linear-gradient(135deg, #20c997 0%, #1aa179 100%);
 }
 
-.badge-success {
-  background-color: #1cc88a;
+.gradient-danger {
+  background: linear-gradient(135deg, #e74a3b 0%, #c02d1d 100%);
 }
 
-.badge-secondary {
-  background-color: #858796;
+.gradient-purple {
+  background: linear-gradient(135deg, #6f42c1 0%, #59359a 100%);
 }
 
-.badge-primary {
-  background-color: #4e73df;
-}
-
-.badge-danger {
-  background-color: #e74a3b;
-}
-
-.badge-light {
-  background-color: #f8f9fc;
-  color: #5a5c69;
-}
-
-.border-left-primary {
-  border-left: 0.25rem solid #4e73df!important;
-}
-
-.border-left-success {
-  border-left: 0.25rem solid #1cc88a!important;
-}
-
-.border-left-info {
-  border-left: 0.25rem solid #36b9cc!important;
-}
-
-.border-left-warning {
-  border-left: 0.25rem solid #f6c23e!important;
-}
-
+/* Card Styling */
 .card {
   border: none;
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
 }
 
-.dropdown-menu {
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Text Colors */
+.text-white-75 {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.opacity-75 {
+  opacity: 0.75 !important;
+}
+
+/* Progress bars */
+.progress {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.progress-bar {
+  border-radius: 10px;
+}
+
+/* Filter Section */
+.form-select:focus,
+.form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.input-group-text {
+  background-color: #f8f9fc;
+  border-color: #d1d3e2;
+}
+
+/* Custom Date Fields */
+.custom-dates {
+  transition: all 0.3s ease;
+}
+
+/* Button Styling */
+.btn-primary {
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
   border: none;
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #224abe 0%, #1e3a8a 100%);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #1cc88a 0%, #17a673 100%);
+  border: none;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #17a673 0%, #138f5e 100%);
 }
 </style>
