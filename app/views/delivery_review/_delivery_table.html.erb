@@ -1,0 +1,35 @@
+<table class="table table-striped table-hover mb-0">
+  <thead class="table-light">
+    <tr>
+      <th scope="col">Date</th>
+      <th scope="col">Customer Name</th>
+      <th scope="col">Product</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">Amount</th>
+      <th scope="col">Status</th>
+      <th scope="col">Delivery Person</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @deliveries.each do |delivery| %>
+      <tr>
+        <td><%= delivery.scheduled_date.strftime('%b %d, %Y') %></td>
+        <td><%= delivery.customer&.name %></td>
+        <td><%= delivery.product&.name %></td>
+        <td><%= delivery.quantity %> <%= delivery.unit %></td>
+        <td>₹<%= number_with_precision(delivery.final_amount_after_discount.to_f, precision: 2) %></td>
+        <td>
+          <% cls = case delivery.status
+            when 'pending' then 'warning'
+            when 'completed' then 'success'
+            when 'cancelled' then 'danger'
+            when 'in_progress' then 'info'
+            else 'secondary'
+          end %>
+          <span class="badge bg-<%= cls %>"><%= delivery.status.to_s.humanize %></span>
+        </td>
+        <td><%= delivery.delivery_person&.name || 'Not Assigned' %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

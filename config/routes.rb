@@ -266,6 +266,11 @@ Rails.application.routes.draw do
     end
   end
 
+  # Delivery Review
+  get '/delivery-review', to: 'delivery_review#index'
+  get '/delivery-review/data', to: 'delivery_review#data'
+  post '/delivery-review/export', to: 'delivery_review#export'
+
   # File Upload API
   post '/api/upload', to: 'uploads#create'
   

@@ -1,0 +1,289 @@
+<!-- app/views/delivery_review/index.html.erb -->
+<div class="delivery-review-page container-fluid">
+  <div class="page-header mb-3">
+    <h2>🚚 Delivery Review</h2>
+    <p>Track and analyze delivery performance and customer delivery details</p>
+  </div>
+
+  <div class="filter-section card mb-3">
+    <div class="card-body">
+      <form id="delivery-review-filters" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Select Customer</label>
+          <select id="customer_id" class="form-select">
+            <option value="all">All Customers</option>
+            <% @customers.each do |c| %>
+              <option value="<%= c.id %>"><%= c.name %> - <%= c.phone_number %> (<%= c.member_id %>)</option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Date Range</label>
+          <select id="date_filter" class="form-select">
+            <option value="monthly" selected>Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="today">Today</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+
+        <div class="col-md-2 d-none" id="custom-start-col">
+          <label class="form-label">Start Date</label>
+          <input type="date" id="start_date" class="form-control" />
+        </div>
+
+        <div class="col-md-2 d-none" id="custom-end-col">
+          <label class="form-label">End Date</label>
+          <input type="date" id="end_date" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Product</label>
+          <select id="product_id" class="form-select">
+            <option value="all">All Products</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Status</label>
+          <select id="status" class="form-select">
+            <option value="all">All</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Delivery Person</label>
+          <select id="delivery_person_id" class="form-select">
+            <option value="all">All</option>
+            <% @delivery_persons.each do |dp| %>
+              <option value="<%= dp.id %>"><%= dp.name %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Search</label>
+          <input type="text" id="search" class="form-control" placeholder="Customer name / phone / member id" />
+        </div>
+
+        <div class="col-md-12 d-flex gap-2">
+          <button type="button" id="apply-filters" class="btn btn-primary"><i class="fas fa-filter me-1"></i>Apply Filters</button>
+          <button type="button" id="reset-filters" class="btn btn-outline-secondary">Reset</button>
+          <button type="button" id="export-csv" class="btn btn-outline-success"><i class="fas fa-file-csv me-1"></i>Export CSV</button>
+          <button type="button" id="print-report" class="btn btn-outline-dark"><i class="fas fa-print me-1"></i>Print</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="summary-section row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h4 class="card-title">Total Deliveries</h4>
+          <span class="value h3" id="sum-total-deliveries">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h4 class="card-title">Total Customers</h4>
+          <span class="value h3" id="sum-total-customers">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h4 class="card-title">Total Amount</h4>
+          <span class="value h3" id="sum-total-amount">₹0</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h4 class="card-title">Completion Rate</h4>
+          <span class="value h3" id="sum-completion-rate">0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">📋 Delivery Details</h3>
+      <div class="export-options d-none d-md-flex gap-2">
+        <button type="button" class="btn btn-outline-success" id="export-csv-2">Export CSV</button>
+        <button type="button" class="btn btn-outline-dark" id="print-report-2">Print</button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0" id="delivery-table">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Customer Name</th>
+              <th scope="col">Product</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Status</th>
+              <th scope="col">Delivery Person</th>
+            </tr>
+          </thead>
+          <tbody id="delivery-tbody">
+            <tr><td colspan="7" class="text-center py-4">Use filters and click Apply to load data</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const els = {
+    customer_id: document.getElementById('customer_id'),
+    date_filter: document.getElementById('date_filter'),
+    start_date: document.getElementById('start_date'),
+    end_date: document.getElementById('end_date'),
+    product_id: document.getElementById('product_id'),
+    status: document.getElementById('status'),
+    delivery_person_id: document.getElementById('delivery_person_id'),
+    search: document.getElementById('search'),
+    apply: document.getElementById('apply-filters'),
+    reset: document.getElementById('reset-filters'),
+    export1: document.getElementById('export-csv'),
+    export2: document.getElementById('export-csv-2'),
+    print1: document.getElementById('print-report'),
+    print2: document.getElementById('print-report-2'),
+    tbody: document.getElementById('delivery-tbody'),
+    sums: {
+      total_deliveries: document.getElementById('sum-total-deliveries'),
+      total_customers: document.getElementById('sum-total-customers'),
+      total_amount: document.getElementById('sum-total-amount'),
+      completion_rate: document.getElementById('sum-completion-rate')
+    }
+  };
+
+  function toggleCustomDates() {
+    const isCustom = els.date_filter.value === 'custom';
+    document.getElementById('custom-start-col').classList.toggle('d-none', !isCustom);
+    document.getElementById('custom-end-col').classList.toggle('d-none', !isCustom);
+  }
+
+  els.date_filter.addEventListener('change', toggleCustomDates);
+  toggleCustomDates();
+
+  function buildParams() {
+    const p = new URLSearchParams();
+    if (els.customer_id.value) p.set('customer_id', els.customer_id.value);
+    if (els.date_filter.value) p.set('date_filter', els.date_filter.value);
+    if (els.date_filter.value === 'custom') {
+      if (els.start_date.value) p.set('start_date', els.start_date.value);
+      if (els.end_date.value) p.set('end_date', els.end_date.value);
+    }
+    if (els.product_id.value) p.set('product_id', els.product_id.value);
+    if (els.status.value) p.set('status', els.status.value);
+    if (els.delivery_person_id.value) p.set('delivery_person_id', els.delivery_person_id.value);
+    if (els.search.value.trim().length > 0) p.set('search', els.search.value.trim());
+    return p.toString();
+  }
+
+  async function fetchData() {
+    els.tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</td></tr>';
+    const qs = buildParams();
+    const res = await fetch('/delivery-review/data.json?' + qs);
+    if (!res.ok) {
+      els.tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Failed to load data</td></tr>';
+      return;
+    }
+    const data = await res.json();
+    renderTable(data.deliveries || []);
+    renderSummary(data.summary || {});
+  }
+
+  function renderTable(rows) {
+    if (!rows.length) {
+      els.tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No records found</td></tr>';
+      return;
+    }
+    els.tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.date}</td>
+        <td>${escapeHtml(r.customer_name)}</td>
+        <td>${escapeHtml(r.product)}</td>
+        <td>${escapeHtml(r.quantity)}</td>
+        <td>₹${Number(r.amount || 0).toFixed(2)}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>${escapeHtml(r.delivery_person)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function statusBadge(status) {
+    const s = (status || '').toLowerCase();
+    const map = {
+      completed: 'success',
+      pending: 'warning',
+      cancelled: 'danger',
+      in_progress: 'info'
+    };
+    const cls = map[s] || 'secondary';
+    return `<span class="badge bg-${cls}">${(s.replace('_',' ')||'').toUpperCase()}</span>`;
+  }
+
+  function renderSummary(s) {
+    els.sums.total_deliveries.textContent = s.total_deliveries || 0;
+    els.sums.total_customers.textContent = s.total_customers || 0;
+    els.sums.total_amount.textContent = '₹' + Number(s.total_amount || 0).toFixed(2);
+    els.sums.completion_rate.textContent = (s.completion_rate || 0) + '%';
+  }
+
+  function exportCsv() {
+    const qs = buildParams();
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/delivery-review/export?' + qs;
+
+    const csrf = document.querySelector('meta[name="csrf-token"]');
+    if (csrf) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'authenticity_token';
+      input.value = csrf.content;
+      form.appendChild(input);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+  }
+
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  els.apply.addEventListener('click', fetchData);
+  els.reset.addEventListener('click', () => { window.location.reload(); });
+  els.export1.addEventListener('click', exportCsv);
+  els.export2.addEventListener('click', exportCsv);
+  els.print1.addEventListener('click', () => window.print());
+  els.print2.addEventListener('click', () => window.print());
+
+  // Optionally auto-load on page open
+  fetchData();
+});
+</script>

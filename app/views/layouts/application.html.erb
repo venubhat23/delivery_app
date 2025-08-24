@@ -899,6 +899,18 @@
                 <% end %>
               </li>
               
+              <% if current_user&.admin? || current_user&.delivery_person? %>
+              <li class="nav-item" role="none">
+                <%= link_to '/delivery-review', 
+                    class: "nav-link #{'active' if request.path.start_with?('/delivery-review') || controller_name == 'delivery_review'}", 
+                    role: "menuitem",
+                    "aria-current": (request.path.start_with?('/delivery-review') || controller_name == 'delivery_review') ? "page" : nil do %>
+                  <i class="fas fa-truck nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">🚚 Delivery Review</span>
+                <% end %>
+              </li>
+              <% end %>
+              
               <li class="nav-item" role="none">
                 <%= link_to purchase_invoices_path, 
                     class: "nav-link #{'active' if current_page?(purchase_invoices_path) || controller_name == 'purchase_invoices'}", 
