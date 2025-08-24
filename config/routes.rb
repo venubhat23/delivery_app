@@ -279,4 +279,9 @@ Rails.application.routes.draw do
       post '/regenerate_token', to: 'authentication#regenerate_token'
     end
   end
+  
+  # Delivery Review
+  get '/delivery-review', to: 'delivery_review#index'
+  get '/delivery-review/data', to: 'delivery_review#data'
+  post '/delivery-review/export', to: 'delivery_review#export'
 end

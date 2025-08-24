@@ -1,0 +1,23 @@
+<% if @deliveries.present? %>
+  <% @deliveries.each do |d| %>
+    <tr>
+      <td><%= d.scheduled_date.strftime('%b %d, %Y') %></td>
+      <td><%= d.customer&.name %></td>
+      <td><%= d.product&.name %></td>
+      <td><%= "#{d.quantity} #{d.unit}" %></td>
+      <td><%= number_to_currency(d.final_amount_after_discount.to_f, unit: '₹') %></td>
+      <td>
+        <% cls = case d.status
+          when 'completed' then 'badge bg-success'
+          when 'pending' then 'badge bg-warning text-dark'
+          when 'cancelled' then 'badge bg-danger'
+          when 'in_progress' then 'badge bg-info text-white'
+          else 'badge bg-secondary' end %>
+        <span class="<%= cls %>"><%= d.status.to_s.humanize %></span>
+      </td>
+      <td><%= d.delivery_person&.name || 'Not Assigned' %></td>
+    </tr>
+  <% end %>
+<% else %>
+  <tr><td colspan="7" class="text-center text-muted">No records found</td></tr>
+<% end %>

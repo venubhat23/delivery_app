@@ -1,10 +1,14 @@
+require 'csv'
+
 class DeliveryReviewController < ApplicationController
   before_action :require_login
+  before_action :require_admin_or_delivery_team
   
   def index
     # Load data for dropdowns
     @customers = Customer.active.order(:name)
-    @delivery_persons = User.delivery_team.order(:name)
+    @delivery_persons = User.delivery_people.order(:name)
+    @products = Product.where(is_active: true).order(:name)
     
     # Initial empty state - data will be loaded via AJAX
     @deliveries = []
@@ -32,14 +36,39 @@ class DeliveryReviewController < ApplicationController
     @deliveries = filtered_deliveries
     
     respond_to do |format|
-      format.csv { 
-        headers['Content-Disposition'] = "attachment; filename=\"delivery_review_#{Date.current.strftime('%Y%m%d')}.csv\""
-        headers['Content-Type'] = 'text/csv'
-      }
+      format.csv do
+        csv_data = CSV.generate(headers: true) do |csv|
+          csv << [
+            'Date', 'Customer Name', 'Product', 'Quantity', 'Amount', 'Status', 'Delivery Person'
+          ]
+
+          @deliveries.find_each do |delivery|
+            csv << [
+              delivery.scheduled_date.strftime('%b %d, %Y'),
+              delivery.customer&.name,
+              delivery.product&.name,
+              "#{delivery.quantity} #{delivery.unit}",
+              delivery.final_amount_after_discount.to_f,
+              delivery.status,
+              delivery.delivery_person&.name || 'Not Assigned'
+            ]
+          end
+        end
+
+        send_data csv_data,
+                  filename: "delivery_review_#{Date.current.strftime('%Y%m%d')}.csv",
+                  type: 'text/csv'
+      end
     end
   end
 
   private
+
+  def require_admin_or_delivery_team
+    unless current_user&.admin? || current_user&.delivery_person?
+      redirect_to root_path
+    end
+  end
 
   def filtered_deliveries
     scope = DeliveryAssignment.includes(:customer, :product, :delivery_person)
@@ -71,10 +100,11 @@ class DeliveryReviewController < ApplicationController
     if params[:search].present?
       search_term = "%#{params[:search]}%"
       scope = scope.joins(:customer)
-                   .where("customers.name ILIKE ? OR customers.phone ILIKE ? OR customers.member_id ILIKE ?", 
+                   .where("customers.name ILIKE ? OR customers.phone_number ILIKE ? OR customers.member_id ILIKE ?", 
                           search_term, search_term, search_term)
     end
     
+    scope = scope.joins(:customer)
     scope.order(scheduled_date: :desc, 'customers.name': :asc)
   end
 
@@ -134,7 +164,7 @@ class DeliveryReviewController < ApplicationController
         id: delivery.id,
         date: delivery.scheduled_date.strftime('%b %d, %Y'),
         customer_name: delivery.customer.name,
-        customer_phone: delivery.customer.phone,
+        customer_phone: delivery.customer.phone_number,
         customer_member_id: delivery.customer.member_id,
         product: delivery.product.name,
         quantity: "#{delivery.quantity} #{delivery.unit}",
