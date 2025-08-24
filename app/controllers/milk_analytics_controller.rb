@@ -32,20 +32,10 @@ class MilkAnalyticsController < ApplicationController
       @end_date = Date.current.end_of_month
     end
     
-    # Calculate dashboard statistics with product filtering
-    if params[:tab] == 'dashboard' || params[:tab].blank?
-      # Default to dashboard tab and always calculate dashboard stats
-      calculate_dashboard_stats
-    else
-      # Calculate KPI metrics for other tabs
-      calculate_kpi_metrics
-      
-      # Calculate summaries
-      calculate_summaries
-      
-      # Calculate daily calculations for the simple report
-      calculate_daily_calculations
-    end
+    # Always calculate dashboard statistics
+    calculate_dashboard_stats
+    # Always prepare daily calculations so the Daily Report tab has data ready
+    calculate_daily_calculations
     
     respond_to do |format|
       format.html
@@ -1097,7 +1087,9 @@ class MilkAnalyticsController < ApplicationController
   
   def calculate_daily_calculations
     begin
-      @daily_calculations = (@start_date..@end_date).map do |date|
+      # Cap the end date to current date to avoid showing future days in monthly view
+      capped_end_date = [@end_date, Date.current].min
+      @daily_calculations = (@start_date..capped_end_date).map do |date|
         # Get procurement assignments for this date - ALL PRODUCTS, not just milk
         daily_procurement = current_user.procurement_assignments.for_date_range(date, date)
         
@@ -1150,6 +1142,8 @@ class MilkAnalyticsController < ApplicationController
           cost: total_cost.round(2),
           delivered: delivered_liters.round(1),
           revenue: total_revenue.round(2),
+          # Keep both keys to satisfy view expectations
+          profit: profit_loss.round(2),
           profit_loss: profit_loss.round(2),
           utilization: utilization,
           wastage: wastage.round(1)
@@ -1342,7 +1336,12 @@ class MilkAnalyticsController < ApplicationController
         
         {
           date: date,
-          customers_served: daily_deliveries.joins(:customer).distinct.count(:customer_id) rescue 0,
+          customers_served: begin
+            daily_deliveries.joins(:customer).distinct.count(:customer_id)
+          rescue => e
+            Rails.logger.warn "Cannot join customer table for daily deliveries on #{date}: #{e.message}"
+            0
+          end,
           total_liters: daily_deliveries.sum(:quantity) || 0,
           assignments_completed: daily_deliveries.count
         }
