@@ -131,42 +131,51 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def bulk_complete
-    # Start with pending assignments
-    pending_assignments = DeliveryAssignment.where(status: 'pending')
-    
-    # Apply date filter (default to current date as set in index method)
-    filter_date = Date.current
-    if params[:date].present?
-      begin
-        filter_date = Date.parse(params[:date])
-      rescue ArgumentError
-        filter_date = Date.current
-      end
-    end
-    pending_assignments = pending_assignments.where(scheduled_date: filter_date)
-    
-    # Apply other filters if they exist
-    if params[:delivery_person_id].present?
-      pending_assignments = pending_assignments.where(user_id: params[:delivery_person_id])
-    end
-    
-    if params[:search].present?
-      pending_assignments = pending_assignments.search_by_customer(params[:search])
-    end
-    
-    # Determine completion scope based on complete_type parameter
-    if params[:complete_type] == 'all'
-      # Complete all filtered assignments (across all pages)
-      # Only complete assignments for today or past dates to avoid completing future assignments
-      pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
+    # If explicit IDs are provided, operate strictly on those IDs
+    if params[:assignment_ids].present?
+      assignment_ids = Array(params[:assignment_ids]).map(&:to_i).uniq
+      pending_assignments = DeliveryAssignment
+        .where(id: assignment_ids)
+        .where(status: 'pending')
+        .where('scheduled_date <= ?', Date.current)
     else
-      # Complete only current page assignments (default behavior)
-      # Only complete assignments for today or past dates to avoid completing future assignments
-      pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
-      
-      # Get current page assignments only
-      page = params[:page] || 1
-      pending_assignments = pending_assignments.page(page).per(50)
+      # Start with pending assignments
+      pending_assignments = DeliveryAssignment.where(status: 'pending')
+
+      # Apply date filter (default to current date as set in index method)
+      filter_date = Date.current
+      if params[:date].present?
+        begin
+          filter_date = Date.parse(params[:date])
+        rescue ArgumentError
+          filter_date = Date.current
+        end
+      end
+      pending_assignments = pending_assignments.where(scheduled_date: filter_date)
+
+      # Apply other filters if they exist
+      if params[:delivery_person_id].present?
+        pending_assignments = pending_assignments.where(user_id: params[:delivery_person_id])
+      end
+
+      if params[:search].present?
+        pending_assignments = pending_assignments.search_by_customer(params[:search])
+      end
+
+      # Determine completion scope based on complete_type parameter
+      if params[:complete_type] == 'all'
+        # Complete all filtered assignments (across all pages)
+        # Only complete assignments for today or past dates to avoid completing future assignments
+        pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
+      else
+        # Complete only current page assignments (default behavior)
+        # Only complete assignments for today or past dates to avoid completing future assignments
+        pending_assignments = pending_assignments.where('scheduled_date <= ?', Date.current)
+
+        # Get current page assignments only
+        page = params[:page] || 1
+        pending_assignments = pending_assignments.page(page).per(50)
+      end
     end
     
     completed_count = 0
