@@ -2,15 +2,15 @@
 
 <div class="container-fluid">
   <!-- Header with Navigation Tabs -->
-  <div class="row mb-4">
+  <div class="row mb-3">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-          <h1 class="h2 mb-2 text-dark fw-bold">
-            <i class="fas fa-glass-milk text-primary me-3" style="font-size: 2rem;"></i>
+          <h1 class="h2 mb-1 text-dark fw-bold d-flex align-items-center">
+            <i class="fas fa-glass-milk text-primary me-2" style="font-size: 1.5rem;"></i>
             Milk Analytics
           </h1>
-          <p class="text-muted mb-0 fs-5">Comprehensive milk procurement and delivery analytics</p>
+          <p class="text-muted mb-0">Comprehensive milk procurement and delivery analytics</p>
         </div>
       </div>
       
@@ -20,25 +20,25 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link <%= 'active' if active_tab == 'dashboard' %>" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" 
                   type="button" role="tab" aria-controls="dashboard" aria-selected="false">
-            <i class="fas fa-chart-line me-2"></i>📈 Dashboard
+            <i class="fas fa-chart-line me-1"></i>Dashboard
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link <%= 'active' if active_tab == 'reports' %>" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports" 
                   type="button" role="tab" aria-controls="reports" aria-selected="false">
-            <i class="fas fa-file-alt me-2"></i>📊 Daily Report
+            <i class="fas fa-file-alt me-1"></i>Daily Report
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link <%= 'active' if active_tab == 'procurement' %>" id="procurement-tab" data-bs-toggle="pill" data-bs-target="#procurement" 
                   type="button" role="tab" aria-controls="procurement" aria-selected="false">
-            <i class="fas fa-plus me-2"></i>➕ Create Procurement
+            <i class="fas fa-plus me-1"></i>Create Procurement
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link <%= 'active' if active_tab == 'calendar' %>" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar" 
                   type="button" role="tab" aria-controls="calendar" aria-selected="true">
-            <i class="fas fa-calendar-alt me-2"></i>📅 Procurement Calendar
+            <i class="fas fa-calendar-alt me-1"></i>Procurement Calendar
           </button>
         </li>
       </ul>
@@ -51,70 +51,32 @@
     <!-- Dashboard & Reports Tab -->
     <div class="tab-pane fade <%= 'show active' if active_tab == 'dashboard' %>" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
       <!-- Filter Section -->
-      <div class="row mb-4">
+      <div class="row mb-3">
         <div class="col-12">
           <div class="card border-0 shadow-sm">
-            <div class="card-body py-3">
-              <%= form_with url: milk_analytics_path, method: :get, local: true, class: "row g-3 align-items-center" do |form| %>
+            <div class="card-body py-2">
+              <%= form_with url: milk_analytics_path, method: :get, local: true, class: "d-flex flex-wrap align-items-end gap-3" do |form| %>
                 <!-- Hidden field to maintain dashboard tab -->
                 <%= form.hidden_field :tab, value: 'dashboard' %>
+                
                 <!-- Product Filter -->
-                <div class="col-xl-4 col-lg-6">
+                <div class="flex-fill" style="min-width: 200px; max-width: 300px;">
                   <label class="form-label fw-bold text-primary mb-1">
                     <i class="fas fa-box me-1"></i>Product Filter
                   </label>
-                  
-                  <!-- Search Input for Product -->
-                  <div class="position-relative mb-3">
-                    <input type="text" id="product-search" class="form-control form-control-lg" 
-                           placeholder="🔍 Search products (e.g., 'mi' for milk)..." 
-                           autocomplete="off"
-                           value="<%= params[:product_id].present? ? (Product.find(params[:product_id]).name rescue '') : '' %>">
-                    <div id="product-search-results" class="position-absolute w-100" style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto; margin-top: 4px;">
-                      <!-- Search results will be populated here -->
-                    </div>
-                  </div>
-                  
-                  <!-- Hidden fields for form submission -->
-                  <%= form.hidden_field :product_id, id: "selected-product-id", value: params[:product_id] %>
-                  
-                  <!-- Selected Product Display -->
-                  <div id="selected-product-display" class="alert alert-success border-success" style="<%= params[:product_id].present? ? '' : 'display: none;' %>">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div id="selected-product-info">
-                        <% if params[:product_id].present? %>
-                          <% product = Product.find(params[:product_id]) rescue nil %>
-                          <% if product %>
-                            <small class="text-success fw-bold">
-                              <i class="fas fa-check-circle me-1"></i>
-                              Selected: <%= product.name %> (<%= product.unit_type %>)
-                            </small>
-                          <% end %>
-                        <% end %>
-                      </div>
-                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearMilkProductSelection()">
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <!-- Fallback Product Dropdown -->
-                  <div id="product-dropdown-container">
-                    <%= form.select :product_id,
-                        options_for_select([['All Products', '']] + 
-                          Product.all.map { |p| ["#{p.name} (#{p.unit_type})", p.id] }, 
-                          params[:product_id]),
-                        {},
-                        { 
-                          class: "form-select",
-                          id: "product-dropdown-fallback",
-                          onchange: "handleRegularDropdownChange(); this.form.submit()"
-                        } %>
-                  </div>
+                  <%= form.select :product_id,
+                      options_for_select([['All Products', '']] + 
+                        Product.all.map { |p| ["#{p.name} (#{p.unit_type})", p.id] }, 
+                        params[:product_id]),
+                      {},
+                      { 
+                        class: "form-select",
+                        onchange: "this.form.submit()"
+                      } %>
                 </div>
                 
                 <!-- Date Range Filter -->
-                <div class="col-xl-3 col-lg-6">
+                <div class="flex-fill" style="min-width: 150px; max-width: 200px;">
                   <label class="form-label fw-bold text-primary mb-1">
                     <i class="fas fa-calendar me-1"></i>Date Range
                   </label>
@@ -129,29 +91,28 @@
                       { 
                         class: "form-select",
                         id: "date-range-select",
-                        onchange: "handleDateRangeChange(); toggleCustomDates(); this.form.submit()"
+                        onchange: "toggleCustomDates(); this.form.submit()"
                       } %>
                 </div>
                 
                 <!-- Custom Date Fields -->
-                <div class="col-xl-5 col-lg-12 custom-dates" style="<%= params[:date_range] == 'custom' ? '' : 'display: none;' %>">
-                  <label class="form-label fw-bold text-primary mb-1">Custom Date Range</label>
-                  <div class="row g-2">
-                    <div class="col">
-                      <%= form.date_field :from_date, 
-                          value: params[:from_date],
-                          class: "form-control",
-                          placeholder: "From Date" %>
-                    </div>
-                    <div class="col">
-                      <%= form.date_field :to_date, 
-                          value: params[:to_date],
-                          class: "form-control",
-                          placeholder: "To Date" %>
-                    </div>
-                    <div class="col-auto">
-                      <%= form.submit "Apply", class: "btn btn-primary" %>
-                    </div>
+                <div class="custom-dates d-flex gap-2" style="<%= params[:date_range] == 'custom' ? '' : 'display: none;' %>">
+                  <div>
+                    <label class="form-label fw-bold text-primary mb-1">From Date</label>
+                    <%= form.date_field :from_date, 
+                        value: params[:from_date],
+                        class: "form-control",
+                        style: "min-width: 140px;" %>
+                  </div>
+                  <div>
+                    <label class="form-label fw-bold text-primary mb-1">To Date</label>
+                    <%= form.date_field :to_date, 
+                        value: params[:to_date],
+                        class: "form-control",
+                        style: "min-width: 140px;" %>
+                  </div>
+                  <div class="align-self-end">
+                    <%= form.submit "Apply", class: "btn btn-primary" %>
                   </div>
                 </div>
               <% end %>
@@ -248,15 +209,15 @@
           </div>
         </div>
 
-        <!-- Card 6: Total Amount Collected -->
+        <!-- Card 6: Revenue After Discount -->
         <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
           <div class="card gradient-teal text-white shadow-lg h-100">
             <div class="card-body p-4">
               <div class="d-flex align-items-center">
                 <div class="flex-grow-1">
-                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Amount Collected</div>
-                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_amount_collected] || 0).round(1)) %></div>
-                  <div class="text-white-75 small">From delivery final amounts</div>
+                  <div class="text-white-75 text-uppercase mb-1 fw-bold small">Revenue After Discount</div>
+                  <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_amount_collected] || 0).round(2)) %></div>
+                  <div class="text-white-75 small">Total delivery earnings</div>
                 </div>
                 <div class="ms-3">
                   <i class="fas fa-money-bill-wave fa-2x text-white opacity-75"></i>
@@ -389,6 +350,105 @@
                         <td colspan="4" class="text-center text-muted py-4">
                           <i class="fas fa-truck fa-2x mb-2"></i><br>
                           No delivery data available
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Procurement Schedules Table -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-lg">
+            <div class="card-header py-4 d-flex justify-content-between align-items-center">
+              <h5 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-calendar-alt me-2"></i>Procurement Schedules
+              </h5>
+              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal" onclick="openScheduleModal()">
+                <i class="fas fa-plus me-1"></i>Add Schedule
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Vendor</th>
+                      <th>Product</th>
+                      <th>Date Range</th>
+                      <th>Quantity/Day</th>
+                      <th>Buying Price</th>
+                      <th>Selling Price</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if @procurement_schedules&.any? %>
+                      <% @procurement_schedules.each do |schedule| %>
+                        <tr data-schedule-id="<%= schedule.id %>">
+                          <td>
+                            <strong><%= schedule.vendor_name %></strong>
+                          </td>
+                          <td>
+                            <% if schedule.product %>
+                              <span class="badge bg-info"><%= schedule.product.name %></span>
+                            <% else %>
+                              <span class="text-muted">N/A</span>
+                            <% end %>
+                          </td>
+                          <td>
+                            <small>
+                              <%= schedule.from_date.strftime('%d %b') %> - <%= schedule.to_date.strftime('%d %b %Y') %>
+                              <br><span class="text-muted">(<%= schedule.duration_in_days %> days)</span>
+                            </small>
+                          </td>
+                          <td>
+                            <%= number_with_delimiter(schedule.quantity) %><%= schedule.unit.first if schedule.unit %>
+                          </td>
+                          <td>₹<%= number_with_delimiter(schedule.buying_price) %></td>
+                          <td>₹<%= number_with_delimiter(schedule.selling_price) %></td>
+                          <td>
+                            <span class="badge bg-<%= case schedule.status
+                                                      when 'active' then 'success'
+                                                      when 'completed' then 'primary'
+                                                      when 'cancelled' then 'danger'
+                                                      else 'secondary'
+                                                      end %>">
+                              <%= schedule.status.titleize %>
+                            </span>
+                          </td>
+                          <td>
+                            <div class="d-flex align-items-center">
+                              <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: <%= schedule.completion_percentage %>%" aria-valuenow="<%= schedule.completion_percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                              <small class="text-muted"><%= schedule.completion_percentage %>%</small>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="btn-group" role="group">
+                              <button type="button" class="btn btn-outline-primary btn-sm" onclick="editSchedule(<%= schedule.id %>)" title="Edit">
+                                <i class="fas fa-edit"></i>
+                              </button>
+                              <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSchedule(<%= schedule.id %>)" title="Delete">
+                                <i class="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      <% end %>
+                    <% else %>
+                      <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                          <i class="fas fa-calendar-alt fa-2x mb-2"></i><br>
+                          No procurement schedules found for the selected filters
                         </td>
                       </tr>
                     <% end %>
@@ -2938,5 +2998,228 @@ document.addEventListener('DOMContentLoaded', function() {
       dashboardPane.classList.add('show', 'active');
     }
   }
+
+// Schedule Management Functions
+let currentEditingScheduleId = null;
+
+function openScheduleModal(scheduleId = null) {
+  currentEditingScheduleId = scheduleId;
+  const modal = document.getElementById('scheduleModal');
+  const modalTitle = document.getElementById('scheduleModalLabel');
+  const form = document.getElementById('scheduleForm');
+  
+  if (scheduleId) {
+    modalTitle.textContent = 'Edit Procurement Schedule';
+    loadScheduleData(scheduleId);
+  } else {
+    modalTitle.textContent = 'Add New Procurement Schedule';
+    form.reset();
+    // Set default values
+    document.getElementById('schedule_status').value = 'active';
+    document.getElementById('schedule_unit').value = 'liters';
+  }
+}
+
+function loadScheduleData(scheduleId) {
+  const row = document.querySelector(`tr[data-schedule-id="${scheduleId}"]`);
+  if (!row) return;
+  
+  // Extract data from the table row (this is a simplified approach)
+  // In a real implementation, you might fetch this data via AJAX
+  const cells = row.querySelectorAll('td');
+  
+  // You would populate the form fields here based on the current schedule data
+  // This would typically involve an AJAX call to get the full schedule details
+}
+
+function saveSchedule() {
+  const form = document.getElementById('scheduleForm');
+  const formData = new FormData(form);
+  
+  const url = currentEditingScheduleId ? 
+    '/milk-supply-analytics/update_schedule' : 
+    '/milk-supply-analytics/create_schedule';
+    
+  const method = currentEditingScheduleId ? 'PATCH' : 'POST';
+  
+  if (currentEditingScheduleId) {
+    formData.append('schedule_id', currentEditingScheduleId);
+  }
+  
+  fetch(url, {
+    method: method,
+    body: formData,
+    headers: {
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert('success', data.message);
+      const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleModal'));
+      modal.hide();
+      location.reload(); // Refresh the page to show updated data
+    } else {
+      showAlert('danger', data.errors ? data.errors.join(', ') : data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('danger', 'An error occurred while saving the schedule');
+  });
+}
+
+function editSchedule(scheduleId) {
+  openScheduleModal(scheduleId);
+}
+
+function deleteSchedule(scheduleId) {
+  if (!confirm('Are you sure you want to delete this schedule? This will also delete all related procurement assignments.')) {
+    return;
+  }
+  
+  fetch('/milk-supply-analytics/destroy_schedule', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    },
+    body: JSON.stringify({ schedule_id: scheduleId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert('success', data.message);
+      // Remove the row from the table
+      const row = document.querySelector(`tr[data-schedule-id="${scheduleId}"]`);
+      if (row) {
+        row.remove();
+      }
+    } else {
+      showAlert('danger', data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('danger', 'An error occurred while deleting the schedule');
+  });
+}
+
+function showAlert(type, message) {
+  const alertContainer = document.getElementById('alert-container') || createAlertContainer();
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  alertContainer.appendChild(alertDiv);
+  
+  // Auto-dismiss after 5 seconds
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
+
+function createAlertContainer() {
+  const container = document.createElement('div');
+  container.id = 'alert-container';
+  container.style.position = 'fixed';
+  container.style.top = '20px';
+  container.style.right = '20px';
+  container.style.zIndex = '1055';
+  container.style.width = '300px';
+  document.body.appendChild(container);
+  return container;
+}
 });
 </script>
+
+<!-- Schedule Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="scheduleModalLabel">Add New Procurement Schedule</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="scheduleForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="schedule_vendor_name" class="form-label">Vendor Name</label>
+              <input type="text" class="form-control" id="schedule_vendor_name" name="procurement_schedule[vendor_name]" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="schedule_product_id" class="form-label">Product</label>
+              <select class="form-select" id="schedule_product_id" name="procurement_schedule[product_id]">
+                <option value="">Select Product</option>
+                <% Product.all.each do |product| %>
+                  <option value="<%= product.id %>"><%= product.name %></option>
+                <% end %>
+              </select>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="schedule_from_date" class="form-label">From Date</label>
+              <input type="date" class="form-control" id="schedule_from_date" name="procurement_schedule[from_date]" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="schedule_to_date" class="form-label">To Date</label>
+              <input type="date" class="form-control" id="schedule_to_date" name="procurement_schedule[to_date]" required>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="schedule_quantity" class="form-label">Quantity per Day</label>
+              <input type="number" step="0.01" class="form-control" id="schedule_quantity" name="procurement_schedule[quantity]" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="schedule_buying_price" class="form-label">Buying Price (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="schedule_buying_price" name="procurement_schedule[buying_price]" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="schedule_selling_price" class="form-label">Selling Price (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="schedule_selling_price" name="procurement_schedule[selling_price]" required>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="schedule_unit" class="form-label">Unit</label>
+              <select class="form-select" id="schedule_unit" name="procurement_schedule[unit]" required>
+                <option value="liters">Liters</option>
+                <option value="gallons">Gallons</option>
+                <option value="kg">Kg</option>
+                <option value="pounds">Pounds</option>
+                <option value="pieces">Pieces</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="schedule_status" class="form-label">Status</label>
+              <select class="form-select" id="schedule_status" name="procurement_schedule[status]" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="schedule_notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="schedule_notes" name="procurement_schedule[notes]" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button>
+      </div>
+    </div>
+  </div>
+</div>

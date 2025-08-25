@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - Delivery Management</title>
+    <title>Join Our Farm - Atma Nirbhar Farm</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,134 +15,293 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            font-family: 'Poppins', sans-serif;
             min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Farm-themed Background */
+        .farm-wrapper {
+            position: relative;
+            min-height: 100vh;
+            width: 100vw;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-x: hidden;
+            overflow-y: auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
         }
 
-        .background-orbs {
-            position: fixed;
+        /* Animated Background Elements */
+        .background-elements {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1;
-        }
-
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            background: linear-gradient(45deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-            backdrop-filter: blur(30px);
-            animation: float 12s ease-in-out infinite;
-            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
-        }
-
-        .orb:nth-child(1) {
-            width: 400px;
-            height: 400px;
-            top: -200px;
-            left: -200px;
-            animation-delay: 0s;
-        }
-
-        .orb:nth-child(2) {
-            width: 300px;
-            height: 300px;
-            top: 50%;
-            right: -150px;
-            animation-delay: 3s;
-        }
-
-        .orb:nth-child(3) {
-            width: 350px;
-            height: 350px;
-            bottom: -175px;
-            left: 15%;
-            animation-delay: 6s;
-        }
-
-        .orb:nth-child(4) {
-            width: 200px;
-            height: 200px;
-            top: 15%;
-            right: 25%;
-            animation-delay: 9s;
-        }
-
-        .orb:nth-child(5) {
-            width: 250px;
-            height: 250px;
-            top: 70%;
-            left: 5%;
-            animation-delay: 1.5s;
-        }
-
-        @keyframes float {
-            0%, 100% { 
-                transform: translateY(0px) rotate(0deg) scale(1);
-                opacity: 0.8;
-            }
-            25% { 
-                transform: translateY(-40px) rotate(90deg) scale(1.1);
-                opacity: 0.4;
-            }
-            50% { 
-                transform: translateY(-80px) rotate(180deg) scale(0.9);
-                opacity: 0.6;
-            }
-            75% { 
-                transform: translateY(-40px) rotate(270deg) scale(1.05);
-                opacity: 0.3;
-            }
-        }
-
-        .signup-container {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(25px);
-            border-radius: 32px;
-            box-shadow: 
-                0 40px 80px rgba(0, 0, 0, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            padding: 56px;
-            width: 100%;
-            max-width: 580px;
-            animation: slideUp 1s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            z-index: 10;
             overflow: hidden;
         }
 
-        .signup-container::before {
+        /* Floating Clouds */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: float-cloud 20s linear infinite;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+        }
+
+        .cloud-1 {
+            width: 80px;
+            height: 30px;
+            top: 10%;
+            left: -100px;
+            animation-duration: 25s;
+        }
+
+        .cloud-1::before {
+            width: 40px;
+            height: 40px;
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud-1::after {
+            width: 60px;
+            height: 35px;
+            top: -15px;
+            right: 5px;
+        }
+
+        .cloud-2 {
+            width: 60px;
+            height: 25px;
+            top: 20%;
+            left: -80px;
+            animation-duration: 30s;
+            animation-delay: -10s;
+        }
+
+        .cloud-2::before {
+            width: 35px;
+            height: 35px;
+            top: -18px;
+            left: 8px;
+        }
+
+        .cloud-2::after {
+            width: 45px;
+            height: 30px;
+            top: -12px;
+            right: 3px;
+        }
+
+        @keyframes float-cloud {
+            from {
+                left: -120px;
+            }
+            to {
+                left: 100vw;
+            }
+        }
+
+        /* Grass Animation */
+        .grass-field {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(to top, #228B22, #32CD32);
+            z-index: 1;
+        }
+
+        .grass {
+            position: absolute;
+            bottom: 0;
+            width: 4px;
+            background: #228B22;
+            border-radius: 2px;
+            animation: sway 3s ease-in-out infinite;
+            transform-origin: bottom;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+        }
+
+        /* Animated Cow */
+        .cow-container {
+            position: absolute;
+            bottom: 120px;
+            right: 10%;
+            z-index: 2;
+            animation: cow-move 15s ease-in-out infinite;
+        }
+
+        .cow {
+            font-size: 4rem;
+            color: #8B4513;
+            animation: cow-bounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        @keyframes cow-move {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-50px); }
+        }
+
+        @keyframes cow-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Sun Animation */
+        .sun {
+            position: absolute;
+            top: 8%;
+            right: 10%;
+            width: 80px;
+            height: 80px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: sun-glow 3s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        .sun::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: sun-rays 4s linear infinite;
+        }
+
+        @keyframes sun-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+        }
+
+        @keyframes sun-rays {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Farm Trees */
+        .tree {
+            position: absolute;
+            bottom: 150px;
+            z-index: 1;
+        }
+
+        .tree-1 {
+            left: 15%;
+            font-size: 3rem;
+            color: #228B22;
+            animation: tree-sway 4s ease-in-out infinite;
+        }
+
+        .tree-2 {
+            left: 25%;
+            font-size: 2.5rem;
+            color: #32CD32;
+            animation: tree-sway 4s ease-in-out infinite;
+            animation-delay: -2s;
+        }
+
+        @keyframes tree-sway {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
+        }
+
+        /* Milk Drops Animation */
+        .milk-drop {
+            position: absolute;
+            width: 8px;
+            height: 12px;
+            background: white;
+            border-radius: 0 50% 50% 50%;
+            opacity: 0.8;
+            animation: milk-fall 3s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes milk-fall {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Signup Card Styles */
+        .farm-signup-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: none;
+            overflow: hidden;
+            animation: card-float 0.8s ease-out;
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 550px;
+            margin: 1rem;
+            min-height: auto;
+        }
+
+        .farm-signup-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #667eea);
-            background-size: 200% 100%;
-            animation: gradientShift 3s ease infinite;
-            border-radius: 32px 32px 0 0;
+            height: 6px;
+            background: linear-gradient(90deg, #32CD32, #228B22, #90EE90, #32CD32);
+            background-size: 400% 100%;
+            animation: gradient-shift 3s ease-in-out infinite;
         }
 
-        @keyframes gradientShift {
+        @keyframes gradient-shift {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
         }
 
-        @keyframes slideUp {
+        @keyframes card-float {
             from {
                 opacity: 0;
-                transform: translateY(60px) scale(0.9);
+                transform: translateY(30px) scale(0.95);
             }
             to {
                 opacity: 1;
@@ -148,306 +309,231 @@
             }
         }
 
-        .header {
+        /* Farm Header */
+        .farm-header {
             text-align: center;
-            margin-bottom: 108px;
-            position: relative;
-            z-index: 10;
+            padding: 2.5rem 2rem 1.5rem;
         }
 
-        .header::before {
+        .farm-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #32CD32, #228B22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: logo-pulse 2s ease-in-out infinite;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(50, 205, 50, 0.4);
+        }
+
+        .farm-logo::before {
             content: '';
             position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 6px;
-            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
-            border-radius: 3px;
-            animation: pulse 2s ease-in-out infinite;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(45deg, #32CD32, transparent, #228B22, transparent);
+            border-radius: 50%;
+            animation: logo-ring 4s linear infinite;
+            z-index: -1;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
-            50% { opacity: 0.7; transform: translateX(-50%) scale(1.1); }
+        @keyframes logo-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
-        .header h1 {
-            color: #1a202c;
-            font-size: 2.8rem;
-            font-weight: 900;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            letter-spacing: -0.02em;
-            line-height: 1.1;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        @keyframes logo-ring {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .header .icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .farm-logo i {
+            font-size: 2.2rem;
             color: white;
-            font-size: 1.6rem;
-            box-shadow: 
-                0 12px 24px rgba(102, 126, 234, 0.4),
-                0 0 0 3px rgba(255, 255, 255, 0.8);
-            flex-shrink: 0;
-            animation: iconFloat 3s ease-in-out infinite;
+            animation: icon-wiggle 3s ease-in-out infinite;
         }
 
-        @keyframes iconFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(5deg); }
+        @keyframes icon-wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
         }
 
-        .header p {
-            color: #4a5568;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-top: 0;
-            line-height: 1.5;
-            position: relative;
-            z-index: 10;
+        .farm-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #228B22, #32CD32);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            animation: title-glow 3s ease-in-out infinite;
         }
 
-        .form-group {
-            margin-bottom: 28px;
-            position: relative;
+        @keyframes title-glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .farm-subtitle {
+            color: #666;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+
+        /* Form Styles */
+        .farm-form {
+            padding: 0 2rem 2rem;
+            animation: form-slide-up 0.8s ease-out 0.3s both;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @keyframes form-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 28px;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 20px 24px;
-            border: 2px solid #e2e8f0;
-            border-radius: 20px;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            outline: none;
-            color: #1a202c;
+        .form-floating {
             position: relative;
-            z-index: 2;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-floating .form-control {
+            border: 2px solid rgba(50, 205, 50, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem 1rem 0.75rem;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
-        .form-control:focus {
-            border-color: #667eea;
+        .form-floating .form-control:focus {
+            border-color: #32CD32;
             box-shadow: 
-                0 0 0 4px rgba(102, 126, 234, 0.15),
-                0 8px 25px rgba(102, 126, 234, 0.2);
-            transform: translateY(-4px);
+                0 0 0 0.2rem rgba(50, 205, 50, 0.25),
+                0 8px 25px rgba(50, 205, 50, 0.15);
             background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            outline: none;
         }
 
-        .form-control:valid {
-            border-color: #48bb78;
-            box-shadow: 
-                0 0 0 4px rgba(72, 187, 120, 0.15),
-                0 4px 12px rgba(72, 187, 120, 0.2);
-        }
-
-        .form-label {
-            position: absolute;
-            top: 50%;
-            left: 24px;
-            color: #718096;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 0 12px;
-            transform: translateY(-50%);
-            z-index: 5;
-            border-radius: 8px;
-            white-space: nowrap;
-        }
-
-        .form-label.active,
-        .form-control:focus + .form-label,
-        .form-control:not(:placeholder-shown) + .form-label,
-        .form-control:valid + .form-label {
-            top: 0;
-            left: 20px;
-            color: #667eea;
-            font-size: 14px;
-            font-weight: 700;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 1);
-            padding: 0 12px;
-            z-index: 5;
-        }
-
-        .form-control:focus + .form-label {
-            color: #667eea;
-        }
-
-        .form-control:valid + .form-label {
-            color: #48bb78;
-        }
-
-        .role-select + .form-label {
-            color: #718096;
-        }
-
-        .role-select:focus + .form-label,
-        .role-select:not([value=""]) + .form-label {
-            top: 0;
-            left: 20px;
-            color: #667eea;
-            font-size: 14px;
-            font-weight: 700;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 1);
-            padding: 0 12px;
-            z-index: 5;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #718096;
-            cursor: pointer;
+        .form-floating label {
+            padding: 1rem;
+            color: #666;
+            font-weight: 500;
             transition: all 0.3s ease;
-            z-index: 4;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            font-size: 16px;
         }
 
-        .password-toggle:hover {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-            transform: translateY(-50%) scale(1.1);
+        .form-floating .form-control:focus ~ label,
+        .form-floating .form-control:not(:placeholder-shown) ~ label {
+            color: #32CD32;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
         }
 
-        .role-select {
-            appearance: none;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 20px center;
-            background-size: 20px;
-            padding-right: 55px;
-            cursor: pointer;
-            position: relative;
-            z-index: 2;
-        }
-
-        .role-select:focus {
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-color: rgba(255, 255, 255, 1);
-        }
-
-        .role-select option {
-            background: white;
-            color: #1a202c;
-            padding: 16px 20px;
-            font-weight: 600;
-            border: none;
-            font-size: 16px;
-        }
-
-        .role-select option:hover {
-            background: #f7fafc;
-        }
-
-        .role-select option:checked {
-            background: #667eea;
-            color: white;
-        }
-
-        /* Fix for select dropdown styling */
-        .role-select::-ms-expand {
-            display: none;
-        }
-
-        .role-select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-
-        .submit-btn {
+        /* Farm Button */
+        .farm-btn {
             width: 100%;
-            padding: 22px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            background-size: 200% 100%;
-            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #32CD32, #228B22);
             border: none;
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-top: 24px;
+            color: white;
+            box-shadow: 0 8px 25px rgba(50, 205, 50, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            margin-top: 1rem;
         }
 
-        .submit-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.5);
-            background-position: 100% 0;
-        }
-
-        .submit-btn:active {
-            transform: translateY(-2px);
-        }
-
-        .submit-btn::before {
+        .farm-btn::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            transition: left 0.8s;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .submit-btn:hover::before {
+        .farm-btn:hover::before {
             left: 100%;
+        }
+
+        .farm-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(50, 205, 50, 0.5);
+            background: linear-gradient(135deg, #228B22, #32CD32);
+        }
+
+        .farm-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Flash Messages */
+        .farm-alert {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            animation: alert-slide-down 0.4s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .farm-alert.alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #721c24;
+            border: 2px solid rgba(220, 53, 69, 0.2);
+        }
+
+        .farm-alert.alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #155724;
+            border: 2px solid rgba(40, 167, 69, 0.2);
+        }
+
+        @keyframes alert-slide-down {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .signin-link {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 32px;
-            border-top: 2px solid #e2e8f0;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid rgba(50, 205, 50, 0.2);
             position: relative;
         }
 
@@ -459,19 +545,19 @@
             transform: translateX(-50%);
             width: 60px;
             height: 2px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, #32CD32, #228B22);
         }
 
         .signin-link p {
-            color: #4a5568;
-            font-weight: 600;
-            font-size: 16px;
+            color: #666;
+            font-weight: 500;
+            margin: 0;
         }
 
         .signin-link a {
-            color: #667eea;
+            color: #32CD32;
             text-decoration: none;
-            font-weight: 800;
+            font-weight: 600;
             transition: all 0.3s ease;
             position: relative;
         }
@@ -482,8 +568,8 @@
             bottom: -3px;
             left: 0;
             width: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 2px;
+            background: linear-gradient(90deg, #32CD32, #228B22);
             transition: width 0.4s ease;
             border-radius: 2px;
         }
@@ -493,319 +579,328 @@
         }
 
         .signin-link a:hover {
-            color: #764ba2;
+            color: #228B22;
             transform: translateY(-2px);
         }
 
-        .error-message {
-            background: linear-gradient(135deg, rgba(245, 101, 101, 0.15), rgba(245, 101, 101, 0.05));
-            color: #e53e3e;
-            padding: 20px 24px;
-            border-radius: 16px;
-            margin-bottom: 28px;
-            border: 2px solid rgba(245, 101, 101, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-            animation: shake 0.5s ease-in-out;
-        }
-
-        .success-message {
-            background: linear-gradient(135deg, rgba(72, 187, 120, 0.15), rgba(72, 187, 120, 0.05));
-            color: #38a169;
-            padding: 20px 24px;
-            border-radius: 16px;
-            margin-bottom: 28px;
-            border: 2px solid rgba(72, 187, 120, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-            animation: successPulse 0.6s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        @keyframes successPulse {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.02); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Rails Flash Messages */
-        .alert {
-            padding: 20px 24px;
-            margin-bottom: 28px;
-            border-radius: 16px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-            border: 2px solid transparent;
-            animation: slideInDown 0.4s ease-out;
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-        }
-
-        .alert-danger {
-            background: linear-gradient(135deg, rgba(245, 101, 101, 0.15), rgba(245, 101, 101, 0.05));
-            color: #e53e3e;
-            border-color: rgba(245, 101, 101, 0.2);
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, rgba(72, 187, 120, 0.15), rgba(72, 187, 120, 0.05));
-            color: #38a169;
-            border-color: rgba(72, 187, 120, 0.2);
-        }
-
-        .alert ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .alert li {
-            margin-bottom: 4px;
-        }
-
-        .loading-spinner {
-            width: 22px;
-            height: 22px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .form-group {
-            animation: slideInUp 0.8s ease-out backwards;
-        }
-
-        .form-group:nth-child(1) { animation-delay: 0.1s; }
-        .form-group:nth-child(2) { animation-delay: 0.2s; }
-        .form-group:nth-child(3) { animation-delay: 0.3s; }
-        .form-group:nth-child(4) { animation-delay: 0.4s; }
-
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
+        /* Responsive Design */
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 0.5rem;
             }
             
-            .signup-container {
-                padding: 40px 32px;
-                margin: 20px;
-                border-radius: 28px;
+            .farm-wrapper {
+                padding: 0.5rem;
             }
             
-            .header h1 {
-                font-size: 2.2rem;
+            .cow-container {
+                display: none;
             }
-
-            .orb {
-                opacity: 0.3;
+            
+            .tree-1, .tree-2 {
+                display: none;
+            }
+            
+            .farm-header {
+                padding: 1.5rem 1.5rem 1rem;
+            }
+            
+            .farm-form {
+                padding: 0 1.5rem 1.5rem;
+            }
+            
+            .farm-title {
+                font-size: 1.6rem;
+            }
+            
+            .farm-logo {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 1rem;
+            }
+            
+            .farm-logo i {
+                font-size: 1.8rem;
+            }
+            
+            .farm-signup-card {
+                margin: 0.5rem;
+                border-radius: 20px;
+            }
+            
+            .form-floating .form-control {
+                padding: 1.25rem 0.75rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .form-floating label {
+                padding: 0.75rem;
+                font-size: 0.8rem;
+            }
+            
+            .farm-btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .farm-wrapper {
+                padding: 0.25rem;
+            }
+            
+            .farm-signup-card {
+                margin: 0.25rem;
+                border-radius: 15px;
+            }
+            
+            .farm-header {
+                padding: 1rem 1rem 0.5rem;
+            }
+            
+            .farm-form {
+                padding: 0 1rem 1rem;
+            }
+            
+            .farm-title {
+                font-size: 1.4rem;
+                line-height: 1.2;
+            }
+            
+            .farm-subtitle {
+                font-size: 0.85rem;
+            }
+            
+            .farm-logo {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .farm-logo i {
+                font-size: 1.5rem;
+            }
+            
+            .form-floating {
+                margin-bottom: 1rem;
             }
         }
 
-        @media (max-width: 480px) {
-            .signup-container {
-                padding: 32px 20px;
-                margin: 15px;
-                border-radius: 24px;
-            }
-            
-            .header h1 {
-                font-size: 1.9rem;
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .orb {
-                display: none;
-            }
+        /* Create grass blades dynamically */
+        .grass-blade {
+            position: absolute;
+            bottom: 0;
+            width: 3px;
+            height: 25px;
+            background: linear-gradient(to top, #228B22, #32CD32);
+            border-radius: 2px;
+            animation: blade-sway 2s ease-in-out infinite;
+            transform-origin: bottom;
         }
     </style>
 </head>
 <body>
-    <div class="background-orbs">
-        <div class="orb"></div>
-        <div class="orb"></div>
-        <div class="orb"></div>
-        <div class="orb"></div>
-        <div class="orb"></div>
-    </div>
-
-    <div class="signup-container">
-        <div class="header">
-            <h1>
-                <div class="icon">
+    <div class="farm-wrapper">
+        <!-- Animated Background -->
+        <div class="background-elements">
+            <!-- Clouds -->
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            
+            <!-- Sun -->
+            <div class="sun"></div>
+            
+            <!-- Trees -->
+            <div class="tree tree-1">🌳</div>
+            <div class="tree tree-2">🌲</div>
+            
+            <!-- Animated Cow -->
+            <div class="cow-container">
+                <div class="cow">🐄</div>
+            </div>
+            
+            <!-- Grass Field -->
+            <div class="grass-field"></div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="farm-signup-card">
+            <!-- Header -->
+            <div class="farm-header">
+                <div class="farm-logo">
                     <i class="fas fa-user-plus"></i>
                 </div>
-                Create Account
-            </h1>
-            <p>Join our delivery management system today</p>
-        </div>
-
-        <%= form_with model: @user, url: signup_path, method: :post, local: true, id: "signupForm", class: "needs-validation", novalidate: true do |form| %>
-            <% if @user.errors.any? %>
-                <div class="alert alert-danger mb-3">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <ul class="mb-0">
-                        <% @user.errors.full_messages.each do |message| %>
-                            <li><%= message %></li>
-                        <% end %>
-                    </ul>
-                </div>
-            <% end %>
+                <h1 class="farm-title">Join Our Farm</h1>
+                <p class="farm-subtitle">Create your account to access fresh dairy products</p>
+            </div>
             
-            <% if flash[:alert] %>
-                <div class="alert alert-danger mb-3">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <%= flash[:alert] %>
-                </div>
-            <% end %>
-            
-            <% if flash[:notice] %>
-                <div class="alert alert-success mb-3">
-                    <i class="fas fa-check-circle me-2"></i>
-                    <%= flash[:notice] %>
-                </div>
-            <% end %>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <%= form.text_field :name, class: "form-control", id: "name", placeholder: " ", required: true %>
-                    <label for="name" class="form-label">Full Name</label>
-                </div>
+            <!-- Signup Form -->
+            <div class="farm-form">
+                <%= form_with model: @user, url: signup_path, method: :post, local: true do |form| %>
+                    <% if @user.errors.any? %>
+                        <div class="farm-alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>
+                                <ul style="margin: 0; padding-left: 1rem;">
+                                    <% @user.errors.full_messages.each do |message| %>
+                                        <li><%= message %></li>
+                                    <% end %>
+                                </ul>
+                            </div>
+                        </div>
+                    <% end %>
+                    
+                    <% if flash[:alert] %>
+                        <div class="farm-alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <%= flash[:alert] %>
+                        </div>
+                    <% end %>
+                    
+                    <% if flash[:notice] %>
+                        <div class="farm-alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <div class="fw-bold">Account created successfully!</div>
+                                <div class="small">Welcome to Atma Nirbhar Farm</div>
+                            </div>
+                        </div>
+                    <% end %>
+                    
+                    <div class="form-row">
+                        <div class="form-floating">
+                            <%= form.text_field :name, class: "form-control", id: "name", placeholder: "name@example.com", required: true %>
+                            <label for="name">
+                                <i class="fas fa-user me-2"></i>Full Name
+                            </label>
+                        </div>
+                        
+                        <div class="form-floating">
+                            <%= form.email_field :email, class: "form-control", id: "email", placeholder: "name@example.com", required: true %>
+                            <label for="email">
+                                <i class="fas fa-envelope me-2"></i>Email Address
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-floating">
+                            <%= form.telephone_field :phone, class: "form-control", id: "phone", placeholder: "Phone Number" %>
+                            <label for="phone">
+                                <i class="fas fa-phone me-2"></i>Phone Number
+                            </label>
+                        </div>
+                        
+                        <div class="form-floating">
+                            <%= form.select :role, options_for_select([
+                                ['Admin', 'admin'],
+                                ['Delivery Person', 'delivery_person'],
+                                ['User', 'user']
+                            ], @user.role), { prompt: 'Select your role' }, { class: "form-control", id: "role", required: true } %>
+                            <label for="role">
+                                <i class="fas fa-user-tag me-2"></i>Role
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-floating">
+                            <%= form.password_field :password, class: "form-control", id: "password", placeholder: "Password", required: true %>
+                            <label for="password">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                        </div>
+                        
+                        <div class="form-floating">
+                            <%= form.password_field :password_confirmation, class: "form-control", id: "password_confirmation", placeholder: "Confirm Password", required: true %>
+                            <label for="password_confirmation">
+                                <i class="fas fa-lock me-2"></i>Confirm Password
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <%= form.submit "Join Our Farm Community", class: "btn farm-btn" %>
+                    </div>
+                <% end %>
                 
-                <div class="form-group">
-                    <%= form.email_field :email, class: "form-control", id: "email", placeholder: " ", required: true %>
-                    <label for="email" class="form-label">Email Address</label>
+                <div class="signin-link">
+                    <p>Already have an account? <a href="/login">Sign in here</a></p>
                 </div>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <%= form.telephone_field :phone, class: "form-control", id: "phone", placeholder: " " %>
-                    <label for="phone" class="form-label">Phone Number</label>
-                </div>
-                
-                <div class="form-group">
-                    <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search roles...">
-                <%= form.select :role, options_for_select([
-                        ['Admin', 'admin'],
-                        ['Delivery Person', 'delivery_person'],
-                        ['User', 'user']
-                    ], @user.role), { prompt: 'Search and select role' }, { class: "form-control role-select", id: "role", required: true, data: { "searchable-select-target" => "select" } } %>
-                    <label for="role" class="form-label">Select Role</label>
-                  </div>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <%= form.password_field :password, class: "form-control", id: "password", placeholder: " ", required: true %>
-                    <label for="password" class="form-label">Password</label>
-                    <i class="fas fa-eye password-toggle" onclick="togglePassword('password')"></i>
-                </div>
-                
-                <div class="form-group">
-                    <%= form.password_field :password_confirmation, class: "form-control", id: "password_confirmation", placeholder: " ", required: true %>
-                    <label for="password_confirmation" class="form-label">Confirm Password</label>
-                    <i class="fas fa-eye password-toggle" onclick="togglePassword('password_confirmation')"></i>
-                </div>
-            </div>
-
-            <button type="submit" class="submit-btn">
-                <i class="fas fa-user-plus"></i>
-                Create Account
-            </button>
-        <% end %>
-
-        <div class="signin-link">
-            <p>Already have an account? <a href="/login">Sign in here</a></p>
         </div>
     </div>
 
     <script>
-        function togglePassword(fieldId) {
-            const field = document.getElementById(fieldId);
-            const toggle = field.parentElement.querySelector('.password-toggle');
+        // Create animated grass blades
+        function createGrassField() {
+            const grassField = document.querySelector('.grass-field');
+            const screenWidth = window.innerWidth;
+            const grassCount = Math.floor(screenWidth / 8);
             
-            if (field.type === 'password') {
-                field.type = 'text';
-                toggle.classList.remove('fa-eye');
-                toggle.classList.add('fa-eye-slash');
-            } else {
-                field.type = 'password';
-                toggle.classList.remove('fa-eye-slash');
-                toggle.classList.add('fa-eye');
+            for (let i = 0; i < grassCount; i++) {
+                const grass = document.createElement('div');
+                grass.classList.add('grass-blade');
+                grass.style.left = `${(i * 8) + Math.random() * 4}px`;
+                grass.style.height = `${15 + Math.random() * 15}px`;
+                grass.style.animationDelay = `${Math.random() * 2}s`;
+                grass.style.animationDuration = `${2 + Math.random() * 2}s`;
+                grassField.appendChild(grass);
             }
         }
 
-        // Removed unused message functions - using Rails flash messages instead
-
-        // Form will now submit to Rails backend - removed JavaScript form handling
-
-        function updateAllLabels() {
-            const inputs = document.querySelectorAll('.form-control');
-            inputs.forEach(input => {
-                const label = input.nextElementSibling;
-                if (label && label.classList.contains('form-label')) {
-                    if (input.tagName === 'SELECT') {
-                        if (input.value && input.value !== '') {
-                            label.classList.add('active');
-                        } else {
-                            label.classList.remove('active');
-                        }
-                    } else {
-                        if (input.value.trim() !== '' || input === document.activeElement) {
-                            label.classList.add('active');
-                        } else {
-                            label.classList.remove('active');
-                        }
-                    }
-                }
-            });
+        // Create floating milk drops
+        function createMilkDrops() {
+            setInterval(() => {
+                const drop = document.createElement('div');
+                drop.classList.add('milk-drop');
+                drop.style.left = Math.random() * window.innerWidth + 'px';
+                drop.style.animationDelay = Math.random() * 2 + 's';
+                document.querySelector('.background-elements').appendChild(drop);
+                
+                // Remove drop after animation
+                setTimeout(() => {
+                    drop.remove();
+                }, 3000);
+            }, 2000);
         }
 
+        // Initialize animations
         document.addEventListener('DOMContentLoaded', function() {
-            const inputs = document.querySelectorAll('.form-control');
+            createGrassField();
+            createMilkDrops();
             
-            inputs.forEach(input => {
-                input.addEventListener('focus', () => updateAllLabels());
-                input.addEventListener('blur', () => updateAllLabels());
-                input.addEventListener('input', () => updateAllLabels());
-                
-                if (input.tagName === 'SELECT') {
-                    input.addEventListener('change', () => updateAllLabels());
-                }
-            });
+            // Auto-hide flash messages
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.farm-alert');
+                alerts.forEach(alert => {
+                    alert.style.animation = 'fadeOut 0.5s ease-out forwards';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 4000);
+        });
 
-            updateAllLabels();
+        // Add CSS for fade out animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            
+            @keyframes blade-sway {
+                0%, 100% { transform: rotate(0deg); }
+                25% { transform: rotate(1deg); }
+                75% { transform: rotate(-1deg); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add window resize handler for grass field
+        window.addEventListener('resize', function() {
+            const grassField = document.querySelector('.grass-field');
+            grassField.innerHTML = '';
+            createGrassField();
         });
     </script>
 </body>

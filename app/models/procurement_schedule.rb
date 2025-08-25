@@ -18,6 +18,7 @@ class ProcurementSchedule < ApplicationRecord
 
   after_create :generate_procurement_assignments
   after_update :regenerate_assignments_if_needed
+  before_destroy :cleanup_related_assignments
 
   def duration_in_days
     (to_date - from_date).to_i + 1
@@ -114,9 +115,48 @@ class ProcurementSchedule < ApplicationRecord
        saved_change_to_quantity? || saved_change_to_buying_price? || 
        saved_change_to_selling_price?
       
+      Rails.logger.info "Regenerating assignments for schedule #{id}: date range changed from #{from_date_before_last_save}-#{to_date_before_last_save} to #{from_date}-#{to_date}"
+      
       # Delete existing assignments and regenerate
       procurement_assignments.destroy_all
       generate_procurement_assignments
+      
+      # Also update any related delivery assignments if they exist
+      sync_delivery_assignments
     end
+  end
+  
+  def sync_delivery_assignments
+    # If delivery assignments are linked to procurement assignments, update them
+    if defined?(DeliveryAssignment) && respond_to?(:delivery_assignments)
+      # Remove delivery assignments for dates no longer in scope
+      old_dates = (from_date_before_last_save..to_date_before_last_save).to_a rescue []
+      new_dates = (from_date..to_date).to_a rescue []
+      dates_to_remove = old_dates - new_dates
+      
+      if dates_to_remove.any?
+        # Find and remove delivery assignments for removed dates
+        DeliveryAssignment.where(
+          scheduled_date: dates_to_remove,
+          product_id: product_id
+        ).where("created_at >= ?", created_at).destroy_all
+      end
+    end
+  end
+  
+  def cleanup_related_assignments
+    Rails.logger.info "Cleaning up related assignments for procurement schedule #{id}"
+    
+    # Clean up related delivery assignments if they exist
+    if defined?(DeliveryAssignment) && product_id.present?
+      # Find and remove delivery assignments for this schedule's date range and product
+      DeliveryAssignment.where(
+        scheduled_date: from_date..to_date,
+        product_id: product_id
+      ).where("created_at >= ?", created_at).destroy_all
+    end
+    
+    # Procurement assignments will be destroyed automatically due to dependent: :destroy
+    true
   end
 end

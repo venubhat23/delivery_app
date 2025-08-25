@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeliveryPro - Login</title>
+    <title>Atma Nirbhar Farm - Pure Desi Cow Milk</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,134 +14,391 @@
             box-sizing: border-box;
         }
 
-        html, body {
-            height: 100%;
-            width: 100%;
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
         }
 
-        /* Enhanced Auth Wrapper */
-        .auth-wrapper {
+        /* Farm-themed Background */
+        .farm-wrapper {
             position: relative;
             min-height: 100vh;
             width: 100vw;
-            overflow: hidden;
-            background: #0f0f23;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .auth-background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            opacity: 0.9;
-            animation: backgroundShift 20s ease-in-out infinite;
-        }
-
-        @keyframes backgroundShift {
-            0%, 100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
-            33% { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%); }
-            66% { background: linear-gradient(135deg, #fa709a 0%, #fee140 50%, #667eea 100%); }
-        }
-
-        /* Floating Shapes */
-        .floating-shapes {
+        /* Animated Background Elements */
+        .background-elements {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
+            overflow: hidden;
         }
 
-        .shape {
+        /* Floating Clouds */
+        .cloud {
             position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            animation: float 6s ease-in-out infinite;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: float-cloud 20s linear infinite;
         }
 
-        .shape-1 {
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+        }
+
+        .cloud-1 {
             width: 80px;
-            height: 80px;
+            height: 30px;
             top: 10%;
-            left: 10%;
-            animation-delay: 0s;
+            left: -100px;
+            animation-duration: 25s;
         }
 
-        .shape-2 {
-            width: 120px;
-            height: 120px;
-            top: 20%;
-            right: 15%;
-            animation-delay: 2s;
-        }
-
-        .shape-3 {
-            width: 60px;
-            height: 60px;
-            bottom: 30%;
-            left: 20%;
-            animation-delay: 4s;
-        }
-
-        .shape-4 {
-            width: 100px;
-            height: 100px;
-            bottom: 20%;
-            right: 10%;
-            animation-delay: 1s;
-        }
-
-        .shape-5 {
+        .cloud-1::before {
             width: 40px;
             height: 40px;
-            top: 60%;
-            right: 30%;
-            animation-delay: 3s;
+            top: -20px;
+            left: 10px;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
+        .cloud-1::after {
+            width: 60px;
+            height: 35px;
+            top: -15px;
+            right: 5px;
         }
 
-        /* Enhanced Auth Card */
-        .auth-card {
+        .cloud-2 {
+            width: 60px;
+            height: 25px;
+            top: 20%;
+            left: -80px;
+            animation-duration: 30s;
+            animation-delay: -10s;
+        }
+
+        .cloud-2::before {
+            width: 35px;
+            height: 35px;
+            top: -18px;
+            left: 8px;
+        }
+
+        .cloud-2::after {
+            width: 45px;
+            height: 30px;
+            top: -12px;
+            right: 3px;
+        }
+
+        @keyframes float-cloud {
+            from {
+                left: -120px;
+            }
+            to {
+                left: 100vw;
+            }
+        }
+
+        /* Grass Animation */
+        .grass-field {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(to top, #228B22, #32CD32);
+            z-index: 1;
+        }
+
+        .grass {
+            position: absolute;
+            bottom: 0;
+            width: 4px;
+            background: #228B22;
+            border-radius: 2px;
+            animation: sway 3s ease-in-out infinite;
+            transform-origin: bottom;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+        }
+
+        /* Animated Cow */
+        .cow-container {
+            position: absolute;
+            bottom: 120px;
+            right: 10%;
+            z-index: 2;
+            animation: cow-move 15s ease-in-out infinite;
+        }
+
+        .cow {
+            font-size: 4rem;
+            color: #8B4513;
+            animation: cow-bounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        @keyframes cow-move {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-50px); }
+        }
+
+        @keyframes cow-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Sun Animation */
+        .sun {
+            position: absolute;
+            top: 8%;
+            right: 10%;
+            width: 80px;
+            height: 80px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: sun-glow 3s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        .sun::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: sun-rays 4s linear infinite;
+        }
+
+        @keyframes sun-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+        }
+
+        @keyframes sun-rays {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Farm Trees */
+        .tree {
+            position: absolute;
+            bottom: 150px;
+            z-index: 1;
+        }
+
+        .tree-1 {
+            left: 15%;
+            font-size: 3rem;
+            color: #228B22;
+            animation: tree-sway 4s ease-in-out infinite;
+        }
+
+        .tree-2 {
+            left: 25%;
+            font-size: 2.5rem;
+            color: #32CD32;
+            animation: tree-sway 4s ease-in-out infinite;
+            animation-delay: -2s;
+        }
+
+        @keyframes tree-sway {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
+        }
+
+        /* Milk Drops Animation */
+        .milk-drop {
+            position: absolute;
+            width: 8px;
+            height: 12px;
+            background: white;
+            border-radius: 0 50% 50% 50%;
+            opacity: 0.8;
+            animation: milk-fall 3s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes milk-fall {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Login Card Styles */
+        .farm-login-card {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: none;
             overflow: hidden;
-            animation: slideInUp 0.8s ease-out;
+            animation: card-float 0.8s ease-out;
             position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 450px;
+            margin: 1rem;
+            min-height: auto;
         }
 
-        .auth-card::before {
+        .farm-login-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
-            background-size: 200% 100%;
-            animation: shimmer 3s ease-in-out infinite;
+            height: 6px;
+            background: linear-gradient(90deg, #32CD32, #228B22, #90EE90, #32CD32);
+            background-size: 400% 100%;
+            animation: gradient-shift 3s ease-in-out infinite;
         }
 
-        @keyframes shimmer {
-            0%, 100% { background-position: 200% 0; }
-            50% { background-position: -200% 0; }
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
-        @keyframes slideInUp {
+        @keyframes card-float {
             from {
                 opacity: 0;
-                transform: translateY(40px);
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Farm Header */
+        .farm-header {
+            text-align: center;
+            padding: 2.5rem 2rem 1.5rem;
+        }
+
+        .farm-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #32CD32, #228B22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: logo-pulse 2s ease-in-out infinite;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(50, 205, 50, 0.4);
+        }
+
+        .farm-logo::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(45deg, #32CD32, transparent, #228B22, transparent);
+            border-radius: 50%;
+            animation: logo-ring 4s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes logo-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes logo-ring {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .farm-logo i {
+            font-size: 3rem;
+            color: white;
+            animation: cow-wiggle 3s ease-in-out infinite;
+        }
+
+        @keyframes cow-wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .farm-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #228B22, #32CD32);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            animation: title-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes title-glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .farm-subtitle {
+            color: #666;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+
+        /* Form Styles */
+        .farm-form {
+            padding: 0 2rem 2rem;
+            animation: form-slide-up 0.8s ease-out 0.3s both;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @keyframes form-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -148,168 +406,60 @@
             }
         }
 
-        /* Auth Card Header */
-        .auth-card-header {
-            padding: 3rem 2rem 1rem;
-            text-align: center;
-            position: relative;
-        }
-
-        .auth-logo {
-            animation: fadeInUp 0.8s ease-out 0.2s both;
-        }
-
-        .logo-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 32px;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-            animation: pulse 2s ease-in-out infinite;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .logo-icon::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shine 3s ease-in-out infinite;
-        }
-
-        @keyframes shine {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .logo-text {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin: 0 0 0.5rem;
-            letter-spacing: -0.5px;
-        }
-
-        .logo-subtitle {
-            color: #6b7280;
-            font-size: 1rem;
-            margin: 0;
-            font-weight: 500;
-        }
-
-        /* Auth Card Body */
-        .auth-card-body {
-            padding: 1rem 2rem 2rem;
-        }
-
-        .auth-form {
-            animation: fadeInUp 0.8s ease-out 0.4s both;
-        }
-
-        /* Enhanced Form Controls */
         .form-floating {
             position: relative;
             margin-bottom: 1.5rem;
         }
 
         .form-floating .form-control {
-            border: 2px solid rgba(102, 126, 234, 0.1);
-            border-radius: 16px;
-            padding: 1.5rem 1.25rem 0.75rem;
-            font-size: 1.1rem;
-            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(50, 205, 50, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem 1rem 0.75rem;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .form-floating .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25), 0 8px 25px rgba(102, 126, 234, 0.15);
+            border-color: #32CD32;
+            box-shadow: 
+                0 0 0 0.2rem rgba(50, 205, 50, 0.25),
+                0 8px 25px rgba(50, 205, 50, 0.15);
             background: rgba(255, 255, 255, 1);
             transform: translateY(-2px);
             outline: none;
         }
 
         .form-floating label {
-            padding: 1rem 1.25rem;
-            font-weight: 600;
-            color: #6b7280;
-            font-size: 0.9rem;
+            padding: 1rem;
+            color: #666;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
 
         .form-floating .form-control:focus ~ label,
         .form-floating .form-control:not(:placeholder-shown) ~ label {
-            color: #667eea;
+            color: #32CD32;
             transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
         }
 
-        /* Form Check */
-        .form-check-input {
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .form-check-input:checked {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: #667eea;
-        }
-
-        .form-check-label {
-            color: #6b7280;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .forgot-password {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .forgot-password:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        /* Enhanced Submit Button */
-        .auth-submit-btn {
-            padding: 1.25rem 2rem;
+        /* Farm Button */
+        .farm-btn {
+            padding: 1rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            background: linear-gradient(135deg, #32CD32, #228B22);
             border: none;
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+            color: white;
+            box-shadow: 0 8px 25px rgba(50, 205, 50, 0.4);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            letter-spacing: 0.5px;
-            color: white;
         }
 
-        .auth-submit-btn::before {
+        .farm-btn::before {
             content: '';
             position: absolute;
             top: 0;
@@ -320,112 +470,30 @@
             transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .auth-submit-btn:hover::before {
+        .farm-btn:hover::before {
             left: 100%;
         }
 
-        .auth-submit-btn:hover {
+        .farm-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.5);
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            color: white;
+            box-shadow: 0 12px 35px rgba(50, 205, 50, 0.5);
+            background: linear-gradient(135deg, #228B22, #32CD32);
         }
 
-        .auth-submit-btn:active {
+        .farm-btn:active {
             transform: translateY(-1px);
         }
 
-        /* Auth Divider */
-        .auth-divider {
-            text-align: center;
-            margin: 2rem 0;
-            position: relative;
-        }
-
-        .auth-divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(107, 114, 128, 0.3), transparent);
-        }
-
-        .auth-divider span {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 0 1rem;
-            color: #6b7280;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        /* Signup Link */
-        .signup-text {
-            color: #6b7280;
-            font-size: 0.95rem;
-            margin: 0;
-        }
-
-        .signup-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .signup-link:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        /* Auth Footer */
-        .auth-footer {
+        /* Farm Features */
+        .farm-features {
             margin-top: 2rem;
-            animation: fadeInUp 0.8s ease-out 0.6s both;
+            animation: features-fade-in 0.8s ease-out 0.6s both;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            padding: 0 1rem;
-        }
-
-        .feature-item {
-            text-align: center;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            color: white;
-        }
-
-        .feature-item:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-item i {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            display: block;
-            opacity: 0.9;
-        }
-
-        .feature-item span {
-            font-size: 0.8rem;
-            font-weight: 600;
-            opacity: 0.8;
-        }
-
-        @keyframes fadeInUp {
+        @keyframes features-fade-in {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -433,381 +501,446 @@
             }
         }
 
-        /* Rails Flash Messages */
-        .alert {
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 1rem 0.5rem;
+            background: rgba(50, 205, 50, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(50, 205, 50, 0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            background: rgba(50, 205, 50, 0.15);
+            box-shadow: 0 8px 20px rgba(50, 205, 50, 0.2);
+        }
+
+        .feature-item i {
+            font-size: 1.5rem;
+            color: #228B22;
+            margin-bottom: 0.5rem;
+            display: block;
+            animation: feature-bounce 2s ease-in-out infinite;
+        }
+
+        .feature-item span {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #666;
+        }
+
+        @keyframes feature-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Flash Messages */
+        .farm-alert {
+            border: none;
+            border-radius: 12px;
             padding: 1rem 1.25rem;
             margin-bottom: 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
             backdrop-filter: blur(10px);
-            border: 2px solid transparent;
-            animation: slideInDown 0.4s ease-out;
+            animation: alert-slide-down 0.4s ease-out;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .alert-danger {
-            background: rgba(248, 215, 218, 0.95);
+        .farm-alert.alert-danger {
+            background: rgba(220, 53, 69, 0.1);
             color: #721c24;
-            border-color: rgba(114, 28, 36, 0.2);
+            border: 2px solid rgba(220, 53, 69, 0.2);
         }
 
-        .alert-success {
-            background: rgba(209, 231, 221, 0.95);
-            color: #0f5132;
-            border-color: rgba(15, 81, 50, 0.2);
-            box-shadow: 0 8px 25px rgba(15, 81, 50, 0.15);
-        }
-        
-        .alert-success i {
-            color: #198754;
+        .farm-alert.alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #155724;
+            border: 2px solid rgba(40, 167, 69, 0.2);
         }
 
-        @keyframes slideInDown {
+        @keyframes alert-slide-down {
             from {
-                transform: translateY(-20px);
                 opacity: 0;
+                transform: translateY(-20px);
             }
             to {
-                transform: translateY(0);
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        /* Mobile Responsive */
+        /* Fix for collapsed mobile view */
+        @media (max-width: 480px) and (orientation: portrait) {
+            .farm-wrapper {
+                padding: 0.5rem;
+            }
+            
+            .farm-login-card {
+                margin: 0.5rem;
+                max-width: calc(100vw - 1rem);
+                width: calc(100vw - 1rem);
+                min-width: 280px;
+            }
+            
+            .farm-header {
+                padding: 1rem 1rem 0.5rem;
+            }
+            
+            .farm-form {
+                padding: 0.5rem 1rem 1rem;
+            }
+            
+            .form-floating .form-control {
+                min-height: 50px;
+                padding: 1rem 0.75rem 0.25rem;
+            }
+            
+            .form-floating label {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .farm-login-card {
+                margin: 1rem;
+                max-width: none;
+                width: auto;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .cow-container {
+                right: 5%;
+                bottom: 100px;
+            }
+            
+            .cow {
+                font-size: 3rem;
+            }
+        }
+
         @media (max-width: 768px) {
-            .auth-card-header {
-                padding: 2rem 1.5rem 1rem;
+            .farm-wrapper {
+                padding: 0.5rem;
             }
             
-            .auth-card-body {
-                padding: 1rem 1.5rem 2rem;
+            .cow-container {
+                display: none;
             }
             
-            .logo-text {
-                font-size: 2rem;
+            .tree-1, .tree-2 {
+                display: none;
             }
             
-            .logo-icon {
+            .farm-header {
+                padding: 1.5rem 1.5rem 1rem;
+            }
+            
+            .farm-form {
+                padding: 0 1.5rem 1.5rem;
+            }
+            
+            .farm-title {
+                font-size: 1.6rem;
+            }
+            
+            .farm-logo {
                 width: 60px;
                 height: 60px;
-                font-size: 24px;
+                margin-bottom: 1rem;
             }
             
-            .features-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.75rem;
+            .farm-logo i {
+                font-size: 1.8rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .farm-login-card {
+                margin: 0.5rem;
+                border-radius: 20px;
+            }
+            
+            .form-floating .form-control {
+                padding: 1.25rem 0.75rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .form-floating label {
+                padding: 0.75rem;
+                font-size: 0.8rem;
+            }
+            
+            .farm-btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .farm-wrapper {
+                padding: 0.25rem;
+            }
+            
+            .farm-login-card {
+                margin: 0.25rem;
+                border-radius: 15px;
+            }
+            
+            .farm-header {
+                padding: 1rem 1rem 0.5rem;
+            }
+            
+            .farm-form {
+                padding: 0 1rem 1rem;
+            }
+            
+            .farm-title {
+                font-size: 1.4rem;
+                line-height: 1.2;
+            }
+            
+            .farm-subtitle {
+                font-size: 0.85rem;
+            }
+            
+            .farm-logo {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .farm-logo i {
+                font-size: 1.5rem;
+            }
+            
+            .form-floating {
+                margin-bottom: 1rem;
             }
             
             .feature-item {
-                padding: 0.75rem;
+                padding: 0.5rem;
             }
             
-            .shape {
-                display: none;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .auth-wrapper {
-                padding: 1rem;
+            .feature-item i {
+                font-size: 1.2rem;
             }
             
-            .auth-card {
-                border-radius: 16px;
-            }
-            
-            .logo-text {
-                font-size: 1.75rem;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
+            .feature-item span {
+                font-size: 0.75rem;
             }
         }
 
-        /* Custom Alert Styling */
-        .custom-alert {
-            border: none;
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            animation: slideInFromTop 0.5s ease-out;
-        }
-
-        .custom-alert.alert-success {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
-
-        .custom-alert.alert-danger {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            color: #721c24;
-            border-left: 4px solid #dc3545;
-        }
-
-        .logout-success-alert {
-            background: linear-gradient(135deg, #d1f2eb 0%, #a7f3d0 100%);
-            color: #065f46;
-            border-left: 4px solid #10b981;
-        }
-
-        .logout-success-alert .fas {
-            color: #10b981;
-            font-size: 1.2rem;
-        }
-
-        @keyframes slideInFromTop {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Ensure full width on all screens */
-        @media (min-width: 769px) {
-            .auth-wrapper {
-                padding: 0;
-            }
-            
-            .auth-card {
-                max-width: 450px;
-                margin: 0 auto;
-            }
+        /* Create grass blades dynamically */
+        .grass-blade {
+            position: absolute;
+            bottom: 0;
+            width: 3px;
+            height: 25px;
+            background: linear-gradient(to top, #228B22, #32CD32);
+            border-radius: 2px;
+            animation: blade-sway 2s ease-in-out infinite;
+            transform-origin: bottom;
         }
     </style>
 </head>
 <body>
-    <div class="auth-wrapper">
-        <div class="auth-background">
-            <div class="floating-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
-                <div class="shape shape-4"></div>
-                <div class="shape shape-5"></div>
+    <div class="farm-wrapper">
+        <!-- Animated Background -->
+        <div class="background-elements">
+            <!-- Clouds -->
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            
+            <!-- Sun -->
+            <div class="sun"></div>
+            
+            <!-- Trees -->
+            <div class="tree tree-1">🌳</div>
+            <div class="tree tree-2">🌲</div>
+            
+            <!-- Animated Cow -->
+            <div class="cow-container">
+                <div class="cow">🐄</div>
             </div>
+            
+            <!-- Grass Field -->
+            <div class="grass-field"></div>
         </div>
         
-        <div class="container-fluid">
-            <div class="row justify-content-center align-items-center min-vh-100">
-                <div class="col-12 col-sm-8 col-md-6 col-lg-4 col-xl-3">
-                    <div class="auth-card">
-                        <div class="auth-card-header">
-                            <div class="auth-logo">
-                                <div class="logo-icon">
-                                    <i class="fas fa-truck-fast"></i>
-                                </div>
-                                <h1 class="logo-text">DeliveryPro</h1>
-                                <p class="logo-subtitle">Welcome back! Please sign in to your account</p>
+        <!-- Main Content -->
+        <div class="farm-login-card">
+                        <!-- Header -->
+                        <div class="farm-header">
+                            <div class="farm-logo">
+                                <i class="fas fa-cow"></i>
                             </div>
+                            <h1 class="farm-title">Atma Nirbhar Farm</h1>
+                            <p class="farm-subtitle">Premium Desi Cow Milk & Dairy Products</p>
                         </div>
                         
-                        <div class="auth-card-body">
-                            <%= form_with url: login_path, method: :post, local: true, class: "auth-form" do |form| %>
+                        <!-- Login Form -->
+                        <div class="farm-form">
+                            <%= form_with url: login_path, method: :post, local: true do |form| %>
                                 <% if flash[:alert] %>
-                                    <div class="alert alert-danger mb-3 custom-alert">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <div class="farm-alert alert-danger">
+                                        <i class="fas fa-exclamation-triangle"></i>
                                         <%= flash[:alert] %>
                                     </div>
                                 <% end %>
                                 
                                 <% if flash[:notice] %>
-                                    <div class="alert alert-success mb-3 custom-alert logout-success-alert">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-check-circle me-2"></i>
-                                            <div>
-                                                <div class="fw-bold">You have been logged out successfully.</div>
-                                                <div class="small">Thank you for using DeliveryPro!</div>
-                                            </div>
+                                    <div class="farm-alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div>
+                                            <div class="fw-bold">Successfully logged out!</div>
+                                            <div class="small">Thank you for using Atma Nirbhar Farm</div>
                                         </div>
                                     </div>
                                 <% end %>
                                 
-                                <div class="form-floating mb-3">
-                                    <%= form.email_field :email, class: "form-control", id: "floatingEmail", placeholder: "name@example.com", value: "pramodbha8@gmail.com", required: true %>
-                                    <label for="floatingEmail">
+                                <div class="form-floating">
+                                    <%= form.email_field :email, class: "form-control", id: "email", placeholder: "name@example.com", value: "pramodbha8@gmail.com", required: true %>
+                                    <label for="email">
                                         <i class="fas fa-envelope me-2"></i>Email Address
                                     </label>
                                 </div>
                                 
-                                <div class="form-floating mb-4">
-                                    <%= form.password_field :password, class: "form-control", id: "floatingPassword", placeholder: "Password", value: "••••••••", required: true %>
-                                    <label for="floatingPassword">
+                                <div class="form-floating">
+                                    <%= form.password_field :password, class: "form-control", id: "password", placeholder: "Password", value: "••••••••", required: true %>
+                                    <label for="password">
                                         <i class="fas fa-lock me-2"></i>Password
                                     </label>
                                 </div>
                                 
-                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="rememberMe">
-                                        <label class="form-check-label" for="rememberMe">
+                                        <input class="form-check-input" type="checkbox" value="" id="remember">
+                                        <label class="form-check-label" for="remember">
                                             Remember me
                                         </label>
                                     </div>
-                                    <a href="#" class="forgot-password">Forgot password?</a>
+                                    <a href="#" class="text-success text-decoration-none small fw-semibold">Forgot Password?</a>
                                 </div>
                                 
-                                <div class="d-grid mb-4">
-                                    <%= form.submit "Sign In", class: "btn btn-primary btn-lg auth-submit-btn" %>
+                                <div class="d-grid">
+                                    <%= form.submit "Sign In to Farm", class: "btn farm-btn" %>
                                 </div>
                             <% end %>
                             
-                            <div class="auth-divider">
-                                <span>or</span>
+                            <div class="text-center mt-3">
+                                <p class="text-muted mb-2">New to our farm?</p>
+                                <a href="/signup" class="text-success text-decoration-none fw-semibold">Join Our Farm Community</a>
                             </div>
                             
-<div class="text-center">
-    <p class="signup-text">
-        Don't have an account? 
-        <a href="/signup" class="signup-link">Create Account</a>
-    </p>
-</div>
+                            <!-- Farm Features -->
+                            <div class="farm-features">
+                                <div class="text-center mb-2">
+                                    <small class="text-muted fw-semibold">Why Choose Our Farm?</small>
+                                </div>
+                                <div class="feature-grid">
+                                    <div class="feature-item">
+                                        <i class="fas fa-cow"></i>
+                                        <span>Pure Desi Cow</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-leaf"></i>
+                                        <span>100% Organic</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-truck"></i>
+                                        <span>Fresh Delivery</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        </div>
+    </div>
 
-                        </div>
-                    </div>
-                    
-                    <div class="auth-footer">
-                        <div class="features-grid">
-                            <div class="feature-item">
-                                <i class="fas fa-shield-alt"></i>
-                                <span>Secure</span>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-bolt"></i>
-                                <span>Fast</span>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Analytics</span>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-mobile-alt"></i>
-                                <span>Mobile</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Logout Success Popup -->
-    <% if flash[:notice] && flash[:notice].include?("logged out") %>
-    <div class="logout-success-popup" id="logoutSuccessPopup">
-        <div class="popup-content">
-            <div class="popup-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <h4>Logout Successful!</h4>
-            <p>You have been safely logged out of DeliveryPro</p>
-            <div class="popup-footer">
-                <small>Redirecting to login...</small>
-            </div>
-        </div>
-    </div>
-    
-    <style>
-        .logout-success-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            animation: fadeIn 0.3s ease-out;
-        }
-        
-        .popup-content {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideInScale 0.4s ease-out;
-        }
-        
-        .popup-icon {
-            font-size: 3rem;
-            color: #198754;
-            margin-bottom: 1rem;
-        }
-        
-        .popup-content h4 {
-            color: #2d3748;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        
-        .popup-content p {
-            color: #718096;
-            margin-bottom: 1.5rem;
-        }
-        
-        .popup-footer small {
-            color: #a0aec0;
-            font-style: italic;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-    </style>
-    
     <script>
-        // Auto-hide the logout success popup after 3 seconds
-        setTimeout(function() {
-            const popup = document.getElementById('logoutSuccessPopup');
-            if (popup) {
-                popup.style.animation = 'fadeOut 0.3s ease-out forwards';
-                setTimeout(() => popup.remove(), 300);
+        // Create animated grass blades
+        function createGrassField() {
+            const grassField = document.querySelector('.grass-field');
+            const screenWidth = window.innerWidth;
+            const grassCount = Math.floor(screenWidth / 8);
+            
+            for (let i = 0; i < grassCount; i++) {
+                const grass = document.createElement('div');
+                grass.classList.add('grass-blade');
+                grass.style.left = `${(i * 8) + Math.random() * 4}px`;
+                grass.style.height = `${15 + Math.random() * 15}px`;
+                grass.style.animationDelay = `${Math.random() * 2}s`;
+                grass.style.animationDuration = `${2 + Math.random() * 2}s`;
+                grassField.appendChild(grass);
             }
-        }, 3000);
-        
-        // Auto-hide the logout success alert after 5 seconds
-        setTimeout(function() {
-            const logoutAlert = document.querySelector('.logout-success-alert');
-            if (logoutAlert) {
-                logoutAlert.style.animation = 'fadeOut 0.5s ease-out forwards';
-                setTimeout(() => logoutAlert.remove(), 500);
-            }
-        }, 5000);
-        
-        // Add fadeOut animation
+        }
+
+        // Create floating milk drops
+        function createMilkDrops() {
+            setInterval(() => {
+                const drop = document.createElement('div');
+                drop.classList.add('milk-drop');
+                drop.style.left = Math.random() * window.innerWidth + 'px';
+                drop.style.animationDelay = Math.random() * 2 + 's';
+                document.querySelector('.background-elements').appendChild(drop);
+                
+                // Remove drop after animation
+                setTimeout(() => {
+                    drop.remove();
+                }, 3000);
+            }, 2000);
+        }
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', function() {
+            createGrassField();
+            createMilkDrops();
+            
+            // Auto-hide flash messages
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.farm-alert');
+                alerts.forEach(alert => {
+                    alert.style.animation = 'fadeOut 0.5s ease-out forwards';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 4000);
+        });
+
+        // Add CSS for fade out animation
         const style = document.createElement('style');
         style.textContent = `
             @keyframes fadeOut {
                 from { opacity: 1; }
                 to { opacity: 0; }
             }
+            
+            @keyframes blade-sway {
+                0%, 100% { transform: rotate(0deg); }
+                25% { transform: rotate(1deg); }
+                75% { transform: rotate(-1deg); }
+            }
         `;
         document.head.appendChild(style);
+        
+        // Add window resize handler for grass field
+        window.addEventListener('resize', function() {
+            const grassField = document.querySelector('.grass-field');
+            grassField.innerHTML = '';
+            createGrassField();
+        });
     </script>
-    <% end %>
 </body>
 </html>

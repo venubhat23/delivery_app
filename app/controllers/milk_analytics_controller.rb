@@ -38,6 +38,8 @@ class MilkAnalyticsController < ApplicationController
     calculate_summaries
     # Always prepare daily calculations so the Daily Report tab has data ready
     calculate_daily_calculations
+    # Get procurement schedules for the schedules table
+    get_procurement_schedules
     
     respond_to do |format|
       format.html
@@ -405,6 +407,51 @@ class MilkAnalyticsController < ApplicationController
         flash[:alert] = 'Report not found'
         redirect_to milk_analytics_path 
       }
+    end
+  end
+
+  # CRUD operations for procurement schedules
+  def create_schedule
+    @schedule = current_user.procurement_schedules.build(schedule_params)
+    
+    respond_to do |format|
+      if @schedule.save
+        format.json { render json: { success: true, message: 'Schedule created successfully', schedule: @schedule } }
+      else
+        format.json { render json: { success: false, errors: @schedule.errors.full_messages } }
+      end
+    end
+  end
+
+  def update_schedule
+    @schedule = current_user.procurement_schedules.find(params[:schedule_id])
+    
+    respond_to do |format|
+      if @schedule.update(schedule_params)
+        format.json { render json: { success: true, message: 'Schedule updated successfully', schedule: @schedule } }
+      else
+        format.json { render json: { success: false, errors: @schedule.errors.full_messages } }
+      end
+    end
+  rescue ActiveRecord::RecordNotFound
+    respond_to do |format|
+      format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+    end
+  end
+
+  def destroy_schedule
+    @schedule = current_user.procurement_schedules.find(params[:schedule_id])
+    
+    respond_to do |format|
+      if @schedule.destroy
+        format.json { render json: { success: true, message: 'Schedule deleted successfully' } }
+      else
+        format.json { render json: { success: false, error: 'Failed to delete schedule' } }
+      end
+    end
+  rescue ActiveRecord::RecordNotFound
+    respond_to do |format|
+      format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
     end
   end
 
@@ -1296,6 +1343,29 @@ class MilkAnalyticsController < ApplicationController
       @milk_left_cost = 0
       @planned_profit = 0
     end
+  end
+  
+  def get_procurement_schedules
+    # Get procurement schedules with filters applied
+    schedules_query = current_user.procurement_schedules.includes(:procurement_assignments, :product)
+    
+    # Apply date filter - schedules that are active or have assignments in the date range
+    schedules_query = schedules_query.where(
+      "(from_date <= ? AND to_date >= ?) OR (from_date >= ? AND from_date <= ?)", 
+      @end_date, @start_date, @start_date, @end_date
+    )
+    
+    # Apply product filter if specified
+    if @product_id.present?
+      schedules_query = schedules_query.where(product_id: @product_id)
+    end
+    
+    @procurement_schedules = schedules_query.order(:from_date, :created_at)
+  end
+  
+  def schedule_params
+    params.require(:procurement_schedule).permit(:vendor_name, :from_date, :to_date, :quantity, 
+                                                  :buying_price, :selling_price, :status, :unit, :notes, :product_id)
   end
   
   def get_delivery_query(start_date, end_date)

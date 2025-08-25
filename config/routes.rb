@@ -259,6 +259,9 @@ Rails.application.routes.draw do
       get :inventory_analysis
       get :generate_reports
       get :saved_reports
+      post :create_schedule
+      patch :update_schedule
+      delete :destroy_schedule
     end
     
     member do
