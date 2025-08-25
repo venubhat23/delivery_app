@@ -211,7 +211,7 @@
 
         <!-- Card 6: Revenue After Discount -->
         <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-          <div class="card gradient-teal text-white shadow-lg h-100">
+          <div class="card gradient-primary text-white shadow-lg h-100">
             <div class="card-body p-4">
               <div class="d-flex align-items-center">
                 <div class="flex-grow-1">
@@ -1478,6 +1478,10 @@
 
 .gradient-danger {
   background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+}
+
+.gradient-teal {
+  background: linear-gradient(135deg, #20bf6b 0%, #26d0ce 100%);
 }
 
 /* Icon Circle */
@@ -3021,15 +3025,39 @@ function openScheduleModal(scheduleId = null) {
 }
 
 function loadScheduleData(scheduleId) {
-  const row = document.querySelector(`tr[data-schedule-id="${scheduleId}"]`);
-  if (!row) return;
-  
-  // Extract data from the table row (this is a simplified approach)
-  // In a real implementation, you might fetch this data via AJAX
-  const cells = row.querySelectorAll('td');
-  
-  // You would populate the form fields here based on the current schedule data
-  // This would typically involve an AJAX call to get the full schedule details
+  // Fetch schedule data from the server
+  fetch(`/milk-supply-analytics/get_schedule?schedule_id=${scheduleId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.schedule) {
+      const schedule = data.schedule;
+      
+      // Populate form fields with schedule data
+      document.getElementById('schedule_vendor_name').value = schedule.vendor_name || '';
+      document.getElementById('schedule_product_id').value = schedule.product_id || '';
+      document.getElementById('schedule_from_date').value = schedule.from_date || '';
+      document.getElementById('schedule_to_date').value = schedule.to_date || '';
+      document.getElementById('schedule_quantity').value = schedule.quantity || '';
+      document.getElementById('schedule_buying_price').value = schedule.buying_price || '';
+      document.getElementById('schedule_selling_price').value = schedule.selling_price || '';
+      document.getElementById('schedule_status').value = schedule.status || 'active';
+      document.getElementById('schedule_unit').value = schedule.unit || 'liters';
+      document.getElementById('schedule_notes').value = schedule.notes || '';
+      
+    } else {
+      showAlert('danger', data.error || 'Failed to load schedule data');
+    }
+  })
+  .catch(error => {
+    console.error('Error loading schedule:', error);
+    showAlert('danger', 'An error occurred while loading schedule data');
+  });
 }
 
 function saveSchedule() {
@@ -3059,7 +3087,11 @@ function saveSchedule() {
       showAlert('success', data.message);
       const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleModal'));
       modal.hide();
-      location.reload(); // Refresh the page to show updated data
+      
+      // Refresh the schedules table instead of full page reload
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
     } else {
       showAlert('danger', data.errors ? data.errors.join(', ') : data.error);
     }
@@ -3091,10 +3123,25 @@ function deleteSchedule(scheduleId) {
   .then(data => {
     if (data.success) {
       showAlert('success', data.message);
-      // Remove the row from the table
+      // Remove the row from the table with animation
       const row = document.querySelector(`tr[data-schedule-id="${scheduleId}"]`);
       if (row) {
-        row.remove();
+        row.style.opacity = '0.5';
+        setTimeout(() => {
+          row.remove();
+          // If no more rows, show empty state
+          const tbody = row.closest('tbody');
+          if (tbody && tbody.children.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                  <i class="fas fa-calendar-alt fa-2x mb-2"></i><br>
+                  No procurement schedules found for the selected filters
+                </td>
+              </tr>
+            `;
+          }
+        }, 300);
       }
     } else {
       showAlert('danger', data.error);

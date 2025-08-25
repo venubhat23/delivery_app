@@ -262,6 +262,7 @@ Rails.application.routes.draw do
       post :create_schedule
       patch :update_schedule
       delete :destroy_schedule
+      get :get_schedule
     end
     
     member do

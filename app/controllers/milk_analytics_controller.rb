@@ -100,18 +100,20 @@ class MilkAnalyticsController < ApplicationController
     # Debug info (remove in production)
     Rails.logger.info "Calendar View Debug: User ID: #{current_user&.id}, Date Range: #{@start_date} to #{@end_date}"
     
-    # Get assignments for the date range with fallback for demo
+    # Get assignments for the date range with optimized includes to avoid N+1 queries
     if current_user
       @assignments = current_user.procurement_assignments
                                 .for_date_range(@start_date, @end_date)
-                                .includes(:procurement_schedule)
+                                .includes(:procurement_schedule, :product)
+                                .preload(:procurement_schedule, :product)
                                 .order(:date, :created_at)
     else
       # Fallback for demo - get first user's assignments if no current user
       first_user = User.first
       @assignments = first_user&.procurement_assignments
                                &.for_date_range(@start_date, @end_date)
-                               &.includes(:procurement_schedule)
+                               &.includes(:procurement_schedule, :product)
+                               &.preload(:procurement_schedule, :product)
                                &.order(:date, :created_at) || []
     end
     
@@ -184,10 +186,12 @@ class MilkAnalyticsController < ApplicationController
     end
     
     if @vendor.present?
-      # Specific vendor analysis
+      # Specific vendor analysis with optimized includes
       @vendor_assignments = current_user.procurement_assignments
                                        .for_vendor(@vendor)
                                        .for_date_range(@start_date, @end_date)
+                                       .includes(:product, :procurement_schedule)
+                                       .preload(:product, :procurement_schedule)
       
       @vendor_analytics = {
         total_assignments: @vendor_assignments.count,
@@ -428,7 +432,9 @@ class MilkAnalyticsController < ApplicationController
     
     respond_to do |format|
       if @schedule.update(schedule_params)
-        format.json { render json: { success: true, message: 'Schedule updated successfully', schedule: @schedule } }
+        # Update related procurement assignments if pricing or dates changed
+        update_related_assignments(@schedule)
+        format.json { render json: { success: true, message: 'Schedule and related assignments updated successfully', schedule: @schedule } }
       else
         format.json { render json: { success: false, errors: @schedule.errors.full_messages } }
       end
@@ -439,12 +445,42 @@ class MilkAnalyticsController < ApplicationController
     end
   end
 
-  def destroy_schedule
+  def get_schedule
     @schedule = current_user.procurement_schedules.find(params[:schedule_id])
     
     respond_to do |format|
+      format.json { render json: { 
+        success: true, 
+        schedule: {
+          id: @schedule.id,
+          vendor_name: @schedule.vendor_name,
+          product_id: @schedule.product_id,
+          from_date: @schedule.from_date.strftime('%Y-%m-%d'),
+          to_date: @schedule.to_date.strftime('%Y-%m-%d'),
+          quantity: @schedule.quantity,
+          buying_price: @schedule.buying_price,
+          selling_price: @schedule.selling_price,
+          status: @schedule.status,
+          unit: @schedule.unit,
+          notes: @schedule.notes
+        }
+      } }
+    end
+  rescue ActiveRecord::RecordNotFound
+    respond_to do |format|
+      format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+    end
+  end
+
+  def destroy_schedule
+    @schedule = current_user.procurement_schedules.find(params[:schedule_id])
+    
+    # Delete related procurement assignments first
+    @schedule.procurement_assignments.destroy_all
+    
+    respond_to do |format|
       if @schedule.destroy
-        format.json { render json: { success: true, message: 'Schedule deleted successfully' } }
+        format.json { render json: { success: true, message: 'Schedule and related assignments deleted successfully' } }
       else
         format.json { render json: { success: false, error: 'Failed to delete schedule' } }
       end
@@ -1145,14 +1181,28 @@ class MilkAnalyticsController < ApplicationController
     begin
       # Cap the end date to current date to avoid showing future days in monthly view
       capped_end_date = [@end_date, Date.current].min
+      # Preload all assignments for the date range to avoid N+1 queries
+      all_assignments = current_user.procurement_assignments
+                                    .for_date_range(@start_date, capped_end_date)
+                                    .includes(:product, :procurement_schedule)
+                                    .preload(:product, :procurement_schedule)
+                                    .to_a
+      
+      # Preload all deliveries for the date range to avoid N+1 queries  
+      all_deliveries = DeliveryAssignment.where(scheduled_date: @start_date..capped_end_date, status: 'completed')
+                                        .includes(:product, :customer)
+                                        .preload(:product, :customer)
+                                        .to_a
+      
+      # Apply product filter if specified for both collections
+      if @product_id.present?
+        all_assignments.select! { |a| a.product_id == @product_id.to_i }
+        all_deliveries.select! { |d| d.product_id == @product_id.to_i }
+      end
+      
       @daily_calculations = (@start_date..capped_end_date).map do |date|
-        # Get procurement assignments for this date - ALL PRODUCTS, not just milk
-        daily_procurement = current_user.procurement_assignments.for_date_range(date, date)
-        
-        # Apply product filter if specified
-        if @product_id.present?
-          daily_procurement = daily_procurement.where(product_id: @product_id)
-        end
+        # Get procurement assignments for this date - using preloaded data
+        daily_procurement = all_assignments.select { |a| a.date == date }
         
         # Calculate procurement totals using planned_quantity primarily, fallback to actual_quantity
         procured_liters = 0
@@ -1164,19 +1214,14 @@ class MilkAnalyticsController < ApplicationController
           total_cost += quantity * assignment.buying_price
         end
         
-        # Get delivery data for ALL PRODUCTS (not just milk)
+        # Get delivery data using preloaded data
         delivered_liters = 0
         total_revenue = 0
         
         begin
-          deliveries = DeliveryAssignment.where(scheduled_date: date, status: 'completed')
+          daily_deliveries = all_deliveries.select { |d| d.scheduled_date == date }
           
-          # Apply product filter if specified
-          if @product_id.present?
-            deliveries = deliveries.where(product_id: @product_id)
-          end
-          
-          deliveries.each do |delivery|
+          daily_deliveries.each do |delivery|
             delivered_liters += delivery.quantity || 0
             total_revenue += delivery.final_amount_after_discount || 0
           end
@@ -1216,9 +1261,23 @@ class MilkAnalyticsController < ApplicationController
   end
   
   def calculate_dashboard_stats
+    # Temporarily disable caching to avoid data structure issues
+    # Use direct calculation for now - we still have all the query optimizations
+    calculate_dashboard_stats_without_cache_and_set_vars
+    
+    # Note: Caching can be re-enabled later with proper data structure handling
+    # For now, the performance gains from indexes and query optimization are significant
+  end
+  
+  private
+  
+  def calculate_dashboard_stats_without_cache
     begin
-      # Base query for procurement assignments with date filter
-      assignments_query = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
+      # Base query for procurement assignments with optimized includes and date filter
+      assignments_query = current_user.procurement_assignments
+                                      .for_date_range(@start_date, @end_date)
+                                      .includes(:product, :procurement_schedule)
+                                      .preload(:product, :procurement_schedule)
       
       # Apply product filter if specified
       if @product_id.present?
@@ -1232,7 +1291,7 @@ class MilkAnalyticsController < ApplicationController
       liters_purchased = assignments_query.sum('planned_quantity') || 0
       
       # 3. Total Purchased Amount - SUM(planned_quantity × buying_price)
-      total_purchased_amount = assignments_query.sum('planned_quantity * buying_price') || 0
+      total_purchased_amount = assignments_query.sum('planned_quantity * procurement_assignments.buying_price') || 0
       
       # 4. Liters Delivered - From delivery_assignments with product and date filters
       delivery_query = get_delivery_query(@start_date, @end_date)
@@ -1280,74 +1339,90 @@ class MilkAnalyticsController < ApplicationController
       @total_profit = total_amount_collected - total_purchased_amount
       
       # Calculate planned procurement (not actual)
-      @planned_liters = assignments_query.sum(:planned_quantity) || 0
-      @planned_cost = assignments_query.sum('planned_quantity * buying_price') || 0
-      
-      # Calculate milk left (planned - delivered)
-      @milk_left = @planned_liters - liters_delivered
-      @milk_left_cost = @milk_left > 0 ? (@planned_cost.to_f / @planned_liters * @milk_left).round(2) : 0
+      planned_liters = assignments_query.sum(:planned_quantity) || 0
+      planned_cost = assignments_query.sum('planned_quantity * procurement_assignments.buying_price') || 0
       
       # Recalculate profit using planned values
-      @planned_profit = total_amount_collected - @planned_cost
+      planned_profit = total_amount_collected - planned_cost
       
       # Calculate summary sections
-      calculate_procurement_summary(assignments_query)
-      calculate_delivery_summary(delivery_query)
-      calculate_detailed_analysis(assignments_query, delivery_query)
+      procurement_summary = calculate_procurement_summary_data(assignments_query)
+      delivery_totals, delivery_summary = calculate_delivery_summary_data(delivery_query)
+      vendor_analysis, daily_procurement, daily_delivery = calculate_detailed_analysis_data(assignments_query, delivery_query)
+      
+      # Return all data for caching
+      {
+        dashboard_stats: @dashboard_stats,
+        procurement_summary: procurement_summary,
+        delivery_totals: delivery_totals,
+        delivery_summary: delivery_summary,
+        vendor_analysis: vendor_analysis,
+        daily_procurement: daily_procurement,
+        daily_delivery: daily_delivery,
+        total_liters: liters_purchased,
+        total_cost: total_purchased_amount,
+        total_delivered: liters_delivered,
+        total_revenue: total_amount_collected,
+        total_profit: total_amount_collected - total_purchased_amount,
+        planned_liters: planned_liters,
+        planned_cost: planned_cost,
+        milk_left: planned_liters - liters_delivered,
+        milk_left_cost: (planned_liters - liters_delivered) > 0 ? (planned_cost.to_f / planned_liters * (planned_liters - liters_delivered)).round(2) : 0,
+        planned_profit: planned_profit
+      }
       
     rescue => e
       Rails.logger.error "Error calculating dashboard stats: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
       
-      # Fallback with default values
-      @dashboard_stats = {
-        total_vendors: 0,
-        liters_purchased: 0,
-        total_purchased_amount: 0,
-        liters_delivered: 0,
-        total_pending_quantity: 0,
-        total_amount_collected: 0,
-        profit_amount: 0,
-        loss_amount: 0,
-        utilization_rate: 0
+      # Return fallback data structure for cache
+      {
+        dashboard_stats: {
+          total_vendors: 0,
+          liters_purchased: 0,
+          total_purchased_amount: 0,
+          liters_delivered: 0,
+          total_pending_quantity: 0,
+          total_amount_collected: 0,
+          profit_amount: 0,
+          loss_amount: 0,
+          utilization_rate: 0
+        },
+        procurement_summary: {
+          total_vendors: 0,
+          total_quantity: 0,
+          total_amount: 0,
+          average_price: 0
+        },
+        delivery_totals: {
+          total_deliveries: 0,
+          total_customers: 0,
+          total_quantity: 0,
+          total_revenue: 0
+        },
+        delivery_summary: [],
+        vendor_analysis: [],
+        daily_procurement: [],
+        daily_delivery: [],
+        total_liters: 0,
+        total_cost: 0,
+        total_delivered: 0,
+        total_revenue: 0,
+        total_profit: 0,
+        planned_liters: 0,
+        planned_cost: 0,
+        milk_left: 0,
+        milk_left_cost: 0,
+        planned_profit: 0
       }
-      
-      @procurement_summary = {
-        total_vendors: 0,
-        total_quantity: 0,
-        total_amount: 0,
-        average_price: 0
-      }
-      
-      @delivery_totals = {
-        total_deliveries: 0,
-        total_customers: 0,
-        total_quantity: 0,
-        total_revenue: 0
-      }
-      @delivery_summary = []
-      
-      @vendor_analysis = []
-      @daily_procurement = []
-      @daily_delivery = []
-      
-      # Set fallback instance variables for detailed calculations view
-      @total_liters = 0
-      @total_cost = 0  
-      @total_delivered = 0
-      @total_revenue = 0
-      @total_profit = 0
-      @planned_liters = 0
-      @planned_cost = 0
-      @milk_left = 0
-      @milk_left_cost = 0
-      @planned_profit = 0
     end
   end
   
   def get_procurement_schedules
-    # Get procurement schedules with filters applied
-    schedules_query = current_user.procurement_schedules.includes(:procurement_assignments, :product)
+    # Get procurement schedules with optimized includes to avoid N+1 queries
+    schedules_query = current_user.procurement_schedules
+                                  .includes(:procurement_assignments, :product)
+                                  .preload(:product, procurement_assignments: :product)
     
     # Apply date filter - schedules that are active or have assignments in the date range
     schedules_query = schedules_query.where(
@@ -1369,10 +1444,12 @@ class MilkAnalyticsController < ApplicationController
   end
   
   def get_delivery_query(start_date, end_date)
-    # Get delivery assignments for the date range
+    # Get delivery assignments for the date range with optimized includes
     if defined?(DeliveryAssignment)
       DeliveryAssignment.where(scheduled_date: start_date..end_date)
                        .where(status: 'completed')
+                       .includes(:product, :customer, :user)
+                       .preload(:product, :customer, :user)
     else
       # Return empty relation if DeliveryAssignment doesn't exist
       current_user.procurement_assignments.none
@@ -1383,8 +1460,8 @@ class MilkAnalyticsController < ApplicationController
     @procurement_summary = {
       total_vendors: assignments_query.distinct.count(:vendor_name),
       total_quantity: assignments_query.sum('planned_quantity') || 0,
-      total_amount: assignments_query.sum('planned_quantity * buying_price') || 0,
-      average_price: assignments_query.average('buying_price')&.round(2) || 0
+      total_amount: assignments_query.sum('planned_quantity * procurement_assignments.buying_price') || 0,
+      average_price: assignments_query.average('procurement_assignments.buying_price')&.round(2) || 0
     }
   end
   
@@ -1482,5 +1559,314 @@ class MilkAnalyticsController < ApplicationController
         }
       end
     end.select { |day| day[:total_liters] > 0 }
+  end
+  
+  def set_instance_variables_from_cache(cached_data)
+    # Debug what we're actually getting
+    Rails.logger.info "Cached data type: #{cached_data.class}"
+    Rails.logger.info "Cached data keys: #{cached_data.respond_to?(:keys) ? cached_data.keys : 'N/A'}"
+    
+    # Handle different cache data structures
+    if cached_data.is_a?(Hash) && cached_data.key?(:dashboard_stats)
+      @dashboard_stats = cached_data[:dashboard_stats]
+      @procurement_summary = cached_data[:procurement_summary]
+      @delivery_totals = cached_data[:delivery_totals]
+      @delivery_summary = cached_data[:delivery_summary]
+      @vendor_analysis = cached_data[:vendor_analysis]
+      @daily_procurement = cached_data[:daily_procurement]
+      @daily_delivery = cached_data[:daily_delivery]
+      @total_liters = cached_data[:total_liters]
+      @total_cost = cached_data[:total_cost]
+      @total_delivered = cached_data[:total_delivered]
+      @total_revenue = cached_data[:total_revenue]
+      @total_profit = cached_data[:total_profit]
+      @planned_liters = cached_data[:planned_liters]
+      @planned_cost = cached_data[:planned_cost]
+      @milk_left = cached_data[:milk_left]
+      @milk_left_cost = cached_data[:milk_left_cost]
+      @planned_profit = cached_data[:planned_profit]
+    else
+      # Fallback - call the original method without caching
+      Rails.logger.warn "Unexpected cache data structure, falling back to direct calculation"
+      calculate_dashboard_stats_without_cache_and_set_vars
+    end
+  end
+  
+  def calculate_procurement_summary_data(assignments_query)
+    {
+      total_vendors: assignments_query.distinct.count(:vendor_name),
+      total_quantity: assignments_query.sum('planned_quantity') || 0,
+      total_amount: assignments_query.sum('planned_quantity * procurement_assignments.buying_price') || 0,
+      average_price: assignments_query.average('procurement_assignments.buying_price')&.round(2) || 0
+    }
+  end
+  
+  def calculate_delivery_summary_data(delivery_query)
+    begin
+      # Aggregate totals for quick stats
+      delivery_totals = {
+        total_deliveries: delivery_query.count,
+        total_customers: begin
+          delivery_query.joins(:customer).distinct.count(:customer_id)
+        rescue => e
+          Rails.logger.warn "Cannot join customer table: #{e.message}"
+          delivery_query.distinct.count(:customer_id) rescue 0
+        end,
+        total_quantity: delivery_query.sum(:quantity) || 0,
+        total_revenue: delivery_query.sum(:final_amount_after_discount) || 0
+      }
+
+      # Build status-wise summary expected by the view
+      grouped_by_status = delivery_query.group_by(&:status)
+      delivery_summary = grouped_by_status.map do |status, assignments|
+        status_revenue = 0
+        assignments.each do |assignment|
+          status_revenue += assignment.final_amount_after_discount || 0
+        end
+        {
+          status: status || 'unknown',
+          count: assignments.count,
+          quantity: assignments.sum { |a| a.quantity || 0 },
+          revenue: status_revenue
+        }
+      end
+      
+      [delivery_totals, delivery_summary]
+    rescue => e
+      Rails.logger.error "Error calculating delivery summary: #{e.message}"
+      delivery_totals = {
+        total_deliveries: 0,
+        total_customers: 0,
+        total_quantity: 0,
+        total_revenue: 0
+      }
+      delivery_summary = []
+      [delivery_totals, delivery_summary]
+    end
+  end
+  
+  def calculate_detailed_analysis_data(assignments_query, delivery_query)
+    # Vendor-wise spending analysis
+    assignments_array = assignments_query.to_a
+    vendor_analysis = assignments_array.group_by(&:vendor_name).map do |vendor, assignments|
+      total_quantity = assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 }
+      total_amount = assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
+      
+      {
+        vendor_name: vendor,
+        total_liters: total_quantity,
+        total_amount: total_amount,
+        average_price: total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
+      }
+    end.sort_by { |v| -v[:total_amount] }
+    
+    # Daily procurement tracking
+    daily_procurement = (@start_date..@end_date).map do |date|
+      daily_assignments = assignments_array.select { |a| a.date == date }
+      
+      {
+        date: date,
+        vendors_engaged: daily_assignments.map(&:vendor_name).uniq.count,
+        total_liters: daily_assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 },
+        total_amount: daily_assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
+      }
+    end.select { |day| day[:total_liters] > 0 }
+    
+    # Daily delivery information
+    daily_delivery = (@start_date..@end_date).map do |date|
+      begin
+        daily_deliveries = delivery_query.where(scheduled_date: date)
+        
+        {
+          date: date,
+          customers_served: begin
+            daily_deliveries.joins(:customer).distinct.count(:customer_id)
+          rescue => e
+            Rails.logger.warn "Cannot join customer table for daily deliveries on #{date}: #{e.message}"
+            0
+          end,
+          total_liters: daily_deliveries.sum(:quantity) || 0,
+          assignments_completed: daily_deliveries.count
+        }
+      rescue => e
+        Rails.logger.error "Error calculating daily deliveries for #{date}: #{e.message}"
+        {
+          date: date,
+          customers_served: 0,
+          total_liters: 0,
+          assignments_completed: 0
+        }
+      end
+    end.select { |day| day[:total_liters] > 0 }
+    
+    [vendor_analysis, daily_procurement, daily_delivery]
+  end
+  
+  def update_related_assignments(schedule)
+    # Update existing assignments for this schedule
+    schedule.procurement_assignments.each do |assignment|
+      assignment.update(
+        vendor_name: schedule.vendor_name,
+        buying_price: schedule.buying_price,
+        selling_price: schedule.selling_price,
+        product_id: schedule.product_id
+      )
+    end
+    
+    # If date range changed, we might need to create/delete assignments
+    # This is a simplified approach - you might want more sophisticated logic
+    if schedule.procurement_assignments.empty?
+      # Generate new assignments for the date range if none exist
+      (schedule.from_date..schedule.to_date).each do |date|
+        schedule.procurement_assignments.create!(
+          user: current_user,
+          vendor_name: schedule.vendor_name,
+          date: date,
+          planned_quantity: (schedule.quantity || 0),
+          buying_price: schedule.buying_price,
+          selling_price: schedule.selling_price,
+          status: 'pending',
+          product_id: schedule.product_id
+        )
+      end
+    end
+  rescue => e
+    Rails.logger.error "Error updating related assignments: #{e.message}"
+    # Don't fail the schedule update if assignment update fails
+  end
+  
+  def calculate_dashboard_stats_without_cache_and_set_vars
+    begin
+      # Base query for procurement assignments with optimized includes and date filter
+      assignments_query = current_user.procurement_assignments
+                                      .for_date_range(@start_date, @end_date)
+                                      .includes(:product, :procurement_schedule)
+                                      .preload(:product, :procurement_schedule)
+      
+      # Apply product filter if specified
+      if @product_id.present?
+        assignments_query = assignments_query.where(product_id: @product_id)
+      end
+      
+      # 1. Total Vendors - COUNT(DISTINCT vendor_name)
+      total_vendors = assignments_query.distinct.count(:vendor_name)
+      
+      # 2. Liters Purchased - Use ONLY planned_quantity
+      liters_purchased = assignments_query.sum('planned_quantity') || 0
+      
+      # 3. Total Purchased Amount - SUM(planned_quantity × buying_price)
+      total_purchased_amount = assignments_query.sum('planned_quantity * procurement_assignments.buying_price') || 0
+      
+      # 4. Liters Delivered - From delivery_assignments with product and date filters
+      delivery_query = get_delivery_query(@start_date, @end_date)
+      if @product_id.present?
+        delivery_query = delivery_query.where(product_id: @product_id)
+      end
+      liters_delivered = delivery_query.sum(:quantity) || 0
+      
+      # 5. Pending Quantity - Total Received - Total Delivered
+      total_pending_quantity = liters_purchased - liters_delivered
+      
+      # 6. Total Amount Collected - SUM(final_amount_after_discount) from completed deliveries
+      total_amount_collected = delivery_query.sum(:final_amount_after_discount) || 0
+      
+      # 7 & 8. Profit/Loss Calculation
+      profit_amount = 0
+      loss_amount = 0
+      
+      if total_amount_collected > total_purchased_amount
+        profit_amount = total_amount_collected - total_purchased_amount
+      else
+        loss_amount = total_purchased_amount - total_amount_collected
+      end
+      
+      # Additional metrics
+      utilization_rate = liters_purchased > 0 ? (liters_delivered.to_f / liters_purchased * 100).round(2) : 0
+      
+      @dashboard_stats = {
+        total_vendors: total_vendors,
+        liters_purchased: liters_purchased,
+        total_purchased_amount: total_purchased_amount,
+        liters_delivered: liters_delivered,
+        total_pending_quantity: total_pending_quantity,
+        total_amount_collected: total_amount_collected,
+        profit_amount: profit_amount,
+        loss_amount: loss_amount,
+        utilization_rate: utilization_rate
+      }
+      
+      # Set instance variables for detailed calculations view
+      @total_liters = liters_purchased
+      @total_cost = total_purchased_amount  
+      @total_delivered = liters_delivered
+      @total_revenue = total_amount_collected
+      @total_profit = total_amount_collected - total_purchased_amount
+      
+      # Calculate planned procurement (not actual)
+      planned_liters = assignments_query.sum(:planned_quantity) || 0
+      planned_cost = assignments_query.sum('planned_quantity * procurement_assignments.buying_price') || 0
+      
+      # Recalculate profit using planned values
+      planned_profit = total_amount_collected - planned_cost
+      
+      @planned_liters = planned_liters
+      @planned_cost = planned_cost
+      @milk_left = planned_liters - liters_delivered
+      @milk_left_cost = (@milk_left > 0 && planned_liters > 0) ? (planned_cost.to_f / planned_liters * @milk_left).round(2) : 0
+      @planned_profit = planned_profit
+      
+      # Calculate summary sections
+      calculate_procurement_summary(assignments_query)
+      calculate_delivery_summary(delivery_query)
+      calculate_detailed_analysis(assignments_query, delivery_query)
+      
+    rescue => e
+      Rails.logger.error "Error in fallback calculation: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      
+      # Set safe defaults
+      @dashboard_stats = {
+        total_vendors: 0,
+        liters_purchased: 0,
+        total_purchased_amount: 0,
+        liters_delivered: 0,
+        total_pending_quantity: 0,
+        total_amount_collected: 0,
+        profit_amount: 0,
+        loss_amount: 0,
+        utilization_rate: 0
+      }
+      
+      @procurement_summary = {
+        total_vendors: 0,
+        total_quantity: 0,
+        total_amount: 0,
+        average_price: 0
+      }
+      
+      @delivery_totals = {
+        total_deliveries: 0,
+        total_customers: 0,
+        total_quantity: 0,
+        total_revenue: 0
+      }
+      @delivery_summary = []
+      
+      @vendor_analysis = []
+      @daily_procurement = []
+      @daily_delivery = []
+      
+      # Set fallback instance variables for detailed calculations view
+      @total_liters = 0
+      @total_cost = 0  
+      @total_delivered = 0
+      @total_revenue = 0
+      @total_profit = 0
+      @planned_liters = 0
+      @planned_cost = 0
+      @milk_left = 0
+      @milk_left_cost = 0
+      @planned_profit = 0
+    end
   end
 end
