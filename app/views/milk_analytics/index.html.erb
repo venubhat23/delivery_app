@@ -405,7 +405,7 @@
                           </td>
                           <td>
                             <small>
-                              <%= schedule.from_date.strftime('%d %b') %> - <%= schedule.to_date.strftime('%d %b %Y') %>
+                              <%= schedule.from_date.strftime('%d.%m.%Y') %> - <%= schedule.to_date.strftime('%d.%m.%Y') %>
                               <br><span class="text-muted">(<%= schedule.duration_in_days %> days)</span>
                             </small>
                           </td>
@@ -433,11 +433,17 @@
                             </div>
                           </td>
                           <td>
-                            <div class="btn-group" role="group">
-                              <button type="button" class="btn btn-outline-primary btn-sm" onclick="editSchedule(<%= schedule.id %>)" title="Edit">
+                            <div class="btn-group" role="group" style="position: relative; z-index: 10;">
+                              <button type="button" class="btn btn-outline-primary btn-sm schedule-edit-btn" 
+                                      data-schedule-id="<%= schedule.id %>" 
+                                      title="Edit"
+                                      style="cursor: pointer;">
                                 <i class="fas fa-edit"></i>
                               </button>
-                              <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSchedule(<%= schedule.id %>)" title="Delete">
+                              <button type="button" class="btn btn-outline-danger btn-sm schedule-delete-btn" 
+                                      data-schedule-id="<%= schedule.id %>" 
+                                      title="Delete"
+                                      style="cursor: pointer;">
                                 <i class="fas fa-trash"></i>
                               </button>
                             </div>
@@ -1616,8 +1622,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize product search functionality
   initializeProductSearch();
   
-  // Initialize milk analytics product search
-  initializeMilkProductSearch();
+  // Initialize milk analytics product search (moved to end after function definition)
+  setTimeout(function() {
+    if (typeof initializeMilkProductSearch === 'function') {
+      initializeMilkProductSearch();
+    }
+  }, 100);
 });
 
 function toggleCustomDates() {
@@ -3006,11 +3016,122 @@ document.addEventListener('DOMContentLoaded', function() {
 // Schedule Management Functions
 let currentEditingScheduleId = null;
 
+// Add event listeners for schedule buttons when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Setting up schedule button event listeners...');
+  
+  // Wait a bit for the page to fully render
+  setTimeout(function() {
+    console.log('Setting up procurement schedule button handlers...');
+    
+    // Handle edit buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.schedule-edit-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const button = e.target.closest('.schedule-edit-btn');
+        const scheduleId = button.getAttribute('data-schedule-id');
+        console.log('Edit button clicked for schedule ID:', scheduleId);
+        
+        if (!scheduleId) {
+          console.error('No schedule ID found on edit button');
+          showAlert('danger', 'Schedule ID not found');
+          return false;
+        }
+        
+        editSchedule(parseInt(scheduleId));
+        return false;
+      }
+    });
+    
+    // Handle delete buttons  
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.schedule-delete-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const button = e.target.closest('.schedule-delete-btn');
+        const scheduleId = button.getAttribute('data-schedule-id');
+        console.log('Delete button clicked for schedule ID:', scheduleId);
+        
+        if (!scheduleId) {
+          console.error('No schedule ID found on delete button');
+          showAlert('danger', 'Schedule ID not found');
+          return false;
+        }
+        
+        deleteSchedule(parseInt(scheduleId));
+        return false;
+      }
+    });
+    
+    // Also try direct button selection as backup
+    const editButtons = document.querySelectorAll('.schedule-edit-btn');
+    const deleteButtons = document.querySelectorAll('.schedule-delete-btn');
+    
+    console.log(`Found ${editButtons.length} edit buttons and ${deleteButtons.length} delete buttons`);
+    
+    editButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const scheduleId = this.getAttribute('data-schedule-id');
+        console.log('Direct edit button clicked for schedule ID:', scheduleId);
+        editSchedule(parseInt(scheduleId));
+      });
+    });
+    
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const scheduleId = this.getAttribute('data-schedule-id');
+        console.log('Direct delete button clicked for schedule ID:', scheduleId);
+        deleteSchedule(parseInt(scheduleId));
+      });
+    });
+    
+    console.log('Schedule button event listeners set up successfully');
+  }, 500);
+});
+
+// Add CSS to ensure buttons are clickable
+const scheduleButtonStyles = document.createElement('style');
+scheduleButtonStyles.textContent = `
+  .schedule-edit-btn, 
+  .schedule-delete-btn {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 100 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    border: 1px solid !important;
+    padding: 0.375rem 0.75rem !important;
+    margin: 0.125rem !important;
+  }
+  
+  .schedule-edit-btn:hover,
+  .schedule-delete-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .btn-group {
+    position: relative !important;
+    z-index: 100 !important;
+  }
+`;
+document.head.appendChild(scheduleButtonStyles);
+
 function openScheduleModal(scheduleId = null) {
   currentEditingScheduleId = scheduleId;
   const modal = document.getElementById('scheduleModal');
   const modalTitle = document.getElementById('scheduleModalLabel');
   const form = document.getElementById('scheduleForm');
+  
+  if (!modal || !modalTitle || !form) {
+    console.error('Modal elements not found');
+    showAlert('danger', 'Error: Modal not found');
+    return;
+  }
   
   if (scheduleId) {
     modalTitle.textContent = 'Edit Procurement Schedule';
@@ -3022,35 +3143,70 @@ function openScheduleModal(scheduleId = null) {
     document.getElementById('schedule_status').value = 'active';
     document.getElementById('schedule_unit').value = 'liters';
   }
+  
+  // Show modal using Bootstrap
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
 }
 
 function loadScheduleData(scheduleId) {
   // Fetch schedule data from the server
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  if (!csrfToken) {
+    console.error('CSRF token not found');
+    showAlert('danger', 'CSRF token not found');
+    return;
+  }
+
   fetch(`/milk-supply-analytics/get_schedule?schedule_id=${scheduleId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      'X-CSRF-Token': csrfToken.content
     }
   })
   .then(response => response.json())
   .then(data => {
     if (data.success && data.schedule) {
       const schedule = data.schedule;
+      console.log('Loading schedule data:', schedule);
       
-      // Populate form fields with schedule data
-      document.getElementById('schedule_vendor_name').value = schedule.vendor_name || '';
-      document.getElementById('schedule_product_id').value = schedule.product_id || '';
-      document.getElementById('schedule_from_date').value = schedule.from_date || '';
-      document.getElementById('schedule_to_date').value = schedule.to_date || '';
-      document.getElementById('schedule_quantity').value = schedule.quantity || '';
-      document.getElementById('schedule_buying_price').value = schedule.buying_price || '';
-      document.getElementById('schedule_selling_price').value = schedule.selling_price || '';
-      document.getElementById('schedule_status').value = schedule.status || 'active';
-      document.getElementById('schedule_unit').value = schedule.unit || 'liters';
-      document.getElementById('schedule_notes').value = schedule.notes || '';
+      // Populate form fields with schedule data - with error handling
+      try {
+        const vendorField = document.getElementById('schedule_vendor_name');
+        const productField = document.getElementById('schedule_product_id');
+        const fromDateField = document.getElementById('schedule_from_date');
+        const toDateField = document.getElementById('schedule_to_date');
+        const quantityField = document.getElementById('schedule_quantity');
+        const buyingPriceField = document.getElementById('schedule_buying_price');
+        const sellingPriceField = document.getElementById('schedule_selling_price');
+        const statusField = document.getElementById('schedule_status');
+        const unitField = document.getElementById('schedule_unit');
+        const notesField = document.getElementById('schedule_notes');
+        
+        if (!vendorField || !productField || !fromDateField || !toDateField) {
+          throw new Error('Required form fields not found');
+        }
+        
+        vendorField.value = schedule.vendor_name || '';
+        productField.value = schedule.product_id || '';
+        fromDateField.value = schedule.from_date || '';
+        toDateField.value = schedule.to_date || '';
+        quantityField.value = schedule.quantity || '';
+        buyingPriceField.value = schedule.buying_price || '';
+        sellingPriceField.value = schedule.selling_price || '';
+        statusField.value = schedule.status || 'active';
+        unitField.value = schedule.unit || 'liters';
+        if (notesField) notesField.value = schedule.notes || '';
+        
+        console.log('Form fields populated successfully');
+      } catch (error) {
+        console.error('Error populating form fields:', error);
+        showAlert('danger', 'Error loading form data: ' + error.message);
+      }
       
     } else {
+      console.error('Failed to load schedule data:', data);
       showAlert('danger', data.error || 'Failed to load schedule data');
     }
   })
@@ -3088,9 +3244,16 @@ function saveSchedule() {
       const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleModal'));
       modal.hide();
       
-      // Refresh the schedules table instead of full page reload
+      // Refresh the schedules table and calendar instead of full page reload
       setTimeout(() => {
-        location.reload();
+        // Refresh calendar if we're on the calendar tab
+        const calendarTab = document.getElementById('calendar-tab');
+        if (calendarTab && calendarTab.classList.contains('active')) {
+          console.log('Refreshing calendar after save');
+          loadCalendarData();
+        } else {
+          location.reload();
+        }
       }, 1000);
     } else {
       showAlert('danger', data.errors ? data.errors.join(', ') : data.error);
@@ -3103,19 +3266,54 @@ function saveSchedule() {
 }
 
 function editSchedule(scheduleId) {
-  openScheduleModal(scheduleId);
+  console.log('editSchedule called with ID:', scheduleId);
+  try {
+    if (!scheduleId || isNaN(scheduleId)) {
+      throw new Error('Invalid schedule ID provided');
+    }
+    
+    // Check if modal elements exist
+    const modal = document.getElementById('scheduleModal');
+    const form = document.getElementById('scheduleForm');
+    
+    if (!modal) {
+      throw new Error('Schedule modal not found in DOM');
+    }
+    if (!form) {
+      throw new Error('Schedule form not found in DOM');
+    }
+    
+    console.log('Opening schedule modal for editing...');
+    openScheduleModal(scheduleId);
+  } catch (error) {
+    console.error('Error in editSchedule:', error);
+    showAlert('danger', 'Error opening edit modal: ' + error.message);
+  }
 }
 
 function deleteSchedule(scheduleId) {
-  if (!confirm('Are you sure you want to delete this schedule? This will also delete all related procurement assignments.')) {
-    return;
-  }
+  console.log('deleteSchedule called with ID:', scheduleId);
+  try {
+    if (!scheduleId || isNaN(scheduleId)) {
+      throw new Error('Invalid schedule ID provided');
+    }
+    
+    if (!confirm('Are you sure you want to delete this schedule? This will also delete all related procurement assignments.')) {
+      return;
+    }
+    
+    console.log('Sending delete request for schedule ID:', scheduleId);
   
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  if (!csrfToken) {
+    throw new Error('CSRF token not found');
+  }
+
   fetch('/milk-supply-analytics/destroy_schedule', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      'X-CSRF-Token': csrfToken.content
     },
     body: JSON.stringify({ schedule_id: scheduleId })
   })
@@ -3143,6 +3341,15 @@ function deleteSchedule(scheduleId) {
           }
         }, 300);
       }
+      
+      // Refresh calendar if we're on the calendar tab
+      const calendarTab = document.getElementById('calendar-tab');
+      if (calendarTab && calendarTab.classList.contains('active')) {
+        setTimeout(() => {
+          console.log('Refreshing calendar after deletion');
+          loadCalendarData();
+        }, 500);
+      }
     } else {
       showAlert('danger', data.error);
     }
@@ -3151,6 +3358,11 @@ function deleteSchedule(scheduleId) {
     console.error('Error:', error);
     showAlert('danger', 'An error occurred while deleting the schedule');
   });
+  
+  } catch (error) {
+    console.error('Error in deleteSchedule:', error);
+    showAlert('danger', 'Error deleting schedule: ' + error.message);
+  }
 }
 
 function showAlert(type, message) {

@@ -16,16 +16,20 @@ class DeliveryReviewController < ApplicationController
   end
 
   def data
-    # Apply filters and return data as JSON
-    @deliveries = filtered_deliveries.limit(1000) # Limit for performance
-    @summary = calculate_summary
+    # Apply filters and get total count first
+    all_filtered_deliveries = filtered_deliveries
+    total_count = all_filtered_deliveries.count
     
+    # Then limit for performance on the actual display
+    @deliveries = all_filtered_deliveries.limit(1000)
+    @summary = calculate_summary(all_filtered_deliveries)
     respond_to do |format|
       format.json { 
         render json: { 
           deliveries: deliveries_json,
           summary: @summary,
-          has_more: @deliveries.count >= 1000
+          has_more: total_count > 1000,
+          total_count: total_count
         } 
       }
       format.html { render partial: 'delivery_table' }
@@ -37,16 +41,24 @@ class DeliveryReviewController < ApplicationController
     
     csv_data = CSV.generate(headers: true) do |csv|
       csv << [
-        'Date', 'Customer Name', 'Product', 'Quantity', 'Amount', 'Status', 'Delivery Person'
+        'Date', 'Customer Name', 'Product', 'Quantity', 'Amount', 'Product Cost', 'Status', 'Delivery Person'
       ]
 
       @deliveries.find_each do |delivery|
+        # Calculate proportional amount for export
+        base_rate_per_liter = 200.0
+        proportional_amount = (delivery.quantity.to_f * base_rate_per_liter).round(2)
+        
+        # Calculate product cost: quantity × proportional_amount
+        product_cost = (delivery.quantity.to_f * proportional_amount).round(2)
+        
         csv << [
-          delivery.scheduled_date.strftime('%b %d, %Y'),
+          delivery.scheduled_date.strftime('%d.%m.%Y'),
           delivery.customer&.name,
           delivery.product&.name,
           "#{delivery.quantity} #{delivery.unit}",
-          delivery.final_amount_after_discount.to_f,
+          proportional_amount,
+          product_cost,
           delivery.status,
           delivery.delivery_person&.name || 'Not Assigned'
         ]
@@ -54,7 +66,7 @@ class DeliveryReviewController < ApplicationController
     end
 
     send_data csv_data,
-              filename: "delivery_review_#{Date.current.strftime('%Y%m%d')}.csv",
+              filename: "delivery_review_#{Date.current.strftime('%d%m%Y')}.csv",
               type: 'text/csv',
               disposition: 'attachment'
   end
@@ -146,8 +158,8 @@ class DeliveryReviewController < ApplicationController
     when 'custom'
       if params[:start_date].present? && params[:end_date].present?
         begin
-          start_date = Date.parse(params[:start_date])
-          end_date = Date.parse(params[:end_date])
+          start_date = Date.strptime(params[:start_date], '%d.%m.%Y') rescue Date.parse(params[:start_date])
+          end_date = Date.strptime(params[:end_date], '%d.%m.%Y') rescue Date.parse(params[:end_date])
           scope.where(scheduled_date: start_date..end_date)
         rescue ArgumentError
           scope.where(scheduled_date: Date.current.beginning_of_month..Date.current.end_of_month)
@@ -160,36 +172,61 @@ class DeliveryReviewController < ApplicationController
     end
   end
 
-  def calculate_summary
-    total_deliveries = @deliveries.count
-    total_customers = @deliveries.distinct.count(:customer_id)
-    total_amount = @deliveries.sum(:final_amount_after_discount)
-    completed_deliveries = @deliveries.where(status: 'completed').count
+  def calculate_summary(deliveries = @deliveries)
+    # Use SQL aggregation to avoid N+1 queries
+    base_rate_per_liter = 200.0
+    
+    # Remove ordering from the deliveries query for summary calculations to avoid PostgreSQL GROUP BY errors
+    summary_query = deliveries.reorder('')
+    
+    # Calculate totals using SQL
+    summary_data = summary_query.group(:status).count
+    total_deliveries = summary_data.values.sum
+    total_customers = summary_query.distinct.count(:customer_id)
+    
+    # Calculate total product cost using SQL: sum(quantity * quantity * base_rate_per_liter)
+    # This is equivalent to: sum(quantity × proportional_amount) where proportional_amount = quantity × base_rate_per_liter
+    total_amount = summary_query.sum("quantity * final_amount_after_discount")
+    
+    completed_deliveries = summary_data['completed'] || 0
+    pending_deliveries = summary_data['pending'] || 0
+    cancelled_deliveries = summary_data['cancelled'] || 0
+    in_progress_deliveries = summary_data['in_progress'] || 0
     
     completion_rate = total_deliveries > 0 ? ((completed_deliveries.to_f / total_deliveries) * 100).round(1) : 0
     
     {
       total_deliveries: total_deliveries,
       total_customers: total_customers,
-      total_amount: total_amount,
+      total_amount: total_amount.round(2),
       completion_rate: completion_rate,
       completed_deliveries: completed_deliveries,
-      pending_deliveries: @deliveries.where(status: 'pending').count,
-      cancelled_deliveries: @deliveries.where(status: 'cancelled').count
+      pending_deliveries: pending_deliveries,
+      cancelled_deliveries: cancelled_deliveries,
+      in_progress_deliveries: in_progress_deliveries
     }
   end
 
   def deliveries_json
     @deliveries.map do |delivery|
+      # Calculate proportional amount: if 1L = ₹200, then 0.5L = ₹100
+      base_rate_per_liter = 200.0
+      proportional_amount = (delivery.quantity.to_f * delivery.final_amount_after_discount.to_i).round(2)
+      
+      # Calculate product cost: quantity × proportional_amount
+      product_cost = (delivery.quantity.to_f * delivery.final_amount_after_discount.to_i).round(2)
+      
       {
         id: delivery.id,
-        date: delivery.scheduled_date.strftime('%b %d, %Y'),
+        date: delivery.scheduled_date.strftime('%d.%m.%Y'),
         customer_name: delivery.customer.name,
         customer_phone: delivery.customer.phone_number,
         customer_member_id: delivery.customer.member_id,
         product: delivery.product.name,
         quantity: "#{delivery.quantity} #{delivery.unit}",
-        amount: delivery.final_amount_after_discount || 0,
+        amount: delivery.final_amount_after_discount.to_i,
+        product_cost: product_cost,
+        original_amount: delivery.final_amount_after_discount || 0,
         status: delivery.status,
         delivery_person: delivery.delivery_person&.name || 'Not Assigned',
         special_instructions: delivery.special_instructions

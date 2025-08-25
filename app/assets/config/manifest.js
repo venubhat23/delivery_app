@@ -3,3 +3,4 @@
 //= link application.scss
 //= link application.js
 //= link application.css
+//= link date_helpers.js

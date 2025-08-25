@@ -1,11 +1,18 @@
 <% if @deliveries.present? %>
   <% @deliveries.each do |d| %>
+    <% 
+      # Calculate proportional amount and product cost
+      base_rate_per_liter = 200.0
+      proportional_amount = (d.quantity.to_f * base_rate_per_liter).round(2)
+      product_cost = (d.quantity.to_f * proportional_amount).round(2)
+    %>
     <tr>
       <td><%= d.scheduled_date.strftime('%b %d, %Y') %></td>
       <td><%= d.customer&.name %></td>
       <td><%= d.product&.name %></td>
       <td><%= "#{d.quantity} #{d.unit}" %></td>
-      <td><%= number_to_currency(d.final_amount_after_discount.to_f, unit: '₹') %></td>
+      <td><%= number_to_currency(proportional_amount, unit: '₹') %></td>
+      <td class="text-info fw-bold"><%= number_to_currency(product_cost, unit: '₹') %></td>
       <td>
         <% cls = case d.status
           when 'completed' then 'badge bg-success'
@@ -19,5 +26,5 @@
     </tr>
   <% end %>
 <% else %>
-  <tr><td colspan="7" class="text-center text-muted">No records found</td></tr>
+  <tr><td colspan="8" class="text-center text-muted">No records found</td></tr>
 <% end %>

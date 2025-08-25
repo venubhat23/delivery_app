@@ -31,5 +31,11 @@ module DeliveryManagement
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+    
+    # Set default date format to DD/MM/YYYY
+    config.time_zone = 'UTC' # or your preferred timezone
+    
+    # Configure date parsing to accept DD/MM/YYYY format
+    config.beginning_of_week = :monday
   end
 end

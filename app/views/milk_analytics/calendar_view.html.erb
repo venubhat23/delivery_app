@@ -95,13 +95,13 @@
             <% case params[:view_type] || 'month' %>
             <% when 'week' %>
               <i class="fas fa-calendar-week text-primary me-2"></i>
-              Week of <%= @start_date.strftime('%B %d') %> - <%= @end_date.strftime('%B %d, %Y') %>
+              Week of <%= @start_date.strftime('%d.%m.%Y') %> - <%= @end_date.strftime('%d.%m.%Y') %>
             <% when 'today' %>
               <i class="fas fa-calendar-day text-primary me-2"></i>
-              <%= Date.current.strftime('%A, %B %d, %Y') %>
+              <%= Date.current.strftime('%A, %d.%m.%Y') %>
             <% when 'custom' %>
               <i class="fas fa-calendar-range text-primary me-2"></i>
-              <%= @start_date.strftime('%B %d, %Y') %> - <%= @end_date.strftime('%B %d, %Y') %>
+              <%= @start_date.strftime('%d.%m.%Y') %> - <%= @end_date.strftime('%d.%m.%Y') %>
             <% else %>
               <i class="fas fa-calendar-month text-primary me-2"></i>
               <%= @date.strftime('%B %Y') %>

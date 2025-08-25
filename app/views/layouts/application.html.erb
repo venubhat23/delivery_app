@@ -211,6 +211,95 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <%= javascript_include_tag "sidebar", "data-turbo-track": "reload" %>
     
+    <script>
+    // Inline date helpers for DD.MM.YYYY format
+    window.DateHelpers = {
+      formatDate: function(date) {
+        if (!date) return '';
+        if (typeof date === 'string') date = new Date(date);
+        if (!(date instanceof Date) || isNaN(date.getTime())) return '';
+        
+        var day = date.getDate().toString().padStart(2, '0');
+        var month = (date.getMonth() + 1).toString().padStart(2, '0');
+        var year = date.getFullYear();
+        return day + '.' + month + '.' + year;
+      },
+      
+      parseDate: function(dateString) {
+        if (!dateString) return null;
+        var parts = dateString.split('.');
+        if (parts.length !== 3) return null;
+        var day = parseInt(parts[0], 10);
+        var month = parseInt(parts[1], 10) - 1;
+        var year = parseInt(parts[2], 10);
+        return new Date(year, month, day);
+      },
+      
+      toInputFormat: function(dateString) {
+        if (!dateString) return '';
+        var parts = dateString.split('.');
+        if (parts.length !== 3) return '';
+        var day = parts[0].padStart(2, '0');
+        var month = parts[1].padStart(2, '0');
+        var year = parts[2];
+        return year + '-' + month + '-' + day;
+      },
+      
+      fromInputFormat: function(inputDate) {
+        if (!inputDate) return '';
+        var date = new Date(inputDate);
+        return this.formatDate(date);
+      },
+      
+      formatDateTime: function(date) {
+        if (!date) return '';
+        if (typeof date === 'string') date = new Date(date);
+        if (!(date instanceof Date) || isNaN(date.getTime())) return '';
+        
+        var dateStr = this.formatDate(date);
+        var hours = date.getHours().toString().padStart(2, '0');
+        var minutes = date.getMinutes().toString().padStart(2, '0');
+        return dateStr + ' ' + hours + ':' + minutes;
+      }
+    };
+    
+    // Legacy support for existing code
+    window.formatDate = window.DateHelpers.formatDate;
+    window.parseDate = window.DateHelpers.parseDate;
+    
+    // Configure Flatpickr date picker for DD.MM.YYYY format
+    window.flatpickrConfig = {
+      dateFormat: "d.m.Y",
+      altInput: true,
+      altFormat: "d.m.Y",
+      allowInput: true,
+      locale: {
+        firstDayOfWeek: 1 // Monday
+      }
+    };
+    
+    // Auto-initialize date pickers when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize all date inputs with DD.MM.YYYY format
+      var dateInputs = document.querySelectorAll('input[type="date"]');
+      dateInputs.forEach(function(input) {
+        if (!input.classList.contains('flatpickr-initialized')) {
+          flatpickr(input, window.flatpickrConfig);
+          input.classList.add('flatpickr-initialized');
+        }
+      });
+      
+      // Initialize inputs with date class
+      var dateClasses = document.querySelectorAll('.date-picker, .date-input');
+      dateClasses.forEach(function(input) {
+        if (!input.classList.contains('flatpickr-initialized')) {
+          flatpickr(input, window.flatpickrConfig);
+          input.classList.add('flatpickr-initialized');
+        }
+      });
+    });
+    </script>
+    
     <!-- Enhanced Production-Ready Sidebar Styles -->
     <style>
       :root {

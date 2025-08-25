@@ -29,11 +29,11 @@
 
         <div class="col-md-2 d-none" id="customStartWrap">
           <label class="form-label">Start Date</label>
-          <input type="date" id="startDate" class="form-control" />
+          <input type="date" id="startDate" class="form-control date-input" data-format="DD, MMM YYYY" />
         </div>
         <div class="col-md-2 d-none" id="customEndWrap">
           <label class="form-label">End Date</label>
-          <input type="date" id="endDate" class="form-control" />
+          <input type="date" id="endDate" class="form-control date-input" data-format="DD, MMM YYYY" />
         </div>
 
         <div class="col-md-3">
@@ -130,13 +130,14 @@
               <th scope="col">Product</th>
               <th scope="col">Quantity</th>
               <th scope="col">Amount</th>
+              <th scope="col">Product Cost</th>
               <th scope="col">Status</th>
               <th scope="col">Delivery Person</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody id="deliveryTableBody">
-            <tr><td colspan="8" class="text-center text-muted">Use filters to load data</td></tr>
+            <tr><td colspan="9" class="text-center text-muted">Use filters to load data</td></tr>
           </tbody>
         </table>
       </div>
@@ -200,7 +201,7 @@
     var tbody = document.getElementById('deliveryTableBody');
     tbody.innerHTML = '';
     if (!deliveries || deliveries.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No records found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No records found</td></tr>';
       return;
     }
     var rows = deliveries.map(function(d) {
@@ -210,6 +211,7 @@
         '<td class="editable-product" data-field="product_id">' + (d.product || '-') + '</td>' +
         '<td class="editable-quantity" data-field="quantity">' + (d.quantity || '-') + '</td>' +
         '<td class="editable-amount" data-field="final_amount_after_discount">' + formatINR(d.amount || 0) + '</td>' +
+        '<td class="text-info fw-bold">' + formatINR(d.product_cost || 0) + '</td>' +
         '<td class="editable-status" data-field="status">' + statusBadge(d.status) + '</td>' +
         '<td class="editable-delivery-person" data-field="user_id">' + (d.delivery_person || '-') + '</td>' +
         '<td>' +
@@ -237,7 +239,41 @@
       .finally(function(){ btn.disabled = false; btn.classList.remove('loading'); });
   }
 
+  function formatDateInput(input) {
+    if (!input.value) return;
+    try {
+      var date = new Date(input.value);
+      var day = date.getDate().toString().padStart(2, '0');
+      var month = (date.getMonth() + 1).toString().padStart(2, '0');
+      var year = date.getFullYear();
+      var formatted = day + '.' + month + '.' + year;
+      // Store original value for form submission
+      input.setAttribute('data-original-value', input.value);
+      // Show formatted date as placeholder or title
+      input.setAttribute('title', formatted + ' (DD.MM.YYYY format)');
+    } catch(e) {
+      console.error('Date formatting error:', e);
+    }
+  }
+
+  function initializeDateInputs() {
+    var dateInputs = document.querySelectorAll('input[type="date"].date-input');
+    dateInputs.forEach(function(input) {
+      // Format on change
+      input.addEventListener('change', function() {
+        formatDateInput(input);
+      });
+      // Format initial value if present
+      if (input.value) {
+        formatDateInput(input);
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date formatting
+    initializeDateInputs();
+    
     // Initialize Select2 if available
     if (window.jQuery && jQuery.fn.select2) {
       jQuery('#filterCustomer, #filterProduct, #filterStatus, #filterDeliveryPerson').select2({ theme: 'bootstrap-5', width: '100%' });
@@ -349,8 +385,17 @@
   }
 
   function getDateValue(dateText) {
-    // Convert "Jan 15, 2024" format to "2024-01-15"
+    // Convert "DD.MM.YYYY" format to "YYYY-MM-DD" for input[type="date"]
     try {
+      if (dateText.includes('.')) {
+        var parts = dateText.split('.');
+        if (parts.length === 3) {
+          var day = parts[0].padStart(2, '0');
+          var month = parts[1].padStart(2, '0');
+          var year = parts[2];
+          return year + '-' + month + '-' + day;
+        }
+      }
       var date = new Date(dateText);
       return date.toISOString().split('T')[0];
     } catch(e) {

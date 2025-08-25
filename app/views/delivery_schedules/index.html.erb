@@ -102,8 +102,8 @@
                 <td>
                   <div>
                     <div class="fw-semibold">
-                      <%= schedule.start_date.strftime("%b %d, %Y") %> - 
-                      <%= schedule.end_date.strftime("%b %d, %Y") %>
+                      <%= schedule.start_date.strftime("%d.%m.%Y") %> - 
+                      <%= schedule.end_date.strftime("%d.%m.%Y") %>
                     </div>
                     <small class="text-muted">
                       <%= schedule.duration_in_days %> days
@@ -123,7 +123,7 @@
                   <small class="text-muted">Delivery Person</small>
                 </td>
                 <td>
-                  <div class="fw-semibold"><%= schedule.created_at.strftime("%b %d, %Y") %></div>
+                  <div class="fw-semibold"><%= schedule.created_at.strftime("%d.%m.%Y") %></div>
                   <small class="text-muted"><%= schedule.created_at.strftime("%I:%M %p") %></small>
                 </td>
                 <td class="text-end">
