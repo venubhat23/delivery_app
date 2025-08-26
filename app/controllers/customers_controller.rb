@@ -66,7 +66,7 @@ class CustomersController < ApplicationController
         
         success_message = 'Customer was successfully created.'
         if params[:products].present? && params[:delivery_details].present?
-          products_count = params[:products].count { |_, p| p[:product_id].present? }
+          products_count = params[:products].permit!.to_h.count { |_, p| p[:product_id].present? }
           success_message += " Created delivery schedules for #{products_count} product(s)." if products_count > 0
         end
         
