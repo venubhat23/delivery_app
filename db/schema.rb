@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_25_042106) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_27_173740) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -73,6 +73,33 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_042106) do
     t.index ["slug", "locale"], name: "index_cms_pages_on_slug_and_locale", unique: true
   end
 
+  create_table "customer_addresses", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "address_type"
+    t.text "street_address"
+    t.string "city"
+    t.string "state"
+    t.string "pincode"
+    t.string "landmark"
+    t.boolean "is_default"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_customer_addresses_on_customer_id"
+  end
+
+  create_table "customer_preferences", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "language"
+    t.time "delivery_time_start"
+    t.time "delivery_time_end"
+    t.boolean "skip_weekends"
+    t.text "special_instructions"
+    t.text "notification_preferences"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_customer_preferences_on_customer_id"
+  end
+
   create_table "customers", force: :cascade do |t|
     t.string "name"
     t.string "address"
@@ -103,10 +130,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_042106) do
     t.string "city"
     t.string "postal_code"
     t.string "state"
+    t.string "address_line"
+    t.string "full_address"
+    t.string "country"
+    t.index ["alt_phone_number"], name: "index_customers_on_alt_phone_number", where: "(alt_phone_number IS NOT NULL)"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
+    t.index ["email"], name: "index_customers_on_email", where: "(email IS NOT NULL)"
     t.index ["is_active"], name: "index_customers_on_is_active"
+    t.index ["latitude", "longitude"], name: "index_customers_on_latitude_and_longitude", where: "((latitude IS NOT NULL) AND (longitude IS NOT NULL))"
     t.index ["member_id"], name: "index_customers_on_member_id", unique: true, where: "(member_id IS NOT NULL)"
     t.index ["name"], name: "index_customers_on_name"
+    t.index ["preferred_language"], name: "index_customers_on_preferred_language"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -195,7 +229,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_042106) do
     t.integer "sort_order", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "customer_id", null: false
+    t.boolean "submitted_by_user"
+    t.integer "status"
+    t.text "admin_response"
     t.index ["category", "locale"], name: "index_faqs_on_category_and_locale"
+    t.index ["customer_id"], name: "index_faqs_on_customer_id"
     t.index ["is_active"], name: "index_faqs_on_is_active"
     t.index ["locale"], name: "index_faqs_on_locale"
     t.index ["sort_order"], name: "index_faqs_on_sort_order"
@@ -584,6 +623,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_042106) do
     t.string "external_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "priority"
+    t.integer "assigned_to"
+    t.datetime "resolved_at"
+    t.integer "customer_rating"
+    t.text "customer_feedback"
     t.index ["customer_id"], name: "index_support_tickets_on_customer_id"
     t.index ["status"], name: "index_support_tickets_on_status"
   end
@@ -621,6 +665,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_042106) do
   end
 
   add_foreign_key "advertisements", "users"
+  add_foreign_key "customer_addresses", "customers"
+  add_foreign_key "customer_preferences", "customers"
   add_foreign_key "customers", "users"
   add_foreign_key "customers", "users", column: "delivery_person_id"
   add_foreign_key "deliveries", "customers"
@@ -634,6 +680,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_042106) do
   add_foreign_key "delivery_schedules", "customers"
   add_foreign_key "delivery_schedules", "products"
   add_foreign_key "delivery_schedules", "users"
+  add_foreign_key "faqs", "customers"
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoice_items", "products"
   add_foreign_key "invoices", "customers"
