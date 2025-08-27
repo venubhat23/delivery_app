@@ -51,7 +51,7 @@ class Invoice < ApplicationRecord
   }
   
   # Callbacks
-  before_create :generate_invoice_number, if: -> { invoice_number.blank? }
+  before_create :generate_invoice_number
   before_create :generate_share_token
   before_save :calculate_total_amount
   after_create :mark_delivery_assignments_as_invoiced
@@ -134,6 +134,8 @@ class Invoice < ApplicationRecord
                'PROF'
              when 'sales_invoice'
                'SALE'
+             when 'monthly'
+               'INV'
              else
                'INV'
              end
@@ -170,7 +172,7 @@ class Invoice < ApplicationRecord
     # ).first
     
     # return { success: false, message: "Invoice already exists for this month" } if existing_invoice
-    
+
     # Get completed delivery assignments for this customer in the month
     assignments = DeliveryAssignment.where(
       customer: customer,
@@ -260,7 +262,10 @@ class Invoice < ApplicationRecord
   end
 
   def generate_invoice_number
-    self.invoice_number = self.class.generate_invoice_number(invoice_type)
+    if invoice_number.blank?
+      self.invoice_number = self.class.generate_invoice_number(invoice_type)
+      Rails.logger.info "Generated invoice number: #{self.invoice_number}"
+    end
   end
   
   def calculate_total_amount
@@ -289,6 +294,7 @@ class Invoice < ApplicationRecord
       status: 'pending',
       invoice_type: 'monthly'
     )
+    Rails.logger.info "Created new invoice: #{invoice.inspect}"
 
     total_amount = 0
 
@@ -309,6 +315,9 @@ class Invoice < ApplicationRecord
     end
 
     invoice.total_amount = total_amount
+    
+    # Explicitly generate invoice number before save
+    invoice.generate_invoice_number if invoice.invoice_number.blank?
 
     if invoice.save
       assignments.each do |assignment|
@@ -316,6 +325,7 @@ class Invoice < ApplicationRecord
       end
       invoice
     else
+      Rails.logger.error "Invoice save failed: #{invoice.errors.full_messages.join(', ')}"
       nil
     end
   end

@@ -22,6 +22,37 @@ Rails.application.routes.draw do
     get 'delivery_people/search', to: 'users#search_delivery_people'
     get 'categories/search', to: 'categories#search'
     get 'parties/search', to: 'parties#search'
+    
+    # Settings API routes
+    namespace :v1 do
+      resources :settings, only: [:index] do
+        collection do
+          # FAQ endpoints
+          get :faq
+          post 'faq/ask', to: 'settings#ask_question'
+          
+          # CMS endpoints
+          get 'cms/terms-of-service', to: 'settings#terms'
+          get 'cms/privacy-policy', to: 'settings#privacy'
+          
+          # Contact/Support endpoints
+          post :contact
+          
+          # Preferences endpoints
+          get :referral
+          get 'delivery-preferences', to: 'settings#delivery_preferences'
+          put 'preferences', to: 'settings#update_preferences'
+          put 'language', to: 'settings#update_language'
+          
+          # Address endpoints
+          get :addresses
+          post :addresses, to: 'settings#create_address'
+          put 'addresses/:id', to: 'settings#update_address'
+          delete 'addresses/:id', to: 'settings#delete_address'
+          post 'addresses/:id/set_default', to: 'settings#set_default_address'
+        end
+      end
+    end
   end
   
   # Main application routes with full CRUD
@@ -290,4 +321,61 @@ Rails.application.routes.draw do
   post '/delivery-review/export', to: 'delivery_review#export'
   patch '/delivery-review/:id', to: 'delivery_review#update'
   delete '/delivery-review/:id', to: 'delivery_review#destroy'
+  
+  # Settings Management
+  resources :faqs do
+    member do
+      patch :activate
+      patch :deactivate
+      patch :move_up
+      patch :move_down
+    end
+    
+    collection do
+      patch :reorder
+    end
+  end
+  
+  resources :cms_pages, path: 'content-pages' do
+    member do
+      patch :publish
+      patch :unpublish
+      patch :schedule_publish
+    end
+  end
+  
+  resources :support_tickets, path: 'support' do
+    member do
+      patch :resolve
+      patch :reopen
+    end
+  end
+  
+  resources :referral_codes, path: 'referrals', only: [:index, :show, :destroy] do
+    collection do
+      get :leaderboard
+    end
+  end
+  
+  # Customer preferences and addresses management
+  resources :customer_preferences, path: 'customer-preferences' do
+    collection do
+      patch :bulk_update_notifications
+    end
+  end
+  
+  resources :customer_addresses, path: 'customer-addresses' do
+    member do
+      patch :set_default
+    end
+    
+    collection do
+      post :bulk_import
+    end
+  end
+  
+  # Nested customer addresses
+  resources :customers do
+    resources :customer_addresses, path: 'addresses', except: [:show]
+  end
 end

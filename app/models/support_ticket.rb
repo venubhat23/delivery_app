@@ -1,11 +1,20 @@
 class SupportTicket < ApplicationRecord
   belongs_to :customer
+  belongs_to :assigned_user, class_name: 'User', foreign_key: 'assigned_to', optional: true
 
   validates :subject, presence: true, length: { maximum: 255 }
   validates :message, presence: true, length: { maximum: 5000 }
   validates :channel, presence: true, inclusion: { in: %w[app web email phone] }
   validates :status, presence: true, inclusion: { in: %w[open in_progress resolved closed] }
   validates :external_id, uniqueness: true, allow_blank: true
+  validates :customer_rating, inclusion: { in: 1..5 }, allow_nil: true
+
+  enum priority: {
+    low: 0,
+    medium: 1, 
+    high: 2,
+    critical: 3
+  }, _default: :low
 
   scope :open, -> { where(status: 'open') }
   scope :in_progress, -> { where(status: 'in_progress') }
@@ -40,7 +49,7 @@ class SupportTicket < ApplicationRecord
   end
 
   def mark_as_resolved!
-    update!(status: 'resolved')
+    update!(status: 'resolved', resolved_at: Time.current)
   end
 
   def mark_as_closed!
@@ -48,8 +57,10 @@ class SupportTicket < ApplicationRecord
   end
 
   def reopen!
-    update!(status: 'open')
+    update!(status: 'open', resolved_at: nil)
   end
+  
+  alias_method :resolve!, :mark_as_resolved!
 
   def days_open
     (Date.current - created_at.to_date).to_i

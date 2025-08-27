@@ -17,6 +17,12 @@ class ReferralCode < ApplicationRecord
   def generate_share_url
     Rails.application.routes.url_helpers.referral_url(share_url_slug) if share_url_slug.present?
   end
+  
+  def share_url(base_url = nil)
+    return nil unless share_url_slug.present?
+    base_url ||= Rails.application.config.action_mailer.default_url_options[:host] || 'localhost:3000'
+    "#{base_url}/referral/#{share_url_slug}"
+  end
 
   def add_referral!(credits = 10)
     increment!(:total_referrals)

@@ -8,7 +8,9 @@ class CmsPage < ApplicationRecord
   scope :published, -> { where.not(published_at: nil) }
   scope :unpublished, -> { where(published_at: nil) }
   scope :by_locale, ->(locale) { where(locale: locale) }
+  scope :for_locale, ->(locale) { where(locale: locale) }
   scope :by_slug, ->(slug) { where(slug: slug) }
+  scope :for_slug, ->(slug) { where(slug: slug) }
   scope :recent, -> { order(updated_at: :desc) }
 
   before_validation :generate_slug, if: -> { slug.blank? && title.present? }

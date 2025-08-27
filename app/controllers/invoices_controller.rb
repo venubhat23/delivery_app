@@ -270,7 +270,6 @@ end
     customer_id = params[:customer_id].to_i
     month = params[:month].to_i
     year = params[:year].to_i
-    
     if customer_id > 0 && month > 0 && year > 0
       @preview_data = DeliveryAssignment.monthly_summary_for_customer(customer_id, month, year)
       render partial: 'monthly_preview', locals: { preview_data: @preview_data }

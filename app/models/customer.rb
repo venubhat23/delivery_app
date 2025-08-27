@@ -14,6 +14,11 @@ class Customer < ApplicationRecord
   has_many :delivery_assignments, dependent: :destroy
   has_many :delivery_schedules, dependent: :destroy
   has_many :invoices, dependent: :destroy
+  has_many :faqs, dependent: :destroy
+  has_many :support_tickets, dependent: :destroy
+  has_many :customer_addresses, dependent: :destroy
+  has_one :customer_preference, dependent: :destroy
+  has_one :referral_code, dependent: :destroy
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
@@ -602,6 +607,31 @@ class Customer < ApplicationRecord
     end
 
     assignments_created
+  end
+
+  # Helper methods for new features
+  def default_address
+    customer_addresses.default_address.first || customer_addresses.first
+  end
+
+  def preferences
+    customer_preference || build_customer_preference
+  end
+
+  def preferred_language
+    preferences.language || 'en'
+  end
+
+  def delivery_time_window
+    preferences.delivery_time_window
+  end
+
+  def notification_preferences
+    preferences.notification_settings
+  end
+
+  def referral
+    referral_code || create_referral_code
   end
 
 end
