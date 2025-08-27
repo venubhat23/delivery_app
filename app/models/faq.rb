@@ -12,7 +12,7 @@ class Faq < ApplicationRecord
     approved: 1, 
     rejected: 2, 
     answered: 3 
-  }, _default: :pending
+  }, _default: 'pending'
 
   scope :active, -> { where(is_active: true) }
   scope :inactive, -> { where(is_active: false) }
