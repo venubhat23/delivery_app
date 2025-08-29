@@ -119,10 +119,8 @@ class CustomersController < ApplicationController
   end
   
   def destroy
-    @customer.destroy!
+    @customer.destroy
     redirect_to customers_url, notice: 'Customer was successfully deleted.'
-  rescue ActiveRecord::RecordNotDestroyed => e
-    redirect_to customers_url, alert: "Could not delete customer: #{e.message}"
   end
   
   # Bulk import form

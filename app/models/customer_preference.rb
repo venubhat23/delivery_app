@@ -6,7 +6,7 @@ class CustomerPreference < ApplicationRecord
   validates :delivery_time_end, presence: true
   validate :end_time_after_start_time
 
-  serialize :notification_preferences, JSON
+  serialize :notification_preferences, coder: JSON
 
   scope :by_language, ->(lang) { where(language: lang) }
   scope :with_time_window, -> { where.not(delivery_time_start: nil, delivery_time_end: nil) }

@@ -8,7 +8,7 @@ class Report < ApplicationRecord
   validates :to_date, presence: true
   
   # Serialize content as JSON for milk analytics reports
-  serialize :content, JSON
+  serialize :content, coder: JSON
   
   scope :gst_reports, -> { where(report_type: 'gst') }
   scope :milk_analytics_reports, -> { where(report_type: %w[daily_procurement_delivery vendor_performance profit_loss wastage_analysis monthly_summary]) }

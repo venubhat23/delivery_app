@@ -9,12 +9,12 @@ class SupportTicket < ApplicationRecord
   validates :external_id, uniqueness: true, allow_blank: true
   validates :customer_rating, inclusion: { in: 1..5 }, allow_nil: true
 
-  enum priority: {
+  enum :priority, {
     low: 0,
     medium: 1, 
     high: 2,
     critical: 3
-  }, _default: :low
+  }, default: :low
 
   scope :open, -> { where(status: 'open') }
   scope :in_progress, -> { where(status: 'in_progress') }
