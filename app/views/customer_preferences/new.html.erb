@@ -1,0 +1,262 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <div class="d-flex align-items-center">
+      <div class="avatar-circle-large me-3">
+        <i class="fas fa-user-cog"></i>
+      </div>
+      <div>
+        New Customer Settings
+        <small class="text-muted d-block">Create Customer Preferences</small>
+      </div>
+    </div>
+  </h1>
+  <div>
+    <%= link_to customer_preferences_path, class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Preferences
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h6 class="m-0">
+          <i class="fas fa-user-cog me-2"></i>Create Customer Settings
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= form_with(model: @customer_preference, local: true, class: "needs-validation", novalidate: true) do |form| %>
+          <% if @customer_preference.errors.any? %>
+            <div class="alert alert-danger">
+              <h4><%= pluralize(@customer_preference.errors.count, "error") %> prohibited this preference from being saved:</h4>
+              <ul class="mb-0">
+                <% @customer_preference.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <!-- Customer Selection -->
+          <div class="mb-3">
+            <%= form.label :customer_id, class: "form-label" do %>
+              <i class="fas fa-user me-1"></i>Customer
+            <% end %>
+            <%= form.select :customer_id, 
+                options_from_collection_for_select(@customers, :id, :name, params[:customer_id]),
+                { prompt: "Select Customer" },
+                { class: "form-select", required: true } %>
+          </div>
+
+          <div class="row">
+            <!-- App Language -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :language, class: "form-label" do %>
+                <i class="fas fa-language me-1"></i>App Language
+              <% end %>
+              <%= form.select :language, 
+                  options_for_select([
+                    ['English', 'en'],
+                    ['Hindi', 'hi'],
+                    ['Telugu', 'te'],
+                    ['Tamil', 'ta'],
+                    ['Kannada', 'kn'],
+                    ['Malayalam', 'ml']
+                  ], 'en'),
+                  { prompt: "Select Language" },
+                  { class: "form-select", required: true } %>
+            </div>
+
+            <!-- Referral Enabled -->
+            <div class="col-md-6 mb-3">
+              <div class="form-check form-switch mt-4">
+                <%= form.check_box :referral_enabled, class: "form-check-input", checked: true %>
+                <%= form.label :referral_enabled, class: "form-check-label" do %>
+                  <i class="fas fa-gift me-1"></i>Enable Referral Program
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Delivery Time Start -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :delivery_time_start, class: "form-label" do %>
+                <i class="fas fa-clock me-1"></i>Delivery Start Time
+              <% end %>
+              <%= form.time_field :delivery_time_start, class: "form-control", required: true %>
+            </div>
+
+            <!-- Delivery Time End -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :delivery_time_end, class: "form-label" do %>
+                <i class="fas fa-clock me-1"></i>Delivery End Time
+              <% end %>
+              <%= form.time_field :delivery_time_end, class: "form-control", required: true %>
+            </div>
+          </div>
+
+          <!-- Skip Weekends -->
+          <div class="mb-3">
+            <div class="form-check">
+              <%= form.check_box :skip_weekends, class: "form-check-input" %>
+              <%= form.label :skip_weekends, class: "form-check-label" do %>
+                <i class="fas fa-calendar-times me-1"></i>Skip Weekend Deliveries
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Special Instructions -->
+          <div class="mb-3">
+            <%= form.label :special_instructions, class: "form-label" do %>
+              <i class="fas fa-sticky-note me-1"></i>Special Delivery Instructions
+            <% end %>
+            <%= form.text_area :special_instructions, 
+                class: "form-control", 
+                rows: 3,
+                placeholder: "Any special instructions for deliveries..." %>
+          </div>
+
+          <!-- Address Request Notes -->
+          <div class="mb-3">
+            <%= form.label :address_request_notes, class: "form-label" do %>
+              <i class="fas fa-map-marker-alt me-1"></i>Address Request Notes
+            <% end %>
+            <%= form.text_area :address_request_notes, 
+                class: "form-control", 
+                rows: 3,
+                placeholder: "Notes about address changes or special requirements..." %>
+          </div>
+
+          <!-- Notification Preferences -->
+          <div class="mb-4">
+            <label class="form-label">
+              <i class="fas fa-bell me-1"></i>Notification Preferences
+            </label>
+            <div class="card bg-light">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-check mb-2">
+                      <%= check_box_tag "customer_preference[notification_preferences][sms]", 
+                          true, 
+                          false,
+                          class: "form-check-input" %>
+                      <label class="form-check-label" for="customer_preference_notification_preferences_sms">
+                        <i class="fas fa-sms me-1"></i>SMS Notifications
+                      </label>
+                    </div>
+                    <div class="form-check mb-2">
+                      <%= check_box_tag "customer_preference[notification_preferences][email]", 
+                          true, 
+                          false,
+                          class: "form-check-input" %>
+                      <label class="form-check-label" for="customer_preference_notification_preferences_email">
+                        <i class="fas fa-envelope me-1"></i>Email Notifications
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check mb-2">
+                      <%= check_box_tag "customer_preference[notification_preferences][whatsapp]", 
+                          true, 
+                          false,
+                          class: "form-check-input" %>
+                      <label class="form-check-label" for="customer_preference_notification_preferences_whatsapp">
+                        <i class="fab fa-whatsapp me-1"></i>WhatsApp Notifications
+                      </label>
+                    </div>
+                    <div class="form-check mb-2">
+                      <%= check_box_tag "customer_preference[notification_preferences][push]", 
+                          true, 
+                          false,
+                          class: "form-check-input" %>
+                      <label class="form-check-label" for="customer_preference_notification_preferences_push">
+                        <i class="fas fa-mobile-alt me-1"></i>Push Notifications
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <%= link_to customer_preferences_path, class: "btn btn-secondary" do %>
+              <i class="fas fa-times me-2"></i>Cancel
+            <% end %>
+            <%= form.submit "Create Settings", class: "btn btn-success" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.avatar-circle-large {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #28a745, #20c997);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.form-switch .form-check-input {
+  width: 2.5em;
+  height: 1.25em;
+}
+</style>
+
+<script>
+// Form validation
+(function() {
+  'use strict';
+  
+  // Fetch all forms we want to apply custom validation to
+  var forms = document.querySelectorAll('.needs-validation');
+  
+  // Loop over them and prevent submission
+  Array.prototype.slice.call(forms).forEach(function(form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+})();
+
+// Time validation
+document.addEventListener('DOMContentLoaded', function() {
+  const startTime = document.querySelector('#customer_preference_delivery_time_start');
+  const endTime = document.querySelector('#customer_preference_delivery_time_end');
+  
+  function validateTimes() {
+    if (startTime.value && endTime.value) {
+      if (startTime.value >= endTime.value) {
+        endTime.setCustomValidity('End time must be after start time');
+      } else {
+        endTime.setCustomValidity('');
+      }
+    }
+  }
+  
+  if (startTime && endTime) {
+    startTime.addEventListener('change', validateTimes);
+    endTime.addEventListener('change', validateTimes);
+  }
+});
+</script>

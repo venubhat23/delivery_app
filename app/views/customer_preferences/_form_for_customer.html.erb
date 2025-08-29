@@ -1,0 +1,175 @@
+<%= form_with(model: @customer_preference, local: true, class: "needs-validation", novalidate: true) do |form| %>
+  <%= form.hidden_field :customer_id, value: @customer.id %>
+  <% if @customer_preference.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(@customer_preference.errors.count, "error") %> prohibited this preference from being saved:</h4>
+      <ul class="mb-0">
+        <% @customer_preference.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row">
+    <!-- App Language -->
+    <div class="col-md-6 mb-3">
+      <%= form.label :language, class: "form-label" do %>
+        <i class="fas fa-language me-1"></i>App Language
+      <% end %>
+      <%= form.select :language, 
+          options_for_select([
+            ['English', 'en'],
+            ['Hindi', 'hi'],
+            ['Telugu', 'te'],
+            ['Tamil', 'ta'],
+            ['Kannada', 'kn'],
+            ['Malayalam', 'ml']
+          ], @customer_preference.language),
+          { prompt: "Select Language" },
+          { class: "form-select", required: true } %>
+    </div>
+
+    <!-- Referral Enabled -->
+    <div class="col-md-6 mb-3">
+      <div class="form-check form-switch mt-4">
+        <%= form.check_box :referral_enabled, class: "form-check-input" %>
+        <%= form.label :referral_enabled, class: "form-check-label" do %>
+          <i class="fas fa-gift me-1"></i>Enable Referral Program
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Delivery Time Start -->
+    <div class="col-md-6 mb-3">
+      <%= form.label :delivery_time_start, class: "form-label" do %>
+        <i class="fas fa-clock me-1"></i>Delivery Start Time
+      <% end %>
+      <%= form.time_field :delivery_time_start, class: "form-control", required: true %>
+    </div>
+
+    <!-- Delivery Time End -->
+    <div class="col-md-6 mb-3">
+      <%= form.label :delivery_time_end, class: "form-label" do %>
+        <i class="fas fa-clock me-1"></i>Delivery End Time
+      <% end %>
+      <%= form.time_field :delivery_time_end, class: "form-control", required: true %>
+    </div>
+  </div>
+
+  <!-- Skip Weekends -->
+  <div class="mb-3">
+    <div class="form-check">
+      <%= form.check_box :skip_weekends, class: "form-check-input" %>
+      <%= form.label :skip_weekends, class: "form-check-label" do %>
+        <i class="fas fa-calendar-times me-1"></i>Skip Weekend Deliveries
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Special Instructions -->
+  <div class="mb-3">
+    <%= form.label :special_instructions, class: "form-label" do %>
+      <i class="fas fa-sticky-note me-1"></i>Special Delivery Instructions
+    <% end %>
+    <%= form.text_area :special_instructions, 
+        class: "form-control", 
+        rows: 3,
+        placeholder: "Any special instructions for deliveries..." %>
+  </div>
+
+  <!-- Address Request Notes -->
+  <div class="mb-3">
+    <%= form.label :address_request_notes, class: "form-label" do %>
+      <i class="fas fa-map-marker-alt me-1"></i>Address Request Notes
+    <% end %>
+    <%= form.text_area :address_request_notes, 
+        class: "form-control", 
+        rows: 3,
+        placeholder: "Notes about address changes or special requirements..." %>
+  </div>
+
+  <!-- Notification Preferences -->
+  <div class="mb-4">
+    <label class="form-label">
+      <i class="fas fa-bell me-1"></i>Notification Preferences
+    </label>
+    <div class="card bg-light">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-check mb-2">
+              <%= check_box_tag "customer_preference[notification_preferences][sms]", 
+                  true, 
+                  @customer_preference.prefers_notification?('sms'),
+                  class: "form-check-input" %>
+              <label class="form-check-label" for="customer_preference_notification_preferences_sms">
+                <i class="fas fa-sms me-1"></i>SMS Notifications
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <%= check_box_tag "customer_preference[notification_preferences][email]", 
+                  true, 
+                  @customer_preference.prefers_notification?('email'),
+                  class: "form-check-input" %>
+              <label class="form-check-label" for="customer_preference_notification_preferences_email">
+                <i class="fas fa-envelope me-1"></i>Email Notifications
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check mb-2">
+              <%= check_box_tag "customer_preference[notification_preferences][whatsapp]", 
+                  true, 
+                  @customer_preference.prefers_notification?('whatsapp'),
+                  class: "form-check-input" %>
+              <label class="form-check-label" for="customer_preference_notification_preferences_whatsapp">
+                <i class="fab fa-whatsapp me-1"></i>WhatsApp Notifications
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <%= check_box_tag "customer_preference[notification_preferences][push]", 
+                  true, 
+                  @customer_preference.prefers_notification?('push'),
+                  class: "form-check-input" %>
+              <label class="form-check-label" for="customer_preference_notification_preferences_push">
+                <i class="fas fa-mobile-alt me-1"></i>Push Notifications
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Referral Info (if exists) -->
+  <% if @customer_preference.persisted? && @customer_preference.referral_enabled? %>
+    <div class="alert alert-info">
+      <h6><i class="fas fa-info-circle me-2"></i>Current Referral Information</h6>
+      <div class="row">
+        <div class="col-md-6">
+          <strong>Referral Code:</strong> 
+          <span class="badge bg-primary font-monospace">
+            <%= @customer_preference.referral_code || "Will be generated" %>
+          </span>
+        </div>
+        <div class="col-md-6">
+          <strong>Total Earnings:</strong> 
+          <span class="text-success fw-bold">
+            <%= @customer_preference.formatted_referral_earnings %>
+          </span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="d-flex justify-content-between">
+    <%= link_to customer_path(@customer), class: "btn btn-secondary" do %>
+      <i class="fas fa-times me-2"></i>Cancel
+    <% end %>
+    <%= form.submit @customer_preference.persisted? ? "Update Settings" : "Create Settings", 
+        class: "btn btn-success" %>
+  </div>
+<% end %>

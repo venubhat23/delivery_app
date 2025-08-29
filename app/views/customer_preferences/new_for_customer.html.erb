@@ -1,0 +1,100 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    <div class="d-flex align-items-center">
+      <div class="avatar-circle-large me-3">
+        <%= @customer.name.try(:first).to_s.upcase %>
+      </div>
+      <div>
+        <%= @customer.name %> - New Settings
+        <small class="text-muted d-block">Create Customer Preferences</small>
+      </div>
+    </div>
+  </h1>
+  <div>
+    <%= link_to customer_path(@customer), class: "btn btn-outline-secondary" do %>
+      <i class="fas fa-arrow-left me-2"></i>Back to Customer
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h6 class="m-0">
+          <i class="fas fa-user-cog me-2"></i>Create Customer Settings
+        </h6>
+      </div>
+      <div class="card-body">
+        <%= render 'form_for_customer' %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.avatar-circle-large {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #28a745, #20c997);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.form-switch .form-check-input {
+  width: 2.5em;
+  height: 1.25em;
+}
+</style>
+
+<script>
+// Form validation
+(function() {
+  'use strict';
+  
+  // Fetch all forms we want to apply custom validation to
+  var forms = document.querySelectorAll('.needs-validation');
+  
+  // Loop over them and prevent submission
+  Array.prototype.slice.call(forms).forEach(function(form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+})();
+
+// Time validation
+document.addEventListener('DOMContentLoaded', function() {
+  const startTime = document.querySelector('#customer_preference_delivery_time_start');
+  const endTime = document.querySelector('#customer_preference_delivery_time_end');
+  
+  function validateTimes() {
+    if startTime.value && endTime.value) {
+      if (startTime.value >= endTime.value) {
+        endTime.setCustomValidity('End time must be after start time');
+      } else {
+        endTime.setCustomValidity('');
+      }
+    }
+  }
+  
+  if (startTime && endTime) {
+    startTime.addEventListener('change', validateTimes);
+    endTime.addEventListener('change', validateTimes);
+  }
+});
+</script>
