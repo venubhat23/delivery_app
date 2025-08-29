@@ -3309,13 +3309,12 @@ function deleteSchedule(scheduleId) {
     throw new Error('CSRF token not found');
   }
 
-  fetch('/milk-supply-analytics/destroy_schedule', {
+  fetch(`/milk-supply-analytics/destroy_schedule?schedule_id=${scheduleId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-Token': csrfToken.content
-    },
-    body: JSON.stringify({ schedule_id: scheduleId })
+    }
   })
   .then(response => response.json())
   .then(data => {

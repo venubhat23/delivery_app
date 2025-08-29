@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_27_173740) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_29_065301) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -30,6 +30,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_173740) do
     t.string "qr_code_path"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "faq"
+    t.text "contact_us"
+    t.text "privacy_policy"
   end
 
   create_table "advertisements", force: :cascade do |t|
@@ -97,6 +100,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_173740) do
     t.text "notification_preferences"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "referral_code"
+    t.decimal "referral_earnings", precision: 10, scale: 2, default: "0.0"
+    t.text "address_request_notes"
+    t.boolean "referral_enabled", default: true
     t.index ["customer_id"], name: "index_customer_preferences_on_customer_id"
   end
 

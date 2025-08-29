@@ -473,7 +473,17 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def destroy_schedule
-    @schedule = current_user.procurement_schedules.find(params[:schedule_id])
+    # Handle schedule_id from params - if sent via JSON, Rails should parse it automatically
+    schedule_id = params[:schedule_id]
+    
+    if schedule_id.blank?
+      respond_to do |format|
+        format.json { render json: { success: false, error: 'Schedule ID is required' }, status: 400 }
+      end
+      return
+    end
+    
+    @schedule = current_user.procurement_schedules.find(schedule_id)
     
     # Delete related procurement assignments first
     @schedule.procurement_assignments.destroy_all
