@@ -19,6 +19,7 @@ class Customer < ApplicationRecord
   has_many :customer_addresses, dependent: :destroy
   has_one :customer_preference, dependent: :destroy
   has_one :referral_code, dependent: :destroy
+  has_many :refresh_tokens, dependent: :destroy
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
