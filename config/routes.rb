@@ -80,6 +80,14 @@ Rails.application.routes.draw do
     end
   end
   
+  # Customer preferences nested routes for easy access from customer pages
+  resources :customers do
+    member do
+      get 'preferences/edit', to: 'customer_preferences#edit_for_customer'
+      get 'preferences/new', to: 'customer_preferences#new_for_customer'
+    end
+  end
+  
   resources :advertisements
   
   resources :parties do

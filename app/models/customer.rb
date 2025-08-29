@@ -514,6 +514,31 @@ class Customer < ApplicationRecord
     unassigned.includes(:user)
   end
 
+  # Helper methods for new features
+  def default_address
+    customer_addresses.default_address.first || customer_addresses.first
+  end
+
+  def preferences
+    customer_preference || build_customer_preference
+  end
+
+  def preferred_language
+    preferences.language || 'en'
+  end
+
+  def delivery_time_window
+    preferences.delivery_time_window
+  end
+
+  def notification_preferences
+    preferences.notification_settings
+  end
+
+  def referral
+    referral_code || create_referral_code
+  end
+
   private
 
   def normalize_member_id
@@ -609,30 +634,4 @@ class Customer < ApplicationRecord
 
     assignments_created
   end
-
-  # Helper methods for new features
-  def default_address
-    customer_addresses.default_address.first || customer_addresses.first
-  end
-
-  def preferences
-    customer_preference || build_customer_preference
-  end
-
-  def preferred_language
-    preferences.language || 'en'
-  end
-
-  def delivery_time_window
-    preferences.delivery_time_window
-  end
-
-  def notification_preferences
-    preferences.notification_settings
-  end
-
-  def referral
-    referral_code || create_referral_code
-  end
-
 end

@@ -157,6 +157,78 @@
         </div>
       </div>
     </div>
+    
+    <div class="card shadow mb-4">
+      <div class="card-header bg-success text-white">
+        <h6 class="m-0">
+          <i class="fas fa-user-cog me-2"></i>Customer Settings
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if @customer.preferences %>
+          <div class="mb-3">
+            <small class="text-muted">
+              <i class="fas fa-language me-1"></i>App Language
+            </small>
+            <p class="mb-0 fw-bold">
+              <%= @customer.preferences.language_display_name %>
+            </p>
+          </div>
+          
+          <div class="mb-3">
+            <small class="text-muted">
+              <i class="fas fa-clock me-1"></i>Delivery Time Preference
+            </small>
+            <p class="mb-0">
+              <%= @customer.preferences.delivery_time_window || "Not specified" %>
+            </p>
+          </div>
+          
+          <% if @customer.preferences.referral_enabled %>
+            <div class="mb-3">
+              <small class="text-muted">
+                <i class="fas fa-gift me-1"></i>Referral Code
+              </small>
+              <p class="mb-0 font-monospace">
+                <span class="badge bg-primary"><%= @customer.preferences.referral_code || "Not generated" %></span>
+              </p>
+            </div>
+            
+            <div class="mb-3">
+              <small class="text-muted">
+                <i class="fas fa-coins me-1"></i>Referral Earnings
+              </small>
+              <p class="mb-0 fw-bold text-success">
+                <%= @customer.preferences.formatted_referral_earnings %>
+              </p>
+            </div>
+          <% end %>
+          
+          <% if @customer.preferences.address_request_notes.present? %>
+            <div class="mb-3">
+              <small class="text-muted">
+                <i class="fas fa-map-marker-alt me-1"></i>Address Request Notes
+              </small>
+              <p class="mb-0 small bg-light p-2 rounded">
+                <%= @customer.preferences.address_request_notes %>
+              </p>
+            </div>
+          <% end %>
+          
+        <% else %>
+          <p class="text-muted text-center">
+            <i class="fas fa-info-circle me-1"></i>No preferences set yet
+          </p>
+        <% end %>
+        
+        <div class="text-center mt-3">
+          <%= link_to preferences_edit_customer_path(@customer), class: "btn btn-outline-primary btn-sm" do %>
+            <i class="fas fa-edit me-1"></i><%= @customer.customer_preference ? "Edit Settings" : "Create Settings" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
     <div class="card shadow">
       <div class="card-header bg-secondary text-white">
         <h6 class="m-0">
