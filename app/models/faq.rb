@@ -7,7 +7,7 @@ class Faq < ApplicationRecord
   validates :category, length: { maximum: 100 }
   validates :sort_order, numericality: { greater_than_or_equal_to: 0 }
   
-  enum status: { 
+  enum :status, { 
     pending: 0, 
     approved: 1, 
     rejected: 2, 
