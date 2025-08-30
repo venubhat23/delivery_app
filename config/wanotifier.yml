@@ -1,0 +1,15 @@
+# WANotifier API Configuration
+# Copy this file to wanotifier.local.yml and add your actual API key
+# Add wanotifier.local.yml to .gitignore to keep credentials secure
+
+development:
+  api_key: <%= ENV['WANOTIFIER_API_KEY'] || 'your_api_key_here' %>
+  base_url: 'https://app.wanotifier.com/api'
+
+production:
+  api_key: <%= ENV['WANOTIFIER_API_KEY'] %>
+  base_url: 'https://app.wanotifier.com/api'
+
+test:
+  api_key: 'test_api_key'
+  base_url: 'https://app.wanotifier.com/api'

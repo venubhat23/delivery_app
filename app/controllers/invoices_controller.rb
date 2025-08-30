@@ -134,37 +134,34 @@ end
       failure_count = 0
       errors = []
       
-      # Process results in batches to avoid overwhelming the system
-      whatsapp_success_count = 0
-      whatsapp_failure_count = 0
+      # Process results and collect successful invoices for bulk WhatsApp sending
+      successful_invoices = []
       
-      results.each_with_index do |result, index|
+      results.each do |result|
         if result[:result][:success]
           success_count += 1
-          invoice = result[:result][:invoice]
-          
-          # Send WhatsApp message for successful invoice
-          begin
-            if send_whatsapp_invoice(invoice)
-              whatsapp_success_count += 1
-            else
-              whatsapp_failure_count += 1
-            end
-          rescue => e
-            Rails.logger.error "WhatsApp sending failed for invoice #{invoice.id}: #{e.message}"
-            whatsapp_failure_count += 1
-          end
-          
-          # Add a small delay after every 10 messages to avoid rate limiting
-          if (index + 1) % 10 == 0
-            sleep(2)
-            Rails.logger.info "Processed #{index + 1} invoices. Pausing briefly to respect rate limits..."
-          end
+          successful_invoices << result[:result][:invoice]
         else
           failure_count += 1
           errors << "#{result[:customer].name}: #{result[:result][:message]}"
         end
       end
+      
+      # Send WhatsApp notifications in bulk using WANotifier
+      whatsapp_results = { success_count: 0, failure_count: 0 }
+      
+      if successful_invoices.any?
+        begin
+          wanotifier_service = WanotifierService.new
+          whatsapp_results = wanotifier_service.send_bulk_invoice_notifications(successful_invoices)
+        rescue => e
+          Rails.logger.error "Bulk WhatsApp sending failed: #{e.message}"
+          whatsapp_results[:failure_count] = successful_invoices.count
+        end
+      end
+      
+      whatsapp_success_count = whatsapp_results[:success_count]
+      whatsapp_failure_count = whatsapp_results[:failure_count]
       
       # Build comprehensive status message
       message_parts = []
@@ -481,21 +478,21 @@ end
     "Hello #{invoice.customer.name}, your invoice #{invoice.formatted_number} for ₹#{invoice.total_amount} is ready. View/download: #{public_url}"
   end
 
-  # Method to send invoice via WhatsApp
+  # Method to send invoice via WhatsApp using WANotifier
   def send_whatsapp_invoice(invoice)
     return false unless invoice&.customer&.phone_number.present?
     
     begin
-      # Initialize WhatsApp service
-      whatsapp_service = WhatsappService.new
+      # Initialize WANotifier service
+      wanotifier_service = WanotifierService.new
       
-      # Try to send with PDF attachment first, fallback to link if PDF fails
-      success = whatsapp_service.send_invoice_with_pdf(invoice)
+      # Send invoice notification via WANotifier
+      success = wanotifier_service.send_invoice_notification(invoice)
       
-      # If PDF sending fails, try sending with public link
-      unless success
-        Rails.logger.warn "PDF sending failed for invoice #{invoice.id}, trying with link..."
-        success = whatsapp_service.send_invoice_with_link(invoice)
+      if success
+        Rails.logger.info "Invoice #{invoice.formatted_number} sent successfully via WANotifier to #{invoice.customer.name}"
+      else
+        Rails.logger.warn "Failed to send invoice #{invoice.formatted_number} via WANotifier to #{invoice.customer.name}"
       end
       
       success

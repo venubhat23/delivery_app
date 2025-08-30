@@ -19,28 +19,30 @@
           <!-- Customer Search Dropdown -->
           <div class="col-md-6">
             <%= form.label :customer_id, class: "form-label fw-bold" %>
-            <%= form.hidden_field :customer_id, id: "selected_customer_id" %>
-            <div class="position-relative">
+            <div class="customer-search-container position-relative">
               <input type="text" 
-                     class="form-control" 
-                     id="customer_search_input"
-                     placeholder="Search by name, phone, email, or member ID..." 
-                     autocomplete="off"
-                     value="<%= @delivery_assignment.customer&.name %>"
-                     required>
-              <div class="search-results-dropdown d-none" id="customer_search_results">
-                <div class="search-loading d-none">
-                  <div class="p-3 text-center">
-                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                    Searching customers...dsdsdsdd
-                  </div>
+                     class="form-control customer-search-input" 
+                     id="customer-search-input"
+                     placeholder="Search customers by name..."
+                     autocomplete="off">
+              <div class="search-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <%= form.hidden_field :customer_id, id: 'customer-select' %>
+              <div class="customer-suggestions" id="customer-suggestions" style="display: none;">
+                <!-- Customer suggestions will be populated here -->
+              </div>
+              <div class="customer-loading" id="customer-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
+              </div>
+              <div class="selected-customer" id="selected-customer" style="display: none;">
+                <div class="selected-customer-info">
+                  <div class="selected-customer-name"></div>
+                  <div class="selected-customer-phone"></div>
                 </div>
-                <div class="search-results-list"></div>
-                <div class="search-no-results d-none">
-                  <div class="p-3 text-muted text-center">
-                    <i class="fas fa-search me-2"></i>No customers found
-                  </div>
-                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary clear-customer">
+                  <i class="fas fa-times"></i>
+                </button>
               </div>
             </div>
             <div class="form-text">
@@ -51,28 +53,30 @@
           <!-- Delivery Person Search Dropdown -->
           <div class="col-md-6">
             <%= form.label :delivery_person_id, "Delivery Person", class: "form-label fw-bold" %>
-            <%= form.hidden_field :delivery_person_id, id: "selected_delivery_person_id" %>
-            <div class="position-relative">
+            <div class="delivery-person-search-container position-relative">
               <input type="text" 
-                     class="form-control" 
-                     id="delivery_person_search_input"
-                     placeholder="Search delivery people by name..." 
-                     autocomplete="off"
-                     value="<%= @delivery_assignment.user&.name %>"
-                     required>
-              <div class="search-results-dropdown d-none" id="delivery_person_search_results">
-                <div class="search-loading d-none">
-                  <div class="p-3 text-center">
-                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                    Searching delivery people...
-                  </div>
+                     class="form-control delivery-person-search-input" 
+                     id="delivery-person-search-input"
+                     placeholder="Search delivery people by name..."
+                     autocomplete="off">
+              <div class="search-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <%= form.hidden_field :delivery_person_id, id: 'delivery-person-select' %>
+              <div class="delivery-person-suggestions" id="delivery-person-suggestions" style="display: none;">
+                <!-- Delivery person suggestions will be populated here -->
+              </div>
+              <div class="delivery-person-loading" id="delivery-person-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin me-2"></i>Searching delivery people...
+              </div>
+              <div class="selected-delivery-person" id="selected-delivery-person" style="display: none;">
+                <div class="selected-delivery-person-info">
+                  <div class="selected-delivery-person-name"></div>
+                  <div class="selected-delivery-person-email"></div>
                 </div>
-                <div class="search-results-list"></div>
-                <div class="search-no-results d-none">
-                  <div class="p-3 text-muted text-center">
-                    <i class="fas fa-truck me-2"></i>No delivery people found
-                  </div>
-                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary clear-delivery-person">
+                  <i class="fas fa-times"></i>
+                </button>
               </div>
             </div>
             <div class="form-text">
@@ -247,7 +251,522 @@
 </div>
 
 <script>
-// Available data loaded from server
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize existing customer/delivery person if editing
+  <% if @delivery_assignment.customer_id.present? %>
+    const existingCustomer = {
+      id: '<%= @delivery_assignment.customer_id %>',
+      name: '<%= j(@delivery_assignment.customer&.name || '') %>',
+      phone: '<%= j(@delivery_assignment.customer&.phone_number.presence || @delivery_assignment.customer&.alt_phone_number || '') %>'
+    };
+    if (existingCustomer.name) {
+      selectCustomer(existingCustomer.id, existingCustomer.name, existingCustomer.phone);
+    }
+  <% end %>
+  
+  <% if @delivery_assignment.user_id.present? %>
+    const existingDeliveryPerson = {
+      id: '<%= @delivery_assignment.user_id %>',
+      name: '<%= j(@delivery_assignment.user&.name || '') %>',
+      email: '<%= j(@delivery_assignment.user&.email || '') %>'
+    };
+    if (existingDeliveryPerson.name) {
+      selectDeliveryPerson(existingDeliveryPerson.id, existingDeliveryPerson.name, existingDeliveryPerson.email);
+    }
+  <% end %>
+  
+  // Initialize search functionality
+  initializeCustomerSearch();
+  initializeDeliveryPersonSearch();
+  initializeProductSearch();
+});
+
+// Customer Search Functionality
+const customerSearchInput = document.getElementById('customer-search-input');
+const customerSuggestions = document.getElementById('customer-suggestions');
+const customerLoading = document.getElementById('customer-loading');
+const selectedCustomer = document.getElementById('selected-customer');
+const customerSelect = document.getElementById('customer-select');
+let customerSearchTimeout;
+let currentCustomerSearchTerm = '';
+let currentCustomerPage = 1;
+let isCustomerLoadingMore = false;
+let hasMoreCustomerData = true;
+
+function initializeCustomerSearch() {
+  if (!customerSearchInput) return;
+  
+  // Trigger customer search as you type
+  customerSearchInput.addEventListener('input', function(e) {
+    clearTimeout(customerSearchTimeout);
+    const query = this.value.trim();
+    currentCustomerSearchTerm = query;
+    
+    // Reset pagination on new search
+    currentCustomerPage = 1;
+    hasMoreCustomerData = true;
+    
+    if (query.length === 0) {
+      // Show all customers when input is empty
+      customerSearchTimeout = setTimeout(() => {
+        showCustomerLoading();
+        fetchCustomerSuggestions('', true);
+      }, 100);
+      return;
+    }
+    
+    // Add debouncing - wait 300ms after user stops typing
+    customerSearchTimeout = setTimeout(() => {
+      showCustomerLoading();
+      fetchCustomerSuggestions(query, true);
+    }, 300);
+  });
+  
+  // Handle focus - show dropdown with all customers
+  customerSearchInput.addEventListener('focus', function() {
+    if (!customerSelect.value) {
+      const query = this.value.trim();
+      currentCustomerPage = 1;
+      hasMoreCustomerData = true;
+      showCustomerLoading();
+      fetchCustomerSuggestions(query, true);
+    }
+  });
+  
+  // Handle blur (with delay to allow clicking suggestions)
+  customerSearchInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      hideCustomerSuggestions();
+    }, 200);
+  });
+}
+
+// Clear customer button
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.clear-customer')) {
+    clearSelectedCustomer();
+  }
+});
+
+function fetchCustomerSuggestions(query, resetList = false) {
+  if (resetList) {
+    currentCustomerPage = 1;
+    hasMoreCustomerData = true;
+  }
+  
+  fetch(`/assign_deliveries/search_suggestions?q=${encodeURIComponent(query)}&page=${currentCustomerPage}`)
+    .then(response => response.json())
+    .then(data => {
+      hideCustomerLoading();
+      // Filter only customer suggestions
+      const customerSuggestionsList = data.suggestions.filter(s => s.type === 'customer');
+      hasMoreCustomerData = data.has_more;
+      
+      if (resetList || currentCustomerPage === 1) {
+        displayCustomerSuggestions(customerSuggestionsList);
+      } else {
+        appendCustomerSuggestions(customerSuggestionsList);
+      }
+      
+      isCustomerLoadingMore = false;
+    })
+    .catch(error => {
+      console.error('Customer search error:', error);
+      hideCustomerLoading();
+      isCustomerLoadingMore = false;
+    });
+}
+
+function displayCustomerSuggestions(suggestions) {
+  if (suggestions.length === 0) {
+    customerSuggestions.innerHTML = '<div class="customer-suggestion-item">No customers found</div>';
+    customerSuggestions.style.display = 'block';
+    return;
+  }
+  
+  const html = suggestions.map(suggestion => {
+    const highlightedName = highlightSearchTerm(suggestion.label, currentCustomerSearchTerm);
+    const phone = suggestion.phone || '';
+    
+    return `
+      <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${phone}">
+        <div class="customer-suggestion-name">${highlightedName}</div>
+        ${phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${phone}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  customerSuggestions.innerHTML = html;
+  if (hasMoreCustomerData) {
+    customerSuggestions.innerHTML += '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>';
+  }
+  customerSuggestions.style.display = 'block';
+  
+  attachCustomerSuggestionEventListeners();
+  attachCustomerScrollListener();
+}
+
+function appendCustomerSuggestions(suggestions) {
+  if (suggestions.length === 0) return;
+  
+  // Remove the load more indicator if it exists
+  const loadMoreIndicator = customerSuggestions.querySelector('.load-more-indicator');
+  if (loadMoreIndicator) {
+    loadMoreIndicator.remove();
+  }
+  
+  const html = suggestions.map(suggestion => {
+    const highlightedName = highlightSearchTerm(suggestion.label, currentCustomerSearchTerm);
+    const phone = suggestion.phone || '';
+    
+    return `
+      <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${phone}">
+        <div class="customer-suggestion-name">${highlightedName}</div>
+        ${phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${phone}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  customerSuggestions.insertAdjacentHTML('beforeend', html);
+  
+  if (hasMoreCustomerData) {
+    customerSuggestions.insertAdjacentHTML('beforeend', '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>');
+  }
+  
+  attachCustomerSuggestionEventListeners();
+}
+
+function attachCustomerSuggestionEventListeners() {
+  // Add click handlers to new items only
+  document.querySelectorAll('.customer-suggestion-item:not([data-listeners-attached])').forEach(item => {
+    if (item.dataset.customerId) {
+      item.addEventListener('click', function() {
+        selectCustomer(
+          this.dataset.customerId,
+          this.dataset.customerName,
+          this.dataset.customerPhone
+        );
+      });
+      
+      item.addEventListener('mouseenter', function() {
+        document.querySelectorAll('.customer-suggestion-item.active').forEach(active => {
+          active.classList.remove('active');
+        });
+        this.classList.add('active');
+      });
+      
+      item.setAttribute('data-listeners-attached', 'true');
+    }
+  });
+}
+
+function attachCustomerScrollListener() {
+  customerSuggestions.removeEventListener('scroll', handleCustomerScroll);
+  customerSuggestions.addEventListener('scroll', handleCustomerScroll);
+}
+
+function handleCustomerScroll() {
+  if (!hasMoreCustomerData || isCustomerLoadingMore) return;
+  
+  const scrollTop = customerSuggestions.scrollTop;
+  const scrollHeight = customerSuggestions.scrollHeight;
+  const clientHeight = customerSuggestions.clientHeight;
+  
+  // Load more when user scrolls to within 50px of the bottom
+  if (scrollTop + clientHeight >= scrollHeight - 50) {
+    isCustomerLoadingMore = true;
+    currentCustomerPage++;
+    
+    // Show loading indicator
+    const loadMoreIndicator = customerSuggestions.querySelector('.load-more-indicator');
+    if (loadMoreIndicator) {
+      loadMoreIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading more...';
+    }
+    
+    fetchCustomerSuggestions(currentCustomerSearchTerm, false);
+  }
+}
+
+function selectCustomer(id, name, phone) {
+  customerSelect.value = id;
+  customerSearchInput.style.display = 'none';
+  selectedCustomer.style.display = 'flex';
+  
+  selectedCustomer.querySelector('.selected-customer-name').textContent = name;
+  selectedCustomer.querySelector('.selected-customer-phone').textContent = phone ? phone : 'No phone number';
+  
+  hideCustomerSuggestions();
+}
+
+function clearSelectedCustomer() {
+  customerSelect.value = '';
+  customerSearchInput.value = '';
+  customerSearchInput.style.display = 'block';
+  selectedCustomer.style.display = 'none';
+  hideCustomerSuggestions();
+}
+
+function showCustomerLoading() {
+  customerLoading.style.display = 'block';
+  customerSuggestions.style.display = 'none';
+}
+
+function hideCustomerLoading() {
+  customerLoading.style.display = 'none';
+}
+
+function hideCustomerSuggestions() {
+  customerSuggestions.style.display = 'none';
+  customerLoading.style.display = 'none';
+}
+
+// Delivery Person Search Functionality
+const deliveryPersonSearchInput = document.getElementById('delivery-person-search-input');
+const deliveryPersonSuggestions = document.getElementById('delivery-person-suggestions');
+const deliveryPersonLoading = document.getElementById('delivery-person-loading');
+const selectedDeliveryPerson = document.getElementById('selected-delivery-person');
+const deliveryPersonSelect = document.getElementById('delivery-person-select');
+let deliveryPersonSearchTimeout;
+let currentDeliveryPersonSearchTerm = '';
+let currentDeliveryPersonPage = 1;
+let isDeliveryPersonLoadingMore = false;
+let hasMoreDeliveryPersonData = true;
+
+function initializeDeliveryPersonSearch() {
+  if (!deliveryPersonSearchInput) return;
+  
+  // Trigger delivery person search as you type
+  deliveryPersonSearchInput.addEventListener('input', function(e) {
+    clearTimeout(deliveryPersonSearchTimeout);
+    const query = this.value.trim();
+    currentDeliveryPersonSearchTerm = query;
+    
+    // Reset pagination on new search
+    currentDeliveryPersonPage = 1;
+    hasMoreDeliveryPersonData = true;
+    
+    if (query.length === 0) {
+      // Show all delivery people when input is empty
+      deliveryPersonSearchTimeout = setTimeout(() => {
+        showDeliveryPersonLoading();
+        fetchDeliveryPersonSuggestions('', true);
+      }, 100);
+      return;
+    }
+    
+    // Add debouncing - wait 300ms after user stops typing
+    deliveryPersonSearchTimeout = setTimeout(() => {
+      showDeliveryPersonLoading();
+      fetchDeliveryPersonSuggestions(query, true);
+    }, 300);
+  });
+  
+  // Handle focus - show dropdown with all delivery people
+  deliveryPersonSearchInput.addEventListener('focus', function() {
+    if (!deliveryPersonSelect.value) {
+      const query = this.value.trim();
+      currentDeliveryPersonPage = 1;
+      hasMoreDeliveryPersonData = true;
+      showDeliveryPersonLoading();
+      fetchDeliveryPersonSuggestions(query, true);
+    }
+  });
+  
+  // Handle blur (with delay to allow clicking suggestions)
+  deliveryPersonSearchInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      hideDeliveryPersonSuggestions();
+    }, 200);
+  });
+}
+
+// Clear delivery person button
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.clear-delivery-person')) {
+    clearSelectedDeliveryPerson();
+  }
+});
+
+function fetchDeliveryPersonSuggestions(query, resetList = false) {
+  if (resetList) {
+    currentDeliveryPersonPage = 1;
+    hasMoreDeliveryPersonData = true;
+  }
+  
+  fetch(`/api/delivery_people/search?q=${encodeURIComponent(query)}&page=${currentDeliveryPersonPage}`)
+    .then(response => response.json())
+    .then(data => {
+      hideDeliveryPersonLoading();
+      
+      const deliveryPersonSuggestionsList = data.results || [];
+      hasMoreDeliveryPersonData = data.pagination?.more || false;
+      
+      if (resetList || currentDeliveryPersonPage === 1) {
+        displayDeliveryPersonSuggestions(deliveryPersonSuggestionsList);
+      } else {
+        appendDeliveryPersonSuggestions(deliveryPersonSuggestionsList);
+      }
+      
+      isDeliveryPersonLoadingMore = false;
+    })
+    .catch(error => {
+      console.error('Delivery person search error:', error);
+      hideDeliveryPersonLoading();
+      isDeliveryPersonLoadingMore = false;
+    });
+}
+
+function displayDeliveryPersonSuggestions(suggestions) {
+  if (suggestions.length === 0) {
+    deliveryPersonSuggestions.innerHTML = '<div class="delivery-person-suggestion-item">No delivery people found</div>';
+    deliveryPersonSuggestions.style.display = 'block';
+    return;
+  }
+  
+  const html = suggestions.map(suggestion => {
+    const highlightedName = highlightSearchTerm(suggestion.text || suggestion.name, currentDeliveryPersonSearchTerm);
+    const email = suggestion.email || '';
+    
+    return `
+      <div class="delivery-person-suggestion-item" data-delivery-person-id="${suggestion.id}" data-delivery-person-name="${suggestion.text || suggestion.name}" data-delivery-person-email="${email}">
+        <div class="delivery-person-suggestion-name">${highlightedName}</div>
+        ${email ? `<div class="delivery-person-suggestion-email"><i class="fas fa-envelope me-1"></i>${email}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  deliveryPersonSuggestions.innerHTML = html;
+  if (hasMoreDeliveryPersonData) {
+    deliveryPersonSuggestions.innerHTML += '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>';
+  }
+  deliveryPersonSuggestions.style.display = 'block';
+  
+  attachDeliveryPersonSuggestionEventListeners();
+  attachDeliveryPersonScrollListener();
+}
+
+function appendDeliveryPersonSuggestions(suggestions) {
+  if (suggestions.length === 0) return;
+  
+  // Remove the load more indicator if it exists
+  const loadMoreIndicator = deliveryPersonSuggestions.querySelector('.load-more-indicator');
+  if (loadMoreIndicator) {
+    loadMoreIndicator.remove();
+  }
+  
+  const html = suggestions.map(suggestion => {
+    const highlightedName = highlightSearchTerm(suggestion.text || suggestion.name, currentDeliveryPersonSearchTerm);
+    const email = suggestion.email || '';
+    
+    return `
+      <div class="delivery-person-suggestion-item" data-delivery-person-id="${suggestion.id}" data-delivery-person-name="${suggestion.text || suggestion.name}" data-delivery-person-email="${email}">
+        <div class="delivery-person-suggestion-name">${highlightedName}</div>
+        ${email ? `<div class="delivery-person-suggestion-email"><i class="fas fa-envelope me-1"></i>${email}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  deliveryPersonSuggestions.insertAdjacentHTML('beforeend', html);
+  
+  if (hasMoreDeliveryPersonData) {
+    deliveryPersonSuggestions.insertAdjacentHTML('beforeend', '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>');
+  }
+  
+  attachDeliveryPersonSuggestionEventListeners();
+}
+
+function attachDeliveryPersonSuggestionEventListeners() {
+  // Add click handlers to new items only
+  document.querySelectorAll('.delivery-person-suggestion-item:not([data-listeners-attached])').forEach(item => {
+    if (item.dataset.deliveryPersonId) {
+      item.addEventListener('click', function() {
+        selectDeliveryPerson(
+          this.dataset.deliveryPersonId,
+          this.dataset.deliveryPersonName,
+          this.dataset.deliveryPersonEmail
+        );
+      });
+      
+      item.addEventListener('mouseenter', function() {
+        document.querySelectorAll('.delivery-person-suggestion-item.active').forEach(active => {
+          active.classList.remove('active');
+        });
+        this.classList.add('active');
+      });
+      
+      item.setAttribute('data-listeners-attached', 'true');
+    }
+  });
+}
+
+function attachDeliveryPersonScrollListener() {
+  deliveryPersonSuggestions.removeEventListener('scroll', handleDeliveryPersonScroll);
+  deliveryPersonSuggestions.addEventListener('scroll', handleDeliveryPersonScroll);
+}
+
+function handleDeliveryPersonScroll() {
+  if (!hasMoreDeliveryPersonData || isDeliveryPersonLoadingMore) return;
+  
+  const scrollTop = deliveryPersonSuggestions.scrollTop;
+  const scrollHeight = deliveryPersonSuggestions.scrollHeight;
+  const clientHeight = deliveryPersonSuggestions.clientHeight;
+  
+  // Load more when user scrolls to within 50px of the bottom
+  if (scrollTop + clientHeight >= scrollHeight - 50) {
+    isDeliveryPersonLoadingMore = true;
+    currentDeliveryPersonPage++;
+    
+    // Show loading indicator
+    const loadMoreIndicator = deliveryPersonSuggestions.querySelector('.load-more-indicator');
+    if (loadMoreIndicator) {
+      loadMoreIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading more...';
+    }
+    
+    fetchDeliveryPersonSuggestions(currentDeliveryPersonSearchTerm, false);
+  }
+}
+
+function selectDeliveryPerson(id, name, email) {
+  deliveryPersonSelect.value = id;
+  deliveryPersonSearchInput.style.display = 'none';
+  selectedDeliveryPerson.style.display = 'flex';
+  
+  selectedDeliveryPerson.querySelector('.selected-delivery-person-name').textContent = name;
+  selectedDeliveryPerson.querySelector('.selected-delivery-person-email').textContent = email ? email : 'No email';
+  
+  hideDeliveryPersonSuggestions();
+}
+
+function clearSelectedDeliveryPerson() {
+  deliveryPersonSelect.value = '';
+  deliveryPersonSearchInput.value = '';
+  deliveryPersonSearchInput.style.display = 'block';
+  selectedDeliveryPerson.style.display = 'none';
+  hideDeliveryPersonSuggestions();
+}
+
+function showDeliveryPersonLoading() {
+  deliveryPersonLoading.style.display = 'block';
+  deliveryPersonSuggestions.style.display = 'none';
+}
+
+function hideDeliveryPersonLoading() {
+  deliveryPersonLoading.style.display = 'none';
+}
+
+function hideDeliveryPersonSuggestions() {
+  deliveryPersonSuggestions.style.display = 'none';
+  deliveryPersonLoading.style.display = 'none';
+}
+
+function highlightSearchTerm(text, term) {
+  if (!term) return text;
+  
+  const regex = new RegExp(`(${term})`, 'gi');
+  return text.replace(regex, '<span class="search-highlight">$1</span>');
+}
+
+// Available data loaded from server (for product search)
 const availableProducts = [
   <% @products.each_with_index do |p, index| %>
     {
@@ -258,284 +777,6 @@ const availableProducts = [
     }<%= index < @products.count - 1 ? ',' : '' %>
   <% end %>
 ];
-
-const availableCustomers = [
-  <% @customers.each_with_index do |c, index| %>
-    {
-      id: <%= c.id %>,
-      name: "<%= j(c.name) %>",
-      phone: "<%= j(c.phone_number.presence || c.alt_phone_number || '') %>",
-      member_id: "<%= j(c.member_id || '') %>",
-      address: "<%= j(c.address || '') %>"
-    }<%= index < @customers.count - 1 ? ',' : '' %>
-  <% end %>
-];
-
-const availableDeliveryPeople = [
-  <% @delivery_people.each_with_index do |dp, index| %>
-    {
-      id: <%= dp.id %>,
-      name: "<%= j(dp.name) %>",
-      email: "<%= j(dp.email || '') %>",
-      phone: "<%= j(dp.phone || '') %>"
-    }<%= index < @delivery_people.count - 1 ? ',' : '' %>
-  <% end %>
-];
-
-let currentCustomerRequest = null;
-let currentDeliveryPersonRequest = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-  initializeEditForm();
-});
-
-function initializeEditForm() {
-  // Set initial hidden field values
-  document.getElementById('selected_customer_id').value = '<%= @delivery_assignment.customer_id %>';
-  document.getElementById('selected_delivery_person_id').value = '<%= @delivery_assignment.user_id %>';
-  document.getElementById('selected_product_id').value = '<%= @delivery_assignment.product_id %>';
-  
-  // Initialize search functionality
-  initializeCustomerSearch();
-  initializeDeliveryPersonSearch();
-  initializeProductSearch();
-}
-
-// Customer Search
-function initializeCustomerSearch() {
-  const searchInput = document.getElementById('customer_search_input');
-  const searchResults = document.getElementById('customer_search_results');
-  const hiddenField = document.getElementById('selected_customer_id');
-  
-  if (!searchInput || !searchResults || !hiddenField) return;
-  
-  let searchTimeout = null;
-  
-  // Show default results on focus
-  searchInput.addEventListener('focus', function() {
-    if (this.value.trim().length === 0) {
-      performCustomerSearch('', searchInput, searchResults, hiddenField);
-    }
-  });
-  
-  searchInput.addEventListener('input', function() {
-    const query = this.value.trim();
-    
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-    
-    if (currentCustomerRequest) {
-      currentCustomerRequest.abort();
-    }
-    
-    // Always search, even for empty queries to show defaults
-    searchTimeout = setTimeout(() => {
-      performCustomerSearch(query, searchInput, searchResults, hiddenField);
-    }, 300);
-  });
-  
-  // Clear hidden field when input is cleared
-  searchInput.addEventListener('input', function() {
-    if (this.value.trim() === '') {
-      hiddenField.value = '';
-    }
-  });
-  
-  // Hide results when clicking outside
-  document.addEventListener('click', function(e) {
-    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-      hideSearchResults(searchResults);
-    }
-  });
-}
-
-function performCustomerSearch(query, searchInput, searchResults, hiddenField) {
-  showSearchLoading(searchResults);
-  
-  // Use client-side search instead of API
-  setTimeout(() => {
-    hideSearchLoading(searchResults);
-    
-    let filteredCustomers = availableCustomers;
-    
-    if (query.trim().length > 0) {
-      const searchTerm = query.toLowerCase();
-      filteredCustomers = availableCustomers.filter(customer => 
-        customer.name.toLowerCase().includes(searchTerm) ||
-        customer.phone.toLowerCase().includes(searchTerm) ||
-        customer.member_id.toLowerCase().includes(searchTerm) ||
-        customer.address.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    if (filteredCustomers.length > 0) {
-      displayCustomerResults(filteredCustomers, searchInput, searchResults, hiddenField);
-    } else {
-      showNoResults(searchResults, 'customers');
-    }
-  }, 100); // Small delay to show loading state
-}
-
-function displayCustomerResults(customers, searchInput, searchResults, hiddenField) {
-  const resultsList = searchResults.querySelector('.search-results-list');
-  resultsList.innerHTML = '';
-  
-  customers.forEach(customer => {
-    const resultItem = document.createElement('div');
-    resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
-    resultItem.innerHTML = `
-      <div class="d-flex align-items-center">
-        <div class="me-3">
-          <div class="avatar-circle">
-            ${customer.name.charAt(0).toUpperCase()}
-          </div>
-        </div>
-        <div class="flex-grow-1">
-          <div class="fw-bold">${customer.name}</div>
-          <div class="text-muted small">
-            ${customer.phone ? `<i class="fas fa-phone me-1"></i>${customer.phone}` : ''}
-            ${customer.member_id ? `<i class="fas fa-id-card me-1 ms-2"></i>${customer.member_id}` : ''}
-          </div>
-          ${customer.address ? `<div class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>${customer.address}</div>` : ''}
-        </div>
-      </div>
-    `;
-    
-    resultItem.addEventListener('click', function() {
-      selectCustomer(customer, searchInput, searchResults, hiddenField);
-    });
-    
-    resultsList.appendChild(resultItem);
-  });
-  
-  showSearchResults(searchResults);
-}
-
-function selectCustomer(customer, searchInput, searchResults, hiddenField) {
-  searchInput.value = customer.name;
-  hiddenField.value = customer.id;
-  hideSearchResults(searchResults);
-}
-
-// Delivery Person Search
-function initializeDeliveryPersonSearch() {
-  const searchInput = document.getElementById('delivery_person_search_input');
-  const searchResults = document.getElementById('delivery_person_search_results');
-  const hiddenField = document.getElementById('selected_delivery_person_id');
-  
-  if (!searchInput || !searchResults || !hiddenField) return;
-  
-  let searchTimeout = null;
-  
-  // Show default results on focus
-  searchInput.addEventListener('focus', function() {
-    if (this.value.trim().length === 0) {
-      performDeliveryPersonSearch('', searchInput, searchResults, hiddenField);
-    }
-  });
-  
-  searchInput.addEventListener('input', function() {
-    const query = this.value.trim();
-    
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-    
-    if (currentDeliveryPersonRequest) {
-      currentDeliveryPersonRequest.abort();
-    }
-    
-    // Always search, even for empty queries to show defaults
-    searchTimeout = setTimeout(() => {
-      performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField);
-    }, 300);
-  });
-  
-  // Clear hidden field when input is cleared
-  searchInput.addEventListener('input', function() {
-    if (this.value.trim() === '') {
-      hiddenField.value = '';
-    }
-  });
-  
-  // Hide results when clicking outside
-  document.addEventListener('click', function(e) {
-    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-      hideSearchResults(searchResults);
-    }
-  });
-}
-
-function performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField) {
-  showSearchLoading(searchResults);
-  
-  // Use client-side search instead of API
-  setTimeout(() => {
-    hideSearchLoading(searchResults);
-    
-    let filteredDeliveryPeople = availableDeliveryPeople;
-    
-    if (query.trim().length > 0) {
-      const searchTerm = query.toLowerCase();
-      filteredDeliveryPeople = availableDeliveryPeople.filter(person => 
-        person.name.toLowerCase().includes(searchTerm) ||
-        person.email.toLowerCase().includes(searchTerm) ||
-        person.phone.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    if (filteredDeliveryPeople.length > 0) {
-      displayDeliveryPersonResults(filteredDeliveryPeople, searchInput, searchResults, hiddenField);
-    } else {
-      showNoResults(searchResults, 'delivery people');
-    }
-  }, 100); // Small delay to show loading state
-}
-
-function displayDeliveryPersonResults(deliveryPeople, searchInput, searchResults, hiddenField) {
-  const resultsList = searchResults.querySelector('.search-results-list');
-  resultsList.innerHTML = '';
-  
-  deliveryPeople.forEach(person => {
-    const resultItem = document.createElement('div');
-    resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
-    
-    resultItem.innerHTML = `
-      <div class="d-flex align-items-center">
-        <div class="me-3">
-          <div class="avatar-circle bg-info">
-            ${person.name.charAt(0).toUpperCase()}
-          </div>
-        </div>
-        <div class="flex-grow-1">
-          <div class="fw-bold">${person.name}</div>
-          <div class="text-muted small">
-            ${person.email ? `<i class="fas fa-envelope me-1"></i>${person.email}` : ''}
-            ${person.phone ? `<i class="fas fa-phone me-1 ms-2"></i>${person.phone}` : ''}
-          </div>
-          <div class="text-muted small">
-            <i class="fas fa-truck me-1"></i>Delivery Person
-          </div>
-        </div>
-      </div>
-    `;
-    
-    resultItem.addEventListener('click', function() {
-      selectDeliveryPerson(person, searchInput, searchResults, hiddenField);
-    });
-    
-    resultsList.appendChild(resultItem);
-  });
-  
-  showSearchResults(searchResults);
-}
-
-function selectDeliveryPerson(person, searchInput, searchResults, hiddenField) {
-  searchInput.value = person.name;
-  hiddenField.value = person.id;
-  hideSearchResults(searchResults);
-}
 
 // Product Search
 function initializeProductSearch() {
@@ -672,7 +913,264 @@ function hideSearchResults(searchResults) {
   font-weight: 600;
 }
 
-/* Search Dropdown Styles */
+/* Customer Search Styles */
+.customer-search-container {
+  position: relative;
+}
+
+.customer-search-input {
+  padding-right: 2.5rem !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(102, 126, 234, 0.2) !important;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.customer-search-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.customer-search-container .search-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #667eea;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.customer-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 400px;
+  width: max-content;
+  max-width: 500px;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 450px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.customer-suggestion-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.customer-suggestion-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.customer-suggestion-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.customer-suggestion-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.customer-suggestion-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.customer-suggestion-phone {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.customer-loading {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 400px;
+  width: max-content;
+  max-width: 500px;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 1rem 1.5rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.selected-customer {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selected-customer-info {
+  flex: 1;
+}
+
+.selected-customer-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.selected-customer-phone {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.clear-customer {
+  border-radius: 8px !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+/* Delivery Person Search Styles */
+.delivery-person-search-container {
+  position: relative;
+}
+
+.delivery-person-search-input {
+  padding-right: 2.5rem !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(102, 126, 234, 0.2) !important;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.delivery-person-search-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.delivery-person-search-container .search-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #667eea;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.delivery-person-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 400px;
+  width: max-content;
+  max-width: 500px;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 450px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.delivery-person-suggestion-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delivery-person-suggestion-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.delivery-person-suggestion-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.delivery-person-suggestion-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.delivery-person-suggestion-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.delivery-person-suggestion-email {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.delivery-person-loading {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 400px;
+  width: max-content;
+  max-width: 500px;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 1rem 1.5rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.selected-delivery-person {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selected-delivery-person-info {
+  flex: 1;
+}
+
+.selected-delivery-person-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.selected-delivery-person-email {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.clear-delivery-person {
+  border-radius: 8px !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+.search-highlight {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Legacy search styles for product search */
 .search-results-dropdown {
   position: absolute;
   top: 100%;
