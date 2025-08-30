@@ -5,13 +5,15 @@ class DeliveryAssignmentsController < ApplicationController
   def index
     # Date filtering - default to today, but allow viewing other dates
     # Fix date filter to show exact date matches only
-    if params[:date].present?
+    if params[:date].present? && !params[:date].blank?
       begin
         filter_date = Date.parse(params[:date])
       rescue ArgumentError
         filter_date = Date.today
       end
     else
+      # Only default to today if no date parameter is provided at all
+      # This ensures that when filters are applied, the date stays the same
       filter_date = Date.today
     end
     

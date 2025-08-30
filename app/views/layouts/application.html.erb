@@ -209,6 +209,43 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <!-- Global Date Input Default Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Set today's date as default for empty date inputs
+        function setDefaultDates() {
+          const today = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD format
+          
+          // Find all date inputs that don't have a value
+          const emptyDateInputs = document.querySelectorAll('input[type="date"]:not([value]), input[type="date"][value=""]');
+          
+          emptyDateInputs.forEach(function(input) {
+            // Skip inputs that explicitly shouldn't have defaults
+            if (!input.hasAttribute('data-no-default')) {
+              input.value = today;
+            }
+          });
+        }
+        
+        // Set defaults on page load
+        setDefaultDates();
+        
+        // Also set defaults when new content is dynamically added
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length > 0) {
+              setDefaultDates();
+            }
+          });
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+      });
+    </script>
     <%= javascript_include_tag "sidebar", "data-turbo-track": "reload" %>
     
     <script>

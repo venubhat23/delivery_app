@@ -88,13 +88,18 @@
 </div>
 
 <!-- Enhanced Filters -->
-<div class="card mb-4">
-  <div class="card-body">
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-header bg-white border-0 pb-0">
+    <h6 class="mb-0 text-muted">
+      <i class="fas fa-filter me-2"></i>Filter Assignments
+    </h6>
+  </div>
+  <div class="card-body pt-3">
     <div class="row align-items-center">
-      <div class="col-md-8">
-        <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex align-items-center flex-wrap gap-3", id: "delivery-filter-form" do |form| %>
-          <div>
-            <label class="form-label" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Customer</label>
+      <div class="col-md-12">
+        <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex align-items-end flex-wrap gap-3", id: "delivery-filter-form" do |form| %>
+          <div style="min-width: 250px;">
+            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Customer</label>
             <div class="customer-search-container position-relative">
               <input type="text" 
                      class="form-control customer-search-input" 
@@ -123,21 +128,23 @@
               </div>
             </div>
           </div>
-          <div>
-            <label class="form-label" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Date</label>
+          <div style="min-width: 170px;">
+            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Date</label>
             <%= form.date_field :date, value: @current_date, 
                                 class: "form-control", 
                                 title: "Select date to view assignments",
-                                style: "min-width: 150px;" %>
+                                id: "date-filter-input" %>
           </div>
-          <div>
+          <div style="min-width: 150px;">
+            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Status</label>
             <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search statuses...">
               <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
                               { include_blank: false },
                               { class: "form-select", data: { "searchable-select-target" => "select" } } %>
             </div>
           </div>
-          <div>
+          <div style="min-width: 180px;">
+            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Delivery Person</label>
             <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search delivery people...">
               <%= form.select :delivery_person_id,
                               options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
@@ -145,7 +152,11 @@
                               { class: "form-select", data: { "searchable-select-target" => "select" } } %>
             </div>
           </div>
-          <%= form.submit "Search & Filter", class: "btn btn-outline-primary", id: "manual-filter-btn" %>
+          <div class="align-self-end">
+            <a href="<%= delivery_assignments_path %>" class="btn btn-outline-danger btn-sm" id="clear-filters-btn">
+              <i class="fas fa-times me-1"></i>Clear Filters
+            </a>
+          </div>
         <% end %>
       </div>
       <div class="col-md-4">
@@ -1206,7 +1217,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Auto-refresh functionality
   const form = document.getElementById('delivery-filter-form');
-  const dateInput = document.querySelector('input[name="date"]');
+  const dateInput = document.getElementById('date-filter-input') || document.querySelector('input[name="date"]');
   const statusSelect = document.querySelector('select[name="status"]');
   const deliveryPersonSelect = document.querySelector('select[name="delivery_person_id"]');
   let autoRefreshTimeout;
@@ -1485,7 +1496,27 @@ document.addEventListener('DOMContentLoaded', function() {
   function autoRefreshFilters() {
     clearTimeout(autoRefreshTimeout);
     autoRefreshTimeout = setTimeout(() => {
-      form.submit();
+      // Preserve the current date value before submitting
+      const currentDate = dateInput ? dateInput.value : null;
+      
+      // Create URL with current form values
+      const formData = new FormData(form);
+      
+      // Ensure date is preserved if it exists
+      if (currentDate && currentDate !== '') {
+        formData.set('date', currentDate);
+      }
+      
+      // Convert FormData to URLSearchParams for URL construction
+      const params = new URLSearchParams();
+      for (let [key, value] of formData.entries()) {
+        if (value && value !== '') {
+          params.append(key, value);
+        }
+      }
+      
+      // Navigate to the URL with preserved parameters
+      window.location.href = form.action + '?' + params.toString();
     }, 500);
   }
   

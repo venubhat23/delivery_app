@@ -120,7 +120,7 @@
           <!-- Enhanced Date Picker -->
           <div class="col-md-6">
             <%= form.label :scheduled_date, "Delivery Date", class: "form-label fw-bold" %>
-            <%= form.date_field :scheduled_date, class: "form-control", required: true %>
+            <%= form.date_field :scheduled_date, class: "form-control", required: true, value: @delivery_assignment.scheduled_date || Date.today %>
           </div>
 
           <div class="col-md-6">
@@ -288,6 +288,13 @@ function initializeCustomerSearch() {
   
   let searchTimeout = null;
   
+  // Show default results on focus
+  searchInput.addEventListener('focus', function() {
+    if (this.value.trim().length === 0) {
+      performCustomerSearch('', searchInput, searchResults, hiddenField);
+    }
+  });
+  
   searchInput.addEventListener('input', function() {
     const query = this.value.trim();
     
@@ -299,11 +306,7 @@ function initializeCustomerSearch() {
       currentCustomerRequest.abort();
     }
     
-    if (query.length < 2) {
-      hideSearchResults(searchResults);
-      return;
-    }
-    
+    // Always search, even for empty queries to show defaults
     searchTimeout = setTimeout(() => {
       performCustomerSearch(query, searchInput, searchResults, hiddenField);
     }, 300);
@@ -327,17 +330,28 @@ function initializeCustomerSearch() {
 function performCustomerSearch(query, searchInput, searchResults, hiddenField) {
   showSearchLoading(searchResults);
   
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  
   currentCustomerRequest = fetch(`/api/customers/search?q=${encodeURIComponent(query)}`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
     }
   })
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
   .then(data => {
     currentCustomerRequest = null;
     hideSearchLoading(searchResults);
+    
+    console.log('Customer search response:', data); // Debug log
     
     if (data && data.results && data.results.length > 0) {
       displayCustomerResults(data.results, searchInput, searchResults, hiddenField);
@@ -406,6 +420,13 @@ function initializeDeliveryPersonSearch() {
   
   let searchTimeout = null;
   
+  // Show default results on focus
+  searchInput.addEventListener('focus', function() {
+    if (this.value.trim().length === 0) {
+      performDeliveryPersonSearch('', searchInput, searchResults, hiddenField);
+    }
+  });
+  
   searchInput.addEventListener('input', function() {
     const query = this.value.trim();
     
@@ -417,11 +438,7 @@ function initializeDeliveryPersonSearch() {
       currentDeliveryPersonRequest.abort();
     }
     
-    if (query.length < 2) {
-      hideSearchResults(searchResults);
-      return;
-    }
-    
+    // Always search, even for empty queries to show defaults
     searchTimeout = setTimeout(() => {
       performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField);
     }, 300);
@@ -445,17 +462,28 @@ function initializeDeliveryPersonSearch() {
 function performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField) {
   showSearchLoading(searchResults);
   
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  
   currentDeliveryPersonRequest = fetch(`/api/delivery_people/search?q=${encodeURIComponent(query)}`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
     }
   })
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
   .then(data => {
     currentDeliveryPersonRequest = null;
     hideSearchLoading(searchResults);
+    
+    console.log('Delivery person search response:', data); // Debug log
     
     if (data && data.results && data.results.length > 0) {
       displayDeliveryPersonResults(data.results, searchInput, searchResults, hiddenField);

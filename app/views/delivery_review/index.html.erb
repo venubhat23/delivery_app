@@ -29,11 +29,11 @@
 
         <div class="col-md-2 d-none" id="customStartWrap">
           <label class="form-label">Start Date</label>
-          <input type="date" id="startDate" class="form-control date-input" data-format="DD, MMM YYYY" />
+          <input type="date" id="startDate" class="form-control date-input" data-format="DD, MMM YYYY" value="<%= Date.today.to_s %>" />
         </div>
         <div class="col-md-2 d-none" id="customEndWrap">
           <label class="form-label">End Date</label>
-          <input type="date" id="endDate" class="form-control date-input" data-format="DD, MMM YYYY" />
+          <input type="date" id="endDate" class="form-control date-input" data-format="DD, MMM YYYY" value="<%= Date.today.to_s %>" />
         </div>
 
         <div class="col-md-3">

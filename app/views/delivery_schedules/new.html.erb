@@ -86,14 +86,14 @@
               <%= form.label :start_date, class: "form-label fw-bold" do %>
                 <i class="fas fa-calendar-alt me-1"></i>Start Date *
               <% end %>
-              <%= form.date_field :start_date, class: "form-control", required: true, id: "start-date" %>
+              <%= form.date_field :start_date, class: "form-control", required: true, id: "start-date", value: Date.today %>
             </div>
 
             <div class="col-md-4 mb-3">
               <%= form.label :end_date, class: "form-label fw-bold" do %>
                 <i class="fas fa-calendar-check me-1"></i>End Date *
               <% end %>
-              <%= form.date_field :end_date, class: "form-control", required: true, id: "end-date" %>
+              <%= form.date_field :end_date, class: "form-control", required: true, id: "end-date", value: Date.today + 30.days %>
             </div>
           </div>
 
