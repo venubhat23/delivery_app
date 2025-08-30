@@ -239,6 +239,7 @@ Rails.application.routes.draw do
       get :generate_monthly_for_all
       post :generate_monthly_for_all
       get :search_suggestions
+      get :export_for_whatsapp
     end
   end
   

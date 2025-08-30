@@ -18,7 +18,10 @@ class ApplicationController < ActionController::Base
   
   def require_login
     unless logged_in?
-      redirect_to login_path
+      respond_to do |format|
+        format.html { redirect_to login_path }
+        format.json { render json: { success: false, error: 'Authentication required' }, status: 401 }
+      end
     end
   end
   

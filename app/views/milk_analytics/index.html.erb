@@ -36,6 +36,12 @@
           </button>
         </li>
         <li class="nav-item" role="presentation">
+          <button class="nav-link <%= 'active' if active_tab == 'schedules' %>" id="schedules-tab" data-bs-toggle="pill" data-bs-target="#schedules" 
+                  type="button" role="tab" aria-controls="schedules" aria-selected="false">
+            <i class="fas fa-list me-1"></i>Schedules
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
           <button class="nav-link <%= 'active' if active_tab == 'calendar' %>" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar" 
                   type="button" role="tab" aria-controls="calendar" aria-selected="true">
             <i class="fas fa-calendar-alt me-1"></i>Procurement Calendar
@@ -350,111 +356,6 @@
                         <td colspan="4" class="text-center text-muted py-4">
                           <i class="fas fa-truck fa-2x mb-2"></i><br>
                           No delivery data available
-                        </td>
-                      </tr>
-                    <% end %>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Procurement Schedules Table -->
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card border-0 shadow-lg">
-            <div class="card-header py-4 d-flex justify-content-between align-items-center">
-              <h5 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-calendar-alt me-2"></i>Procurement Schedules
-              </h5>
-              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal" onclick="openScheduleModal()">
-                <i class="fas fa-plus me-1"></i>Add Schedule
-              </button>
-            </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table table-hover">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Vendor</th>
-                      <th>Product</th>
-                      <th>Date Range</th>
-                      <th>Quantity/Day</th>
-                      <th>Buying Price</th>
-                      <th>Selling Price</th>
-                      <th>Status</th>
-                      <th>Progress</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if @procurement_schedules&.any? %>
-                      <% @procurement_schedules.each do |schedule| %>
-                        <tr data-schedule-id="<%= schedule.id %>">
-                          <td>
-                            <strong><%= schedule.vendor_name %></strong>
-                          </td>
-                          <td>
-                            <% if schedule.product %>
-                              <span class="badge bg-info"><%= schedule.product.name %></span>
-                            <% else %>
-                              <span class="text-muted">N/A</span>
-                            <% end %>
-                          </td>
-                          <td>
-                            <small>
-                              <%= schedule.from_date.strftime('%d.%m.%Y') %> - <%= schedule.to_date.strftime('%d.%m.%Y') %>
-                              <br><span class="text-muted">(<%= schedule.duration_in_days %> days)</span>
-                            </small>
-                          </td>
-                          <td>
-                            <%= number_with_delimiter(schedule.quantity) %><%= schedule.unit.first if schedule.unit %>
-                          </td>
-                          <td>₹<%= number_with_delimiter(schedule.buying_price) %></td>
-                          <td>₹<%= number_with_delimiter(schedule.selling_price) %></td>
-                          <td>
-                            <span class="badge bg-<%= case schedule.status
-                                                      when 'active' then 'success'
-                                                      when 'completed' then 'primary'
-                                                      when 'cancelled' then 'danger'
-                                                      else 'secondary'
-                                                      end %>">
-                              <%= schedule.status.titleize %>
-                            </span>
-                          </td>
-                          <td>
-                            <div class="d-flex align-items-center">
-                              <div class="progress flex-grow-1 me-2" style="height: 8px;">
-                                <div class="progress-bar" role="progressbar" style="width: <%= schedule.completion_percentage %>%" aria-valuenow="<%= schedule.completion_percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
-                              </div>
-                              <small class="text-muted"><%= schedule.completion_percentage %>%</small>
-                            </div>
-                          </td>
-                          <td>
-                            <div class="btn-group" role="group" style="position: relative; z-index: 10;">
-                              <button type="button" class="btn btn-outline-primary btn-sm schedule-edit-btn" 
-                                      data-schedule-id="<%= schedule.id %>" 
-                                      title="Edit"
-                                      style="cursor: pointer;">
-                                <i class="fas fa-edit"></i>
-                              </button>
-                              <button type="button" class="btn btn-outline-danger btn-sm schedule-delete-btn" 
-                                      data-schedule-id="<%= schedule.id %>" 
-                                      title="Delete"
-                                      style="cursor: pointer;">
-                                <i class="fas fa-trash"></i>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      <% end %>
-                    <% else %>
-                      <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
-                          <i class="fas fa-calendar-alt fa-2x mb-2"></i><br>
-                          No procurement schedules found for the selected filters
                         </td>
                       </tr>
                     <% end %>
@@ -1392,6 +1293,95 @@
               <div class="alert alert-info mt-4">
                 <i class="fas fa-lightbulb me-2"></i>
                 <strong>How it works:</strong> When you create a procurement schedule, the system will automatically generate daily procurement assignments for each day in the date range. Each assignment will have the planned quantity and prices you specify.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simple Schedules Tab -->
+    <div class="tab-pane fade <%= 'show active' if active_tab == 'schedules' %>" id="schedules" role="tabpanel" aria-labelledby="schedules-tab">
+      <div class="row">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="fas fa-list me-2"></i>Procurement Schedules
+                </h5>
+                <button class="btn btn-light btn-sm" onclick="refreshSchedulesList()">
+                  <i class="fas fa-sync me-1"></i>Refresh
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Vendor</th>
+                      <th>Product</th>
+                      <th>Duration</th>
+                      <th>Quantity</th>
+                      <th>Buying Price</th>
+                      <th>Selling Price</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="schedules-table-body">
+                    <% @procurement_schedules&.each do |schedule| %>
+                      <tr id="schedule-row-<%= schedule.id %>">
+                        <td><%= schedule.vendor_name %></td>
+                        <td><%= schedule.product&.name || 'N/A' %></td>
+                        <td>
+                          <%= schedule.from_date.strftime('%d %b') %> - 
+                          <%= schedule.to_date.strftime('%d %b %Y') %>
+                        </td>
+                        <td><%= schedule.quantity %> <%= schedule.unit %></td>
+                        <td>₹<%= schedule.buying_price %></td>
+                        <td>₹<%= schedule.selling_price %></td>
+                        <td>
+                          <span class="badge bg-<%= schedule.status == 'active' ? 'success' : 'secondary' %>">
+                            <%= schedule.status.capitalize %>
+                          </span>
+                        </td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-primary me-1" 
+                                  onclick="editSchedule(<%= schedule.id %>)"
+                                  title="Edit">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger" 
+                                  onclick="deleteScheduleSimple(<%= schedule.id %>)"
+                                  title="Delete">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+                <% if @procurement_schedules.nil? || @procurement_schedules.empty? %>
+                  <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
+                    <h5>No procurement schedules found</h5>
+                    <p class="mb-2">There are no procurement schedules to display.</p>
+                    <small class="text-muted">
+                      Create your first schedule using the "Create Procurement" tab above.
+                    </small>
+                    <% if Rails.env.development? %>
+                      <div class="mt-3 small text-warning">
+                        <strong>Debug info:</strong><br>
+                        @procurement_schedules: <%= @procurement_schedules.class %><br>
+                        Count: <%= @procurement_schedules&.count || 'nil' %><br>
+                        Tab: <%= params[:tab] %><br>
+                        User ID: <%= current_user&.id || 'nil' %>
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
             </div>
           </div>
@@ -3265,31 +3255,6 @@ function saveSchedule() {
   });
 }
 
-function editSchedule(scheduleId) {
-  console.log('editSchedule called with ID:', scheduleId);
-  try {
-    if (!scheduleId || isNaN(scheduleId)) {
-      throw new Error('Invalid schedule ID provided');
-    }
-    
-    // Check if modal elements exist
-    const modal = document.getElementById('scheduleModal');
-    const form = document.getElementById('scheduleForm');
-    
-    if (!modal) {
-      throw new Error('Schedule modal not found in DOM');
-    }
-    if (!form) {
-      throw new Error('Schedule form not found in DOM');
-    }
-    
-    console.log('Opening schedule modal for editing...');
-    openScheduleModal(scheduleId);
-  } catch (error) {
-    console.error('Error in editSchedule:', error);
-    showAlert('danger', 'Error opening edit modal: ' + error.message);
-  }
-}
 
 function deleteSchedule(scheduleId) {
   console.log('deleteSchedule called with ID:', scheduleId);
@@ -3364,6 +3329,325 @@ function deleteSchedule(scheduleId) {
   }
 }
 
+
+// Debug function to check tab switching
+document.addEventListener('DOMContentLoaded', function() {
+  const schedulesTab = document.getElementById('schedules-tab');
+  if (schedulesTab) {
+    schedulesTab.addEventListener('click', function() {
+      console.log('Schedules tab clicked!');
+      // Force reload with schedules tab parameter
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        if (!url.searchParams.get('tab') || url.searchParams.get('tab') !== 'schedules') {
+          url.searchParams.set('tab', 'schedules');
+          window.location.href = url.toString();
+        }
+      }, 100);
+    });
+  }
+});
+});
+
+// Global functions for schedule management (accessible from onclick handlers)
+function deleteScheduleSimple(scheduleId) {
+  console.log('Delete clicked for schedule ID:', scheduleId);
+  
+  if (!scheduleId) {
+    showAlert('danger', 'Invalid schedule ID');
+    return;
+  }
+  
+  if (!confirm('Are you sure you want to delete this procurement schedule?')) {
+    return;
+  }
+  
+  // Show loading
+  showAlert('info', 'Deleting schedule...');
+  
+  // Use AJAX to delete schedule
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  
+  fetch(`/milk-procurement/${scheduleId}.json`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => {
+    if (response.status === 401) {
+      throw new Error('Authentication required - please refresh page');
+    }
+    if (response.ok) {
+      // Remove row from table
+      const row = document.getElementById(`schedule-row-${scheduleId}`);
+      if (row) {
+        row.style.opacity = '0.5';
+        setTimeout(() => {
+          row.remove();
+          showAlert('success', 'Schedule deleted successfully');
+        }, 300);
+      } else {
+        // Fallback: reload page
+        window.location.reload();
+      }
+    } else {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    if (error.message.includes('Authentication required')) {
+      showAlert('danger', 'Session expired. Please refresh the page.');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showAlert('danger', 'Error deleting schedule');
+    }
+  });
+}
+
+function editSchedule(scheduleId) {
+  console.log('Edit clicked for schedule ID:', scheduleId);
+  
+  if (!scheduleId) {
+    showAlert('danger', 'Invalid schedule ID');
+    return;
+  }
+  
+  // Fetch schedule data from backend
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  
+  showAlert('info', 'Loading schedule data...');
+  
+  fetch(`/milk-procurement/${scheduleId}.json`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => {
+    if (response.status === 401) {
+      throw new Error('Authentication required - please refresh page');
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    // Check if response is actually JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      throw new Error('Server returned non-JSON response');
+    }
+  })
+  .then(data => {
+    if (data.success || data.schedule) {
+      const schedule = data.schedule || data;
+      populateEditForm(schedule);
+      
+      // Show the edit modal
+      const modal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
+      modal.show();
+      
+      // Hide loading message
+      setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+          if (alert.textContent.includes('Loading schedule data')) {
+            alert.remove();
+          }
+        });
+      }, 500);
+    } else {
+      showAlert('danger', 'Failed to load schedule data');
+    }
+  })
+  .catch(error => {
+    console.error('Edit error:', error);
+    if (error.message.includes('Authentication required')) {
+      showAlert('danger', 'Session expired. Please refresh the page and try again.');
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } else if (error.message.includes('non-JSON response')) {
+      showAlert('danger', 'Server error. Please refresh the page and try again.');
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } else {
+      showAlert('danger', `Error loading schedule data: ${error.message}`);
+    }
+  });
+}
+
+function populateEditForm(schedule) {
+  // Populate the edit form with schedule data
+  document.getElementById('edit_schedule_id').value = schedule.id;
+  document.getElementById('edit_vendor_name').value = schedule.vendor_name || '';
+  document.getElementById('edit_from_date').value = schedule.from_date || '';
+  document.getElementById('edit_to_date').value = schedule.to_date || '';
+  document.getElementById('edit_quantity').value = schedule.quantity || '';
+  document.getElementById('edit_buying_price').value = schedule.buying_price || '';
+  document.getElementById('edit_selling_price').value = schedule.selling_price || '';
+  document.getElementById('edit_unit').value = schedule.unit || 'liters';
+  document.getElementById('edit_status').value = schedule.status || 'active';
+  document.getElementById('edit_notes').value = schedule.notes || '';
+}
+
+function updateSchedule() {
+  const scheduleId = document.getElementById('edit_schedule_id').value;
+  const form = document.getElementById('editScheduleForm');
+  
+  if (!scheduleId) {
+    showAlert('danger', 'Schedule ID is missing');
+    return;
+  }
+  
+  // Get form data
+  const formData = new FormData(form);
+  const scheduleData = {};
+  
+  // Convert FormData to regular object
+  for (let [key, value] of formData.entries()) {
+    if (key !== 'schedule_id') {
+      scheduleData[key] = value;
+    }
+  }
+  
+  console.log('Updating schedule:', scheduleId, scheduleData);
+  
+  // Show loading
+  const updateBtn = document.getElementById('updateScheduleBtn');
+  updateBtn.disabled = true;
+  updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+  
+  // Send update request
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  
+  fetch(`/milk-procurement/${scheduleId}.json`, {
+    method: 'PATCH',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({ procurement_schedule: scheduleData })
+  })
+  .then(response => {
+    if (response.status === 401) {
+      throw new Error('Authentication required - please refresh page');
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      showAlert('success', 'Schedule updated successfully');
+      
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editScheduleModal'));
+      modal.hide();
+      
+      // Refresh the table or update the specific row using server response data
+      if (data.schedule) {
+        refreshScheduleRow(scheduleId, data.schedule);
+      } else {
+        // Fallback to form data if server doesn't return schedule data
+        refreshScheduleRow(scheduleId, scheduleData);
+      }
+      
+    } else {
+      showAlert('danger', data.error || 'Failed to update schedule');
+    }
+  })
+  .catch(error => {
+    console.error('Update error:', error);
+    if (error.message.includes('Authentication required')) {
+      showAlert('danger', 'Session expired. Please refresh the page.');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showAlert('danger', 'Error updating schedule');
+    }
+  })
+  .finally(() => {
+    // Reset button
+    updateBtn.disabled = false;
+    updateBtn.innerHTML = '<i class="fas fa-save me-1"></i>Update Schedule';
+  });
+}
+
+function refreshScheduleRow(scheduleId, scheduleData) {
+  // Update the table row with new data
+  console.log('Refreshing schedule row with data:', scheduleData);
+  const row = document.getElementById(`schedule-row-${scheduleId}`);
+  if (row) {
+    const cells = row.cells;
+    if (cells.length >= 7) {
+      // Update duration with better date handling
+      try {
+        const fromDateObj = new Date(scheduleData.from_date + 'T00:00:00');
+        const toDateObj = new Date(scheduleData.to_date + 'T00:00:00');
+        
+        if (isNaN(fromDateObj.getTime()) || isNaN(toDateObj.getTime())) {
+          // Fallback: use the original date strings
+          cells[2].textContent = `${scheduleData.from_date} - ${scheduleData.to_date}`;
+        } else {
+          const fromDate = fromDateObj.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'});
+          const toDate = toDateObj.toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'});
+          cells[2].textContent = `${fromDate} - ${toDate}`;
+        }
+      } catch (error) {
+        console.error('Date formatting error:', error);
+        // Fallback: use the original date strings
+        cells[2].textContent = `${scheduleData.from_date} - ${scheduleData.to_date}`;
+      }
+      
+      // Update quantity
+      cells[3].textContent = `${scheduleData.quantity} ${scheduleData.unit}`;
+      
+      // Update buying price
+      cells[4].textContent = `₹${scheduleData.buying_price}`;
+      
+      // Update selling price
+      cells[5].textContent = `₹${scheduleData.selling_price}`;
+      
+      // Update status
+      const statusBadge = cells[6].querySelector('.badge');
+      if (statusBadge) {
+        statusBadge.textContent = scheduleData.status.charAt(0).toUpperCase() + scheduleData.status.slice(1);
+        statusBadge.className = `badge bg-${scheduleData.status === 'active' ? 'success' : 'secondary'}`;
+      }
+      
+      // Highlight updated row briefly
+      row.style.backgroundColor = '#d4edda';
+      setTimeout(() => {
+        row.style.backgroundColor = '';
+      }, 2000);
+    }
+  }
+}
+
+function refreshSchedulesList() {
+  // Reload the page with schedules tab active
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', 'schedules');
+  window.location.href = url.toString();
+}
+
+// Global alert functions
 function showAlert(type, message) {
   const alertContainer = document.getElementById('alert-container') || createAlertContainer();
   const alertDiv = document.createElement('div');
@@ -3391,7 +3675,7 @@ function createAlertContainer() {
   document.body.appendChild(container);
   return container;
 }
-});
+
 </script>
 
 <!-- Schedule Modal -->
@@ -3477,6 +3761,94 @@ function createAlertContainer() {
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Schedule Modal -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1" aria-labelledby="editScheduleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="editScheduleModalLabel">
+          <i class="fas fa-edit me-2"></i>Edit Procurement Schedule
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editScheduleForm">
+          <input type="hidden" id="edit_schedule_id" name="schedule_id">
+          
+          <!-- Vendor Name (Read-only) -->
+          <div class="mb-3">
+            <label for="edit_vendor_name" class="form-label">Vendor Name</label>
+            <input type="text" class="form-control" id="edit_vendor_name" readonly>
+          </div>
+          
+          <!-- Duration -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="edit_from_date" class="form-label">From Date</label>
+              <input type="date" class="form-control" id="edit_from_date" name="from_date" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_to_date" class="form-label">To Date</label>
+              <input type="date" class="form-control" id="edit_to_date" name="to_date" required>
+            </div>
+          </div>
+          
+          <!-- Quantity, Buying Price, Selling Price -->
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="edit_quantity" class="form-label">Quantity per Day</label>
+              <input type="number" step="0.01" class="form-control" id="edit_quantity" name="quantity" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="edit_buying_price" class="form-label">Buying Price (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="edit_buying_price" name="buying_price" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="edit_selling_price" class="form-label">Selling Price (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="edit_selling_price" name="selling_price" required>
+            </div>
+          </div>
+          
+          <!-- Unit and Status -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="edit_unit" class="form-label">Unit</label>
+              <select class="form-select" id="edit_unit" name="unit" required>
+                <option value="liters">Liters</option>
+                <option value="gallons">Gallons</option>
+                <option value="kg">Kg</option>
+                <option value="pounds">Pounds</option>
+                <option value="pieces">Pieces</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_status" class="form-label">Status</label>
+              <select class="form-select" id="edit_status" name="status" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Notes -->
+          <div class="mb-3">
+            <label for="edit_notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="updateSchedule()" id="updateScheduleBtn">
+          <i class="fas fa-save me-1"></i>Update Schedule
+        </button>
       </div>
     </div>
   </div>

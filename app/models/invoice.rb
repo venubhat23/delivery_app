@@ -13,6 +13,63 @@ class Invoice < ApplicationRecord
   validates :customer_id, presence: true
   validates :invoice_date, presence: true
   validates :due_date, presence: true
+  
+  # WhatsApp Integration
+  def send_via_whatsapp(message = nil)
+    return { success: false, error: 'Customer phone number not found' } if customer.phone.blank?
+    
+    wanotifier = WanotifierService.new
+    
+    # Default message if none provided
+    default_message = build_default_whatsapp_message
+    message_text = message || default_message
+    
+    # Generate invoice PDF URL (you'll need to implement this)
+    invoice_pdf_url = generate_pdf_url
+    
+    if invoice_pdf_url.present?
+      # Send with PDF attachment
+      result = wanotifier.send_document_message(
+        customer.phone,
+        message_text,
+        invoice_pdf_url,
+        "Invoice_#{invoice_number}.pdf"
+      )
+    else
+      # Send text only
+      result = wanotifier.send_text_message(customer.phone, message_text)
+    end
+    
+    # Log the result
+    if result[:success]
+      Rails.logger.info "Invoice #{invoice_number} sent via WhatsApp to #{customer.name}"
+      update(whatsapp_sent_at: Time.current, whatsapp_message_id: result[:data]['message_id'])
+    else
+      Rails.logger.error "Failed to send invoice #{invoice_number} via WhatsApp: #{result[:error]}"
+    end
+    
+    result
+  end
+  
+  def build_default_whatsapp_message
+    "🧾 *Invoice from #{customer.user.business_name || 'Atma Nirbhar Farm'}*\n\n" +
+    "📋 Invoice #: *#{invoice_number}*\n" +
+    "👤 Customer: *#{customer.name}*\n" +
+    "📅 Date: *#{invoice_date.strftime('%d %b %Y')}*\n" +
+    "💰 Amount: *₹#{total_amount}*\n" +
+    "📍 Due Date: *#{due_date.strftime('%d %b %Y')}*\n\n" +
+    "Thank you for your business! 🙏\n\n" +
+    "_This is an automated message from our billing system._"
+  end
+  
+  private
+  
+  def generate_pdf_url
+    # You can implement PDF generation here
+    # For now, return nil to send text only
+    # Later you can add: Rails.application.routes.url_helpers.invoice_pdf_url(self)
+    nil
+  end
   validates :status, presence: true, inclusion: { in: %w[pending paid overdue] }
   validates :total_amount, presence: true, numericality: { greater_than: 0 }
   validates :invoice_number, presence: true, uniqueness: true

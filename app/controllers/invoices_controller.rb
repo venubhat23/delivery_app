@@ -281,6 +281,9 @@ end
   # AJAX action for search suggestions
   def search_suggestions
     query = params[:q].to_s.strip
+    page = (params[:page] || 1).to_i
+    per_page = 15
+    offset = (page - 1) * per_page
     
     if query.present? && query.length >= 1
       # Get customers matching name or phone/alt_phone starting with/containing digits
@@ -290,27 +293,47 @@ end
                     name_q: "#{query}%",
                     num_q: "%#{query}%"
                   )
-                  .limit(10)
+                  .limit(per_page)
+                  .offset(offset)
                   .order(:name)
       
-      # Get invoices matching the query
-      invoices = Invoice.includes(:customer)
-                       .search_by_number_or_customer(query)
-                       .limit(5)
-                       .order(created_at: :desc)
+      # Get total count for pagination info
+      total_customers = Customer.where(
+                         "name ILIKE :name_q OR phone_number ILIKE :num_q OR alt_phone_number ILIKE :num_q",
+                         name_q: "#{query}%",
+                         num_q: "%#{query}%"
+                       ).count
       
-      suggestions = []
-      
-      customers.each do |customer|
-        suggestions << {
-          type: 'customer',
-          label: customer.name,
-          value: customer.name,
-          phone: customer.phone_number.presence || customer.alt_phone_number,
-          id: customer.id
-        }
-      end
-      
+      # Get invoices matching the query (only on first page)
+      invoices = if page == 1
+                   Invoice.includes(:customer)
+                          .search_by_number_or_customer(query)
+                          .limit(5)
+                          .order(created_at: :desc)
+                 else
+                   []
+                 end
+    else
+      # When no query, return all customers (paginated)
+      customers = Customer.limit(per_page).offset(offset).order(:name)
+      total_customers = Customer.count
+      invoices = []
+    end
+    
+    suggestions = []
+    
+    customers.each do |customer|
+      suggestions << {
+        type: 'customer',
+        label: customer.name,
+        value: customer.name,
+        phone: customer.phone_number.presence || customer.alt_phone_number,
+        id: customer.id
+      }
+    end
+    
+    # Only add invoices if there's a search query and it's the first page
+    if query.present? && page == 1
       invoices.each do |invoice|
         suggestions << {
           type: 'invoice',
@@ -321,11 +344,16 @@ end
           id: invoice.id
         }
       end
-      
-      render json: { suggestions: suggestions }
-    else
-      render json: { suggestions: [] }
     end
+    
+    has_more = (offset + customers.length) < total_customers
+    
+    render json: { 
+      suggestions: suggestions,
+      page: page,
+      has_more: has_more,
+      total_count: total_customers
+    }
   end
   
   def mark_as_paid
@@ -458,27 +486,76 @@ end
     return false unless invoice&.customer&.phone_number.present?
     
     begin
-      # Create public URL for the invoice
-      public_url = public_invoice_url(invoice.share_token)
-      
       # Initialize WhatsApp service
       whatsapp_service = WhatsappService.new
       
-      # Build message with public URL
-      message = build_enhanced_invoice_message(invoice, public_url)
+      # Try to send with PDF attachment first, fallback to link if PDF fails
+      success = whatsapp_service.send_invoice_with_pdf(invoice)
       
-      # Send WhatsApp message with invoice link
-      whatsapp_service.send_text(invoice.customer.phone_number, message)
+      # If PDF sending fails, try sending with public link
+      unless success
+        Rails.logger.warn "PDF sending failed for invoice #{invoice.id}, trying with link..."
+        success = whatsapp_service.send_invoice_with_link(invoice)
+      end
       
-      # Mark invoice as shared
-      invoice.update(shared_at: Time.current) if invoice.shared_at.blank?
-      
-      Rails.logger.info "Invoice WhatsApp sent successfully to #{invoice.customer.name} (#{invoice.customer.phone_number})"
-      true
+      success
     rescue => e
       Rails.logger.error "Failed to send invoice WhatsApp to #{invoice.customer.name}: #{e.message}"
       false
     end
+  end
+
+  # Export invoices for WhatsApp extension
+  def export_for_whatsapp
+    # Get invoices that haven't been sent via WhatsApp yet
+    invoices = Invoice.includes(:customer)
+                     .where(status: ['pending', 'generated'])
+                     .where(shared_at: nil)
+                     .where.not(customer: { phone_number: [nil, ''] })
+    
+    # Apply filters if provided
+    if params[:month].present? && params[:year].present?
+      invoices = invoices.by_month(params[:month], params[:year])
+    end
+    
+    if params[:customer_id].present?
+      invoices = invoices.where(customer_id: params[:customer_id])
+    end
+    
+    whatsapp_data = invoices.map do |invoice|
+      {
+        id: invoice.id,
+        customer_name: invoice.customer.name,
+        phone_number: invoice.customer.phone_number,
+        invoice_number: invoice.formatted_number,
+        amount: invoice.total_amount.to_f,
+        invoice_date: invoice.invoice_date.strftime('%d %B %Y'),
+        due_date: invoice.due_date.strftime('%d %B %Y'),
+        public_url: public_invoice_url(invoice.share_token),
+        pdf_url: invoice_url(invoice, format: :pdf, host: request.host_with_port, protocol: request.protocol)
+      }
+    end
+    
+    render json: {
+      invoices: whatsapp_data,
+      total_count: whatsapp_data.length,
+      timestamp: Time.current.iso8601,
+      message: "#{whatsapp_data.length} invoices ready for WhatsApp delivery"
+    }
+  end
+  
+  # Mark invoice as sent via WhatsApp
+  def mark_whatsapp_sent
+    @invoice = Invoice.find(params[:id])
+    
+    @invoice.update!(
+      shared_at: Time.current,
+      whatsapp_sent_at: Time.current
+    )
+    
+    render json: { success: true, message: 'Invoice marked as sent via WhatsApp' }
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, error: 'Invoice not found' }, status: 404
   end
 
   # Enhanced message for invoice with better formatting

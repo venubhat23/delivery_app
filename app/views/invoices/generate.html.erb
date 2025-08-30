@@ -11,7 +11,7 @@
         <div class="card-header">
           <h5><i class="fas fa-cog"></i> Invoice Generation Settings</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="height: 500px;">
           <%= form_with url: generate_invoices_path, method: :post, local: true, id: 'invoice-generate-form' do |form| %>
             <div class="row g-3">
               <div class="col-md-4">
@@ -137,13 +137,15 @@
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  min-width: 400px;
+  width: max-content;
+  max-width: 500px;
   background: white;
   border: 1px solid rgba(102, 126, 234, 0.2);
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  max-height: 300px;
+  max-height: 450px;
   overflow-y: auto;
   margin-top: 0.5rem;
 }
@@ -183,7 +185,9 @@
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  min-width: 400px;
+  width: max-content;
+  max-width: 500px;
   background: white;
   border: 1px solid rgba(102, 126, 234, 0.2);
   border-radius: 12px;
@@ -251,28 +255,45 @@ document.addEventListener('DOMContentLoaded', function() {
   const selectedCustomer = document.getElementById('selected-customer');
   let customerSearchTimeout;
   let currentCustomerSearchTerm = '';
+  let currentPage = 1;
+  let isLoadingMore = false;
+  let hasMoreData = true;
   
   if (customerSearchInput) {
-    // Trigger customer search on Enter key
-    customerSearchInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const query = this.value.trim();
-        currentCustomerSearchTerm = query;
-        if (query.length === 0) {
-          hideCustomerSuggestions();
-          clearSelectedCustomer();
-          return;
-        }
-        showCustomerLoading();
-        fetchCustomerSuggestions(query);
+    // Trigger customer search as you type
+    customerSearchInput.addEventListener('input', function(e) {
+      clearTimeout(customerSearchTimeout);
+      const query = this.value.trim();
+      currentCustomerSearchTerm = query;
+      
+      // Reset pagination on new search
+      currentPage = 1;
+      hasMoreData = true;
+      
+      if (query.length === 0) {
+        // Show all customers when input is empty
+        customerSearchTimeout = setTimeout(() => {
+          showCustomerLoading();
+          fetchCustomerSuggestions('', true);
+        }, 100);
+        return;
       }
+      
+      // Add debouncing - wait 300ms after user stops typing
+      customerSearchTimeout = setTimeout(() => {
+        showCustomerLoading();
+        fetchCustomerSuggestions(query, true);
+      }, 300);
     });
     
-    // Handle focus
+    // Handle focus - show dropdown with all customers
     customerSearchInput.addEventListener('focus', function() {
-      if (this.value.trim().length >= 1 && !customerSelect.value) {
-        fetchCustomerSuggestions(this.value.trim());
+      if (!customerSelect.value) {
+        const query = this.value.trim();
+        currentPage = 1;
+        hasMoreData = true;
+        showCustomerLoading();
+        fetchCustomerSuggestions(query, true);
       }
     });
     
@@ -333,18 +354,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  function fetchCustomerSuggestions(query) {
-    fetch(`/invoices/search_suggestions?q=${encodeURIComponent(query)}`)
+  function fetchCustomerSuggestions(query, resetList = false) {
+    if (resetList) {
+      currentPage = 1;
+      hasMoreData = true;
+    }
+    
+    fetch(`/invoices/search_suggestions?q=${encodeURIComponent(query)}&page=${currentPage}`)
       .then(response => response.json())
       .then(data => {
         hideCustomerLoading();
         // Filter only customer suggestions
         const customerSuggestionsList = data.suggestions.filter(s => s.type === 'customer');
-        displayCustomerSuggestions(customerSuggestionsList);
+        hasMoreData = data.has_more;
+        
+        if (resetList || currentPage === 1) {
+          displayCustomerSuggestions(customerSuggestionsList);
+        } else {
+          appendCustomerSuggestions(customerSuggestionsList);
+        }
+        
+        isLoadingMore = false;
       })
       .catch(error => {
         console.error('Customer search error:', error);
         hideCustomerLoading();
+        isLoadingMore = false;
       });
   }
   
@@ -368,10 +403,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }).join('');
     
     customerSuggestions.innerHTML = html;
+    if (hasMoreData) {
+      customerSuggestions.innerHTML += '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>';
+    }
     customerSuggestions.style.display = 'block';
     
-    // Add click handlers
-    document.querySelectorAll('.customer-suggestion-item').forEach(item => {
+    attachSuggestionEventListeners();
+    attachScrollListener();
+  }
+  
+  function appendCustomerSuggestions(suggestions) {
+    if (suggestions.length === 0) return;
+    
+    // Remove the load more indicator if it exists
+    const loadMoreIndicator = customerSuggestions.querySelector('.load-more-indicator');
+    if (loadMoreIndicator) {
+      loadMoreIndicator.remove();
+    }
+    
+    const html = suggestions.map(suggestion => {
+      const highlightedName = highlightSearchTerm(suggestion.label, currentCustomerSearchTerm);
+      const phone = suggestion.phone || '';
+      
+      return `
+        <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${phone}">
+          <div class="customer-suggestion-name">${highlightedName}</div>
+          ${phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${phone}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+    
+    customerSuggestions.insertAdjacentHTML('beforeend', html);
+    
+    if (hasMoreData) {
+      customerSuggestions.insertAdjacentHTML('beforeend', '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>');
+    }
+    
+    attachSuggestionEventListeners();
+  }
+  
+  function attachSuggestionEventListeners() {
+    // Add click handlers to new items only
+    document.querySelectorAll('.customer-suggestion-item:not([data-listeners-attached])').forEach(item => {
       if (item.dataset.customerId) {
         item.addEventListener('click', function() {
           selectCustomer(
@@ -387,8 +460,37 @@ document.addEventListener('DOMContentLoaded', function() {
           });
           this.classList.add('active');
         });
+        
+        item.setAttribute('data-listeners-attached', 'true');
       }
     });
+  }
+  
+  function attachScrollListener() {
+    customerSuggestions.removeEventListener('scroll', handleScroll);
+    customerSuggestions.addEventListener('scroll', handleScroll);
+  }
+  
+  function handleScroll() {
+    if (!hasMoreData || isLoadingMore) return;
+    
+    const scrollTop = customerSuggestions.scrollTop;
+    const scrollHeight = customerSuggestions.scrollHeight;
+    const clientHeight = customerSuggestions.clientHeight;
+    
+    // Load more when user scrolls to within 50px of the bottom
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      isLoadingMore = true;
+      currentPage++;
+      
+      // Show loading indicator
+      const loadMoreIndicator = customerSuggestions.querySelector('.load-more-indicator');
+      if (loadMoreIndicator) {
+        loadMoreIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading more...';
+      }
+      
+      fetchCustomerSuggestions(currentCustomerSearchTerm, false);
+    }
   }
   
   function selectCustomer(id, name, phone) {

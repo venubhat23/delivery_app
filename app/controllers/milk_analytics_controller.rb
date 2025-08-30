@@ -1429,23 +1429,34 @@ class MilkAnalyticsController < ApplicationController
   end
   
   def get_procurement_schedules
+    # Debug: Log current user and tab
+    Rails.logger.info "Getting procurement schedules for user: #{current_user&.id}, tab: #{params[:tab]}"
+    
     # Get procurement schedules with optimized includes to avoid N+1 queries
     schedules_query = current_user.procurement_schedules
                                   .includes(:procurement_assignments, :product)
                                   .preload(:product, procurement_assignments: :product)
     
-    # Apply date filter - schedules that are active or have assignments in the date range
-    schedules_query = schedules_query.where(
-      "(from_date <= ? AND to_date >= ?) OR (from_date >= ? AND from_date <= ?)", 
-      @end_date, @start_date, @start_date, @end_date
-    )
-    
-    # Apply product filter if specified
-    if @product_id.present?
-      schedules_query = schedules_query.where(product_id: @product_id)
+    # If we're on the schedules tab, show ALL schedules (not just date-filtered ones)
+    if params[:tab] == 'schedules'
+      # Show all schedules for the schedules tab
+      @procurement_schedules = schedules_query.order(:from_date, :created_at)
+      Rails.logger.info "Schedules tab: Found #{@procurement_schedules.count} schedules"
+    else
+      # Apply date filter for other tabs - schedules that are active or have assignments in the date range
+      schedules_query = schedules_query.where(
+        "(from_date <= ? AND to_date >= ?) OR (from_date >= ? AND from_date <= ?)", 
+        @end_date, @start_date, @start_date, @end_date
+      )
+      
+      # Apply product filter if specified
+      if @product_id.present?
+        schedules_query = schedules_query.where(product_id: @product_id)
+      end
+      
+      @procurement_schedules = schedules_query.order(:from_date, :created_at)
+      Rails.logger.info "Other tabs: Found #{@procurement_schedules.count} schedules (filtered)"
     end
-    
-    @procurement_schedules = schedules_query.order(:from_date, :created_at)
   end
   
   def schedule_params

@@ -27,8 +27,40 @@ class ProcurementSchedulesController < ApplicationController
   end
 
   def show
-    @assignments = @procurement_schedule.procurement_assignments.by_date
-    @analytics = calculate_schedule_analytics(@procurement_schedule)
+    Rails.logger.info "ProcurementSchedules#show called with ID: #{params[:id]}, format: #{request.format}"
+    Rails.logger.info "Current user: #{current_user&.id}"
+    Rails.logger.info "Procurement schedule: #{@procurement_schedule&.id}"
+    
+    respond_to do |format|
+      format.html do
+        @assignments = @procurement_schedule.procurement_assignments.by_date
+        @analytics = calculate_schedule_analytics(@procurement_schedule)
+      end
+      format.json do
+        Rails.logger.info "Returning JSON response for schedule #{@procurement_schedule.id}"
+        render json: { 
+          success: true,
+          schedule: {
+            id: @procurement_schedule.id,
+            vendor_name: @procurement_schedule.vendor_name,
+            from_date: @procurement_schedule.from_date.strftime('%Y-%m-%d'),
+            to_date: @procurement_schedule.to_date.strftime('%Y-%m-%d'),
+            quantity: @procurement_schedule.quantity,
+            buying_price: @procurement_schedule.buying_price,
+            selling_price: @procurement_schedule.selling_price,
+            status: @procurement_schedule.status,
+            unit: @procurement_schedule.unit,
+            notes: @procurement_schedule.notes
+          }
+        }
+      end
+    end
+  rescue => e
+    Rails.logger.error "Error in ProcurementSchedules#show: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+    respond_to do |format|
+      format.json { render json: { success: false, error: e.message }, status: 500 }
+    end
   end
 
   def new
@@ -52,16 +84,61 @@ class ProcurementSchedulesController < ApplicationController
   end
 
   def update
-    if @procurement_schedule.update(procurement_schedule_params)
-      redirect_to @procurement_schedule, notice: 'Procurement schedule was successfully updated.'
-    else
-      render :edit, status: :unprocessable_entity
+    respond_to do |format|
+      if @procurement_schedule.update(procurement_schedule_params)
+        format.html { redirect_to @procurement_schedule, notice: 'Procurement schedule was successfully updated.' }
+        format.json { 
+          render json: { 
+            success: true, 
+            message: 'Procurement schedule was successfully updated.',
+            schedule: {
+              id: @procurement_schedule.id,
+              vendor_name: @procurement_schedule.vendor_name,
+              from_date: @procurement_schedule.from_date.strftime('%Y-%m-%d'),
+              to_date: @procurement_schedule.to_date.strftime('%Y-%m-%d'),
+              quantity: @procurement_schedule.quantity,
+              buying_price: @procurement_schedule.buying_price,
+              selling_price: @procurement_schedule.selling_price,
+              status: @procurement_schedule.status,
+              unit: @procurement_schedule.unit,
+              notes: @procurement_schedule.notes
+            }
+          }
+        }
+      else
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { 
+          render json: { 
+            success: false, 
+            error: 'Failed to update schedule',
+            errors: @procurement_schedule.errors.full_messages
+          }, status: 422 
+        }
+      end
     end
   end
 
   def destroy
     @procurement_schedule.destroy
-    redirect_to procurement_schedules_url, notice: 'Procurement schedule was successfully deleted.'
+    
+    respond_to do |format|
+      if request.xhr? || request.headers['X-Requested-With'] == 'XMLHttpRequest'
+        # AJAX request - return JSON
+        format.json { render json: { success: true, message: 'Procurement schedule was successfully deleted.' } }
+      else
+        # Regular form submission - redirect
+        if request.referer&.include?('milk-supply-analytics')
+          format.html { redirect_to milk_analytics_path(tab: 'schedules'), notice: 'Procurement schedule was successfully deleted.' }
+        else
+          format.html { redirect_to procurement_schedules_url, notice: 'Procurement schedule was successfully deleted.' }
+        end
+      end
+    end
+  rescue => e
+    respond_to do |format|
+      format.json { render json: { success: false, error: e.message }, status: 422 }
+      format.html { redirect_back(fallback_location: milk_analytics_path, alert: "Error: #{e.message}") }
+    end
   end
 
   def analytics
@@ -107,6 +184,13 @@ class ProcurementSchedulesController < ApplicationController
 
   def set_procurement_schedule
     @procurement_schedule = current_user.procurement_schedules.find(params[:id])
+    Rails.logger.info "Found procurement schedule: #{@procurement_schedule.id} for user #{current_user.id}"
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error "Procurement schedule #{params[:id]} not found for user #{current_user&.id}"
+    respond_to do |format|
+      format.html { redirect_to procurement_schedules_path, alert: 'Schedule not found' }
+      format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+    end
   end
 
   def procurement_schedule_params
