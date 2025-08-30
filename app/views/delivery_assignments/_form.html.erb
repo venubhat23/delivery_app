@@ -247,7 +247,7 @@
 </div>
 
 <script>
-// Available products data
+// Available data loaded from server
 const availableProducts = [
   <% @products.each_with_index do |p, index| %>
     {
@@ -256,6 +256,29 @@ const availableProducts = [
       price: "<%= p.price %>",
       unit_type: "<%= p.unit_type %>"
     }<%= index < @products.count - 1 ? ',' : '' %>
+  <% end %>
+];
+
+const availableCustomers = [
+  <% @customers.each_with_index do |c, index| %>
+    {
+      id: <%= c.id %>,
+      name: "<%= j(c.name) %>",
+      phone: "<%= j(c.phone_number.presence || c.alt_phone_number || '') %>",
+      member_id: "<%= j(c.member_id || '') %>",
+      address: "<%= j(c.address || '') %>"
+    }<%= index < @customers.count - 1 ? ',' : '' %>
+  <% end %>
+];
+
+const availableDeliveryPeople = [
+  <% @delivery_people.each_with_index do |dp, index| %>
+    {
+      id: <%= dp.id %>,
+      name: "<%= j(dp.name) %>",
+      email: "<%= j(dp.email || '') %>",
+      phone: "<%= j(dp.phone || '') %>"
+    }<%= index < @delivery_people.count - 1 ? ',' : '' %>
   <% end %>
 ];
 
@@ -330,43 +353,28 @@ function initializeCustomerSearch() {
 function performCustomerSearch(query, searchInput, searchResults, hiddenField) {
   showSearchLoading(searchResults);
   
-  const csrfToken = document.querySelector('meta[name="csrf-token"]');
-  
-  currentCustomerRequest = fetch(`/api/customers/search?q=${encodeURIComponent(query)}`, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    currentCustomerRequest = null;
+  // Use client-side search instead of API
+  setTimeout(() => {
     hideSearchLoading(searchResults);
     
-    console.log('Customer search response:', data); // Debug log
+    let filteredCustomers = availableCustomers;
     
-    if (data && data.results && data.results.length > 0) {
-      displayCustomerResults(data.results, searchInput, searchResults, hiddenField);
+    if (query.trim().length > 0) {
+      const searchTerm = query.toLowerCase();
+      filteredCustomers = availableCustomers.filter(customer => 
+        customer.name.toLowerCase().includes(searchTerm) ||
+        customer.phone.toLowerCase().includes(searchTerm) ||
+        customer.member_id.toLowerCase().includes(searchTerm) ||
+        customer.address.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (filteredCustomers.length > 0) {
+      displayCustomerResults(filteredCustomers, searchInput, searchResults, hiddenField);
     } else {
       showNoResults(searchResults, 'customers');
     }
-  })
-  .catch(error => {
-    currentCustomerRequest = null;
-    hideSearchLoading(searchResults);
-    if (error.name !== 'AbortError') {
-      console.error('Customer search error:', error);
-      showNoResults(searchResults, 'customers');
-    }
-  });
+  }, 100); // Small delay to show loading state
 }
 
 function displayCustomerResults(customers, searchInput, searchResults, hiddenField) {
@@ -462,43 +470,27 @@ function initializeDeliveryPersonSearch() {
 function performDeliveryPersonSearch(query, searchInput, searchResults, hiddenField) {
   showSearchLoading(searchResults);
   
-  const csrfToken = document.querySelector('meta[name="csrf-token"]');
-  
-  currentDeliveryPersonRequest = fetch(`/api/delivery_people/search?q=${encodeURIComponent(query)}`, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    currentDeliveryPersonRequest = null;
+  // Use client-side search instead of API
+  setTimeout(() => {
     hideSearchLoading(searchResults);
     
-    console.log('Delivery person search response:', data); // Debug log
+    let filteredDeliveryPeople = availableDeliveryPeople;
     
-    if (data && data.results && data.results.length > 0) {
-      displayDeliveryPersonResults(data.results, searchInput, searchResults, hiddenField);
+    if (query.trim().length > 0) {
+      const searchTerm = query.toLowerCase();
+      filteredDeliveryPeople = availableDeliveryPeople.filter(person => 
+        person.name.toLowerCase().includes(searchTerm) ||
+        person.email.toLowerCase().includes(searchTerm) ||
+        person.phone.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (filteredDeliveryPeople.length > 0) {
+      displayDeliveryPersonResults(filteredDeliveryPeople, searchInput, searchResults, hiddenField);
     } else {
       showNoResults(searchResults, 'delivery people');
     }
-  })
-  .catch(error => {
-    currentDeliveryPersonRequest = null;
-    hideSearchLoading(searchResults);
-    if (error.name !== 'AbortError') {
-      console.error('Delivery person search error:', error);
-      showNoResults(searchResults, 'delivery people');
-    }
-  });
+  }, 100); // Small delay to show loading state
 }
 
 function displayDeliveryPersonResults(deliveryPeople, searchInput, searchResults, hiddenField) {
@@ -509,20 +501,18 @@ function displayDeliveryPersonResults(deliveryPeople, searchInput, searchResults
     const resultItem = document.createElement('div');
     resultItem.className = 'search-result-item p-3 border-bottom cursor-pointer';
     
-    const name = person.data ? person.data.name : person.name;
-    const email = person.data ? person.data.email : person.email;
-    
     resultItem.innerHTML = `
       <div class="d-flex align-items-center">
         <div class="me-3">
           <div class="avatar-circle bg-info">
-            ${name.charAt(0).toUpperCase()}
+            ${person.name.charAt(0).toUpperCase()}
           </div>
         </div>
         <div class="flex-grow-1">
-          <div class="fw-bold">${name}</div>
+          <div class="fw-bold">${person.name}</div>
           <div class="text-muted small">
-            ${email ? `<i class="fas fa-envelope me-1"></i>${email}` : ''}
+            ${person.email ? `<i class="fas fa-envelope me-1"></i>${person.email}` : ''}
+            ${person.phone ? `<i class="fas fa-phone me-1 ms-2"></i>${person.phone}` : ''}
           </div>
           <div class="text-muted small">
             <i class="fas fa-truck me-1"></i>Delivery Person
@@ -542,8 +532,7 @@ function displayDeliveryPersonResults(deliveryPeople, searchInput, searchResults
 }
 
 function selectDeliveryPerson(person, searchInput, searchResults, hiddenField) {
-  const name = person.data ? person.data.name : person.name;
-  searchInput.value = name;
+  searchInput.value = person.name;
   hiddenField.value = person.id;
   hideSearchResults(searchResults);
 }
