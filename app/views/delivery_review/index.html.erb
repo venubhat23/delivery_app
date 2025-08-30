@@ -73,6 +73,9 @@
 
         <div class="col-md-12 text-end">
           <button type="button" id="applyFiltersBtn" class="btn btn-primary me-2">Apply Filters</button>
+          <button type="button" id="bulkCompleteBtn" class="btn btn-success me-2" style="display: none;">
+            <i class="fas fa-check-circle me-1"></i><span id="bulkCompleteText">Complete 0</span>
+          </button>
           <button type="button" id="exportCsvBtn" class="btn btn-outline-secondary me-2">Export CSV</button>
           <button type="button" id="printBtn" class="btn btn-outline-secondary">Print</button>
         </div>
@@ -148,6 +151,9 @@
 <script>
 (function() {
   'use strict';
+  
+  // Store pending assignment IDs for bulk completion
+  var pendingAssignmentIds = [];
 
   function formatINR(value) {
     try {
@@ -195,16 +201,41 @@
     document.getElementById('sumTotalCustomers').textContent = summary.total_customers || 0;
     document.getElementById('sumTotalAmount').textContent = formatINR(summary.total_amount || 0);
     document.getElementById('sumCompletionRate').textContent = (summary.completion_rate || 0) + '%';
+    
+    // Update bulk complete button
+    updateBulkCompleteButton(summary.pending_deliveries || 0);
+  }
+
+  function updateBulkCompleteButton(pendingCount) {
+    var bulkBtn = document.getElementById('bulkCompleteBtn');
+    var bulkText = document.getElementById('bulkCompleteText');
+    
+    if (pendingCount > 0) {
+      bulkText.textContent = 'Complete ' + pendingCount;
+      bulkBtn.style.display = 'inline-block';
+    } else {
+      bulkBtn.style.display = 'none';
+    }
   }
 
   function renderRows(deliveries) {
     var tbody = document.getElementById('deliveryTableBody');
     tbody.innerHTML = '';
+    
+    // Clear and rebuild pending assignment IDs
+    pendingAssignmentIds = [];
+    
     if (!deliveries || deliveries.length === 0) {
       tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No records found</td></tr>';
       return;
     }
+    
     var rows = deliveries.map(function(d) {
+      // Track pending assignments for bulk completion
+      if (d.status === 'pending') {
+        pendingAssignmentIds.push(d.id);
+      }
+      
       return '<tr data-delivery-id="' + d.id + '">' +
         '<td class="editable-date" data-field="scheduled_date">' + d.date + '</td>' +
         '<td>' + (d.customer_name || '-') + '</td>' +
@@ -280,6 +311,7 @@
     }
     document.getElementById('filterDate').addEventListener('change', toggleCustomDates);
     document.getElementById('applyFiltersBtn').addEventListener('click', fetchData);
+    document.getElementById('bulkCompleteBtn').addEventListener('click', handleBulkComplete);
     document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
 
     document.getElementById('exportCsvBtn').addEventListener('click', function() {
@@ -489,6 +521,51 @@
     .catch(function(error) {
       console.error('Error:', error);
       alert('Failed to delete delivery');
+    });
+  }
+
+  function handleBulkComplete() {
+    if (pendingAssignmentIds.length === 0) {
+      alert('No pending assignments found to complete.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to mark ' + pendingAssignmentIds.length + ' pending assignment(s) as completed?')) {
+      return;
+    }
+
+    var btn = document.getElementById('bulkCompleteBtn');
+    var originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Completing...';
+
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    fetch('/delivery-review/bulk-complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf ? csrf.getAttribute('content') : ''
+      },
+      body: JSON.stringify({ assignment_ids: pendingAssignmentIds })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+      if (result.success) {
+        // Show success message
+        alert(result.message);
+        // Refresh the data to show updated statuses
+        fetchData();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    })
+    .catch(function(error) {
+      console.error('Error:', error);
+      alert('Failed to complete assignments');
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
     });
   }
 

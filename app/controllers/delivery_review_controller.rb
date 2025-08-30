@@ -95,6 +95,51 @@ class DeliveryReviewController < ApplicationController
     render json: { success: false, message: 'Delivery not found' }, status: 404
   end
 
+  def bulk_complete
+    assignment_ids = params[:assignment_ids]
+    
+    if assignment_ids.blank?
+      render json: { success: false, message: 'No assignments provided' }, status: 400
+      return
+    end
+    
+    # Find pending assignments with the provided IDs
+    assignments = DeliveryAssignment.where(
+      id: assignment_ids,
+      status: 'pending'
+    )
+    
+    completed_count = 0
+    failed_count = 0
+    
+    assignments.find_each do |assignment|
+      if assignment.update(status: 'completed', completed_at: Time.current)
+        completed_count += 1
+      else
+        failed_count += 1
+      end
+    end
+    
+    if completed_count > 0
+      message = "Successfully completed #{completed_count} delivery assignment(s)."
+      message += " #{failed_count} failed to update." if failed_count > 0
+      render json: { 
+        success: true, 
+        message: message,
+        completed_count: completed_count,
+        failed_count: failed_count
+      }
+    else
+      render json: { 
+        success: false, 
+        message: 'No pending assignments found to complete.' 
+      }
+    end
+  rescue => e
+    Rails.logger.error "Bulk completion error: #{e.message}"
+    render json: { success: false, message: 'Failed to complete assignments' }, status: 500
+  end
+
   private
 
   def require_admin_or_delivery_team

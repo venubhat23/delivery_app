@@ -193,6 +193,7 @@ Rails.application.routes.draw do
       get :bulk, path: 'bulk-automate'
       post :process_bulk_assignments, path: 'bulk-process', as: 'process_bulk_assignments'
       post :bulk_complete, path: 'bulk-complete'
+      get :search_suggestions
     end
   end
   
@@ -328,6 +329,7 @@ Rails.application.routes.draw do
   get '/delivery-review', to: 'delivery_review#index'
   get '/delivery-review/data', to: 'delivery_review#data'
   post '/delivery-review/export', to: 'delivery_review#export'
+  post '/delivery-review/bulk-complete', to: 'delivery_review#bulk_complete'
   patch '/delivery-review/:id', to: 'delivery_review#update'
   delete '/delivery-review/:id', to: 'delivery_review#destroy'
   

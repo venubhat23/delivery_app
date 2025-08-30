@@ -15,6 +15,9 @@ class DeliveryAssignmentsController < ApplicationController
       filter_date = Date.today
     end
     
+    # Convert date to string format for database comparison if needed
+    filter_date_str = filter_date.to_s
+    
     # Optimize queries with proper includes to prevent N+1 queries
     @delivery_assignments = DeliveryAssignment.includes(
       :user, 
@@ -23,7 +26,7 @@ class DeliveryAssignmentsController < ApplicationController
       :customer, 
       :delivery_schedule,
       :invoice
-    ).where(scheduled_date: filter_date)
+    ).where("DATE(scheduled_date) = ?", filter_date_str)
      .order(created_at: :desc)
     
     # Filter by status if provided
@@ -40,6 +43,10 @@ class DeliveryAssignmentsController < ApplicationController
     # Search by customer name
     if params[:search].present?
       @delivery_assignments = @delivery_assignments.search_by_customer(params[:search])
+    end
+
+    if params[:customer_id].present?
+      @delivery_assignments = @delivery_assignments.where(customer_id: params[:customer_id])
     end
 
     # Store filtered assignments for statistics before pagination
@@ -128,6 +135,58 @@ class DeliveryAssignmentsController < ApplicationController
     else
       redirect_to @delivery_assignment, alert: 'Failed to cancel delivery assignment.'
     end
+  end
+
+  # AJAX action for search suggestions
+  def search_suggestions
+    query = params[:q].to_s.strip
+    page = (params[:page] || 1).to_i
+    per_page = 15
+    offset = (page - 1) * per_page
+    
+    if query.present? && query.length >= 1
+      # Get customers matching name or phone/alt_phone starting with/containing digits
+      customers = Customer.where(
+                    "name ILIKE :name_q OR phone_number ILIKE :num_q OR alt_phone_number ILIKE :num_q",
+                    name_q: "#{query}%",
+                    num_q: "%#{query}%"
+                  )
+                  .limit(per_page)
+                  .offset(offset)
+                  .order(:name)
+      
+      # Get total count for pagination info
+      total_customers = Customer.where(
+                         "name ILIKE :name_q OR phone_number ILIKE :num_q OR alt_phone_number ILIKE :num_q",
+                         name_q: "#{query}%",
+                         num_q: "%#{query}%"
+                       ).count
+    else
+      # When no query, return all customers (paginated)
+      customers = Customer.limit(per_page).offset(offset).order(:name)
+      total_customers = Customer.count
+    end
+    
+    suggestions = []
+    
+    customers.each do |customer|
+      suggestions << {
+        type: 'customer',
+        label: customer.name,
+        value: customer.name,
+        phone: customer.phone_number.presence || customer.alt_phone_number,
+        id: customer.id
+      }
+    end
+    
+    has_more = (offset + customers.length) < total_customers
+    
+    render json: { 
+      suggestions: suggestions,
+      page: page,
+      has_more: has_more,
+      total_count: total_customers
+    }
   end
 
   def bulk_complete

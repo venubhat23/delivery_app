@@ -62,6 +62,70 @@ class Invoice < ApplicationRecord
     "_This is an automated message from our billing system._"
   end
   
+  # Public instance methods
+  def formatted_number
+    invoice_number
+  end
+  
+  def mark_as_paid!
+    update!(status: 'paid', paid_at: Time.current)
+  end
+  
+  def mark_as_overdue!
+    update!(status: 'overdue')
+  end
+  
+  def send_reminder!
+    # Logic to send reminder email/SMS
+    InvoiceReminderJob.perform_later(self) if defined?(InvoiceReminderJob)
+    update!(last_reminder_sent_at: Time.current)
+  end
+  
+  def overdue?
+    due_date < Date.current && status != 'paid'
+  end
+  
+  def days_overdue
+    return 0 unless overdue?
+    (Date.current - due_date).to_i
+  end
+
+  def generate_share_token
+    self.share_token = SecureRandom.urlsafe_base64(32) if share_token.blank?
+  end
+
+  def mark_as_shared!
+    update!(shared_at: Time.current)
+  end
+
+  def public_url(host: nil, port: nil)
+    url_options = { token: share_token }
+    url_options[:host] = "http://gnu-modern-totally.ngrok-free.app"
+    Rails.application.routes.url_helpers.public_invoice_url(url_options)
+  end
+
+  def public_pdf_url(host: nil, port: nil)
+    url_options = { token: share_token }
+    Rails.application.routes.url_helpers.public_invoice_download_url(url_options)
+  end
+  
+  def profit_amount
+    return 0 unless invoice_type == 'profit_invoice'
+    invoice_items.sum { |item| (item.unit_price - (item.product&.cost_price || 0)) * item.quantity }
+  end
+  
+  def is_profit_invoice?
+    invoice_type == 'profit_invoice'
+  end
+  
+  def is_sales_invoice?
+    invoice_type == 'sales_invoice'
+  end
+  
+  def month_year
+    invoice_date.strftime("%B %Y")
+  end
+  
   private
   
   def generate_pdf_url
@@ -70,6 +134,7 @@ class Invoice < ApplicationRecord
     # Later you can add: Rails.application.routes.url_helpers.invoice_pdf_url(self)
     nil
   end
+  
   validates :status, presence: true, inclusion: { in: %w[pending paid overdue] }
   validates :total_amount, presence: true, numericality: { greater_than: 0 }
   validates :invoice_number, presence: true, uniqueness: true
@@ -112,61 +177,6 @@ class Invoice < ApplicationRecord
   before_create :generate_share_token
   before_save :calculate_total_amount
   after_create :mark_delivery_assignments_as_invoiced
-  
-  # Instance methods
-  def formatted_number
-    invoice_number
-  end
-  
-  def mark_as_paid!
-    update!(status: 'paid', paid_at: Time.current)
-  end
-  
-  def mark_as_overdue!
-    update!(status: 'overdue')
-  end
-  
-  def send_reminder!
-    # Logic to send reminder email/SMS
-    InvoiceReminderJob.perform_later(self) if defined?(InvoiceReminderJob)
-    update!(last_reminder_sent_at: Time.current)
-  end
-  
-  def overdue?
-    due_date < Date.current && status != 'paid'
-  end
-  
-  def days_overdue
-    return 0 unless overdue?
-    (Date.current - due_date).to_i
-  end
-
-  def generate_share_token
-    self.share_token = SecureRandom.urlsafe_base64(32) if share_token.blank?
-  end
-
-  def mark_as_shared!
-    update!(shared_at: Time.current)
-  end
-
-  def public_url(host: nil, port: nil)
-    url_options = { token: share_token }
-    
-    
-
-      url_options[:host] = "http://gnu-modern-totally.ngrok-free.app"
-    
-    
-    Rails.application.routes.url_helpers.public_invoice_url(url_options)
-  end
-
-  def public_pdf_url(host: nil, port: nil)
-    url_options = { token: share_token }
-    
-    # Ensure we always have a host
-    
-    Rails.application.routes.url_helpers.public_invoice_download_url(url_options)
-  end
   
   def profit_amount
     return 0 unless invoice_type == 'profit_invoice'
