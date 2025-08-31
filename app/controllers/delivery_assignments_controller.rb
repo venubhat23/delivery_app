@@ -324,7 +324,7 @@ class DeliveryAssignmentsController < ApplicationController
 
   def create_single_delivery
     assignment_params = delivery_assignment_params.except(:additional_products)
-    additional_products = delivery_assignment_params[:additional_products] || []
+    additional_products_hash = params[:additional_products] || {}
     
     # Create main delivery assignment
     @delivery_assignment = DeliveryAssignment.new(assignment_params)
@@ -333,15 +333,16 @@ class DeliveryAssignmentsController < ApplicationController
     if @delivery_assignment.save
       # Create additional product assignments
       created_count = 1 # Count the main assignment
-      additional_products.each do |product_data|
-        next if product_data[:product_id].blank?
+      additional_products_hash.each do |index, product_data|
+        next if product_data['product_id'].blank?
         
         additional_assignment = DeliveryAssignment.new(
           customer_id: @delivery_assignment.customer_id,
           user_id: @delivery_assignment.user_id,
-          product_id: product_data[:product_id],
-          quantity: product_data[:quantity],
-          unit: product_data[:unit] || 'pieces',
+          product_id: product_data['product_id'],
+          quantity: product_data['quantity'],
+          unit: product_data['unit'] || 'pieces',
+          discount_amount: product_data['discount_amount'] || 0,
           scheduled_date: @delivery_assignment.scheduled_date,
           special_instructions: @delivery_assignment.special_instructions,
           status: 'pending'

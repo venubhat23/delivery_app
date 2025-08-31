@@ -226,7 +226,9 @@ class DeliveryAssignment < ApplicationRecord
   def set_completed_at_if_completed
     # If status is being set to 'completed' and completed_at is not already set
     if status == 'completed' && completed_at.blank?
-      self.completed_at = scheduled_date.present? ? scheduled_date : Date.current
+      # Set timezone to +0530 (IST)
+      ist_time = Time.current.in_time_zone("Asia/Kolkata")
+      self.completed_at = scheduled_date.present? ? scheduled_date.in_time_zone("Asia/Kolkata") : ist_time
     end
   end
 end
