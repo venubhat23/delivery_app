@@ -74,7 +74,7 @@
               <i class="fas fa-box me-1"></i>Product *
             <% end %>
             <%= form.select :product_id, 
-                options_for_select([['Select product', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id] }), 
+                options_for_select([['Select product', '']] + @products.map { |p| ["#{p.name} - Rs#{p.price}", p.id, { 'data-price' => p.price || 0, 'data-unit' => p.unit_type }] }), 
                 {}, 
                 { 
                   class: "form-select product-select2", 
@@ -86,9 +86,38 @@
             </div>
           </div>
 
-          <div class="col-md-6">
-            <%= form.label :quantity, class: "form-label fw-bold" %>
-            <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
+          <div class="col-md-3">
+            <%= form.label :quantity, class: "form-label fw-bold" do %>
+              <i class="fas fa-sort-numeric-up me-1"></i>Quantity *
+            <% end %>
+            <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01", id: "quantity-field" %>
+          </div>
+
+          <!-- Discount Amount Field -->
+          <div class="col-md-3">
+            <%= form.label :discount_amount, class: "form-label fw-bold" do %>
+              <i class="fas fa-percent me-1"></i>Discount (Rs)
+            <% end %>
+            <%= form.number_field :discount_amount, 
+                class: "form-control discount-input", 
+                step: "0.01", 
+                min: "0", 
+                placeholder: "0.00",
+                id: "discount-amount-field" %>
+          </div>
+
+          <!-- Final Amount Display -->
+          <div class="col-md-3">
+            <label class="form-label fw-bold">
+              <i class="fas fa-calculator me-1"></i>Final Amount
+            </label>
+            <input type="text" 
+                   class="form-control final-amount-display" 
+                   id="final-amount-display" 
+                   readonly 
+                   placeholder="Rs 0.00" 
+                   style="background-color: #f8f9fc;">
+            <%= form.hidden_field :final_amount_after_discount, id: "final-amount-hidden" %>
           </div>
 
           <!-- Delivery Date -->
@@ -172,6 +201,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   initializeCustomerSearch();
+  initializePricingCalculations();
   initializeSelect2Dropdowns();
 });
 
@@ -425,6 +455,61 @@ function initializeCustomerSearch() {
   }
 }
 
+function initializePricingCalculations() {
+  // Elements for calculation (matching customer form exactly)
+  const productSelect = document.querySelector('.product-select2');
+  const quantityInput = document.getElementById('quantity-field');
+  const discountInput = document.getElementById('discount-amount-field');
+  const finalAmountDisplay = document.getElementById('final-amount-display');
+  const finalAmountHidden = document.getElementById('final-amount-hidden');
+  
+  function calculateFinalAmount() {
+    // Get selected product option
+    const selectedOption = productSelect ? productSelect.selectedOptions[0] : null;
+    const price = selectedOption ? parseFloat(selectedOption.getAttribute('data-price')) || 0 : 0;
+    const quantity = parseFloat(quantityInput?.value) || 0;
+    const discount = parseFloat(discountInput?.value) || 0;
+    
+    const totalAmount = price * quantity;
+    const finalAmount = Math.max(totalAmount - discount, 0);
+    
+    if (finalAmountDisplay) {
+      finalAmountDisplay.value = `Rs ${finalAmount.toFixed(2)}`;
+    }
+    
+    if (finalAmountHidden) {
+      finalAmountHidden.value = finalAmount.toFixed(2);
+    }
+    
+    // Update discount input validation (exactly like customer form)
+    if (discountInput) {
+      discountInput.max = totalAmount;
+      
+      if (discount > totalAmount) {
+        discountInput.setCustomValidity('Discount cannot exceed total amount');
+      } else {
+        discountInput.setCustomValidity('');
+      }
+    }
+  }
+  
+  // Event listeners (matching customer form)
+  if (productSelect) {
+    $(productSelect).on('change', calculateFinalAmount);
+  }
+  
+  if (quantityInput) {
+    quantityInput.addEventListener('input', calculateFinalAmount);
+  }
+  
+  if (discountInput) {
+    discountInput.addEventListener('input', calculateFinalAmount);
+  }
+  
+  // Initial calculation
+  calculateFinalAmount();
+}
+
 function initializeSelect2Dropdowns() {
   // Initialize Product Select2 (local search)
   $('.product-select2').select2({
@@ -491,26 +576,41 @@ function initializeSelect2Dropdowns() {
     const row = document.createElement('div');
     row.className = 'product-row border rounded p-3 mb-3 bg-light';
     row.innerHTML = `
-      <div class="row align-items-center">
-        <div class="col-md-5">
-          <label class="form-label fw-bold">Product</label>
-          <select name="additional_products[${index}][product_id]" class="form-select additional-product-select" required>
+      <div class="row align-items-end">
+        <div class="col-md-3">
+          <label class="form-label fw-bold"><i class="fas fa-box me-1"></i>Product</label>
+          <select name="additional_products[${index}][product_id]" class="form-select additional-product-select product-select-additional" 
+                  data-row="${index}" required onchange="updateAdditionalProductDetails(this)">
             <option value="">Select product...</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <label class="form-label fw-bold">Quantity</label>
-          <input type="number" name="additional_products[${index}][quantity]" class="form-control" 
-                 placeholder="Quantity" min="0.01" step="0.01" required>
+        <div class="col-md-2">
+          <label class="form-label fw-bold"><i class="fas fa-sort-numeric-up me-1"></i>Quantity</label>
+          <input type="number" name="additional_products[${index}][quantity]" class="form-control quantity-additional" 
+                 data-row="${index}" placeholder="1.0" min="0.01" step="0.01" required oninput="calculateAdditionalAmount(${index})">
         </div>
-        <div class="col-md-3">
-          <label class="form-label fw-bold">Unit</label>
-          <select name="additional_products[${index}][unit]" class="form-select">
+        <div class="col-md-2">
+          <label class="form-label fw-bold"><i class="fas fa-balance-scale me-1"></i>Unit</label>
+          <select name="additional_products[${index}][unit]" class="form-select unit-additional" data-row="${index}">
+            <option value="">Auto (from product)</option>
             <option value="pieces">Pieces</option>
             <option value="kg">Kilograms</option>
             <option value="liters">Liters</option>
             <option value="boxes">Boxes</option>
           </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold"><i class="fas fa-percent me-1"></i>Discount (₹)</label>
+          <input type="number" name="additional_products[${index}][discount_amount]" class="form-control discount-additional" 
+                 data-row="${index}" placeholder="0.00" min="0" step="0.01" oninput="validateAdditionalDiscount(this); calculateAdditionalAmount(${index})">
+          <div class="invalid-feedback discount-error-additional" style="display: none;">
+            Discount cannot exceed total amount
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold"><i class="fas fa-calculator me-1"></i>Final Amount</label>
+          <input type="text" class="form-control final-amount-additional" data-row="${index}" readonly 
+                 placeholder="₹0.00" style="background-color: #e8f5e8; font-weight: bold; color: #155724;">
         </div>
         <div class="col-md-1">
           <label class="form-label">&nbsp;</label>
@@ -538,6 +638,114 @@ function initializeSelect2Dropdowns() {
   // Initialize empty message
   updateEmptyMessage();
 }
+
+// Additional Product Discount Functionality
+function updateAdditionalProductDetails(selectElement) {
+  const row = selectElement.closest('.product-row');
+  const selectedOption = selectElement.options[selectElement.selectedIndex];
+  const rowIndex = selectElement.getAttribute('data-row');
+  
+  if (selectedOption.value && selectedOption.dataset) {
+    const productData = availableProducts.find(p => p.id == selectedOption.value);
+    if (productData) {
+      // Auto-select unit type
+      const unitSelect = row.querySelector('.unit-additional');
+      if (unitSelect && productData.unit_type && !unitSelect.value) {
+        // Try to match the unit type or set to the product's unit type
+        for (let option of unitSelect.options) {
+          if (option.value === productData.unit_type) {
+            unitSelect.value = productData.unit_type;
+            break;
+          }
+        }
+      }
+      
+      // Calculate initial amount
+      calculateAdditionalAmount(rowIndex);
+    }
+  } else {
+    // Clear calculations if no product selected
+    const finalAmountDisplay = row.querySelector('.final-amount-additional');
+    if (finalAmountDisplay) {
+      finalAmountDisplay.value = '₹0.00';
+    }
+  }
+}
+
+function calculateAdditionalAmount(rowIndex) {
+  const row = document.querySelector(`[data-row="${rowIndex}"]`).closest('.product-row');
+  const productSelect = row.querySelector('.product-select-additional');
+  const quantityInput = row.querySelector('.quantity-additional');
+  const discountInput = row.querySelector('.discount-additional');
+  const finalAmountDisplay = row.querySelector('.final-amount-additional');
+  
+  const selectedProductId = productSelect.value;
+  const quantity = parseFloat(quantityInput.value) || 0;
+  const discount = parseFloat(discountInput.value) || 0;
+  
+  let totalAmount = 0;
+  
+  if (selectedProductId) {
+    const productData = availableProducts.find(p => p.id == selectedProductId);
+    if (productData) {
+      const price = parseFloat(productData.price) || 0;
+      totalAmount = price * quantity;
+    }
+  }
+  
+  const finalAmount = Math.max(totalAmount - discount, 0);
+  
+  if (finalAmountDisplay) {
+    finalAmountDisplay.value = '₹' + finalAmount.toFixed(2);
+    
+    // Add visual feedback for discount
+    if (discount > 0 && totalAmount > 0) {
+      finalAmountDisplay.style.borderColor = '#28a745';
+      finalAmountDisplay.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+    } else {
+      finalAmountDisplay.style.borderColor = '';
+      finalAmountDisplay.style.boxShadow = '';
+    }
+  }
+}
+
+function validateAdditionalDiscount(input) {
+  const row = input.closest('.product-row');
+  const productSelect = row.querySelector('.product-select-additional');
+  const quantityInput = row.querySelector('.quantity-additional');
+  const discount = parseFloat(input.value) || 0;
+  
+  const selectedProductId = productSelect.value;
+  const quantity = parseFloat(quantityInput.value) || 0;
+  
+  let totalAmount = 0;
+  
+  if (selectedProductId) {
+    const productData = availableProducts.find(p => p.id == selectedProductId);
+    if (productData) {
+      const price = parseFloat(productData.price) || 0;
+      totalAmount = price * quantity;
+    }
+  }
+  
+  const discountError = row.querySelector('.discount-error-additional');
+  
+  if (discount > totalAmount && totalAmount > 0) {
+    input.style.borderColor = '#dc3545';
+    input.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+    if (discountError) {
+      discountError.style.display = 'block';
+    }
+    input.setCustomValidity('Discount cannot exceed total amount');
+  } else {
+    input.style.borderColor = '';
+    input.style.boxShadow = '';
+    if (discountError) {
+      discountError.style.display = 'none';
+    }
+    input.setCustomValidity('');
+  }
+}
 </script>
 
 <style>
@@ -545,6 +753,89 @@ function initializeSelect2Dropdowns() {
 .form-label.fw-bold {
   color: #5a5c69;
   font-weight: 600;
+}
+
+/* Enhanced Product Row Styling */
+.product-row {
+  background-color: #f8f9fc !important;
+  border: 2px solid #e3e6f0 !important;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.product-row:hover {
+  border-color: #4e73df !important;
+  box-shadow: 0 0.25rem 1.5rem 0 rgba(78, 115, 223, 0.2) !important;
+  transform: translateY(-2px);
+}
+
+.product-row::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  border-radius: 0.5rem;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.product-row:hover::before {
+  opacity: 0.1;
+}
+
+/* Discount Input Styling */
+.discount-additional {
+  transition: all 0.3s ease;
+}
+
+.discount-additional:focus {
+  border-color: #f6c23e !important;
+  box-shadow: 0 0 0 0.2rem rgba(246, 194, 62, 0.25) !important;
+}
+
+.final-amount-additional {
+  font-weight: bold !important;
+  font-size: 0.95rem !important;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.final-amount-additional:not([value="₹0.00"]) {
+  background: linear-gradient(135deg, #e8f5e8, #d4edda) !important;
+  border: 2px solid #28a745 !important;
+}
+
+/* Enhanced Error Styling */
+.discount-error-additional {
+  font-size: 0.75rem;
+  color: #dc3545;
+  margin-top: 0.25rem;
+}
+
+/* Icon Styling */
+.form-label i {
+  color: #4e73df;
+  opacity: 0.8;
+}
+
+/* Additional Visual Enhancements */
+.product-row .form-control:focus {
+  transform: scale(1.02);
+  z-index: 5;
+  position: relative;
+}
+
+.product-row .btn-danger {
+  transition: all 0.3s ease;
+}
+
+.product-row .btn-danger:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.3);
 }
 
 /* Select2 Custom Styles - Light Theme */
@@ -901,5 +1192,22 @@ code {
   padding: 0.1rem 0.3rem;
   border-radius: 4px;
   font-weight: 600;
+}
+
+/* Discount and Final Amount Styling (matching customer form) */
+.discount-input {
+  border-color: #e3e6f0;
+}
+
+.discount-input:focus {
+  border-color: #5a5c69;
+  box-shadow: 0 0 0 0.2rem rgba(90, 92, 105, 0.25);
+}
+
+.final-amount-display {
+  font-weight: 600;
+  color: #28a745;
+  background-color: #f8f9fc !important;
+  border-color: #e3e6f0;
 }
 </style>

@@ -295,7 +295,7 @@ class DeliveryAssignmentsController < ApplicationController
     da_params = params.require(:delivery_assignment).permit(
       :customer_id, :product_id, :quantity, :unit,
       :scheduled_date, :special_instructions, :status, :priority,
-      :delivery_person_id,
+      :delivery_person_id, :discount_amount, :final_amount_after_discount,
       additional_products: [:product_id, :quantity, :unit]
     ).dup  # Create a copy to avoid modifying original params
 
@@ -306,6 +306,18 @@ class DeliveryAssignmentsController < ApplicationController
 
     # Set default unit if not provided
     da_params[:unit] = 'pieces' if da_params[:unit].blank?
+
+    # Handle discount and final amount calculations
+    if da_params[:discount_amount].present? || da_params[:final_amount_after_discount].present?
+      discount_amount = da_params[:discount_amount].to_f
+      final_amount = da_params[:final_amount_after_discount].to_f
+      
+      # Ensure discount amount is not negative
+      da_params[:discount_amount] = [discount_amount, 0].max
+      
+      # Ensure final amount is not negative
+      da_params[:final_amount_after_discount] = [final_amount, 0].max
+    end
 
     da_params
   end

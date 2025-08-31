@@ -1,33 +1,49 @@
-<!-- Enhanced Delivery Assignments Index Page -->
-<div class="page-header">
-  <div class="d-flex justify-content-between align-items-center">
-    <div>
-      <h1 class="h2 mb-2">
-        <i class="fas fa-truck me-3"></i>Delivery Assignments
-        <% if @current_date != Date.today %>
-          <span class="badge bg-info fs-6">
-            <%= @current_date.strftime("%d.%m.%Y") %>
-            <% if @current_date < Date.today %>
-              <i class="fas fa-history ms-1" title="Past date"></i>
-            <% elsif @current_date > Date.today %>
-              <i class="fas fa-clock ms-1" title="Future date"></i>
+<!-- Modern Delivery Assignments Header -->
+<div class="modern-page-header">
+  <div class="container-fluid">
+    <div class="row align-items-center">
+      <div class="col-lg-8 col-md-7">
+        <div class="header-content">
+          <div class="d-flex align-items-center mb-2">
+            <div class="header-icon">
+              <i class="fas fa-truck"></i>
+            </div>
+            <div>
+              <h1 class="page-title mb-0">Delivery Assignments</h1>
+              <div class="date-badge-container">
+                <% if @current_date != Date.today %>
+                  <span class="modern-badge badge-info">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    <%= @current_date.strftime("%d %b %Y") %>
+                    <% if @current_date < Date.today %>
+                      <i class="fas fa-history ms-1" title="Past date"></i>
+                    <% elsif @current_date > Date.today %>
+                      <i class="fas fa-clock ms-1" title="Future date"></i>
+                    <% end %>
+                  </span>
+                <% else %>
+                  <span class="modern-badge badge-today">
+                    <i class="fas fa-calendar-day me-1"></i>TODAY
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <p class="page-subtitle">
+            Manage delivery assignments and track delivery progress
+            <% unless @current_date == Date.today %>
+              - Viewing <%= @current_date.strftime("%A, %d %B %Y") %>
             <% end %>
-          </span>
-        <% else %>
-          <span class="badge bg-success fs-6">Today</span>
-        <% end %>
-      </h1>
-      <p class="text-muted mb-0">
-        Manage delivery assignments and track delivery progress
-        <% unless @current_date == Date.today %>
-          - Viewing assignments for <%= @current_date.strftime("%A, %d.%m.%Y") %>
-        <% end %>
-      </p>
-    </div>
-    <div class="d-flex gap-2">
-      <%= link_to new_delivery_assignment_path, class: "btn btn-primary" do %>
-        <i class="fas fa-plus me-2"></i>New Assignment
-      <% end %>
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-5">
+        <div class="header-actions">
+          <%= link_to new_delivery_assignment_path, class: "btn btn-primary btn-lg modern-btn-primary" do %>
+            <i class="fas fa-plus me-2"></i>New Assignment
+          <% end %>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -38,75 +54,131 @@
 <% overdue = @overdue_assignments %>
 <% percentage = @completion_rate %>
 
-<!-- Enhanced Stats Cards -->
-<div class="row mb-4">
-  <div class="col-md-2 mb-3">
-    <div class="stats-card">
-      <div class="stats-icon">
-        <i class="fas fa-clipboard-list"></i>
+<!-- Modern Stats Dashboard -->
+<div class="stats-dashboard mb-4">
+  <div class="container-fluid">
+    <div class="row g-3">
+      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
+        <div class="modern-stats-card primary">
+          <div class="stats-content">
+            <div class="stats-header">
+              <div class="stats-icon-wrapper">
+                <i class="fas fa-clipboard-list"></i>
+              </div>
+              <div class="stats-trend">
+                <i class="fas fa-arrow-up text-success"></i>
+              </div>
+            </div>
+            <div class="stats-body">
+              <h3 class="stats-number"><%= total %></h3>
+              <p class="stats-label">Total Assignments</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stats-number"><%= total %></div>
-      <div class="stats-label">Total Assignments</div>
-    </div>
-  </div>
-  <div class="col-md-2 mb-3">
-    <div class="stats-card stats-card-warning">
-      <div class="stats-icon">
-        <i class="fas fa-clock"></i>
+      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
+        <div class="modern-stats-card warning">
+          <div class="stats-content">
+            <div class="stats-header">
+              <div class="stats-icon-wrapper">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stats-trend">
+                <span class="stats-badge">Pending</span>
+              </div>
+            </div>
+            <div class="stats-body">
+              <h3 class="stats-number"><%= pending %></h3>
+              <p class="stats-label">Pending</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stats-number"><%= pending %></div>
-      <div class="stats-label">Pending</div>
-    </div>
-  </div>
-  <div class="col-md-2 mb-3">
-    <div class="stats-card stats-card-success">
-      <div class="stats-icon">
-        <i class="fas fa-check-circle"></i>
+      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
+        <div class="modern-stats-card success">
+          <div class="stats-content">
+            <div class="stats-header">
+              <div class="stats-icon-wrapper">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="stats-trend">
+                <i class="fas fa-arrow-up text-success"></i>
+              </div>
+            </div>
+            <div class="stats-body">
+              <h3 class="stats-number"><%= completed %></h3>
+              <p class="stats-label">Completed</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stats-number"><%= completed %></div>
-      <div class="stats-label">Completed</div>
-    </div>
-  </div>
-  <div class="col-md-2 mb-3">
-    <div class="stats-card stats-card-danger">
-      <div class="stats-icon">
-        <i class="fas fa-exclamation-triangle"></i>
+      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
+        <div class="modern-stats-card danger">
+          <div class="stats-content">
+            <div class="stats-header">
+              <div class="stats-icon-wrapper">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="stats-trend">
+                <span class="stats-badge urgent">Urgent</span>
+              </div>
+            </div>
+            <div class="stats-body">
+              <h3 class="stats-number"><%= overdue %></h3>
+              <p class="stats-label">Overdue</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stats-number"><%= overdue %></div>
-      <div class="stats-label">Overdue</div>
-    </div>
-  </div>
-  <div class="col-md-2 mb-3">
-    <div class="stats-card stats-card-info">
-      <div class="stats-icon">
-        <i class="fas fa-percentage"></i>
+      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
+        <div class="modern-stats-card info">
+          <div class="stats-content">
+            <div class="stats-header">
+              <div class="stats-icon-wrapper">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="stats-trend">
+                <i class="fas fa-chart-line text-info"></i>
+              </div>
+            </div>
+            <div class="stats-body">
+              <h3 class="stats-number"><%= percentage %>%</h3>
+              <p class="stats-label">Completion Rate</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stats-number"><%= percentage %>%</div>
-      <div class="stats-label">Completion Rate</div>
     </div>
   </div>
 </div>
 
-<!-- Enhanced Filters -->
-<div class="card mb-4 border-0 shadow-sm">
-  <div class="card-header bg-white border-0 pb-0">
-    <h6 class="mb-0 text-muted">
-      <i class="fas fa-filter me-2"></i>Filter Assignments
-    </h6>
-  </div>
-  <div class="card-body pt-3">
-    <div class="row align-items-center">
-      <div class="col-md-12">
-        <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "d-flex align-items-end flex-wrap gap-3", id: "delivery-filter-form" do |form| %>
-          <div style="min-width: 250px;">
-            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Customer</label>
+<!-- Modern Filter Panel -->
+<div class="modern-filter-panel mb-4">
+  <div class="container-fluid">
+    <div class="filter-header">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="filter-title">
+          <i class="fas fa-filter me-2"></i>
+          <span>Filter Assignments</span>
+        </div>
+        <div class="filter-toggle" id="filterToggle">
+          <i class="fas fa-chevron-up"></i>
+        </div>
+      </div>
+    </div>
+    <div class="filter-content" id="filterContent">
+      <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "modern-filter-form", id: "delivery-filter-form" do |form| %>
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-3 col-md-6">
+            <label class="modern-filter-label">
+              <i class="fas fa-user me-1"></i>Customer
+            </label>
             <div class="customer-search-container position-relative">
               <input type="text" 
-                     class="form-control customer-search-input" 
+                     class="form-control modern-input customer-search-input" 
                      id="customer-search-input"
                      placeholder="Search customers by name..."
-                     autocomplete="off"
-                     style="min-width: 220px;">
+                     autocomplete="off">
               <div class="search-icon">
                 <i class="fas fa-search"></i>
               </div>
@@ -128,39 +200,59 @@
               </div>
             </div>
           </div>
-          <div style="min-width: 170px;">
-            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Date</label>
-            <%= form.date_field :date, value: @current_date, 
-                                class: "form-control", 
+          <div class="col-lg-2 col-md-6">
+            <label class="modern-filter-label">
+              <i class="fas fa-calendar me-1"></i>Date
+            </label>
+            <%= form.date_field :date, 
+                                value: params[:date].present? ? params[:date] : Date.current, 
+                                class: "form-control modern-input", 
                                 title: "Select date to view assignments",
                                 id: "date-filter-input" %>
           </div>
-          <div style="min-width: 150px;">
-            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Status</label>
+          <div class="col-lg-2 col-md-6">
+            <label class="modern-filter-label">
+              <i class="fas fa-info-circle me-1"></i>Status
+            </label>
             <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search statuses...">
               <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
                               { include_blank: false },
-                              { class: "form-select", data: { "searchable-select-target" => "select" } } %>
+                              { class: "form-select modern-input", data: { "searchable-select-target" => "select" }, id: "status-filter-select" } %>
             </div>
           </div>
-          <div style="min-width: 180px;">
-            <label class="form-label fw-semibold text-primary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Delivery Person</label>
+          <div class="col-lg-2 col-md-6">
+            <label class="modern-filter-label">
+              <i class="fas fa-truck me-1"></i>Delivery Person
+            </label>
             <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search delivery people...">
               <%= form.select :delivery_person_id,
                               options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
                               { include_blank: false },
-                              { class: "form-select", data: { "searchable-select-target" => "select" } } %>
+                              { class: "form-select modern-input", data: { "searchable-select-target" => "select" }, id: "delivery-person-filter-select" } %>
             </div>
           </div>
-          <div class="align-self-end">
-            <a href="<%= delivery_assignments_path %>" class="btn btn-outline-danger btn-sm" id="clear-filters-btn">
-              <i class="fas fa-times me-1"></i>Clear Filters
-            </a>
+          <div class="col-lg-3 col-md-12">
+            <div class="d-flex gap-2 align-items-end h-100">
+              <button type="submit" class="btn btn-primary modern-btn-primary">
+                <i class="fas fa-search me-1"></i>Filter
+              </button>
+              <a href="<%= delivery_assignments_path %>" class="btn btn-outline-secondary modern-btn-secondary" id="clear-filters-btn">
+                <i class="fas fa-times me-1"></i>Clear All
+              </a>
+            </div>
           </div>
-        <% end %>
-      </div>
-      <div class="col-md-4">
-        <!-- Complete All Buttons -->
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Action Buttons Section -->
+<div class="actions-section mb-4">
+  <div class="container-fluid">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <!-- Bulk Actions -->
         <% 
         # Get all today's pending assignments (regardless of filters)
         all_today_pending = DeliveryAssignment.where(status: 'pending').where('scheduled_date <= ?', Date.current)
@@ -288,6 +380,7 @@
               <th><i class="fas fa-truck me-1"></i>Delivery Person</th>
               <th><i class="fas fa-cube me-1"></i>Product</th>
               <th><i class="fas fa-sort-numeric-up me-1"></i>Quantity</th>
+              <th><i class="fas fa-money-bill-wave me-1"></i>Amount</th>
               <th><i class="fas fa-calendar me-1"></i>Delivery Date</th>
               <th><i class="fas fa-info-circle me-1"></i>Status</th>
               <th><i class="fas fa-cogs me-1"></i>Actions</th>
@@ -339,6 +432,23 @@
                   <span class="fw-bold text-info">
                     <%= assignment.quantity %> <%= assignment.product.unit_type %>
                   </span>
+                </td>
+                <td>
+                  <div class="amount-info">
+                    <div class="d-flex flex-column">
+                      <span class="fw-bold text-success">
+                        Rs <%= assignment.final_amount.round(2) %>
+                      </span>
+                      <% if assignment.has_discount? %>
+                        <small class="text-muted text-decoration-line-through">
+                          Rs <%= assignment.total_amount.round(2) %>
+                        </small>
+                        <small class="text-warning">
+                          <i class="fas fa-percentage me-1"></i>-Rs <%= assignment.discount_amount.round(2) %>
+                        </small>
+                      <% end %>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <span class="<%= assignment.overdue? ? 'text-danger fw-bold' : 'text-muted' %>">
@@ -445,6 +555,15 @@
                       <span><%= assignment.product.name %> (<%= assignment.quantity %> <%= assignment.product.unit_type %>)</span>
                     </div>
                     <div class="detail-item">
+                      <i class="fas fa-money-bill-wave me-2 text-muted"></i>
+                      <span class="fw-bold text-success">Rs <%= assignment.final_amount.round(2) %></span>
+                      <% if assignment.has_discount? %>
+                        <small class="text-muted ms-1">
+                          (was Rs <%= assignment.total_amount.round(2) %>)
+                        </small>
+                      <% end %>
+                    </div>
+                    <div class="detail-item">
                       <i class="fas fa-calendar me-2 text-muted"></i>
                       <span class="<%= assignment.overdue? ? 'text-danger' : '' %>">
                         <%= assignment.scheduled_date.strftime('%d.%m.%Y') %>
@@ -508,18 +627,431 @@
 </div>
 
 <style>
-/* Enhanced Delivery Assignments Index Styles - Modern & Professional */
+/* Modern Delivery Assignments UI - Enhanced Professional Design */
 
-/* Page Layout Improvements */
-.page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 20px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+/* Modern Page Header */
+.modern-page-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
   position: relative;
   overflow: hidden;
+}
+
+.modern-page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  transform: translate(50%, -50%);
+}
+
+.header-content {
+  position: relative;
+  z-index: 2;
+}
+
+.header-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.header-icon i {
+  font-size: 24px;
+  color: white;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.date-badge-container {
+  margin-top: 0.5rem;
+}
+
+.modern-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-info {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-today {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.modern-btn-primary {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.modern-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Modern Stats Dashboard */
+.stats-dashboard {
+  margin-bottom: 2rem;
+}
+
+.modern-stats-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid transparent;
+}
+
+.modern-stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.modern-stats-card.primary {
+  border-left-color: #4f46e5;
+}
+
+.modern-stats-card.warning {
+  border-left-color: #f59e0b;
+}
+
+.modern-stats-card.success {
+  border-left-color: #10b981;
+}
+
+.modern-stats-card.danger {
+  border-left-color: #ef4444;
+}
+
+.modern-stats-card.info {
+  border-left-color: #3b82f6;
+}
+
+.stats-content {
+  position: relative;
+  z-index: 2;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.stats-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+}
+
+.primary .stats-icon-wrapper {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+
+.warning .stats-icon-wrapper {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.success .stats-icon-wrapper {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.danger .stats-icon-wrapper {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.info .stats-icon-wrapper {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stats-trend {
+  margin-left: auto;
+}
+
+.stats-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(79, 70, 229, 0.1);
+  color: #4f46e5;
+}
+
+.stats-badge.urgent {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.stats-body h3.stats-number {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1f2937;
+}
+
+.stats-body p.stats-label {
+  margin: 0.25rem 0 0 0;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Modern Filter Panel */
+.modern-filter-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.filter-header {
+  background: #f8fafc;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-title {
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+}
+
+.filter-toggle {
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.filter-toggle:hover {
+  color: #374151;
+}
+
+.filter-content {
+  padding: 1.5rem;
+}
+
+.modern-filter-form {
+  margin: 0;
+}
+
+.modern-filter-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-size: 0.875rem;
+}
+
+.modern-input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.modern-btn-secondary {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.modern-btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Action Buttons Section */
+.actions-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modern-stats-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.modern-stats-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.modern-stats-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.modern-stats-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.modern-stats-card:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modern-page-header {
+    padding: 1.5rem;
+    text-align: center;
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
+  }
+  
+  .header-actions {
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  
+  .modern-stats-card {
+    margin-bottom: 1rem;
+  }
+  
+  .filter-content {
+    padding: 1rem;
+  }
+  
+  .modern-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Table Improvements */
+.table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 1rem;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(79, 70, 229, 0.05);
+}
+
+/* Button Improvements */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #4338ca, #6d28d9);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* Card improvements */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
 }
 
 .page-header::before {
@@ -1215,11 +1747,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Auto-refresh functionality
+  // Enhanced filter functionality
   const form = document.getElementById('delivery-filter-form');
-  const dateInput = document.getElementById('date-filter-input') || document.querySelector('input[name="date"]');
-  const statusSelect = document.querySelector('select[name="status"]');
-  const deliveryPersonSelect = document.querySelector('select[name="delivery_person_id"]');
+  const dateInput = document.getElementById('date-filter-input');
+  const statusSelect = document.getElementById('status-filter-select');
+  const deliveryPersonSelect = document.getElementById('delivery-person-filter-select');
+  const filterToggle = document.getElementById('filterToggle');
+  const filterContent = document.getElementById('filterContent');
   let autoRefreshTimeout;
   
   // Customer Search Functionality
@@ -1492,45 +2026,78 @@ document.addEventListener('DOMContentLoaded', function() {
     customerLoading.style.display = 'none';
   }
   
-  // Auto-refresh on filter changes
+  // Enhanced filter behavior with date persistence
   function autoRefreshFilters() {
     clearTimeout(autoRefreshTimeout);
     autoRefreshTimeout = setTimeout(() => {
-      // Preserve the current date value before submitting
-      const currentDate = dateInput ? dateInput.value : null;
+      // Always preserve current date or default to today if empty
+      let currentDate = dateInput ? dateInput.value : null;
+      if (!currentDate || currentDate === '') {
+        const today = new Date();
+        currentDate = today.toISOString().split('T')[0];
+        if (dateInput) dateInput.value = currentDate;
+      }
       
       // Create URL with current form values
       const formData = new FormData(form);
       
-      // Ensure date is preserved if it exists
-      if (currentDate && currentDate !== '') {
-        formData.set('date', currentDate);
-      }
+      // Force date preservation
+      formData.set('date', currentDate);
       
       // Convert FormData to URLSearchParams for URL construction
       const params = new URLSearchParams();
       for (let [key, value] of formData.entries()) {
-        if (value && value !== '') {
+        if (value && value !== '' && value !== 'undefined') {
           params.append(key, value);
         }
       }
       
       // Navigate to the URL with preserved parameters
       window.location.href = form.action + '?' + params.toString();
-    }, 500);
+    }, 300); // Reduced delay for better UX
   }
   
-  // Add event listeners for auto-refresh
+  // Initialize date field with today's date if empty
+  if (dateInput && (!dateInput.value || dateInput.value === '')) {
+    const today = new Date();
+    dateInput.value = today.toISOString().split('T')[0];
+  }
+  
+  // Filter toggle functionality
+  if (filterToggle && filterContent) {
+    filterToggle.addEventListener('click', function() {
+      const isExpanded = filterContent.style.display !== 'none';
+      filterContent.style.display = isExpanded ? 'none' : 'block';
+      const icon = filterToggle.querySelector('i');
+      icon.className = isExpanded ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+    });
+  }
+  
+  // Enhanced event listeners for auto-refresh with date persistence
   if (dateInput) {
     dateInput.addEventListener('change', autoRefreshFilters);
   }
   
   if (statusSelect) {
-    statusSelect.addEventListener('change', autoRefreshFilters);
+    statusSelect.addEventListener('change', function() {
+      // Ensure date is preserved when status changes
+      if (dateInput && (!dateInput.value || dateInput.value === '')) {
+        const today = new Date();
+        dateInput.value = today.toISOString().split('T')[0];
+      }
+      autoRefreshFilters();
+    });
   }
   
   if (deliveryPersonSelect) {
-    deliveryPersonSelect.addEventListener('change', autoRefreshFilters);
+    deliveryPersonSelect.addEventListener('change', function() {
+      // Ensure date is preserved when delivery person changes
+      if (dateInput && (!dateInput.value || dateInput.value === '')) {
+        const today = new Date();
+        dateInput.value = today.toISOString().split('T')[0];
+      }
+      autoRefreshFilters();
+    });
   }
 });
 </script>

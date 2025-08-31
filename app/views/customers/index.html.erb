@@ -174,20 +174,53 @@
             if (!input || !submit) return;
 
             let debounceTimer = null;
-            input.addEventListener('input', function() {
+            let isSubmitting = false;
+            
+            input.addEventListener('input', function(e) {
+              const currentValue = this.value;
+              
               if (debounceTimer) clearTimeout(debounceTimer);
+              
               debounceTimer = setTimeout(function() {
-                saveFilters();
-                submit.click();
+                if (!isSubmitting && input.value === currentValue) {
+                  // Store cursor position before submitting
+                  const cursorPosition = input.selectionStart;
+                  
+                  isSubmitting = true;
+                  saveFilters();
+                  
+                  // Create a hidden input to preserve cursor position
+                  input.dataset.cursorPosition = cursorPosition;
+                  
+                  submit.click();
+                  
+                  // Reset submitting flag after a short delay
+                  setTimeout(() => {
+                    isSubmitting = false;
+                  }, 100);
+                }
               }, 400);
             });
 
             input.addEventListener('keydown', function(e) {
               if (e.key === 'Enter') {
                 e.preventDefault();
+                const cursorPosition = this.selectionStart;
+                this.dataset.cursorPosition = cursorPosition;
                 saveFilters();
+                submit.click();
               }
             });
+            
+            // Restore cursor position after form submission
+            if (input.dataset.cursorPosition) {
+              const position = parseInt(input.dataset.cursorPosition);
+              setTimeout(() => {
+                input.focus();
+                input.setSelectionRange(position, position);
+                delete input.dataset.cursorPosition;
+              }, 50);
+            }
           }
 
           function initDeliveryPersonFilter() {
@@ -218,7 +251,15 @@
             // Save filters when form is submitted manually
             const form = document.querySelector('form[action*="customers"]');
             if (form) {
-              form.addEventListener('submit', saveFilters);
+              form.addEventListener('submit', function(e) {
+                const input = document.getElementById('customer-live-search');
+                if (input) {
+                  // Store cursor position before form submission
+                  const cursorPosition = input.selectionStart;
+                  input.dataset.cursorPosition = cursorPosition;
+                }
+                saveFilters();
+              });
             }
 
             // Save filters when Clear All is clicked
@@ -231,8 +272,20 @@
 
             // Try to restore filters on page load
             restoreFilters();
+            
+            // Restore focus and cursor position after page load
+            setTimeout(() => {
+              const input = document.getElementById('customer-live-search');
+              if (input && input.dataset.cursorPosition) {
+                const position = parseInt(input.dataset.cursorPosition);
+                input.focus();
+                input.setSelectionRange(position, position);
+                delete input.dataset.cursorPosition;
+              }
+            }, 100);
           }
 
+          // Event handlers for initialization
           document.addEventListener('turbo:load', initCustomerLiveSearch);
           document.addEventListener('DOMContentLoaded', initCustomerLiveSearch);
           document.addEventListener('turbo:load', initDeliveryPersonFilter);
@@ -240,6 +293,23 @@
           document.addEventListener('DOMContentLoaded', initDeliveryPersonFilter);
           document.addEventListener('turbo:load', initFilterPersistence);
           document.addEventListener('DOMContentLoaded', initFilterPersistence);
+          
+          // Additional handler specifically for cursor position restoration after Turbo navigation
+          document.addEventListener('turbo:load', function() {
+            setTimeout(() => {
+              const input = document.getElementById('customer-live-search');
+              if (input && input.dataset.cursorPosition) {
+                const position = parseInt(input.dataset.cursorPosition);
+                input.focus();
+                input.setSelectionRange(position, position);
+                delete input.dataset.cursorPosition;
+              } else if (input && input.value && document.activeElement !== input) {
+                // If there's a search value but no stored cursor position, focus at the end
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
+              }
+            }, 50);
+          });
         </script>
       </div>
       <div class="col-md-4 text-end">

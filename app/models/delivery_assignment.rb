@@ -11,8 +11,13 @@ class DeliveryAssignment < ApplicationRecord
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending in_progress completed cancelled] }
   validates :discount_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :final_amount_after_discount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   validate :delivery_person_is_valid
+  validate :discount_not_exceeding_total_amount
+
+  # Callbacks
+  before_save :calculate_and_set_final_amount
 
   # SCOPES
   scope :pending, -> { where(status: 'pending') }
@@ -195,5 +200,26 @@ class DeliveryAssignment < ApplicationRecord
   def delivery_person_is_valid
     return unless user.present? && !user.delivery_person?
     errors.add(:user, "must be a delivery person")
+  end
+
+  def discount_not_exceeding_total_amount
+    return unless discount_amount.present? && discount_amount > 0
+    return unless product&.price && quantity
+    
+    total = total_amount
+    if discount_amount > total
+      errors.add(:discount_amount, "cannot exceed the total amount (Rs #{total.round(2)})")
+    end
+  end
+
+  def calculate_and_set_final_amount
+    # Only calculate if we have the necessary data
+    return unless product&.price && quantity
+    
+    base_amount = total_amount
+    discount = discount_amount.to_f
+    
+    # Calculate final amount after discount
+    self.final_amount_after_discount = [base_amount - discount, 0].max.round(2)
   end
 end

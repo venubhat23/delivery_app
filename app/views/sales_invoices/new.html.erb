@@ -116,13 +116,14 @@
                   <table class="table table-bordered" id="itemsTable">
                     <thead class="table-light">
                       <tr>
-                        <th width="25%">Items / Services</th>
-                        <th width="10%">HSN/SAC</th>
-                        <th width="10%">QTY</th>
-                        <th width="15%">Price/Item (₹)</th>
-                        <th width="10%">Tax (%)</th>
+                        <th width="22%">Items / Services</th>
+                        <th width="8%">HSN/SAC</th>
+                        <th width="8%">QTY</th>
+                        <th width="12%">Price/Item (₹)</th>
+                        <th width="8%">Tax (%)</th>
                         <th width="10%">Discount (₹)</th>
-                        <th width="15%">Amount (₹)</th>
+                        <th width="12%">Subtotal (₹)</th>
+                        <th width="15%">Final Amount (₹)</th>
                         <th width="5%">Action</th>
                       </tr>
                     </thead>
@@ -192,10 +193,17 @@
                           </td>
                           <td>
                             <%= item_form.number_field :discount, class: 'form-control discount-input', 
-                                                       step: 0.01, value: 0, onchange: 'calculateRowTotal(this)' %>
+                                                       step: 0.01, value: 0, min: 0, placeholder: '0.00', 
+                                                       onchange: 'calculateRowTotal(this)', oninput: 'validateDiscount(this)' %>
+                            <div class="invalid-feedback discount-error" style="display: none;">
+                              Discount cannot exceed subtotal
+                            </div>
                           </td>
                           <td>
-                            <input type="text" class="form-control amount-display" readonly>
+                            <input type="text" class="form-control subtotal-display" readonly placeholder="₹0.00" style="background-color: #f8f9fc;">
+                          </td>
+                          <td>
+                            <input type="text" class="form-control amount-display final-amount-highlight" readonly placeholder="₹0.00" style="background-color: #e8f5e8; font-weight: bold; color: #155724;">
                           </td>
                           <td>
                             <button type="button" class="btn btn-sm btn-danger remove-item">
@@ -771,16 +779,68 @@ function calculateRowTotal(input) {
   
   const lineTotal = quantity * price;
   const taxAmount = lineTotal * taxRate / 100;
-  const total = lineTotal + taxAmount - discount;
+  const subtotal = lineTotal + taxAmount;
+  const finalAmount = Math.max(subtotal - discount, 0);
   
-  row.querySelector('.amount-display').value = '₹' + total.toFixed(2);
+  // Update subtotal display
+  const subtotalDisplay = row.querySelector('.subtotal-display');
+  if (subtotalDisplay) {
+    subtotalDisplay.value = '₹' + subtotal.toFixed(2);
+  }
+  
+  // Update final amount display with visual highlight
+  const amountDisplay = row.querySelector('.amount-display');
+  amountDisplay.value = '₹' + finalAmount.toFixed(2);
+  
+  // Add visual feedback for discount
+  if (discount > 0) {
+    amountDisplay.style.borderColor = '#28a745';
+    amountDisplay.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+  } else {
+    amountDisplay.style.borderColor = '';
+    amountDisplay.style.boxShadow = '';
+  }
+  
   calculateTotals();
+}
+
+function validateDiscount(input) {
+  const row = input.closest('.item-row');
+  const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+  const price = parseFloat(row.querySelector('.price-input').value) || 0;
+  const taxRate = parseFloat(row.querySelector('.tax-input').value) || 0;
+  const discount = parseFloat(input.value) || 0;
+  
+  const lineTotal = quantity * price;
+  const taxAmount = lineTotal * taxRate / 100;
+  const subtotal = lineTotal + taxAmount;
+  
+  const discountError = row.querySelector('.discount-error');
+  
+  if (discount > subtotal && subtotal > 0) {
+    input.style.borderColor = '#dc3545';
+    input.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+    if (discountError) {
+      discountError.style.display = 'block';
+    }
+    input.setCustomValidity('Discount cannot exceed subtotal');
+  } else {
+    input.style.borderColor = '';
+    input.style.boxShadow = '';
+    if (discountError) {
+      discountError.style.display = 'none';
+    }
+    input.setCustomValidity('');
+  }
+  
+  calculateRowTotal(input);
 }
 
 function calculateTotals() {
   let subtotal = 0;
   let taxAmount = 0;
   let discountAmount = 0;
+  let totalItemsDiscount = 0;
   
   document.querySelectorAll('.item-row').forEach(row => {
     const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
@@ -789,16 +849,21 @@ function calculateTotals() {
     const discount = parseFloat(row.querySelector('.discount-input').value) || 0;
     
     const lineTotal = quantity * price;
+    const lineTaxAmount = lineTotal * taxRate / 100;
+    
     subtotal += lineTotal;
-    taxAmount += lineTotal * taxRate / 100;
-    discountAmount += discount;
+    taxAmount += lineTaxAmount;
+    totalItemsDiscount += discount;
   });
   
   // Additional charges and discounts
   const additionalCharges = parseFloat(document.getElementById('sales_invoice_additional_charges').value) || 0;
   const additionalDiscount = parseFloat(document.getElementById('sales_invoice_additional_discount').value) || 0;
   
-  let total = subtotal + taxAmount - discountAmount + additionalCharges - additionalDiscount;
+  // Calculate total discount (items + additional)
+  const totalDiscount = totalItemsDiscount + additionalDiscount;
+  
+  let total = subtotal + taxAmount - totalDiscount + additionalCharges;
   
   // TCS
   if (document.getElementById('sales_invoice_apply_tcs').checked) {
@@ -811,11 +876,23 @@ function calculateTotals() {
     total = Math.round(total);
   }
   
-  // Update display
+  // Update display with enhanced styling
   document.getElementById('subtotal').textContent = '₹' + subtotal.toFixed(2);
   document.getElementById('taxAmount').textContent = '₹' + taxAmount.toFixed(2);
-  document.getElementById('discountAmount').textContent = '₹' + (discountAmount + additionalDiscount).toFixed(2);
-  document.getElementById('totalAmount').textContent = '₹' + total.toFixed(2);
+  document.getElementById('discountAmount').textContent = '₹' + totalDiscount.toFixed(2);
+  
+  const totalAmountElement = document.getElementById('totalAmount');
+  totalAmountElement.textContent = '₹' + total.toFixed(2);
+  
+  // Add visual highlighting for discounts
+  const discountElement = document.getElementById('discountAmount');
+  if (totalDiscount > 0) {
+    discountElement.style.color = '#28a745';
+    discountElement.style.fontWeight = 'bold';
+  } else {
+    discountElement.style.color = '';
+    discountElement.style.fontWeight = '';
+  }
   
   calculateBalance();
 }
@@ -907,10 +984,17 @@ function addNewItemRow() {
     </td>
     <td>
       <input type="number" name="sales_invoice[sales_invoice_items_attributes][${itemsCount}][discount]" 
-             class="form-control discount-input" step="0.01" value="0" onchange="calculateRowTotal(this)">
+             class="form-control discount-input" step="0.01" value="0" min="0" placeholder="0.00"
+             onchange="calculateRowTotal(this)" oninput="validateDiscount(this)">
+      <div class="invalid-feedback discount-error" style="display: none;">
+        Discount cannot exceed subtotal
+      </div>
     </td>
     <td>
-      <input type="text" class="form-control amount-display" readonly>
+      <input type="text" class="form-control subtotal-display" readonly placeholder="₹0.00" style="background-color: #f8f9fc;">
+    </td>
+    <td>
+      <input type="text" class="form-control amount-display final-amount-highlight" readonly placeholder="₹0.00" style="background-color: #e8f5e8; font-weight: bold; color: #155724;">
     </td>
     <td>
       <button type="button" class="btn btn-sm btn-danger remove-item">
