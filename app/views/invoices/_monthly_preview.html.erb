@@ -1,98 +1,285 @@
 <!-- app/views/invoices/_monthly_preview.html.erb -->
 <% if preview_data[:summary].present? %>
-  <div class="row mb-3">
-    <div class="col-md-6">
-      <h6><strong>Customer:</strong> <%= preview_data[:assignments].first&.customer&.name %></h6>
-      <h6><strong>Period:</strong> <%= preview_data[:month_year] %></h6>
-      <h6><strong>Total Deliveries:</strong> <%= preview_data[:assignments].count %></h6>
+  <!-- Enhanced Monthly Delivery Report Header -->
+  <div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Monthly Delivery Report</h5>
+          <small><%= preview_data[:month_year] %></small>
+        </div>
+        <div class="col-md-4 text-end">
+          <span class="badge bg-light text-dark fs-6">
+            <i class="fas fa-truck me-1"></i><%= preview_data[:assignments].count %> Deliveries
+          </span>
+        </div>
+      </div>
     </div>
-    <div class="col-md-6 text-end">
-      <h4 class="text-success">
-        <strong>Total Amount: ₹<%= number_with_delimiter(preview_data[:total_amount]) %></strong>
-      </h4>
-    </div>
-  </div>
-
-  <div class="table-responsive">
-    <table class="table table-bordered">
-      <thead class="table-light">
-        <tr>
-          <th>Product</th>
-          <th>Total Quantity</th>
-          <th>Unit Price</th>
-          <th>Total Amount</th>
-          <th>Deliveries</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% preview_data[:summary].each do |item| %>
-          <tr>
-            <td>
-              <strong><%= item[:product].name %></strong>
-              <% if item[:product].description.present? %>
-                <br><small class="text-muted"><%= item[:product].description %></small>
-              <% end %>
-            </td>
-            <td>
-              <%= item[:quantity] %> <%= item[:product].unit_type %>
-            </td>
-            <td>₹<%= number_with_delimiter(item[:unit_price]) %></td>
-            <td>₹<%= number_with_delimiter(item[:total_amount]) %></td>
-            <td>
-              <span class="badge bg-primary"><%= item[:assignments_count] %> deliveries</span>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-      <tfoot class="table-dark">
-        <tr>
-          <th colspan="3">Total</th>
-          <th>₹<%= number_with_delimiter(preview_data[:total_amount]) %></th>
-          <th><%= preview_data[:assignments].count %> deliveries</th>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-
-  <!-- Delivery Details -->
-  <div class="mt-4">
-    <h6><i class="fas fa-truck"></i> Delivery Details</h6>
-    <div class="table-responsive">
-      <table class="table table-sm table-striped">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% preview_data[:assignments].order(:completed_at).each do |assignment| %>
-            <tr>
-              <td><%= assignment.completed_at&.strftime('%d %b %Y') || assignment.scheduled_date.strftime('%d %b %Y') %></td>
-              <td><%= assignment.product.name %></td>
-              <td><%= assignment.quantity %> <%= assignment.unit %></td>
-              <td>₹<%= number_with_delimiter(assignment.total_amount) %></td>
-              <td>
-                <span class="badge bg-success">Completed</span>
-              </td>
-            </tr>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <h6 class="text-muted mb-1">CUSTOMER DETAILS</h6>
+          <h5 class="mb-2"><strong><%= preview_data[:assignments].first&.customer&.name %></strong></h5>
+          <% if preview_data[:assignments].first&.customer&.address.present? %>
+            <p class="mb-1 text-muted small"><%= preview_data[:assignments].first.customer.address %></p>
           <% end %>
-        </tbody>
-      </table>
+          <% if preview_data[:assignments].first&.customer&.phone_number.present? %>
+            <p class="mb-0 text-muted small">
+              <i class="fas fa-phone me-1"></i><%= preview_data[:assignments].first.customer.phone_number %>
+            </p>
+          <% end %>
+        </div>
+        <div class="col-md-6">
+          <div class="row text-center">
+            <div class="col-6">
+              <div class="bg-light p-3 rounded">
+                <h4 class="text-success mb-1"><%= preview_data[:assignments].select { |a| a.status == 'completed' }.count %></h4>
+                <small class="text-muted">Completed</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="bg-light p-3 rounded">
+                <h4 class="text-primary mb-1">₹<%= number_with_delimiter(preview_data[:total_amount]) %></h4>
+                <small class="text-muted">Total Amount</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="alert alert-info mt-3">
-    <i class="fas fa-info-circle"></i>
-    <strong>Note:</strong> This invoice will include all completed deliveries for the selected month that haven't been invoiced yet.
+  <!-- Product Summary Section -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h6 class="mb-0"><i class="fas fa-boxes me-2"></i>Product-wise Summary</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th><i class="fas fa-box me-1"></i>Product</th>
+              <th class="text-center"><i class="fas fa-balance-scale me-1"></i>Total Qty</th>
+              <th class="text-end"><i class="fas fa-tag me-1"></i>Unit Price</th>
+              <th class="text-end"><i class="fas fa-rupee-sign me-1"></i>Amount</th>
+              <th class="text-center"><i class="fas fa-truck me-1"></i>Deliveries</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% preview_data[:summary].each do |item| %>
+              <tr>
+                <td>
+                  <div>
+                    <strong class="text-dark"><%= item[:product].name %></strong>
+                    <% if item[:product].description.present? %>
+                      <br><small class="text-muted"><%= item[:product].description %></small>
+                    <% end %>
+                    <% if item[:product].unit_type.present? %>
+                      <span class="badge bg-secondary ms-2"><%= item[:product].unit_type %></span>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="fw-bold"><%= item[:quantity] %></span>
+                  <small class="text-muted d-block"><%= item[:product].unit_type %></small>
+                </td>
+                <td class="text-end">
+                  <span class="fw-bold">₹<%= number_with_delimiter(item[:unit_price]) %></span>
+                </td>
+                <td class="text-end">
+                  <span class="fw-bold text-success">₹<%= number_with_delimiter(item[:total_amount]) %></span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-primary rounded-pill">
+                    <%= item[:assignments_count] %>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot class="table-secondary">
+            <tr class="fw-bold">
+              <th>GRAND TOTAL</th>
+              <th class="text-center">
+                <%= preview_data[:summary].sum { |item| item[:quantity] } %>
+              </th>
+              <th></th>
+              <th class="text-end fs-5 text-success">
+                ₹<%= number_with_delimiter(preview_data[:total_amount]) %>
+              </th>
+              <th class="text-center">
+                <span class="badge bg-success rounded-pill">
+                  <%= preview_data[:assignments].count %>
+                </span>
+              </th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Delivery Assignments -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <div class="row align-items-center">
+        <div class="col">
+          <h6 class="mb-0"><i class="fas fa-list-alt me-2"></i>Detailed Delivery History</h6>
+        </div>
+        <div class="col-auto">
+          <small class="text-muted">Sorted by completion date</small>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-striped mb-0">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th><i class="fas fa-calendar me-1"></i>Date</th>
+              <th><i class="fas fa-box me-1"></i>Product</th>
+              <th class="text-center"><i class="fas fa-weight me-1"></i>Qty</th>
+              <th class="text-end"><i class="fas fa-rupee-sign me-1"></i>Amount</th>
+              <th class="text-center"><i class="fas fa-info-circle me-1"></i>Status</th>
+              <th><i class="fas fa-user me-1"></i>Delivered By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%
+              # Pagination logic
+              page = params[:page].to_i > 0 ? params[:page].to_i : 1
+              per_page = params[:per_page].to_i > 0 ? params[:per_page].to_i : 10
+              offset = (page - 1) * per_page
+              
+              assignments = preview_data[:assignments].order(:completed_at, :scheduled_date)
+              total_assignments = assignments.count
+              paginated_assignments = assignments.offset(offset).limit(per_page)
+              total_pages = (total_assignments.to_f / per_page).ceil
+            %>
+            <% paginated_assignments.each_with_index do |assignment, index| %>
+              <tr class="<%= 'table-warning' if assignment.has_discount? %>">
+                <td class="text-nowrap">
+                  <% display_date = assignment.completed_at || assignment.scheduled_date %>
+                  <%= display_date&.strftime('%d %b %Y') %>
+                  <% if assignment.completed_at.present? %>
+                    <br><small class="text-success"><%= assignment.completed_at.strftime('%H:%M') %></small>
+                  <% end %>
+                </td>
+                <td>
+                  <div>
+                    <strong><%= assignment.product.name %></strong>
+                    <% if assignment.has_discount? %>
+                      <br><small class="text-warning">
+                        <i class="fas fa-percent me-1"></i>Discount: ₹<%= assignment.discount_amount %> 
+                        (<%= assignment.discount_percentage %>%)
+                      </small>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="fw-bold"><%= assignment.quantity %></span>
+                  <small class="text-muted d-block"><%= assignment.product.unit_type %></small>
+                </td>
+                <td class="text-end">
+                  <% if assignment.has_discount? %>
+                    <s class="text-muted">₹<%= number_with_delimiter(assignment.total_amount) %></s>
+                    <br><strong class="text-success">₹<%= number_with_delimiter(assignment.final_amount) %></strong>
+                  <% else %>
+                    <strong class="text-success">₹<%= number_with_delimiter(assignment.final_amount) %></strong>
+                  <% end %>
+                </td>
+                <td class="text-center">
+                  <% case assignment.status %>
+                  <% when 'completed' %>
+                    <span class="badge bg-success">
+                      <i class="fas fa-check me-1"></i>Completed
+                    </span>
+                  <% when 'pending' %>
+                    <span class="badge bg-warning text-dark">
+                      <i class="fas fa-clock me-1"></i>Pending
+                    </span>
+                  <% when 'cancelled' %>
+                    <span class="badge bg-danger">
+                      <i class="fas fa-times me-1"></i>Cancelled
+                    </span>
+                  <% else %>
+                    <span class="badge bg-secondary"><%= assignment.status.humanize %></span>
+                  <% end %>
+                </td>
+                <td>
+                  <div>
+                    <%= assignment.delivery_person_name %>
+                    <% if assignment.notes.present? %>
+                      <br><small class="text-muted">
+                        <i class="fas fa-sticky-note me-1"></i>
+                        <%= truncate(assignment.notes, length: 30) %>
+                      </small>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title text-muted">Total Deliveries</h6>
+          <h3 class="text-primary"><%= preview_data[:assignments].count %></h3>
+          <small class="text-muted">assignments</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title text-muted">Success Rate</h6>
+          <% completed_count = preview_data[:assignments].select { |a| a.status == 'completed' }.count %>
+          <% success_rate = preview_data[:assignments].count > 0 ? (completed_count.to_f / preview_data[:assignments].count * 100).round(1) : 0 %>
+          <h3 class="text-success"><%= success_rate %>%</h3>
+          <small class="text-muted">completed on time</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Information Alert -->
+  <div class="alert alert-info border-0">
+    <div class="row align-items-center">
+      <div class="col-auto">
+        <i class="fas fa-info-circle fa-2x text-info"></i>
+      </div>
+      <div class="col">
+        <h6 class="alert-heading mb-1">Ready for Invoice Generation</h6>
+        <p class="mb-0">
+          This report shows all completed deliveries for <strong><%= preview_data[:assignments].first&.customer&.name %></strong> 
+          during <strong><%= preview_data[:month_year] %></strong> that haven't been invoiced yet. 
+          Total amount: <strong class="text-success">₹<%= number_with_delimiter(preview_data[:total_amount]) %></strong>
+        </p>
+      </div>
+    </div>
   </div>
 
 <% else %>
-  <div class="alert alert-warning">
-    <i class="fas fa-exclamation-triangle"></i>
-    <strong>No deliveries found</strong> for the selected customer and month, or all deliveries have already been invoiced.
+  <div class="alert alert-warning border-0">
+    <div class="row align-items-center">
+      <div class="col-auto">
+        <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+      </div>
+      <div class="col">
+        <h6 class="alert-heading mb-1">No Deliveries Found</h6>
+        <p class="mb-0">
+          No completed deliveries were found for the selected customer and month, 
+          or all deliveries for this period have already been invoiced.
+        </p>
+      </div>
+    </div>
   </div>
 <% end %>
