@@ -260,7 +260,6 @@ class DeliveryReviewController < ApplicationController
       
       # Calculate product cost: quantity × proportional_amount
       product_cost = (delivery.quantity.to_f * delivery.final_amount_after_discount.to_i).round(2)
-      
       {
         id: delivery.id,
         date: delivery.scheduled_date.strftime('%d.%m.%Y'),
@@ -269,8 +268,9 @@ class DeliveryReviewController < ApplicationController
         customer_member_id: delivery.customer.member_id,
         product: delivery.product.name,
         quantity: "#{delivery.quantity} #{delivery.unit}",
-        amount: delivery.final_amount_after_discount.to_i,
-        product_cost: product_cost,
+        amount: delivery.product.price.to_f,
+        discount: delivery.discount_amount.to_f,
+        product_cost: delivery.final_amount_after_discount.to_i,
         original_amount: delivery.final_amount_after_discount || 0,
         status: delivery.status,
         delivery_person: delivery.delivery_person&.name || 'Not Assigned',
@@ -280,6 +280,20 @@ class DeliveryReviewController < ApplicationController
   end
 
   def delivery_params
-    params.require(:delivery_assignment).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+    # Handle both direct delivery_assignment params and nested delivery_review[delivery_assignment] params
+    if params[:delivery_review].present? && params[:delivery_review][:delivery_assignment].present?
+      # Use nested params and filter out undefined keys
+      assignment_params = params[:delivery_review][:delivery_assignment]
+      assignment_params = assignment_params.reject { |k, v| k == 'undefined' || k.blank? }
+      ActionController::Parameters.new(assignment_params).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+    elsif params[:delivery_assignment].present?
+      # Use direct params and filter out undefined keys
+      assignment_params = params[:delivery_assignment]
+      assignment_params = assignment_params.reject { |k, v| k == 'undefined' || k.blank? }
+      ActionController::Parameters.new(assignment_params).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+    else
+      # Fallback to empty permitted params
+      ActionController::Parameters.new({}).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+    end
   end
 end

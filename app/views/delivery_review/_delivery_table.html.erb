@@ -1,5 +1,8 @@
 <% if @deliveries.present? %>
+    <% debugger %>
+
   <% @deliveries.each do |d| %>
+    <%= debugger %>
     <% 
       # Calculate proportional amount and product cost
       base_rate_per_liter = 200.0
@@ -11,8 +14,9 @@
       <td><%= d.customer&.name %></td>
       <td><%= d.product&.name %></td>
       <td><%= "#{d.quantity} #{d.unit}" %></td>
-      <td><%= number_to_currency(proportional_amount, unit: '₹') %></td>
-      <td class="text-info fw-bold"><%= number_to_currency(product_cost, unit: '₹') %></td>
+      <td><%= number_to_currency(d.quantity.to_f, unit: '₹') %></td>
+      <td><%= d.discount || 0 %></td>
+      <td class="text-info fw-bold"><%= number_to_currency(d.product_cost.to_f, unit: '₹') %></td>
       <td>
         <% cls = case d.status
           when 'completed' then 'badge bg-success'
