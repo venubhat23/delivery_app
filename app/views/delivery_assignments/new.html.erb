@@ -120,10 +120,60 @@
             <%= form.hidden_field :final_amount_after_discount, id: "final-amount-hidden" %>
           </div>
 
-          <!-- Delivery Date -->
-          <div class="col-md-6">
+          <!-- Multiple Dates Feature Toggle -->
+          <div class="col-12">
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="multipleDatesToggle" name="enable_multiple_dates">
+              <label class="form-check-label fw-bold text-primary" for="multipleDatesToggle">
+                <i class="fas fa-calendar-week me-2"></i>Create assignments for multiple dates
+              </label>
+              <div class="form-text">
+                <small><i class="fas fa-info-circle me-1"></i>Enable this to select multiple delivery dates and create assignments for each date</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Single Delivery Date (default) -->
+          <div class="col-md-6" id="singleDateContainer">
             <%= form.label :scheduled_date, "Delivery Date", class: "form-label fw-bold" %>
-            <%= form.date_field :scheduled_date, class: "form-control", required: true, value: Date.today %>
+            <%= form.date_field :scheduled_date, class: "form-control", required: true, value: Date.today, id: "singleDateInput" %>
+          </div>
+
+          <!-- Multiple Delivery Dates (hidden by default) -->
+          <div class="col-12" id="multipleDatesContainer" style="display: none;">
+            <label class="form-label fw-bold text-primary">
+              <i class="fas fa-calendar-alt me-2"></i>Select Multiple Delivery Dates
+            </label>
+            <div class="card bg-light border-primary">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-lg-8">
+                    <div id="multiDateCalendar" class="multi-date-calendar">
+                      <!-- Calendar will be generated here -->
+                    </div>
+                  </div>
+                  <div class="col-lg-4">
+                    <div class="selected-dates-panel">
+                      <h6 class="text-muted mb-3">
+                        <i class="fas fa-list me-2"></i>Selected Dates
+                      </h6>
+                      <div id="selectedDatesList" class="selected-dates-list">
+                        <div class="text-muted text-center py-3">
+                          <i class="fas fa-calendar-plus fa-2x mb-2"></i>
+                          <p class="mb-0">Click on calendar dates to select</p>
+                        </div>
+                      </div>
+                      <div class="mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="clearAllDates">
+                          <i class="fas fa-trash me-1"></i>Clear All
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="delivery_dates" id="deliveryDatesHidden">
           </div>
 
           <div class="col-md-6">
@@ -208,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeCustomerSearch();
   initializePricingCalculations();
   initializeSelect2Dropdowns();
+  initializeMultipleDatesFeature();
 });
 
 function initializeCustomerSearch() {
@@ -774,6 +825,260 @@ function validateAdditionalDiscount(input) {
     input.setCustomValidity('');
   }
 }
+
+// Multiple Dates Feature
+function initializeMultipleDatesFeature() {
+  const multipleDatesToggle = document.getElementById('multipleDatesToggle');
+  const singleDateContainer = document.getElementById('singleDateContainer');
+  const multipleDatesContainer = document.getElementById('multipleDatesContainer');
+  const additionalProductsCard = document.querySelector('.card.mt-4');
+  const singleDateInput = document.getElementById('singleDateInput');
+  const selectedDatesList = document.getElementById('selectedDatesList');
+  const deliveryDatesHidden = document.getElementById('deliveryDatesHidden');
+  const clearAllDatesBtn = document.getElementById('clearAllDates');
+  const multiDateCalendar = document.getElementById('multiDateCalendar');
+  
+  let selectedDates = [];
+  let currentCalendarDate = new Date();
+
+  // Toggle multiple dates feature
+  multipleDatesToggle.addEventListener('change', function() {
+    if (this.checked) {
+      // Enable multiple dates mode
+      singleDateContainer.style.display = 'none';
+      multipleDatesContainer.style.display = 'block';
+      singleDateInput.removeAttribute('required');
+      
+      // Disable additional products section
+      if (additionalProductsCard) {
+        additionalProductsCard.style.opacity = '0.5';
+        additionalProductsCard.style.pointerEvents = 'none';
+        const addProductBtn = document.getElementById('addProductBtn');
+        if (addProductBtn) {
+          addProductBtn.disabled = true;
+          addProductBtn.innerHTML = '<i class="fas fa-info-circle me-1"></i>Disabled in multiple dates mode';
+        }
+      }
+      
+      // Initialize calendar
+      initializeCalendar();
+      
+    } else {
+      // Disable multiple dates mode
+      singleDateContainer.style.display = 'block';
+      multipleDatesContainer.style.display = 'none';
+      singleDateInput.setAttribute('required', 'required');
+      
+      // Enable additional products section
+      if (additionalProductsCard) {
+        additionalProductsCard.style.opacity = '1';
+        additionalProductsCard.style.pointerEvents = 'auto';
+        const addProductBtn = document.getElementById('addProductBtn');
+        if (addProductBtn) {
+          addProductBtn.disabled = false;
+          addProductBtn.innerHTML = '<i class="fas fa-plus me-1"></i>Add Product';
+        }
+      }
+      
+      // Clear selected dates
+      selectedDates = [];
+      updateSelectedDatesDisplay();
+    }
+  });
+
+  // Clear all dates button
+  clearAllDatesBtn.addEventListener('click', function() {
+    selectedDates = [];
+    updateSelectedDatesDisplay();
+    updateCalendarDisplay();
+  });
+
+  function initializeCalendar() {
+    currentCalendarDate = new Date();
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+    
+    const today = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"];
+    
+    let calendarHTML = `
+      <div class="calendar-header d-flex justify-content-between align-items-center mb-3">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="prevMonth">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <h5 class="mb-0 text-primary">${monthNames[month]} ${year}</h5>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="nextMonth">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      <div class="calendar-grid">
+        <div class="calendar-days-header">
+          <div class="calendar-day-header">Sun</div>
+          <div class="calendar-day-header">Mon</div>
+          <div class="calendar-day-header">Tue</div>
+          <div class="calendar-day-header">Wed</div>
+          <div class="calendar-day-header">Thu</div>
+          <div class="calendar-day-header">Fri</div>
+          <div class="calendar-day-header">Sat</div>
+        </div>
+        <div class="calendar-days">
+    `;
+    
+    // Generate calendar days
+    const currentDate = new Date(startDate);
+    for (let week = 0; week < 6; week++) {
+      for (let day = 0; day < 7; day++) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const isCurrentMonth = currentDate.getMonth() === month;
+        const isToday = currentDate.toDateString() === today.toDateString();
+        const isSelected = selectedDates.includes(dateStr);
+        const isPast = currentDate < today.setHours(0,0,0,0);
+        
+        let dayClass = 'calendar-day';
+        if (!isCurrentMonth) dayClass += ' other-month';
+        if (isToday) dayClass += ' today';
+        if (isSelected) dayClass += ' selected';
+        if (isPast) dayClass += ' past';
+        
+        calendarHTML += `
+          <div class="${dayClass}" data-date="${dateStr}">
+            ${currentDate.getDate()}
+          </div>
+        `;
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+    
+    calendarHTML += `
+        </div>
+      </div>
+    `;
+    
+    multiDateCalendar.innerHTML = calendarHTML;
+    
+    // Add event listeners
+    document.getElementById('prevMonth').addEventListener('click', function() {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+      renderCalendar();
+    });
+    
+    document.getElementById('nextMonth').addEventListener('click', function() {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+      renderCalendar();
+    });
+    
+    // Add click listeners to calendar days (allow all dates including past)
+    document.querySelectorAll('.calendar-day:not(.other-month)').forEach(dayElement => {
+      dayElement.addEventListener('click', function() {
+        const dateStr = this.dataset.date;
+        
+        if (selectedDates.includes(dateStr)) {
+          // Remove date
+          selectedDates = selectedDates.filter(date => date !== dateStr);
+          this.classList.remove('selected');
+        } else {
+          // Add date
+          selectedDates.push(dateStr);
+          selectedDates.sort(); // Keep dates sorted
+          this.classList.add('selected');
+        }
+        
+        updateSelectedDatesDisplay();
+      });
+    });
+  }
+
+  function updateCalendarDisplay() {
+    // Re-render calendar to update selected states
+    renderCalendar();
+  }
+
+  function updateSelectedDatesDisplay() {
+    if (selectedDates.length > 0) {
+      // Format dates nicely
+      const formattedDates = selectedDates.map(dateStr => {
+        const date = new Date(dateStr + 'T00:00:00');
+        return {
+          dateStr: dateStr,
+          formatted: date.toLocaleDateString('en-IN', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+          }),
+          fullFormatted: date.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })
+        };
+      });
+      
+      selectedDatesList.innerHTML = `
+        <div class="selected-dates-count mb-2">
+          <strong class="text-success">
+            <i class="fas fa-calendar-check me-1"></i>${selectedDates.length} dates selected
+          </strong>
+        </div>
+        <div class="selected-dates-items">
+          ${formattedDates.map(date => `
+            <div class="selected-date-item d-flex justify-content-between align-items-center">
+              <span class="selected-date-text">${date.formatted}</span>
+              <button type="button" class="btn btn-sm btn-outline-danger remove-date" data-date="${date.dateStr}" title="${date.fullFormatted}">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      // Add remove button listeners
+      document.querySelectorAll('.remove-date').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const dateToRemove = this.dataset.date;
+          selectedDates = selectedDates.filter(date => date !== dateToRemove);
+          updateSelectedDatesDisplay();
+          updateCalendarDisplay();
+        });
+      });
+      
+      // Update hidden input
+      deliveryDatesHidden.value = selectedDates.join(',');
+      
+    } else {
+      selectedDatesList.innerHTML = `
+        <div class="text-muted text-center py-3">
+          <i class="fas fa-calendar-plus fa-2x mb-2"></i>
+          <p class="mb-0">Click on calendar dates to select</p>
+        </div>
+      `;
+      deliveryDatesHidden.value = '';
+    }
+  }
+
+  // Form validation for multiple dates
+  const form = document.querySelector('form');
+  form.addEventListener('submit', function(e) {
+    if (multipleDatesToggle.checked) {
+      if (selectedDates.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one delivery date when using multiple dates mode.');
+        return false;
+      }
+    }
+  });
+}
 </script>
 
 <style>
@@ -1237,5 +1542,219 @@ code {
   color: #28a745;
   background-color: #f8f9fc !important;
   border-color: #e3e6f0;
+}
+
+/* Multi-Date Calendar Styles */
+.multi-date-calendar {
+  max-width: 100%;
+}
+
+.calendar-header {
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0.5rem;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.calendar-header h5 {
+  color: white !important;
+  font-weight: 600;
+}
+
+.calendar-header .btn-outline-primary {
+  border-color: white;
+  color: white;
+}
+
+.calendar-header .btn-outline-primary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  color: white;
+}
+
+.calendar-grid {
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.calendar-day-header {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 0.875rem;
+  background-color: #f8f9fa;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  position: relative;
+  background-color: white;
+}
+
+.calendar-day:hover:not([data-disabled]):not(.other-month) {
+  background-color: #e3f2fd;
+  transform: scale(1.05);
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-day.today {
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: bold;
+  border-color: #ffeaa7;
+}
+
+.calendar-day.today::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #f39c12;
+  border-radius: 50%;
+}
+
+.calendar-day.selected {
+  background-color: #4e73df !important;
+  color: white !important;
+  font-weight: bold;
+  transform: scale(1.1);
+  z-index: 3;
+  box-shadow: 0 4px 12px rgba(78, 115, 223, 0.4);
+}
+
+.calendar-day.selected:hover {
+  background-color: #2e59d9 !important;
+}
+
+.calendar-day.other-month {
+  color: #adb5bd;
+  background-color: #f8f9fa;
+}
+
+.calendar-day.other-month:hover {
+  background-color: #f8f9fa;
+  transform: none;
+  cursor: default;
+}
+
+.calendar-day.past {
+  color: #6c757d;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.calendar-day.past:hover {
+  background-color: #e3f2fd;
+  transform: scale(1.05);
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Selected Dates Panel */
+.selected-dates-panel {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  height: fit-content;
+  min-height: 300px;
+}
+
+.selected-dates-list {
+  max-height: 250px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.selected-date-item {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: white;
+  border-radius: 0.375rem;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.selected-date-item:hover {
+  border-color: #4e73df;
+  box-shadow: 0 2px 4px rgba(78, 115, 223, 0.2);
+}
+
+.selected-date-text {
+  font-weight: 500;
+  color: #495057;
+}
+
+.selected-date-item .btn-outline-danger {
+  border: none;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.selected-dates-count {
+  text-align: center;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border-radius: 0.375rem;
+  border: 1px solid #28a745;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .calendar-day {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+  }
+  
+  .calendar-day-header {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+  }
+  
+  .selected-dates-panel {
+    margin-top: 1rem;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-day {
+    font-size: 0.75rem;
+  }
+  
+  .calendar-header {
+    padding: 0.75rem;
+  }
+  
+  .calendar-header h5 {
+    font-size: 1rem;
+  }
 }
 </style>

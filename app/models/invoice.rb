@@ -328,12 +328,20 @@ class Invoice < ApplicationRecord
     results
   end
 
+  public
+
   def generate_invoice_number
     if invoice_number.blank?
       self.invoice_number = self.class.generate_invoice_number(invoice_type)
       Rails.logger.info "Generated invoice number: #{self.invoice_number}"
     end
   end
+  
+  def mark_delivery_assignments_as_invoiced
+    delivery_assignments.update_all(invoice_generated: true, invoice_id: id)
+  end
+
+  private
   
   def calculate_total_amount
     # Calculate base amount (excluding tax)
@@ -348,12 +356,8 @@ class Invoice < ApplicationRecord
     self.total_amount = taxable_amount + total_tax
   end
   
-  def mark_delivery_assignments_as_invoiced
-    delivery_assignments.update_all(invoice_generated: true, invoice_id: id)
-  end
   def self.create_invoice_from_assignments(customer, assignments, invoice_date)
     return nil if assignments.empty?
-
     invoice = Invoice.new(
       customer: customer,
       invoice_date: invoice_date,

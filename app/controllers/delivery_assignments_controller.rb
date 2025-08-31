@@ -80,7 +80,12 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def create
-    create_single_delivery
+    # Check if multiple dates mode is enabled
+    if params[:enable_multiple_dates] == 'on' && params[:delivery_dates].present?
+      create_multiple_dates_deliveries
+    else
+      create_single_delivery
+    end
   end
 
   def edit
@@ -359,6 +364,59 @@ class DeliveryAssignmentsController < ApplicationController
         
       redirect_to delivery_assignments_path, notice: notice_message
     else
+      load_form_data
+      render :new
+    end
+  end
+
+  def create_multiple_dates_deliveries
+    assignment_params = delivery_assignment_params.except(:additional_products)
+    delivery_dates = params[:delivery_dates].split(',').map(&:strip)
+    
+    created_count = 0
+    failed_dates = []
+    
+    # Validate that we have valid dates
+    if delivery_dates.empty?
+      @delivery_assignment = DeliveryAssignment.new(assignment_params)
+      @delivery_assignment.errors.add(:base, "Please select at least one delivery date")
+      load_form_data
+      render :new
+      return
+    end
+    
+    # Create delivery assignment for each selected date
+    delivery_dates.each do |date_str|
+      begin
+        # Parse the date (should be in YYYY-MM-DD format from frontend)
+        delivery_date = Date.parse(date_str)
+        
+        # Create assignment for this date
+        assignment = DeliveryAssignment.new(assignment_params.merge(scheduled_date: delivery_date))
+        assignment.status = 'pending' if assignment.status.blank?
+        
+        if assignment.save
+          created_count += 1
+        else
+          failed_dates << date_str
+        end
+        
+      rescue Date::Error
+        failed_dates << date_str
+      end
+    end
+    
+    # Provide feedback
+    if created_count > 0
+      if failed_dates.empty?
+        notice_message = "Successfully created #{created_count} delivery assignments for #{created_count} dates."
+      else
+        notice_message = "Created #{created_count} delivery assignments. Failed to create for: #{failed_dates.join(', ')}"
+      end
+      redirect_to delivery_assignments_path, notice: notice_message
+    else
+      @delivery_assignment = DeliveryAssignment.new(assignment_params)
+      @delivery_assignment.errors.add(:base, "Failed to create any delivery assignments. Please check your input.")
       load_form_data
       render :new
     end

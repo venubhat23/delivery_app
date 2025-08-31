@@ -257,7 +257,6 @@ class DeliveryReviewController < ApplicationController
       # Calculate proportional amount: if 1L = ₹200, then 0.5L = ₹100
       base_rate_per_liter = 200.0
       proportional_amount = (delivery.quantity.to_f * delivery.final_amount_after_discount.to_i).round(2)
-      
       # Calculate product cost: quantity × proportional_amount
       product_cost = (delivery.quantity.to_f * delivery.final_amount_after_discount.to_i).round(2)
       {
