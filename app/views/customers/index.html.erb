@@ -63,18 +63,30 @@
 </div>
 
 <!-- Enhanced Filters -->
-<div class="card mb-4">
+<div class="card mb-4" style="height:220px;">
   <div class="card-body">
     <div class="row align-items-center">
       <div class="col-md-8">
         <%= form_with url: customers_path, method: :get, local: true, class: "d-flex align-items-center" do |form| %>
           <div class="me-3 position-relative" style="display:flex;align-items:center;gap:8px;">
-            <%= form.text_field :search, 
-                placeholder: "Search by name, phone, email, or member ID (e.g., 9632)...", 
-                value: params[:search],
-                class: "form-control",
-                style: "min-width: 350px;",
-                id: "customer-live-search" %>
+            <div class="customer-search-container position-relative">
+              <input type="text" 
+                     class="form-control customer-search-input" 
+                     id="customer-search-input"
+                     placeholder="Search customers by name..."
+                     autocomplete="off"
+                     style="min-width: 350px;">
+              <div class="search-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <%= form.hidden_field :search, id: 'customer-search-hidden' %>
+              <div class="customer-suggestions" id="customer-suggestions" style="display: none;">
+                <!-- Customer suggestions will be populated here -->
+              </div>
+              <div class="customer-loading" id="customer-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
+              </div>
+            </div>
           </div>
           <div class="me-3">
             <label for="delivery_person_filter" class="form-label me-2 mb-0" style="white-space: nowrap;">
@@ -93,223 +105,171 @@
           <%= form.submit "Search & Filter", class: "btn btn-outline-primary d-none", id: "customer-search-submit" %>
         <% end %>
         <script>
-          // Filter persistence using sessionStorage
-          const CUSTOMER_FILTERS_KEY = 'customer_index_filters';
+          document.addEventListener('DOMContentLoaded', function() {
+            initializeCustomerSearch();
+            initializeDeliveryPersonFilter();
+          });
 
-          function saveFilters() {
-            const searchInput = document.getElementById('customer-live-search');
-            const deliveryPersonSelect = document.getElementById('delivery_person_filter');
+          document.addEventListener('turbo:load', function() {
+            initializeCustomerSearch();
+            initializeDeliveryPersonFilter();
+          });
+
+          function initializeCustomerSearch() {
+            const customerSearchInput = document.getElementById('customer-search-input');
+            const customerSuggestions = document.getElementById('customer-suggestions');
+            const customerLoading = document.getElementById('customer-loading');
+            const customerSearchHidden = document.getElementById('customer-search-hidden');
             
-            if (searchInput && deliveryPersonSelect) {
-              const filters = {
-                search: searchInput.value,
-                delivery_person_id: deliveryPersonSelect.value,
-                timestamp: Date.now()
-              };
-              sessionStorage.setItem(CUSTOMER_FILTERS_KEY, JSON.stringify(filters));
-            }
-          }
-
-          function restoreFilters() {
-            const savedFilters = sessionStorage.getItem(CUSTOMER_FILTERS_KEY);
-            if (!savedFilters) return false;
-
-            try {
-              const filters = JSON.parse(savedFilters);
-              
-              // Check if filters are not too old (1 hour max)
-              const oneHour = 60 * 60 * 1000;
-              if (Date.now() - filters.timestamp > oneHour) {
-                sessionStorage.removeItem(CUSTOMER_FILTERS_KEY);
-                return false;
-              }
-
-              const searchInput = document.getElementById('customer-live-search');
-              const deliveryPersonSelect = document.getElementById('delivery_person_filter');
-              
-              // Check if current URL already has filters to avoid conflicts
+            let customerSearchTimeout;
+            let currentCustomerSearchTerm = '';
+            
+            if (customerSearchInput) {
+              // Set initial value from URL params
               const urlParams = new URLSearchParams(window.location.search);
-              const hasFiltersInUrl = urlParams.has('search') || urlParams.has('delivery_person_id');
-              
-              if (hasFiltersInUrl) {
-                // Update sessionStorage with current URL filters
-                saveFilters();
-                return false;
+              const searchParam = urlParams.get('search');
+              if (searchParam) {
+                customerSearchInput.value = searchParam;
+                customerSearchHidden.value = searchParam;
               }
 
-              // Apply saved filters if form elements exist and no URL filters
-              if (searchInput && filters.search && filters.search !== searchInput.value) {
-                searchInput.value = filters.search;
-              }
-              
-              if (deliveryPersonSelect && filters.delivery_person_id && filters.delivery_person_id !== deliveryPersonSelect.value) {
-                deliveryPersonSelect.value = filters.delivery_person_id;
-              }
-
-              // Submit form if we have filters to apply
-              if (filters.search || (filters.delivery_person_id && filters.delivery_person_id !== 'all')) {
-                const form = searchInput?.closest('form');
-                if (form) {
-                  setTimeout(() => {
-                    if (typeof form.requestSubmit === 'function') {
-                      form.requestSubmit();
-                    } else {
-                      form.submit();
-                    }
-                  }, 100);
-                  return true;
+              // Trigger customer search as you type
+              customerSearchInput.addEventListener('input', function(e) {
+                clearTimeout(customerSearchTimeout);
+                const query = this.value.trim();
+                currentCustomerSearchTerm = query;
+                
+                if (query.length === 0) {
+                  hideCustomerSuggestions();
+                  customerSearchHidden.value = '';
+                  // Auto-submit to clear results
+                  customerSearchTimeout = setTimeout(() => {
+                    this.closest('form').submit();
+                  }, 300);
+                  return;
                 }
+                
+                // Add debouncing - wait 300ms after user stops typing
+                customerSearchTimeout = setTimeout(() => {
+                  showCustomerLoading();
+                  fetchCustomerSuggestions(query);
+                }, 300);
+              });
+              
+              // Handle focus - show dropdown
+              customerSearchInput.addEventListener('focus', function() {
+                const query = this.value.trim();
+                if (query.length > 0) {
+                  showCustomerLoading();
+                  fetchCustomerSuggestions(query);
+                }
+              });
+              
+              // Handle blur (with delay to allow clicking suggestions)
+              customerSearchInput.addEventListener('blur', function() {
+                setTimeout(() => {
+                  hideCustomerSuggestions();
+                }, 200);
+              });
+
+              // Handle Enter key
+              customerSearchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  customerSearchHidden.value = this.value;
+                  this.closest('form').submit();
+                }
+              });
+            }
+            
+            function fetchCustomerSuggestions(query) {
+              fetch(`/customers/search_suggestions?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                  hideCustomerLoading();
+                  displayCustomerSuggestions(data.customers || []);
+                })
+                .catch(error => {
+                  console.error('Customer search error:', error);
+                  hideCustomerLoading();
+                });
+            }
+            
+            function displayCustomerSuggestions(customers) {
+              if (customers.length === 0) {
+                customerSuggestions.innerHTML = '<div class="customer-suggestion-item">No customers found</div>';
+                customerSuggestions.style.display = 'block';
+                return;
               }
               
-              return false;
-            } catch (e) {
-              sessionStorage.removeItem(CUSTOMER_FILTERS_KEY);
-              return false;
+              const html = customers.map(customer => {
+                const highlightedName = highlightSearchTerm(customer.name, currentCustomerSearchTerm);
+                const phone = customer.phone_number || '';
+                const address = customer.address ? customer.address.substring(0, 40) + '...' : '';
+                
+                return `
+                  <div class="customer-suggestion-item" data-customer-name="${customer.name}">
+                    <div class="customer-suggestion-main">
+                      <div class="customer-suggestion-name">${highlightedName}</div>
+                      ${phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${phone}</div>` : ''}
+                      ${address ? `<div class="customer-suggestion-address"><i class="fas fa-map-marker-alt me-1"></i>${address}</div>` : ''}
+                    </div>
+                    ${customer.delivery_person ? `<div class="customer-suggestion-delivery"><i class="fas fa-truck me-1"></i>${customer.delivery_person.name}</div>` : ''}
+                  </div>
+                `;
+              }).join('');
+              
+              customerSuggestions.innerHTML = html;
+              customerSuggestions.style.display = 'block';
+              
+              // Add click handlers
+              document.querySelectorAll('.customer-suggestion-item').forEach(item => {
+                item.addEventListener('click', function() {
+                  const customerName = this.dataset.customerName;
+                  selectCustomer(customerName);
+                });
+              });
+            }
+            
+            function selectCustomer(customerName) {
+              customerSearchInput.value = customerName;
+              customerSearchHidden.value = customerName;
+              hideCustomerSuggestions();
+              customerSearchInput.closest('form').submit();
+            }
+            
+            function highlightSearchTerm(text, term) {
+              if (!term) return text;
+              
+              const regex = new RegExp(`(${term})`, 'gi');
+              return text.replace(regex, '<span class="search-highlight">$1</span>');
+            }
+            
+            function showCustomerLoading() {
+              customerLoading.style.display = 'block';
+              customerSuggestions.style.display = 'none';
+            }
+            
+            function hideCustomerLoading() {
+              customerLoading.style.display = 'none';
+            }
+            
+            function hideCustomerSuggestions() {
+              customerSuggestions.style.display = 'none';
+              customerLoading.style.display = 'none';
             }
           }
 
-          function initCustomerLiveSearch() {
-            const input = document.getElementById('customer-live-search');
-            const submit = document.getElementById('customer-search-submit');
-            if (!input || !submit) return;
-
-            let debounceTimer = null;
-            let isSubmitting = false;
-            
-            input.addEventListener('input', function(e) {
-              const currentValue = this.value;
-              
-              if (debounceTimer) clearTimeout(debounceTimer);
-              
-              debounceTimer = setTimeout(function() {
-                if (!isSubmitting && input.value === currentValue) {
-                  // Store cursor position before submitting
-                  const cursorPosition = input.selectionStart;
-                  
-                  isSubmitting = true;
-                  saveFilters();
-                  
-                  // Create a hidden input to preserve cursor position
-                  input.dataset.cursorPosition = cursorPosition;
-                  
-                  submit.click();
-                  
-                  // Reset submitting flag after a short delay
-                  setTimeout(() => {
-                    isSubmitting = false;
-                  }, 100);
-                }
-              }, 400);
-            });
-
-            input.addEventListener('keydown', function(e) {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                const cursorPosition = this.selectionStart;
-                this.dataset.cursorPosition = cursorPosition;
-                saveFilters();
-                submit.click();
-              }
-            });
-            
-            // Restore cursor position after form submission
-            if (input.dataset.cursorPosition) {
-              const position = parseInt(input.dataset.cursorPosition);
-              setTimeout(() => {
-                input.focus();
-                input.setSelectionRange(position, position);
-                delete input.dataset.cursorPosition;
-              }, 50);
-            }
-          }
-
-          function initDeliveryPersonFilter() {
+          function initializeDeliveryPersonFilter() {
             const select = document.getElementById('delivery_person_filter');
             if (!select) return;
             const form = select.closest('form');
             if (!form) return;
 
-            // Remove any previous listener to avoid duplicate submissions after Turbo renders
-            const handlerKey = '__deliveryFilterHandler__';
-            const oldHandler = select[handlerKey];
-            if (oldHandler) select.removeEventListener('change', oldHandler);
-
-            const handleChange = function() {
-              saveFilters();
-              if (typeof form.requestSubmit === 'function') {
-                form.requestSubmit();
-              } else {
-                form.submit();
-              }
-            };
-
-            select.addEventListener('change', handleChange);
-            select[handlerKey] = handleChange;
+            select.addEventListener('change', function() {
+              form.submit();
+            });
           }
-
-          function initFilterPersistence() {
-            // Save filters when form is submitted manually
-            const form = document.querySelector('form[action*="customers"]');
-            if (form) {
-              form.addEventListener('submit', function(e) {
-                const input = document.getElementById('customer-live-search');
-                if (input) {
-                  // Store cursor position before form submission
-                  const cursorPosition = input.selectionStart;
-                  input.dataset.cursorPosition = cursorPosition;
-                }
-                saveFilters();
-              });
-            }
-
-            // Save filters when Clear All is clicked
-            const clearButton = document.querySelector('a[href*="customers"][href$="customers"]');
-            if (clearButton) {
-              clearButton.addEventListener('click', function() {
-                sessionStorage.removeItem(CUSTOMER_FILTERS_KEY);
-              });
-            }
-
-            // Try to restore filters on page load
-            restoreFilters();
-            
-            // Restore focus and cursor position after page load
-            setTimeout(() => {
-              const input = document.getElementById('customer-live-search');
-              if (input && input.dataset.cursorPosition) {
-                const position = parseInt(input.dataset.cursorPosition);
-                input.focus();
-                input.setSelectionRange(position, position);
-                delete input.dataset.cursorPosition;
-              }
-            }, 100);
-          }
-
-          // Event handlers for initialization
-          document.addEventListener('turbo:load', initCustomerLiveSearch);
-          document.addEventListener('DOMContentLoaded', initCustomerLiveSearch);
-          document.addEventListener('turbo:load', initDeliveryPersonFilter);
-          document.addEventListener('turbo:render', initDeliveryPersonFilter);
-          document.addEventListener('DOMContentLoaded', initDeliveryPersonFilter);
-          document.addEventListener('turbo:load', initFilterPersistence);
-          document.addEventListener('DOMContentLoaded', initFilterPersistence);
-          
-          // Additional handler specifically for cursor position restoration after Turbo navigation
-          document.addEventListener('turbo:load', function() {
-            setTimeout(() => {
-              const input = document.getElementById('customer-live-search');
-              if (input && input.dataset.cursorPosition) {
-                const position = parseInt(input.dataset.cursorPosition);
-                input.focus();
-                input.setSelectionRange(position, position);
-                delete input.dataset.cursorPosition;
-              } else if (input && input.value && document.activeElement !== input) {
-                // If there's a search value but no stored cursor position, focus at the end
-                input.focus();
-                input.setSelectionRange(input.value.length, input.value.length);
-              }
-            }, 50);
-          });
         </script>
       </div>
       <div class="col-md-4 text-end">
@@ -1302,6 +1262,130 @@
   .badge {
     border: 1px solid #000;
   }
+}
+
+/* Customer Search Dropdown Styles */
+.customer-search-container {
+  position: relative;
+}
+
+.customer-search-input {
+  padding-right: 2.5rem !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(102, 126, 234, 0.2) !important;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.customer-search-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.customer-search-container .search-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #667eea;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.customer-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 500px;
+  width: max-content;
+  max-width: 600px;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.customer-suggestion-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.customer-suggestion-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.customer-suggestion-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.customer-suggestion-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.customer-suggestion-main {
+  flex: 1;
+}
+
+.customer-suggestion-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.customer-suggestion-phone {
+  font-size: 0.875rem;
+  color: #718096;
+  margin-bottom: 0.125rem;
+}
+
+.customer-suggestion-address {
+  font-size: 0.75rem;
+  color: #a0aec0;
+}
+
+.customer-suggestion-delivery {
+  font-size: 0.75rem;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.customer-loading {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 400px;
+  width: max-content;
+  max-width: 500px;
+  background: white;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 1rem 1.5rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.search-highlight {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 600;
 }
 
 /* Print Styles */

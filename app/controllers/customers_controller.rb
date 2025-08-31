@@ -38,6 +38,32 @@ class CustomersController < ApplicationController
     # Get all delivery people for the dropdown
     @delivery_people = User.delivery_people.order(:name)
   end
+
+  def search_suggestions
+    query = params[:q].to_s.strip
+    
+    if query.present?
+      customers = Customer.includes(:delivery_person)
+                         .where("name ILIKE ? OR phone_number ILIKE ? OR address ILIKE ? OR member_id ILIKE ?", 
+                                "%#{query}%", "%#{query}%", "%#{query}%", "%#{query}%")
+                         .limit(10)
+                         .order(:name)
+    else
+      customers = []
+    end
+
+    render json: {
+      customers: customers.map do |customer|
+        {
+          name: customer.name,
+          phone_number: customer.phone_number,
+          address: customer.address,
+          member_id: customer.member_id,
+          delivery_person: customer.delivery_person ? { name: customer.delivery_person.name } : nil
+        }
+      end
+    }
+  end
   
   def show
   end

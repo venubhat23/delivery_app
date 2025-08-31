@@ -65,6 +65,7 @@ Rails.application.routes.draw do
   resources :categories
   resources :customers do
     collection do
+      get :search_suggestions
       get :bulk_import
       post :process_bulk_import
       post :validate_csv
