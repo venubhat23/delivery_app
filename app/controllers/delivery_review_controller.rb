@@ -231,7 +231,7 @@ class DeliveryReviewController < ApplicationController
     
     # Calculate total product cost using SQL: sum(quantity * quantity * base_rate_per_liter)
     # This is equivalent to: sum(quantity × proportional_amount) where proportional_amount = quantity × base_rate_per_liter
-    total_amount = summary_query.sum("quantity * final_amount_after_discount")
+    total_amount = summary_query.sum("final_amount_after_discount")
     
     completed_deliveries = summary_data['completed'] || 0
     pending_deliveries = summary_data['pending'] || 0
@@ -282,15 +282,33 @@ class DeliveryReviewController < ApplicationController
   def delivery_params
     # Handle both direct delivery_assignment params and nested delivery_review[delivery_assignment] params
     if params[:delivery_review].present? && params[:delivery_review][:delivery_assignment].present?
-      # Use nested params and filter out undefined keys
-      assignment_params = params[:delivery_review][:delivery_assignment]
+      # Use nested params - permit first, then filter
+      permitted_params = params[:delivery_review][:delivery_assignment].permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+      
+      # Convert to hash for filtering
+      assignment_params = permitted_params.to_h
       assignment_params = assignment_params.reject { |k, v| k == 'undefined' || k.blank? }
-      ActionController::Parameters.new(assignment_params).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+      
+      # Handle the case where 'undefined' key contains the actual status value
+      if assignment_params.has_key?('undefined') && assignment_params['status'].blank?
+        assignment_params['status'] = assignment_params.delete('undefined')
+      end
+      
+      ActionController::Parameters.new(assignment_params).permit!
     elsif params[:delivery_assignment].present?
-      # Use direct params and filter out undefined keys
-      assignment_params = params[:delivery_assignment]
+      # Use direct params - permit first, then filter
+      permitted_params = params[:delivery_assignment].permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+      
+      # Convert to hash for filtering
+      assignment_params = permitted_params.to_h
       assignment_params = assignment_params.reject { |k, v| k == 'undefined' || k.blank? }
-      ActionController::Parameters.new(assignment_params).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)
+      
+      # Handle the case where 'undefined' key contains the actual status value
+      if assignment_params.has_key?('undefined') && assignment_params['status'].blank?
+        assignment_params['status'] = assignment_params.delete('undefined')
+      end
+      
+      ActionController::Parameters.new(assignment_params).permit!
     else
       # Fallback to empty permitted params
       ActionController::Parameters.new({}).permit(:product_id, :quantity, :scheduled_date, :final_amount_after_discount, :status, :user_id)

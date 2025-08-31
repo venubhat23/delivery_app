@@ -243,10 +243,11 @@
         '<td class="editable-product" data-field="product_id">' + (d.product || '-') + '</td>' +
         '<td class="editable-quantity" data-field="quantity">' + (d.quantity || '-') + '</td>' +
         '<td class="editable-amount" data-field="final_amount_after_discount">' + formatINR(d.amount || 0) + '</td>' +
+        '<td>' + formatINR(d.discount || 0) + '</td>' +
         '<td class="text-info fw-bold">' + formatINR(d.product_cost || 0) + '</td>' +
         '<td class="editable-status" data-field="status">' + statusBadge(d.status) + '</td>' +
         '<td class="editable-delivery-person" data-field="user_id">' + (d.delivery_person || '-') + '</td>' +
-        '<td>' +
+        '<td class="actions-cell">' +
           '<button class="btn btn-sm btn-outline-primary me-1 edit-btn" data-id="' + d.id + '">Edit</button>' +
           '<button class="btn btn-sm btn-outline-danger delete-btn" data-id="' + d.id + '">Delete</button>' +
         '</td>' +
@@ -358,18 +359,27 @@
     row.setAttribute('data-editing', 'true');
     var cells = row.querySelectorAll('td');
     
+    console.log('Edit mode - Total cells found:', cells.length);
+    console.log('Cells array:', Array.from(cells).map((cell, idx) => ({ index: idx, content: cell.textContent.trim() })));
+    
     // Convert editable cells to form inputs
-    convertCellToInput(cells[0], 'date', getDateValue(cells[0].textContent)); // Date
-    convertCellToSelect(cells[2], 'product', cells[2].textContent); // Product
-    convertCellToInput(cells[3], 'quantity', getQuantityValue(cells[3].textContent)); // Quantity
-    convertCellToInput(cells[4], 'amount', getAmountValue(cells[4].textContent)); // Amount
-    convertCellToSelect(cells[5], 'status', getStatusValue(cells[5].innerHTML)); // Status
-    convertCellToSelect(cells[6], 'delivery-person', cells[6].textContent); // Delivery Person
+    // Table structure: Date, Customer, Product, Quantity, Amount, Discount, Product Cost, Status, Delivery Person, Actions
+    convertCellToInput(cells[0], 'date', getDateValue(cells[0].textContent)); // Date (index 0)
+    convertCellToSelect(cells[2], 'product', cells[2].textContent); // Product (index 2)
+    convertCellToInput(cells[3], 'quantity', getQuantityValue(cells[3].textContent)); // Quantity (index 3)
+    convertCellToInput(cells[4], 'amount', getAmountValue(cells[4].textContent)); // Amount (index 4)
+    convertCellToSelect(cells[7], 'status', getStatusValue(cells[7].innerHTML)); // Status (index 7)
+    convertCellToSelect(cells[8], 'delivery-person', cells[8].textContent); // Delivery Person (index 8)
 
-    // Change action buttons
-    cells[7].innerHTML = 
-      '<button class="btn btn-sm btn-success me-1 save-btn" data-id="' + deliveryId + '">Save</button>' +
-      '<button class="btn btn-sm btn-secondary cancel-btn" data-id="' + deliveryId + '">Cancel</button>';
+    // Change action buttons (index 9 - Actions column)
+    var actionsCell = cells[9];
+    if (actionsCell) {
+      actionsCell.innerHTML = 
+        '<button class="btn btn-sm btn-success me-1 save-btn" data-id="' + deliveryId + '">Save</button>' +
+        '<button class="btn btn-sm btn-secondary cancel-btn" data-id="' + deliveryId + '">Cancel</button>';
+    } else {
+      console.error('Actions cell not found at index 9 for delivery ID:', deliveryId);
+    }
   }
 
   function convertCellToInput(cell, type, value) {
@@ -399,9 +409,9 @@
         { value: 'cancelled', text: 'Cancelled' },
         { value: 'in_progress', text: 'In Progress' }
       ];
-      options = '<option value="">Select Status</option>';
+      options = '';
       statusOptions.forEach(function(opt) {
-        var selected = opt.text === currentValue ? 'selected' : '';
+        var selected = opt.text === currentValue || opt.value === currentValue ? 'selected' : '';
         options += '<option value="' + opt.value + '" ' + selected + '>' + opt.text + '</option>';
       });
     } else if (type === 'delivery-person') {
