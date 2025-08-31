@@ -146,18 +146,7 @@
             </tr>
           </thead>
           <tbody>
-            <%
-              # Pagination logic
-              page = params[:page].to_i > 0 ? params[:page].to_i : 1
-              per_page = params[:per_page].to_i > 0 ? params[:per_page].to_i : 10
-              offset = (page - 1) * per_page
-              
-              assignments = preview_data[:assignments].order(:completed_at, :scheduled_date)
-              total_assignments = assignments.count
-              paginated_assignments = assignments.offset(offset).limit(per_page)
-              total_pages = (total_assignments.to_f / per_page).ceil
-            %>
-            <% paginated_assignments.each_with_index do |assignment, index| %>
+            <% preview_data[:assignments].order(:completed_at, :scheduled_date).each_with_index do |assignment, index| %>
               <tr class="<%= 'table-warning' if assignment.has_discount? %>">
                 <td class="text-nowrap">
                   <% display_date = assignment.completed_at || assignment.scheduled_date %>
@@ -210,10 +199,10 @@
                 <td>
                   <div>
                     <%= assignment.delivery_person_name %>
-                    <% if assignment.notes.present? %>
+                    <% if assignment.special_instructions.present? %>
                       <br><small class="text-muted">
                         <i class="fas fa-sticky-note me-1"></i>
-                        <%= truncate(assignment.notes, length: 30) %>
+                        <%= truncate(assignment.special_instructions, length: 30) %>
                       </small>
                     <% end %>
                   </div>

@@ -18,6 +18,7 @@ class DeliveryAssignment < ApplicationRecord
 
   # Callbacks
   before_save :calculate_and_set_final_amount
+  before_save :set_completed_at_if_completed
 
   # SCOPES
   scope :pending, -> { where(status: 'pending') }
@@ -148,12 +149,12 @@ class DeliveryAssignment < ApplicationRecord
       completed_at: start_date..end_date,
       invoice_generated: false
     ).includes(:product)
-
+    debugger
     summary = assignments.group_by(&:product).map do |product, product_assignments|
       debugger
       total_quantity = product_assignments.sum(&:quantity)
       unit_price = product.price
-      total_amount = (total_quantity && unit_price) ? total_quantity * unit_price : 0
+      total_amount = product_assignments.sum(&:final_amount_after_discount)
       {
         product: product,
         quantity: total_quantity,
@@ -222,5 +223,12 @@ class DeliveryAssignment < ApplicationRecord
     
     # Calculate final amount after discount
     self.final_amount_after_discount = [base_amount - discount, 0].max.round(2)
+  end
+
+  def set_completed_at_if_completed
+    # If status is being set to 'completed' and completed_at is not already set
+    if status == 'completed' && completed_at.blank?
+      self.completed_at = scheduled_date.present? ? scheduled_date : Date.current
+    end
   end
 end

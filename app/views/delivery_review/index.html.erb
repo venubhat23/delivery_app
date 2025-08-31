@@ -191,10 +191,36 @@
       search: document.getElementById('globalSearch').value.trim()
     };
     if (dateType === 'custom') {
-      params.start_date = document.getElementById('startDate').value;
-      params.end_date = document.getElementById('endDate').value;
+      // Convert date input values (YYYY-MM-DD) to DD.MM.YYYY format for backend
+      var startDateInput = document.getElementById('startDate');
+      var endDateInput = document.getElementById('endDate');
+      
+      params.start_date = convertDateToBackendFormat(startDateInput.value);
+      params.end_date = convertDateToBackendFormat(endDateInput.value);
     }
     return params;
+  }
+
+  function convertDateToBackendFormat(dateValue) {
+    if (!dateValue) return '';
+    try {
+      // Input format: YYYY-MM-DD, Output format: DD.MM.YYYY
+      console.log('Converting date:', dateValue);
+      var parts = dateValue.split('-');
+      if (parts.length === 3) {
+        var year = parts[0];
+        var month = parts[1];
+        var day = parts[2];
+        var converted = day + '.' + month + '.' + year;
+        console.log('Converted to:', converted);
+        return converted;
+      }
+      console.log('Date parts not found, returning original:', dateValue);
+      return dateValue;
+    } catch(e) {
+      console.error('Date conversion error:', e);
+      return dateValue;
+    }
   }
 
   function setSummary(summary) {
@@ -272,34 +298,13 @@
       .finally(function(){ btn.disabled = false; btn.classList.remove('loading'); });
   }
 
-  function formatDateInput(input) {
-    if (!input.value) return;
-    try {
-      var date = new Date(input.value);
-      var day = date.getDate().toString().padStart(2, '0');
-      var month = (date.getMonth() + 1).toString().padStart(2, '0');
-      var year = date.getFullYear();
-      var formatted = day + '.' + month + '.' + year;
-      // Store original value for form submission
-      input.setAttribute('data-original-value', input.value);
-      // Show formatted date as placeholder or title
-      input.setAttribute('title', formatted + ' (DD.MM.YYYY format)');
-    } catch(e) {
-      console.error('Date formatting error:', e);
-    }
-  }
-
   function initializeDateInputs() {
     var dateInputs = document.querySelectorAll('input[type="date"].date-input');
     dateInputs.forEach(function(input) {
-      // Format on change
+      // Add change listener for validation
       input.addEventListener('change', function() {
-        formatDateInput(input);
+        console.log('Date input changed:', input.id, 'value:', input.value);
       });
-      // Format initial value if present
-      if (input.value) {
-        formatDateInput(input);
-      }
     });
   }
 
