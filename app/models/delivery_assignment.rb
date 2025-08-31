@@ -149,9 +149,7 @@ class DeliveryAssignment < ApplicationRecord
       completed_at: start_date..end_date,
       invoice_generated: false
     ).includes(:product)
-    debugger
     summary = assignments.group_by(&:product).map do |product, product_assignments|
-      debugger
       total_quantity = product_assignments.sum(&:quantity)
       unit_price = product.price
       total_amount = product_assignments.sum(&:final_amount_after_discount)
