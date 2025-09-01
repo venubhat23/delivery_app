@@ -125,6 +125,10 @@
       </div>
       <div class="col-md-4 text-end">
         <div class="d-flex align-items-center justify-content-end">
+          <button type="button" class="btn btn-success btn-sm me-2" id="bulkWhatsAppBtn" style="display: none;" 
+                  title="Open separate WhatsApp Web tabs for each selected customer. You'll be prompted to confirm each one.">
+            <i class="fab fa-whatsapp me-2"></i>Send Bulk WhatsApp (<span id="selectedCount">0</span>)
+          </button>
           <span class="badge bg-primary me-2"><%= @invoices.count %> invoices</span>
           <div class="btn-group btn-group-sm" role="group">
             <button type="button" class="btn btn-outline-secondary active" id="tableView">
@@ -161,6 +165,9 @@
         <table class="table table-hover mb-0">
           <thead>
             <tr>
+              <th width="40">
+                <input type="checkbox" id="selectAll" class="form-check-input">
+              </th>
               <th><i class="fas fa-hashtag me-1"></i>Invoice #</th>
               <th><i class="fas fa-user me-1"></i>Customer</th>
               <th><i class="fas fa-calendar me-1"></i>Date</th>
@@ -174,6 +181,17 @@
           <tbody>
             <% @invoices.each do |invoice| %>
               <tr class="invoice-row">
+                <td>
+                  <% if invoice.customer.phone_number.present? && invoice.status != 'paid' %>
+                    <input type="checkbox" 
+                           class="form-check-input invoice-checkbox" 
+                           data-invoice-id="<%= invoice.id %>"
+                           data-customer-name="<%= invoice.customer.name %>"
+                           data-customer-phone="<%= invoice.customer.phone_number %>"
+                           data-invoice-number="<%= invoice.formatted_number %>"
+                           data-amount="<%= invoice.total_amount %>">
+                  <% end %>
+                </td>
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="invoice-avatar me-3">
@@ -1677,6 +1695,239 @@ document.addEventListener('DOMContentLoaded', function() {
         notification.remove();
       }
     }, 5000);
+  }
+
+  // Bulk WhatsApp Functionality
+  const selectAllCheckbox = document.getElementById('selectAll');
+  const invoiceCheckboxes = document.querySelectorAll('.invoice-checkbox');
+  const bulkWhatsAppBtn = document.getElementById('bulkWhatsAppBtn');
+  const selectedCountSpan = document.getElementById('selectedCount');
+
+  // Handle select all checkbox
+  if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', function() {
+      const isChecked = this.checked;
+      invoiceCheckboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+      });
+      updateBulkButton();
+    });
+  }
+
+  // Handle individual checkboxes
+  invoiceCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      updateSelectAllState();
+      updateBulkButton();
+    });
+  });
+
+  // Update select all state based on individual checkboxes
+  function updateSelectAllState() {
+    if (!selectAllCheckbox) return;
+    
+    const totalCheckboxes = invoiceCheckboxes.length;
+    const checkedCheckboxes = document.querySelectorAll('.invoice-checkbox:checked').length;
+    
+    selectAllCheckbox.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
+    selectAllCheckbox.checked = checkedCheckboxes === totalCheckboxes;
+  }
+
+  // Update bulk button visibility and count
+  function updateBulkButton() {
+    const checkedCheckboxes = document.querySelectorAll('.invoice-checkbox:checked');
+    const count = checkedCheckboxes.length;
+    
+    if (count > 0) {
+      bulkWhatsAppBtn.style.display = 'inline-block';
+      selectedCountSpan.textContent = count;
+    } else {
+      bulkWhatsAppBtn.style.display = 'none';
+    }
+  }
+
+  // Handle bulk WhatsApp send
+  if (bulkWhatsAppBtn) {
+    bulkWhatsAppBtn.addEventListener('click', function() {
+      const checkedCheckboxes = document.querySelectorAll('.invoice-checkbox:checked');
+      
+      if (checkedCheckboxes.length === 0) {
+        showNotification('Please select at least one invoice', 'warning');
+        return;
+      }
+      
+      // Debug information
+      console.log('Selected invoices:', checkedCheckboxes.length);
+      checkedCheckboxes.forEach((cb, index) => {
+        console.log(`Invoice ${index + 1}:`, {
+          id: cb.dataset.invoiceId,
+          customer: cb.dataset.customerName,
+          phone: cb.dataset.customerPhone
+        });
+      });
+
+      if (checkedCheckboxes.length > 10) {
+        showNotification('Please select maximum 10 invoices at a time for optimal performance', 'warning');
+        return;
+      }
+
+      // Get selected invoice IDs
+      const invoiceIds = Array.from(checkedCheckboxes).map(cb => cb.dataset.invoiceId);
+      
+      // Show loading state
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating links...';
+
+      // Make AJAX request to bulk share endpoint
+      fetch('/invoices/bulk_share_whatsapp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+          invoice_ids: invoiceIds
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Received WhatsApp URLs:', data.whatsapp_urls.length);
+          
+          // Start the sequential tab opening process
+          openWhatsAppTabsSequentially(data.whatsapp_urls);
+          
+          // Uncheck all checkboxes
+          document.querySelectorAll('.invoice-checkbox:checked').forEach(cb => cb.checked = false);
+          updateBulkButton();
+          updateSelectAllState();
+        } else {
+          showNotification(data.error || 'Failed to generate WhatsApp links', 'danger');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while generating WhatsApp links', 'danger');
+      })
+      .finally(() => {
+        // Reset button state
+        this.disabled = false;
+        this.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Send Bulk WhatsApp (<span id="selectedCount">0</span>)';
+      });
+    });
+  }
+
+  // Function to open WhatsApp tabs sequentially with user confirmation
+  function openWhatsAppTabsSequentially(whatsappUrls) {
+    if (whatsappUrls.length === 0) return;
+    
+    let currentIndex = 0;
+    let openedTabs = 0;
+    
+    function openNextTab() {
+      if (currentIndex >= whatsappUrls.length) {
+        showNotification(`Successfully opened ${openedTabs} out of ${whatsappUrls.length} WhatsApp tabs!`, 'success');
+        return;
+      }
+      
+      const item = whatsappUrls[currentIndex];
+      
+      // Create modal for each customer
+      const confirmModal = document.createElement('div');
+      confirmModal.className = 'modal fade';
+      confirmModal.id = 'bulkWhatsAppModal_' + currentIndex;
+      confirmModal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);">
+              <h5 class="modal-title text-white fw-bold">
+                <i class="fab fa-whatsapp me-2"></i>Send WhatsApp Message
+              </h5>
+              <span class="badge bg-light text-dark ms-2">${currentIndex + 1} of ${whatsappUrls.length}</span>
+            </div>
+            <div class="modal-body text-center py-4">
+              <div class="mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle" style="width: 80px; height: 80px;">
+                  <i class="fab fa-whatsapp text-success" style="font-size: 2.5rem;"></i>
+                </div>
+              </div>
+              <h5 class="text-primary mb-3">${item.customer_name}</h5>
+              <p class="text-muted mb-2">Invoice: <span class="fw-bold">${item.invoice_number}</span></p>
+              <div class="alert alert-info border-0 bg-light">
+                <small><i class="fas fa-info-circle me-1"></i>This will open WhatsApp Web in a new tab with the invoice message ready to send.</small>
+              </div>
+              <div class="small text-muted">
+                <i class="fas fa-lightbulb me-1"></i>If it opens in a new window instead of a tab, check your browser settings under "New tabs/windows".
+              </div>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pb-4">
+              <button type="button" class="btn btn-success btn-lg px-4 me-2" id="openWhatsAppTab_${currentIndex}">
+                <i class="fab fa-whatsapp me-2"></i>Open WhatsApp Tab
+              </button>
+              <button type="button" class="btn btn-outline-secondary me-2" id="skipCustomer_${currentIndex}">
+                Skip
+              </button>
+              <button type="button" class="btn btn-outline-danger" id="cancelAll_${currentIndex}">
+                Cancel All
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(confirmModal);
+      const modal = new bootstrap.Modal(confirmModal, { backdrop: 'static' });
+      modal.show();
+      
+      // Handle open WhatsApp button - GUARANTEED user interaction
+      document.getElementById(`openWhatsAppTab_${currentIndex}`).onclick = function() {
+        console.log(`Opening WhatsApp tab for ${item.customer_name}`);
+        
+        // This WILL work because it's direct user click - opens in new tab
+        const opened = window.open(item.whatsapp_url, `whatsapp_tab_${item.invoice_id}_${Date.now()}`);
+        
+        if (opened) {
+          openedTabs++;
+          console.log(`✅ Tab ${currentIndex + 1} opened successfully for ${item.customer_name}`);
+        } else {
+          console.log(`❌ Failed to open tab ${currentIndex + 1} for ${item.customer_name}`);
+        }
+        
+        modal.hide();
+        confirmModal.remove();
+        currentIndex++;
+        
+        // Short delay before next tab
+        setTimeout(openNextTab, 500);
+      };
+      
+      // Handle skip button
+      document.getElementById(`skipCustomer_${currentIndex}`).onclick = function() {
+        console.log(`Skipped ${item.customer_name}`);
+        modal.hide();
+        confirmModal.remove();
+        currentIndex++;
+        setTimeout(openNextTab, 200);
+      };
+      
+      // Handle cancel button
+      document.getElementById(`cancelAll_${currentIndex}`).onclick = function() {
+        console.log(`Cancelled remaining tabs. Opened ${openedTabs} out of ${whatsappUrls.length}`);
+        modal.hide();
+        confirmModal.remove();
+        showNotification(`Opened ${openedTabs} out of ${whatsappUrls.length} WhatsApp tabs`, 'info');
+      };
+    }
+    
+    // Start the process
+    showNotification(`Ready to open ${whatsappUrls.length} WhatsApp tabs. Click through each confirmation...`, 'info');
+    
+    // Show additional tip after 2 seconds
+    setTimeout(() => {
+      showNotification('💡 Tip: If links open in new windows instead of tabs, adjust your browser settings: Settings → Advanced → Open links in tabs instead of new windows', 'info');
+    }, 2000);
+    
+    openNextTab();
   }
 });
 </script>

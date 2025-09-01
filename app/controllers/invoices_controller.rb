@@ -364,6 +364,74 @@ end
     redirect_to invoices_path, notice: 'Invoice converted to completed successfully.'
   end
   
+  # Bulk WhatsApp sharing action
+  def bulk_share_whatsapp
+    invoice_ids = params[:invoice_ids]
+    
+    if invoice_ids.blank?
+      render json: { error: 'No invoices selected' }, status: 400
+      return
+    end
+    
+    # Get invoices with valid phone numbers
+    invoices = Invoice.includes(:customer)
+                     .where(id: invoice_ids)
+                     .joins(:customer)
+                     .where.not(customers: { phone_number: [nil, ''] })
+    
+    if invoices.empty?
+      render json: { error: 'No valid invoices found with phone numbers' }, status: 400
+      return
+    end
+    
+    # Generate WhatsApp URLs for each invoice
+    whatsapp_urls = []
+    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'steady-raccoon-enormous.ngrok-free.app'
+    
+    invoices.each do |invoice|
+      # Ensure share token exists
+      invoice.generate_share_token if invoice.share_token.blank?
+      invoice.save! if invoice.changed?
+      
+      # Generate public URL
+      public_url = invoice.public_url(host: host).gsub(':3000', '')
+      
+      # Build WhatsApp message
+      message = build_whatsapp_message(invoice, public_url)
+      
+      # Sanitize phone number and add country code if needed
+      sanitized_phone = invoice.customer.phone_number.gsub(/\D/, '')
+      
+      # Add +91 if it doesn't start with country code (assuming Indian numbers)
+      unless sanitized_phone.start_with?('91')
+        sanitized_phone = "91#{sanitized_phone.sub(/^0/, '')}"
+      end
+      
+      # Create WhatsApp URL - use web.whatsapp.com for better multi-tab support
+      whatsapp_url = "https://web.whatsapp.com/send?phone=#{sanitized_phone}&text=#{CGI.escape(message)}"
+      
+      whatsapp_urls << {
+        invoice_id: invoice.id,
+        customer_name: invoice.customer.name,
+        invoice_number: invoice.formatted_number,
+        whatsapp_url: whatsapp_url
+      }
+      
+      # Mark invoice as shared
+      invoice.mark_as_shared!
+    end
+    
+    render json: { 
+      success: true, 
+      whatsapp_urls: whatsapp_urls,
+      count: whatsapp_urls.length,
+      message: "Generated #{whatsapp_urls.length} WhatsApp links"
+    }
+  rescue => e
+    Rails.logger.error "Bulk WhatsApp sharing error: #{e.message}"
+    render json: { error: 'Failed to generate WhatsApp links' }, status: 500
+  end
+
   # WhatsApp sharing action
   def share_whatsapp
     phone_number = params[:phone_number]
