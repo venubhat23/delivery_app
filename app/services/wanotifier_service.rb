@@ -80,7 +80,7 @@ class WanotifierService
       invoice.save! if invoice.changed?
       
       # Get public URLs
-      host = Rails.application.config.action_controller.default_url_options[:host] || 'gnu-modern-totally.ngrok-free.app'
+      host = Rails.application.config.action_controller.default_url_options[:host] || 'steady-raccoon-enormous.ngrok-free.app'
       public_url = invoice.public_url(host: host).gsub(':3000', '')
       pdf_url = "#{public_url}.pdf"
       

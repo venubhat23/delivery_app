@@ -344,12 +344,12 @@ class Invoice < ApplicationRecord
   private
   
   def calculate_total_amount
-    # Calculate base amount (excluding tax)
-    taxable_amount = invoice_items.sum { |item| item.quantity * (item.unit_price || 0) }
+    # Use total_price from invoice items (which includes discounts) instead of recalculating
+    taxable_amount = invoice_items.sum { |item| item.total_price || (item.quantity * (item.unit_price || 0)) }
     
     # Calculate total tax
     total_tax = invoice_items.sum do |item|
-      base_amount = item.quantity * (item.unit_price || 0)
+      base_amount = item.total_price || (item.quantity * (item.unit_price || 0))
       item.product&.total_tax_amount_for(base_amount) || 0
     end
     
@@ -374,15 +374,20 @@ class Invoice < ApplicationRecord
     grouped_assignments.each do |product_id, product_assignments|
       product = Product.find(product_id)
       total_quantity = product_assignments.sum(&:quantity)
-      unit_price = product.price
+      
+      # Use the sum of final_amount_after_discount instead of price * quantity
+      total_discounted_amount = product_assignments.sum(&:final_amount_after_discount)
+      
+      # Calculate effective unit price after discounts
+      effective_unit_price = total_quantity > 0 ? (total_discounted_amount / total_quantity) : 0
 
       item = invoice.invoice_items.build(
         product: product,
         quantity: total_quantity,
-        unit_price: unit_price,
-        total_price: total_quantity * (unit_price || 0)
+        unit_price: effective_unit_price,
+        total_price: total_discounted_amount
       )
-      total_amount += item.total_price
+      total_amount += total_discounted_amount
     end
 
     invoice.total_amount = total_amount

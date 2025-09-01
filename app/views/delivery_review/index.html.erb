@@ -191,37 +191,16 @@
       search: document.getElementById('globalSearch').value.trim()
     };
     if (dateType === 'custom') {
-      // Convert date input values (YYYY-MM-DD) to DD.MM.YYYY format for backend
+      // Use date values directly in YYYY-MM-DD format
       var startDateInput = document.getElementById('startDate');
       var endDateInput = document.getElementById('endDate');
       
-      params.start_date = convertDateToBackendFormat(startDateInput.value);
-      params.end_date = convertDateToBackendFormat(endDateInput.value);
+      params.start_date = startDateInput.value;  // Keep as YYYY-MM-DD
+      params.end_date = endDateInput.value;      // Keep as YYYY-MM-DD
     }
     return params;
   }
 
-  function convertDateToBackendFormat(dateValue) {
-    if (!dateValue) return '';
-    try {
-      // Input format: YYYY-MM-DD, Output format: DD.MM.YYYY
-      console.log('Converting date:', dateValue);
-      var parts = dateValue.split('-');
-      if (parts.length === 3) {
-        var year = parts[0];
-        var month = parts[1];
-        var day = parts[2];
-        var converted = day + '.' + month + '.' + year;
-        console.log('Converted to:', converted);
-        return converted;
-      }
-      console.log('Date parts not found, returning original:', dateValue);
-      return dateValue;
-    } catch(e) {
-      console.error('Date conversion error:', e);
-      return dateValue;
-    }
-  }
 
   function setSummary(summary) {
     document.getElementById('sumTotalDeliveries').textContent = summary.total_deliveries || 0;
@@ -433,22 +412,8 @@
   }
 
   function getDateValue(dateText) {
-    // Convert "DD.MM.YYYY" format to "YYYY-MM-DD" for input[type="date"]
-    try {
-      if (dateText.includes('.')) {
-        var parts = dateText.split('.');
-        if (parts.length === 3) {
-          var day = parts[0].padStart(2, '0');
-          var month = parts[1].padStart(2, '0');
-          var year = parts[2];
-          return year + '-' + month + '-' + day;
-        }
-      }
-      var date = new Date(dateText);
-      return date.toISOString().split('T')[0];
-    } catch(e) {
-      return '';
-    }
+    // Return date as-is since we're keeping YYYY-MM-DD format
+    return dateText || '';
   }
 
   function getQuantityValue(quantityText) {

@@ -422,7 +422,7 @@
                 <%= item.product&.unit_type || 'pcs' %>
               </td>
               <td>₹<%= number_with_delimiter(item.unit_price, precision: 2) %></td>
-              <td>₹<%= number_with_delimiter(item.quantity * item.unit_price, precision: 2) %></td>
+              <td>₹<%= number_with_delimiter(item.total_price || (item.quantity * item.unit_price), precision: 2) %></td>
             </tr>
           <% end %>
         </tbody>
@@ -490,11 +490,11 @@
             <div class="totals-section">
               <div class="total-row">
                 <span>Subtotal:</span>
-                <span>₹<%= number_with_delimiter(@invoice_items.sum { |item| item.quantity * item.unit_price }, precision: 2) %></span>
+                <span>₹<%= number_with_delimiter(@invoice_items.sum { |item| item.total_price || (item.quantity * item.unit_price) }, precision: 2) %></span>
               </div>
               
               <!-- Tax calculation if applicable -->
-              <% tax_amount = @invoice.total_amount - @invoice_items.sum { |item| item.quantity * item.unit_price } %>
+              <% tax_amount = @invoice.total_amount - @invoice_items.sum { |item| item.total_price || (item.quantity * item.unit_price) } %>
               <% if tax_amount > 0 %>
                 <div class="total-row">
                   <span>Tax:</span>

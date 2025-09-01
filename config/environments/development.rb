@@ -8,7 +8,7 @@ Rails.application.configure do
     "atmanirbharfarm.work.gd",     # Allow requests from main domain
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
     ENV['APP_HOST'],                 # Allow requests from environment-specific host
-    "gnu-modern-totally.ngrok-free.app",
+    "steady-raccoon-enormous.ngrok-free.app",
     "atmanirbharfarm.work.gd",
     "13.232.153.224"                # Allow requests from the production server IP
   ].compact
@@ -49,7 +49,7 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
 
-  default_host = ENV.fetch('APP_HOST', 'gnu-modern-totally.ngrok-free.app')
+  default_host = ENV.fetch('APP_HOST', 'steady-raccoon-enormous.ngrok-free.app')
   config.action_mailer.default_url_options = { host: default_host }
 
   # Set default URL options for the main application routes
