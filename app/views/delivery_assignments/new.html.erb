@@ -938,7 +938,12 @@ function initializeMultipleDatesFeature() {
     const currentDate = new Date(startDate);
     for (let week = 0; week < 6; week++) {
       for (let day = 0; day < 7; day++) {
-        const dateStr = currentDate.toISOString().split('T')[0];
+        // Create date string manually to avoid timezone issues
+        const year = currentDate.getFullYear();
+        const month_num = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day_num = String(currentDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month_num}-${day_num}`;
+        
         const isCurrentMonth = currentDate.getMonth() === month;
         const isToday = currentDate.toDateString() === today.toDateString();
         const isSelected = selectedDates.includes(dateStr);
@@ -1008,7 +1013,10 @@ function initializeMultipleDatesFeature() {
     if (selectedDates.length > 0) {
       // Format dates nicely
       const formattedDates = selectedDates.map(dateStr => {
-        const date = new Date(dateStr + 'T00:00:00');
+        // Parse date parts manually to avoid timezone issues
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day); // month is 0-indexed
+        
         return {
           dateStr: dateStr,
           formatted: date.toLocaleDateString('en-IN', {
