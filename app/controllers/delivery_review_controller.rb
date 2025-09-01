@@ -203,10 +203,12 @@ class DeliveryReviewController < ApplicationController
     when 'custom'
       if params[:start_date].present? && params[:end_date].present?
         begin
-          start_date = Date.strptime(params[:start_date], '%d.%m.%Y') rescue Date.parse(params[:start_date])
-          end_date = Date.strptime(params[:end_date], '%d.%m.%Y') rescue Date.parse(params[:end_date])
+          # Handle YYYY-MM-DD format (standard HTML5 date input format)
+          start_date = Date.parse(params[:start_date])
+          end_date = Date.parse(params[:end_date])
           scope.where(scheduled_date: start_date..end_date)
         rescue ArgumentError
+          # Fallback to current month if date parsing fails
           scope.where(scheduled_date: Date.current.beginning_of_month..Date.current.end_of_month)
         end
       else

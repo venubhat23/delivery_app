@@ -29,11 +29,11 @@
 
         <div class="col-md-2 d-none" id="customStartWrap">
           <label class="form-label">Start Date</label>
-          <input type="date" id="startDate" class="form-control date-input" data-format="DD, MMM YYYY" value="<%= Date.today.to_s %>" />
+          <input type="date" id="startDate" class="form-control" value="<%= Date.today.to_s %>" />
         </div>
         <div class="col-md-2 d-none" id="customEndWrap">
           <label class="form-label">End Date</label>
-          <input type="date" id="endDate" class="form-control date-input" data-format="DD, MMM YYYY" value="<%= Date.today.to_s %>" />
+          <input type="date" id="endDate" class="form-control" value="<%= Date.today.to_s %>" />
         </div>
 
         <div class="col-md-3">
@@ -180,6 +180,7 @@
     else { s.classList.add('d-none'); e.classList.add('d-none'); }
   }
 
+  // Fixed date handling - v2025-09-01-07:05
   function getFilters() {
     var dateType = document.getElementById('filterDate').value;
     var params = {
@@ -190,13 +191,18 @@
       delivery_person_id: document.getElementById('filterDeliveryPerson').value,
       search: document.getElementById('globalSearch').value.trim()
     };
+    
+    // SIMPLE DATE HANDLING - NO CONVERSION
     if (dateType === 'custom') {
-      // Use date values directly in YYYY-MM-DD format
-      var startDateInput = document.getElementById('startDate');
-      var endDateInput = document.getElementById('endDate');
+      var startInput = document.getElementById('startDate');
+      var endInput = document.getElementById('endDate');
       
-      params.start_date = startDateInput.value;  // Keep as YYYY-MM-DD
-      params.end_date = endDateInput.value;      // Keep as YYYY-MM-DD
+      // Just use the values directly - they're already YYYY-MM-DD
+      params.start_date = startInput.value || '';
+      params.end_date = endInput.value || '';
+      
+      console.log('FIXED: start_date =', params.start_date);
+      console.log('FIXED: end_date =', params.end_date);
     }
     return params;
   }
@@ -265,8 +271,15 @@
     var btn = document.getElementById('applyFiltersBtn');
     btn.disabled = true; btn.classList.add('loading');
     var params = getFilters();
+    
+    // Debug the final URL being sent
     var query = new URLSearchParams(params).toString();
-    fetch('/delivery-review/data.json?' + query, { headers: { 'Accept': 'application/json' } })
+    console.log('FINAL URL BEING SENT:', '/delivery-review/data.json?' + query);
+    
+    // Add timestamp to break cache
+    var url = '/delivery-review/data.json?' + query + '&_=' + Date.now();
+    
+    fetch(url, { headers: { 'Accept': 'application/json' } })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         setSummary(data.summary || {});
@@ -277,20 +290,8 @@
       .finally(function(){ btn.disabled = false; btn.classList.remove('loading'); });
   }
 
-  function initializeDateInputs() {
-    var dateInputs = document.querySelectorAll('input[type="date"].date-input');
-    dateInputs.forEach(function(input) {
-      // Add change listener for validation
-      input.addEventListener('change', function() {
-        console.log('Date input changed:', input.id, 'value:', input.value);
-      });
-    });
-  }
 
   document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date formatting
-    initializeDateInputs();
-    
     // Initialize Select2 if available
     if (window.jQuery && jQuery.fn.select2) {
       jQuery('#filterCustomer, #filterProduct, #filterStatus, #filterDeliveryPerson').select2({ theme: 'bootstrap-5', width: '100%' });
@@ -412,7 +413,8 @@
   }
 
   function getDateValue(dateText) {
-    // Return date as-is since we're keeping YYYY-MM-DD format
+    // NO CONVERSION - Return date exactly as received
+    // HTML5 date inputs use YYYY-MM-DD format automatically
     return dateText || '';
   }
 
