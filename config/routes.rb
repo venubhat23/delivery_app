@@ -195,6 +195,7 @@ Rails.application.routes.draw do
       post :process_bulk_assignments, path: 'bulk-process', as: 'process_bulk_assignments'
       post :bulk_complete, path: 'bulk-complete'
       get :search_suggestions
+      post :unassign_customer
     end
   end
   

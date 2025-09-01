@@ -288,6 +288,77 @@ class DeliveryAssignmentsController < ApplicationController
     end
   end
 
+  # AJAX action to unassign a customer - deletes all assignments and schedules for a specific customer/month/year
+  def unassign_customer
+    customer_id = params[:customer_id]
+    month = params[:month].to_i
+    year = params[:year].to_i
+    
+    if customer_id.blank? || month == 0 || year == 0
+      render json: { 
+        success: false, 
+        error: 'Customer, month, and year are required' 
+      }
+      return
+    end
+    
+    begin
+      customer = Customer.find(customer_id)
+      
+      # Calculate date range for the specified month/year
+      start_date = Date.new(year, month, 1).beginning_of_month
+      end_date = start_date.end_of_month
+      
+      assignments_deleted = 0
+      schedules_deleted = 0
+      
+      ActiveRecord::Base.transaction do
+        # Delete delivery assignments for the customer in the specified month
+        assignments_to_delete = DeliveryAssignment.where(
+          customer_id: customer_id,
+          scheduled_date: start_date..end_date
+        )
+        assignments_deleted = assignments_to_delete.count
+        assignments_to_delete.delete_all
+        
+        # Delete delivery schedules for the customer that overlap with the specified month
+        schedules_to_delete = DeliverySchedule.where(customer_id: customer_id)
+                                             .where(
+                                               "(start_date <= ? AND end_date >= ?) OR " +
+                                               "(start_date >= ? AND start_date <= ?) OR " +
+                                               "(end_date >= ? AND end_date <= ?)",
+                                               start_date, start_date,
+                                               start_date, end_date,
+                                               start_date, end_date
+                                             )
+        schedules_deleted = schedules_to_delete.count
+        schedules_to_delete.delete_all
+      end
+      
+      render json: {
+        success: true,
+        assignments_deleted: assignments_deleted,
+        schedules_deleted: schedules_deleted,
+        customer_name: customer.name,
+        month: month,
+        year: year,
+        message: "Successfully unassigned #{customer.name} for #{Date::MONTHNAMES[month]} #{year}"
+      }
+      
+    rescue ActiveRecord::RecordNotFound
+      render json: { 
+        success: false, 
+        error: 'Customer not found' 
+      }
+    rescue => e
+      Rails.logger.error "Error unassigning customer: #{e.message}"
+      render json: { 
+        success: false, 
+        error: 'An error occurred while unassigning the customer' 
+      }
+    end
+  end
+
   private
 
   def set_delivery_assignment
