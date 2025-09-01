@@ -149,7 +149,7 @@
             <% preview_data[:assignments].order(:completed_at, :scheduled_date).each_with_index do |assignment, index| %>
               <tr class="<%= 'table-warning' if assignment.has_discount? %>">
                 <td class="text-nowrap">
-                  <% display_date = assignment.completed_at || assignment.scheduled_date %>
+                  <% display_date = assignment.scheduled_date %>
                   <%= display_date&.strftime('%d %b %Y') %>
                   <% if assignment.completed_at.present? %>
                     <br><small class="text-success"><%= assignment.completed_at.strftime('%H:%M') %></small>
