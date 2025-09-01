@@ -237,6 +237,7 @@ Rails.application.routes.draw do
     collection do
       get :generate
       post :generate
+      post :bulk_share_whatsapp
       get :monthly_preview
       get :generate_monthly_for_all
       post :generate_monthly_for_all
