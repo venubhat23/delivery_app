@@ -142,23 +142,26 @@ class DeliveryAssignment < ApplicationRecord
   def self.monthly_summary_for_customer(customer_id, month, year)
     start_date = Date.new(year, month, 1).beginning_of_month
     end_date = start_date.end_of_month
-
     assignments = where(
       customer_id: customer_id,
       status: 'completed',
-      completed_at: start_date..end_date,
+      scheduled_date: start_date..end_date,
       invoice_generated: false
     ).includes(:product)
     summary = assignments.group_by(&:product).map do |product, product_assignments|
       total_quantity = product_assignments.sum(&:quantity)
       unit_price = product.price
-      total_amount = product_assignments.sum(&:final_amount_after_discount)
+      
+      # Handle nil values properly using blocks
+      total_discount = product_assignments.sum { |a| a.discount_amount.to_f }
+      total_final_amount = product_assignments.sum { |a| a.final_amount_after_discount.to_f }
+      
       {
         product: product,
         quantity: total_quantity,
         unit_price: product.price.to_f,
-        discount: product_assignments.sum(&:discount_amount),
-        total_amount: product_assignments.sum(&:final_amount_after_discount),
+        discount: total_discount,
+        total_amount: total_final_amount,
         assignments_count: product_assignments.count
       }
     end
