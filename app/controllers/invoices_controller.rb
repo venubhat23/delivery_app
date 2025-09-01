@@ -543,7 +543,20 @@ end
   end
 
   def build_whatsapp_message(invoice, public_url)
-    "Hello #{invoice.customer.name}, your invoice #{invoice.formatted_number} for ₹#{invoice.total_amount} is ready. View/download: #{public_url}"
+    formatted_amount = ActionController::Base.helpers.number_with_delimiter(invoice.total_amount, delimiter: ',')
+    
+    <<~MESSAGE.strip
+      🧾 *Invoice Ready - #{invoice.formatted_number}*
+
+      Dear #{invoice.customer.name},
+      Your invoice for ₹#{formatted_amount} from *Atmanirbhar Farm* has been prepared.
+
+      📥 *View & Download:*
+      #{public_url}
+
+      Thank you for your business! 🙏
+      🌾 *Atmanirbhar Farm*
+    MESSAGE
   end
 
   # Method to send invoice via WhatsApp using WANotifier

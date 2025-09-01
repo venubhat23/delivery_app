@@ -52,14 +52,15 @@ class Invoice < ApplicationRecord
   end
   
   def build_default_whatsapp_message
-    "🧾 *Invoice from #{customer.user.business_name || 'Atma Nirbhar Farm'}*\n\n" +
-    "📋 Invoice #: *#{invoice_number}*\n" +
-    "👤 Customer: *#{customer.name}*\n" +
-    "📅 Date: *#{invoice_date.strftime('%d %b %Y')}*\n" +
-    "💰 Amount: *₹#{total_amount}*\n" +
-    "📍 Due Date: *#{due_date.strftime('%d %b %Y')}*\n\n" +
-    "Thank you for your business! 🙏\n\n" +
-    "_This is an automated message from our billing system._"
+    formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(total_amount, delimiter: ',')}"
+    
+    "🧾 *Invoice Ready - #{invoice_number}*\n\n" +
+    "Dear #{customer.name},\n" +
+    "Your invoice for #{formatted_amount} from *Atmanirbhar Farm* has been prepared.\n\n" +
+    "📥 *View & Download:*\n" +
+    "#{public_url}\n\n" +
+    "Thank you for your business! 🙏\n" +
+    "🌾 *Atmanirbhar Farm*"
   end
   
   # Public instance methods

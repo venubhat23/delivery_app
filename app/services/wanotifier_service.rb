@@ -185,23 +185,16 @@ class WanotifierService
   
   # Build personalized invoice message
   def build_invoice_message(invoice)
-    month_year = invoice.invoice_date.strftime("%B %Y")
-    formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}"
-    due_date = invoice.due_date.strftime('%d %B %Y')
+    formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount, delimiter: ',')}"
     
     <<~MESSAGE.strip
-      Hello #{invoice.customer.name}! 👋
+      🧾 *Invoice Ready - #{invoice.formatted_number}*
 
-      Your #{month_year} invoice is ready! 📋
+      Dear #{invoice.customer.name},
+      Your invoice for #{formatted_amount} from *Atmanirbhar Farm* has been prepared.
 
-      📄 Invoice #: #{invoice.formatted_number}
-      💰 Total Amount: #{formatted_amount}
-      📅 Due Date: #{due_date}
-
-      Thank you for your continued business! 🙏
-
-      For any queries, please contact us.
-      - Atma Nirbhar Farm
+      Thank you for your business! 🙏
+      🌾 *Atmanirbhar Farm*
     MESSAGE
   end
   
