@@ -8,10 +8,9 @@ Rails.application.configure do
     "atmanirbharfarm.work.gd",     # Allow requests from main domain
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
     ENV['APP_HOST'],                 # Allow requests from environment-specific host
-    "steady-raccoon-enormous.ngrok-free.app",
     "atmanirbharfarm.work.gd",
     "13.232.153.224",                # Allow requests from the production server IP
-    "steady-raccoon-enormous.ngrok-free.app"
+    "atmanirbharfarmbangalore.com"
   ].compact
 
 
