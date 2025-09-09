@@ -4,7 +4,7 @@ class AdminSettingsController < ApplicationController
 
   def index
     @admin_setting = AdminSetting.first || AdminSetting.new
-    redirect_to @admin_setting if @admin_setting.persisted?
+    redirect_to admin_setting_path(@admin_setting) if @admin_setting.persisted?
   end
 
   def show
@@ -21,7 +21,7 @@ class AdminSettingsController < ApplicationController
     
     if @admin_setting.save
       generate_qr_code if @admin_setting.upi_id.present?
-      redirect_to @admin_setting, notice: 'Admin settings were successfully created.'
+      redirect_to admin_setting_path(@admin_setting), notice: 'Admin settings were successfully created.'
     else
       render :new
     end
@@ -37,7 +37,7 @@ class AdminSettingsController < ApplicationController
   def update
     if @admin_setting.update(admin_setting_params)
       generate_qr_code if @admin_setting.upi_id.present?
-      redirect_to @admin_setting, notice: 'Admin settings were successfully updated.'
+      redirect_to admin_setting_path(@admin_setting), notice: 'Admin settings were successfully updated.'
     else
       render :edit
     end

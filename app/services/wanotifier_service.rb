@@ -90,15 +90,16 @@ class WanotifierService
       if success
         # Mark invoice as shared
         invoice.mark_as_shared!
-        Rails.logger.info "Invoice #{invoice.formatted_number} sent successfully via WhatsApp to #{invoice.customer.name}"
+        Rails.logger.info "Invoice #{invoice.formatted_number} sent with PDF attachment via WhatsApp to #{invoice.customer.name}"
       else
         # Fallback: send message with link only (no PDF attachment)
-        message_with_link = "#{message}\n\nView/Download: #{public_url}"
+        message_with_link = "#{message}\n\n📥 *View & Download:*\n#{public_url}"
         success = send_message(invoice.customer.phone_number, message_with_link)
         
         if success
           invoice.mark_as_shared!
           Rails.logger.info "Invoice #{invoice.formatted_number} sent (link only) via WhatsApp to #{invoice.customer.name}"
+          Rails.logger.warn "PDF attachment failed for invoice #{invoice.formatted_number}, sent link instead"
         end
       end
       
