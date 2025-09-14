@@ -2,6 +2,16 @@ class DeliveryAssignmentsController < ApplicationController
   before_action :require_login
   before_action :set_delivery_assignment, only: [:show, :edit, :update, :destroy, :complete, :cancel]
 
+  def filtered
+    @delivery_assignments = filter_assignments
+                           .includes(:customer, :user, :product)
+                           .order(created_at: :desc)
+                           .page(params[:page])
+                           .per(50)
+
+    @total_count = filter_assignments.count
+  end
+
   def index
     # Date filtering - default to today, but allow viewing other dates
     # Fix date filter to show exact date matches only
@@ -729,12 +739,68 @@ class DeliveryAssignmentsController < ApplicationController
   def calculate_delivery_amount
     # Use final amount after discount if available, otherwise calculate normally
     return @delivery_assignment.final_amount if @delivery_assignment.final_amount_after_discount.present?
-    
+
     # Fallback to basic calculation
     base_amount = @delivery_assignment.product&.price || 0
     quantity = @delivery_assignment.quantity || 1
     total = base_amount * quantity
     discount = @delivery_assignment.discount_amount || 0
     [total - discount, 0].max
+  end
+
+  def filter_assignments
+    assignments = DeliveryAssignment.all
+
+    # Date filter
+    assignments = apply_date_filter(assignments)
+
+    # Booked by filter
+    assignments = apply_booked_by_filter(assignments)
+
+    assignments
+  end
+
+  def apply_date_filter(assignments)
+    case params[:date_filter]
+    when 'today'
+      assignments.where(scheduled_date: Date.current)
+    when 'weekly'
+      start_date = Date.current.beginning_of_week
+      end_date = Date.current.end_of_week
+      assignments.where(scheduled_date: start_date..end_date)
+    when 'monthly'
+      start_date = Date.current.beginning_of_month
+      end_date = Date.current.end_of_month
+      assignments.where(scheduled_date: start_date..end_date)
+    when 'custom'
+      if params[:start_date].present? && params[:end_date].present?
+        start_date = Date.parse(params[:start_date])
+        end_date = Date.parse(params[:end_date])
+        assignments.where(scheduled_date: start_date..end_date)
+      else
+        assignments
+      end
+    else
+      # Default to today
+      assignments.where(scheduled_date: Date.current)
+    end
+  rescue Date::Error
+    # If date parsing fails, return all assignments
+    assignments
+  end
+
+  def apply_booked_by_filter(assignments)
+    return assignments unless params[:booked_by_filter].present?
+
+    case params[:booked_by_filter]
+    when 'customer'
+      assignments.booked_by_customer
+    when 'delivery_person'
+      assignments.booked_by_delivery_person
+    when 'admin'
+      assignments.booked_by_admin
+    else
+      assignments
+    end
   end
 end

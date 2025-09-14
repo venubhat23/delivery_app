@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_10_141206) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_14_101300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -142,6 +142,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_141206) do
     t.string "country"
     t.integer "customer_type", default: 0
     t.text "interval_days"
+    t.integer "regular_quantity"
+    t.integer "regular_product_id"
+    t.string "regular_delivery_person"
+    t.string "regular_delivery_person_from_assignment"
     t.index ["alt_phone_number"], name: "index_customers_on_alt_phone_number", where: "(alt_phone_number IS NOT NULL)"
     t.index ["customer_type"], name: "index_customers_on_customer_type"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
@@ -294,6 +298,30 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_141206) do
     t.string "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "order_items", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "quantity"
+    t.decimal "unit_price"
+    t.decimal "total_price"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+    t.index ["product_id"], name: "index_order_items_on_product_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "status"
+    t.decimal "total_amount"
+    t.text "notes"
+    t.datetime "order_date"
+    t.datetime "delivery_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_orders_on_customer_id"
   end
 
   create_table "parties", force: :cascade do |t|
@@ -717,6 +745,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_141206) do
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoice_items", "products"
   add_foreign_key "invoices", "customers"
+  add_foreign_key "order_items", "orders"
+  add_foreign_key "order_items", "products"
+  add_foreign_key "orders", "customers"
   add_foreign_key "parties", "users"
   add_foreign_key "procurement_assignments", "procurement_schedules"
   add_foreign_key "procurement_assignments", "products"

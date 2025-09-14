@@ -62,6 +62,16 @@ class Customer < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
   scope :active, -> { where(is_active: true) }
 
+  # Customer type scopes (Legacy - based on customer_type field)
+  scope :regular_customers_legacy, -> { where(customer_type: 0) }
+  scope :interval_customers_legacy, -> { where(customer_type: 1) }
+  scope :irregular_customers_legacy, -> { where.not(customer_type: [0, 1]) }
+
+  # New customer categorization based on interval_days
+  scope :regular_customers, -> { where(interval_days: "7") }
+  scope :interval_customers, -> { where("interval_days::integer < 3").where.not(interval_days: nil) }
+  scope :all_customers_with_intervals, -> { where.not(interval_days: nil) }
+
 
   # CSV template for bulk import
   def self.csv_template
@@ -414,6 +424,48 @@ class Customer < ApplicationRecord
 
   def delivery_person_name
     delivery_person&.name || "Not Assigned"
+  end
+
+  # Customer type helper methods
+  def customer_type_name
+    case customer_type
+    when 0
+      'Regular'
+    when 1
+      'Interval'
+    else
+      'Irregular'
+    end
+  end
+
+  def regular_customer?
+    customer_type == 0
+  end
+
+  def interval_customer?
+    customer_type == 1
+  end
+
+  def irregular_customer?
+    !regular_customer? && !interval_customer?
+  end
+
+  # Get delivery days for this customer
+  def delivery_days
+    delivered_dates = delivery_assignments.completed.pluck(:scheduled_date)
+    return [] if delivered_dates.empty?
+
+    if delivered_dates.length >= 28 # Assuming almost full month
+      'Every day'
+    else
+      delivered_dates.map { |date| date.day }.sort.join(', ')
+    end
+  end
+
+  # Get regular product name
+  def regular_product_name
+    return nil unless regular_product_id
+    Product.find_by(id: regular_product_id)&.name
   end
 
   # Delivery related methods

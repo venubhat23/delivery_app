@@ -1,0 +1,382 @@
+<% content_for :title, "Customer Details" %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h2 mb-2">
+            <i class="fas fa-user-tag me-3 text-primary"></i>Customer Details
+          </h1>
+          <p class="text-muted mb-0">Manage customers categorized by delivery intervals</p>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="card border-0 shadow-sm bg-primary text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="h2 mb-0"><%= @stats[:regular_count] %></div>
+                  <div class="small">Regular Customers</div>
+                  <div class="small opacity-75">Interval Days = 7</div>
+                </div>
+                <div class="display-6">
+                  <i class="fas fa-calendar-check"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="card border-0 shadow-sm bg-success text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="h2 mb-0"><%= @stats[:interval_count] %></div>
+                  <div class="small">Interval Customers</div>
+                  <div class="small opacity-75">Interval Days < 3</div>
+                </div>
+                <div class="display-6">
+                  <i class="fas fa-clock"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="card border-0 shadow-sm bg-info text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="h2 mb-0"><%= @stats[:total_count] %></div>
+                  <div class="small">Total Customers</div>
+                  <div class="small opacity-75">With Interval Data</div>
+                </div>
+                <div class="display-6">
+                  <i class="fas fa-users"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabbed Interface -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom-0">
+          <ul class="nav nav-tabs card-header-tabs" id="customerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <%= link_to customer_details_path(tab: 'all'),
+                  class: "nav-link #{'active' if @active_tab == 'all'}",
+                  id: "all-tab",
+                  role: "tab" do %>
+                <i class="fas fa-users me-2"></i>
+                All Customers
+                <span class="badge bg-secondary ms-2"><%= @stats[:total_count] %></span>
+              <% end %>
+            </li>
+            <li class="nav-item" role="presentation">
+              <%= link_to customer_details_path(tab: 'regular'),
+                  class: "nav-link #{'active' if @active_tab == 'regular'}",
+                  id: "regular-tab",
+                  role: "tab" do %>
+                <i class="fas fa-calendar-check me-2"></i>
+                Regular
+                <span class="badge bg-primary ms-2"><%= @stats[:regular_count] %></span>
+              <% end %>
+            </li>
+            <li class="nav-item" role="presentation">
+              <%= link_to customer_details_path(tab: 'interval'),
+                  class: "nav-link #{'active' if @active_tab == 'interval'}",
+                  id: "interval-tab",
+                  role: "tab" do %>
+                <i class="fas fa-clock me-2"></i>
+                Interval
+                <span class="badge bg-success ms-2"><%= @stats[:interval_count] %></span>
+              <% end %>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card-body p-0">
+          <!-- Tab Content -->
+          <div class="tab-content" id="customerTabContent">
+            <!-- Active Tab Display -->
+            <div class="tab-pane fade show active">
+
+              <!-- Tab Description -->
+              <div class="bg-light border-bottom p-3">
+                <% if @active_tab == 'regular' %>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar-check text-primary me-2"></i>
+                    <div>
+                      <strong>Regular Customers</strong>
+                      <small class="text-muted d-block">Customers with weekly delivery schedule (interval_days = 7)</small>
+                    </div>
+                  </div>
+                <% elsif @active_tab == 'interval' %>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-clock text-success me-2"></i>
+                    <div>
+                      <strong>Interval Customers</strong>
+                      <small class="text-muted d-block">Customers with short interval deliveries (interval_days < 3)</small>
+                    </div>
+                  </div>
+                <% else %>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-users text-info me-2"></i>
+                    <div>
+                      <strong>All Customers</strong>
+                      <small class="text-muted d-block">Complete list of customers with defined delivery intervals</small>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+
+              <!-- Customers Table -->
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th>Customer</th>
+                      <th class="text-center">Interval Days</th>
+                      <th>Contact</th>
+                      <th>Address</th>
+                      <th>Delivery Person</th>
+                      <th class="text-center">Recent Activity</th>
+                      <th class="text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if @customers.any? %>
+                      <% @customers.each do |customer| %>
+                        <tr>
+                          <td>
+                            <div class="d-flex align-items-center">
+                              <div class="avatar-sm bg-<%= customer.interval_days == '7' ? 'primary' : 'success' %> text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                <i class="fas fa-user"></i>
+                              </div>
+                              <div>
+                                <div class="fw-bold">
+                                  <%= customer.name %>
+                                </div>
+                                <% if customer.member_id.present? %>
+                                  <small class="text-muted">
+                                    ID: <%= customer.member_id %>
+                                  </small>
+                                <% end %>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="text-center">
+                            <% if customer.interval_days == '7' %>
+                              <span class="badge bg-primary px-3 py-2">
+                                <i class="fas fa-calendar-week me-1"></i>
+                                <%= customer.interval_days %> days
+                              </span>
+                            <% elsif customer.interval_days.to_i < 3 %>
+                              <span class="badge bg-success px-3 py-2">
+                                <i class="fas fa-clock me-1"></i>
+                                <%= customer.interval_days %> days
+                              </span>
+                            <% else %>
+                              <span class="badge bg-warning text-dark px-3 py-2">
+                                <i class="fas fa-question me-1"></i>
+                                <%= customer.interval_days %> days
+                              </span>
+                            <% end %>
+                          </td>
+                          <td>
+                            <div>
+                              <div class="fw-semibold">
+                                <i class="fas fa-phone text-muted me-1"></i>
+                                <%= customer.phone_number %>
+                              </div>
+                              <% if customer.email.present? %>
+                                <small class="text-muted">
+                                  <i class="fas fa-envelope me-1"></i>
+                                  <%= customer.email %>
+                                </small>
+                              <% end %>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="small text-wrap" style="max-width: 200px;">
+                              <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                              <%= truncate(customer.address, length: 50) %>
+                            </div>
+                          </td>
+                          <td>
+                            <% if customer.delivery_person.present? %>
+                              <div class="d-flex align-items-center">
+                                <div class="avatar-xs bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-2">
+                                  <i class="fas fa-truck"></i>
+                                </div>
+                                <div>
+                                  <div class="fw-semibold">
+                                    <%= customer.delivery_person.name %>
+                                  </div>
+                                  <% if customer.delivery_person.phone %>
+                                    <small class="text-muted">
+                                      <%= customer.delivery_person.phone %>
+                                    </small>
+                                  <% end %>
+                                </div>
+                              </div>
+                            <% else %>
+                              <span class="text-muted">
+                                <i class="fas fa-user-slash me-1"></i>
+                                Not Assigned
+                              </span>
+                            <% end %>
+                          </td>
+                          <td class="text-center">
+                            <% recent_assignment = customer.delivery_assignments.order(created_at: :desc).first %>
+                            <% if recent_assignment %>
+                              <div class="small">
+                                <div class="fw-semibold">
+                                  <%= recent_assignment.scheduled_date&.strftime("%d/%m/%Y") %>
+                                </div>
+                                <span class="<%= recent_assignment.status_badge_class %>">
+                                  <%= recent_assignment.status.humanize %>
+                                </span>
+                              </div>
+                            <% else %>
+                              <span class="text-muted">No activity</span>
+                            <% end %>
+                          </td>
+                          <td class="text-center">
+                            <% if customer.is_active? %>
+                              <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Active
+                              </span>
+                            <% else %>
+                              <span class="badge bg-danger">
+                                <i class="fas fa-pause-circle me-1"></i>
+                                Inactive
+                              </span>
+                            <% end %>
+                          </td>
+                        </tr>
+                      <% end %>
+                    <% else %>
+                      <tr>
+                        <td colspan="7" class="text-center py-5">
+                          <div class="empty-state">
+                            <div class="mb-3">
+                              <i class="fas fa-users fa-3x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">No customers found</h5>
+                            <p class="text-muted">
+                              No customers found in the <%= @active_tab %> category.
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <% if @customers.respond_to?(:current_page) %>
+                <div class="card-footer bg-light">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                      <% if @customers.total_count > 0 %>
+                        Showing <%= @customers.offset_value + 1 %> to
+                        <%= [@customers.offset_value + @customers.limit_value, @customers.total_count].min %>
+                        of <%= @customers.total_count %> customers
+                      <% else %>
+                        No customers found
+                      <% end %>
+                    </div>
+                    <% if @customers.total_pages > 1 %>
+                      <div>
+                        <%= paginate @customers, theme: 'twitter-bootstrap-4',
+                            params: { tab: @active_tab } %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .avatar-xs {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .nav-tabs .nav-link {
+    border: none;
+    background: none;
+    color: #6c757d;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+  }
+
+  .nav-tabs .nav-link:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+    border-color: transparent;
+  }
+
+  .nav-tabs .nav-link.active {
+    background-color: transparent;
+    color: #0d6efd;
+    border-color: transparent transparent #0d6efd transparent;
+    font-weight: 600;
+  }
+
+  .table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #495057;
+  }
+
+  .table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .empty-state {
+    padding: 2rem;
+  }
+
+  .card {
+    border-radius: 12px;
+  }
+</style>

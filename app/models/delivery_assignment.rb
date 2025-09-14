@@ -12,6 +12,7 @@ class DeliveryAssignment < ApplicationRecord
   validates :status, presence: true, inclusion: { in: %w[pending in_progress completed cancelled] }
   validates :discount_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :final_amount_after_discount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :booked_by, presence: true, inclusion: { in: [0, 1, 2] }
 
   validate :delivery_person_is_valid
   validate :discount_not_exceeding_total_amount
@@ -32,6 +33,10 @@ class DeliveryAssignment < ApplicationRecord
   scope :for_date, ->(date) { where(scheduled_date: date) }
   scope :scheduled, -> { where.not(delivery_schedule_id: nil) }
   scope :one_time, -> { where(delivery_schedule_id: nil) }
+  scope :booked_by_customer, -> { where(booked_by: 1) }
+  scope :booked_by_delivery_person, -> { where(booked_by: 2) }
+  scope :booked_by_admin, -> { where(booked_by: 0) }
+  scope :by_booked_by, ->(booked_by_value) { where(booked_by: booked_by_value) if booked_by_value.present? }
   scope :by_month, ->(month, year) {
     return all if month.blank? || year.blank?
     start_date = Date.new(year.to_i, month.to_i, 1).beginning_of_month
@@ -127,6 +132,31 @@ class DeliveryAssignment < ApplicationRecord
 
   def can_generate_invoice?
     status == 'completed' && !invoice_generated?
+  end
+
+  def booked_by_display
+    case booked_by
+    when 1
+      'Customer'
+    when 2
+      'Delivery Person'
+    when 0
+      'Admin'
+    else
+      'Unknown'
+    end
+  end
+
+  def booked_by_customer?
+    booked_by == 1
+  end
+
+  def booked_by_delivery_person?
+    booked_by == 2
+  end
+
+  def booked_by_admin?
+    booked_by == 0
   end
 
   # Alias methods for backward compatibility

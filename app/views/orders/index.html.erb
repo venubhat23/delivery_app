@@ -1,0 +1,343 @@
+<% content_for :title, "Orders" %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h3 class="card-title mb-0">
+            <i class="fas fa-shopping-cart me-2"></i>
+            Orders Management
+          </h3>
+          <div class="d-flex align-items-center gap-3">
+            <div class="d-flex gap-2">
+              <span class="badge bg-light text-dark">
+                <i class="fas fa-clock me-1"></i>
+                Pending: <%= @pending_count %>
+              </span>
+              <span class="badge bg-light text-dark">
+                <i class="fas fa-check-circle me-1"></i>
+                Delivered: <%= @delivered_count %>
+              </span>
+              <span class="badge bg-light text-dark">
+                <i class="fas fa-list me-1"></i>
+                Total: <%= @total_count %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <!-- Filters Section -->
+          <div class="border-bottom p-4 bg-light">
+            <%= form_with url: orders_path, method: :get, class: "d-flex flex-wrap gap-3 align-items-end", local: true do |form| %>
+              <!-- Date Range Filter -->
+              <div class="form-group">
+                <label class="form-label fw-bold text-secondary">
+                  <i class="fas fa-calendar me-1"></i>
+                  Date Range
+                </label>
+                <%= form.select :date_filter, options_for_select([
+                  ['Today', 'today'],
+                  ['Weekly', 'weekly'],
+                  ['Monthly', 'monthly'],
+                  ['Custom Range', 'custom']
+                ], params[:date_filter] || 'today'), {}, {
+                  class: 'form-select form-select-sm',
+                  id: 'date_filter',
+                  style: 'min-width: 150px;'
+                } %>
+              </div>
+
+              <!-- Custom Date Range -->
+              <div class="form-group" id="start_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
+                <label class="form-label fw-bold text-secondary">Start Date</label>
+                <%= form.date_field :start_date, value: params[:start_date], class: 'form-control form-control-sm', style: 'min-width: 140px;' %>
+              </div>
+
+              <div class="form-group" id="end_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
+                <label class="form-label fw-bold text-secondary">End Date</label>
+                <%= form.date_field :end_date, value: params[:end_date], class: 'form-control form-control-sm', style: 'min-width: 140px;' %>
+              </div>
+
+              <!-- Booked By Filter -->
+              <div class="form-group">
+                <label class="form-label fw-bold text-secondary">
+                  <i class="fas fa-user-tag me-1"></i>
+                  Booked By
+                </label>
+                <%= form.select :booked_by_filter, options_for_select([
+                  ['All', ''],
+                  ['Booked by Customer', 'customer'],
+                  ['Booked by Delivery Person', 'delivery_person'],
+                  ['Booked by Admin', 'admin']
+                ], params[:booked_by_filter]), {}, {
+                  class: 'form-select form-select-sm',
+                  style: 'min-width: 180px;'
+                } %>
+              </div>
+
+              <!-- Filter Button -->
+              <div class="form-group">
+                <%= form.submit "Apply Filters", class: "btn btn-primary btn-sm" %>
+                <% if params[:date_filter].present? || params[:booked_by_filter].present? %>
+                  <%= link_to "Clear", orders_path, class: "btn btn-outline-secondary btn-sm ms-2" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Results Table -->
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-dark sticky-top">
+                <tr>
+                  <th class="text-center" style="width: 120px;">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Date
+                  </th>
+                  <th class="text-center" style="width: 140px;">
+                    <i class="fas fa-user-tag me-1"></i>
+                    Booked By
+                  </th>
+                  <th style="min-width: 200px;">
+                    <i class="fas fa-user me-1"></i>
+                    Customer Name
+                  </th>
+                  <th style="min-width: 180px;">
+                    <i class="fas fa-box me-1"></i>
+                    Product
+                  </th>
+                  <th class="text-end" style="width: 140px;">
+                    <i class="fas fa-rupee-sign me-1"></i>
+                    Amount After Discount
+                  </th>
+                  <th style="min-width: 160px;">
+                    <i class="fas fa-truck me-1"></i>
+                    Delivery Person
+                  </th>
+                  <th class="text-center" style="width: 120px;">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if @delivery_assignments.any? %>
+                  <% @delivery_assignments.each_with_index do |assignment, index| %>
+                    <tr class="<%= 'table-warning' if assignment.overdue? %>">
+                      <td class="text-center">
+                        <div class="fw-bold text-dark">
+                          <%= assignment.scheduled_date.strftime("%d/%m/%Y") if assignment.scheduled_date %>
+                        </div>
+                        <% if assignment.scheduled_date %>
+                          <small class="text-muted">
+                            <%= assignment.scheduled_date.strftime("%a") %>
+                          </small>
+                        <% end %>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge bg-<%= case assignment.booked_by
+                          when 1 then 'success'
+                          when 2 then 'warning text-dark'
+                          when 0 then 'primary'
+                          else 'secondary'
+                        end %> px-3 py-2">
+                          <i class="fas fa-<%= case assignment.booked_by
+                            when 1 then 'user'
+                            when 2 then 'truck'
+                            when 0 then 'user-cog'
+                            else 'question'
+                          end %> me-1"></i>
+                          <%= assignment.booked_by_display %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                            <i class="fas fa-user"></i>
+                          </div>
+                          <div>
+                            <div class="fw-bold text-dark">
+                              <%= assignment.customer_name %>
+                            </div>
+                            <% if assignment.customer&.phone_number %>
+                              <small class="text-muted">
+                                <i class="fas fa-phone me-1"></i>
+                                <%= assignment.customer.phone_number %>
+                              </small>
+                            <% end %>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                            <i class="fas fa-box"></i>
+                          </div>
+                          <div>
+                            <div class="fw-bold text-dark">
+                              <%= assignment.product_name %>
+                            </div>
+                            <small class="text-muted">
+                              <i class="fas fa-balance-scale me-1"></i>
+                              Qty: <%= assignment.quantity %> <%= assignment.unit %>
+                            </small>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-end">
+                        <div class="fw-bold text-success fs-6">
+                          ₹<%= number_with_precision(assignment.final_amount || 0, precision: 2) %>
+                        </div>
+                        <% if assignment.has_discount? %>
+                          <small class="text-success">
+                            <i class="fas fa-tag me-1"></i>
+                            Discount: ₹<%= assignment.discount_amount %>
+                          </small>
+                        <% end %>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-sm bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3">
+                            <i class="fas fa-truck"></i>
+                          </div>
+                          <div>
+                            <div class="fw-bold text-dark">
+                              <%= assignment.delivery_person_name %>
+                            </div>
+                            <% if assignment.user&.phone %>
+                              <small class="text-muted">
+                                <i class="fas fa-phone me-1"></i>
+                                <%= assignment.user.phone %>
+                              </small>
+                            <% end %>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <% if assignment.status == 'completed' %>
+                          <span class="badge bg-success px-3 py-2">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Delivered
+                          </span>
+                        <% else %>
+                          <span class="badge bg-<%= assignment.overdue? ? 'danger' : 'warning text-dark' %> px-3 py-2">
+                            <i class="fas fa-<%= assignment.overdue? ? 'exclamation-triangle' : 'clock' %> me-1"></i>
+                            <%= assignment.overdue? ? 'Overdue' : 'Pending' %>
+                          </span>
+                        <% end %>
+                        <% if assignment.completed_at %>
+                          <div class="small text-muted mt-1">
+                            <%= assignment.completed_at.strftime("%d/%m %H:%M") %>
+                          </div>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                <% else %>
+                  <tr>
+                    <td colspan="7" class="text-center py-5">
+                      <div class="empty-state">
+                        <div class="mb-3">
+                          <i class="fas fa-search fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No orders found</h5>
+                        <p class="text-muted">
+                          No delivery assignments found matching the selected criteria.
+                          Try adjusting your filters or date range.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if @delivery_assignments.respond_to?(:current_page) %>
+            <div class="card-footer bg-light">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted">
+                  <% if @delivery_assignments.total_count > 0 %>
+                    Showing <%= @delivery_assignments.offset_value + 1 %> to
+                    <%= [@delivery_assignments.offset_value + @delivery_assignments.limit_value, @delivery_assignments.total_count].min %>
+                    of <%= @delivery_assignments.total_count %> results
+                  <% else %>
+                    No results found
+                  <% end %>
+                </div>
+                <% if @delivery_assignments.total_pages > 1 %>
+                  <div>
+                    <%= paginate @delivery_assignments, theme: 'twitter-bootstrap-4',
+                        params: { date_filter: params[:date_filter],
+                                 booked_by_filter: params[:booked_by_filter],
+                                 start_date: params[:start_date],
+                                 end_date: params[:end_date] } %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .empty-state {
+    padding: 2rem;
+  }
+
+  .table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dateFilter = document.getElementById('date_filter');
+  const startDateWrapper = document.getElementById('start_date_wrapper');
+  const endDateWrapper = document.getElementById('end_date_wrapper');
+
+  function toggleCustomDateFields() {
+    if (dateFilter.value === 'custom') {
+      startDateWrapper.style.display = 'block';
+      endDateWrapper.style.display = 'block';
+    } else {
+      startDateWrapper.style.display = 'none';
+      endDateWrapper.style.display = 'none';
+    }
+  }
+
+  dateFilter.addEventListener('change', toggleCustomDateFields);
+  toggleCustomDateFields(); // Initial call
+});
+</script>

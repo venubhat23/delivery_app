@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
+  get "customer_details", to: "customer_details#index"
   root 'dashboard#index'
+
+  # Orders routes
+  resources :orders, only: [:index]
   
   # Dashboard analytics endpoint
   get '/dashboard/delivery_analytics', to: 'dashboard#delivery_analytics'
@@ -189,12 +193,13 @@ Rails.application.routes.draw do
       patch :complete
       patch :cancel
     end
-    
+
     collection do
       get :bulk, path: 'bulk-automate'
       post :process_bulk_assignments, path: 'bulk-process', as: 'process_bulk_assignments'
       post :bulk_complete, path: 'bulk-complete'
       get :search_suggestions
+      get :filtered, path: 'filtered'
       post :unassign_customer
     end
   end

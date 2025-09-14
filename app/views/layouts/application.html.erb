@@ -914,18 +914,28 @@
             <!-- Navigation Menu -->
             <ul class="nav flex-column" role="menubar">
               <li class="nav-item" role="none">
-                <%= link_to root_path, 
-                    class: "nav-link #{'active' if current_page?(root_path)}", 
+                <%= link_to root_path,
+                    class: "nav-link #{'active' if current_page?(root_path)}",
                     role: "menuitem",
                     "aria-current": current_page?(root_path) ? "page" : nil do %>
                   <i class="fas fa-chart-line nav-icon" aria-hidden="true"></i>
                   <span class="nav-text">Dashboard</span>
                 <% end %>
               </li>
-              
+
               <li class="nav-item" role="none">
-                <%= link_to products_path, 
-                    class: "nav-link #{'active' if current_page?(products_path) || controller_name == 'products'}", 
+                <%= link_to orders_path,
+                    class: "nav-link #{'active' if current_page?(orders_path) || controller_name == 'orders'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(orders_path) || controller_name == 'orders') ? "page" : nil do %>
+                  <i class="fas fa-shopping-cart nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Orders</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
+                <%= link_to products_path,
+                    class: "nav-link #{'active' if current_page?(products_path) || controller_name == 'products'}",
                     role: "menuitem",
                     "aria-current": (current_page?(products_path) || controller_name == 'products') ? "page" : nil do %>
                   <i class="fas fa-cube nav-icon" aria-hidden="true"></i>
@@ -944,18 +954,28 @@
               </li>
               
               <li class="nav-item" role="none">
-                <%= link_to customers_path, 
-                    class: "nav-link #{'active' if current_page?(customers_path) || controller_name == 'customers'}", 
+                <%= link_to customers_path,
+                    class: "nav-link #{'active' if current_page?(customers_path) || controller_name == 'customers'}",
                     role: "menuitem",
                     "aria-current": (current_page?(customers_path) || controller_name == 'customers') ? "page" : nil do %>
                   <i class="fas fa-users nav-icon" aria-hidden="true"></i>
                   <span class="nav-text">Customers</span>
                 <% end %>
               </li>
-              
+
               <li class="nav-item" role="none">
-                <%= link_to advertisements_path, 
-                    class: "nav-link #{'active' if current_page?(advertisements_path) || controller_name == 'advertisements'}", 
+                <%= link_to customer_details_path,
+                    class: "nav-link #{'active' if current_page?(customer_details_path) || controller_name == 'customer_details'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(customer_details_path) || controller_name == 'customer_details') ? "page" : nil do %>
+                  <i class="fas fa-user-tag nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Customer Detail</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
+                <%= link_to advertisements_path,
+                    class: "nav-link #{'active' if current_page?(advertisements_path) || controller_name == 'advertisements'}",
                     role: "menuitem",
                     "aria-current": (current_page?(advertisements_path) || controller_name == 'advertisements') ? "page" : nil do %>
                   <i class="fas fa-bullhorn nav-icon" aria-hidden="true"></i>

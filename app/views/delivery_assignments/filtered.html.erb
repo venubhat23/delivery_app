@@ -1,0 +1,171 @@
+<% content_for :title, "Delivery Assignments - Filtered View" %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h3 class="card-title mb-0">Delivery Assignments</h3>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-info">Total: <%= @total_count %></span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Filters Section -->
+          <%= form_with url: filtered_delivery_assignments_path, method: :get, class: "mb-4", local: true do |form| %>
+            <div class="row g-3">
+              <!-- Date Range Filter -->
+              <div class="col-md-3">
+                <label class="form-label">Date Range</label>
+                <%= form.select :date_filter, options_for_select([
+                  ['Today', 'today'],
+                  ['Weekly', 'weekly'],
+                  ['Monthly', 'monthly'],
+                  ['Custom Range', 'custom']
+                ], params[:date_filter] || 'today'), {}, { class: 'form-select', id: 'date_filter' } %>
+              </div>
+
+              <!-- Custom Date Range -->
+              <div class="col-md-2" id="start_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
+                <label class="form-label">Start Date</label>
+                <%= form.date_field :start_date, value: params[:start_date], class: 'form-control' %>
+              </div>
+
+              <div class="col-md-2" id="end_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
+                <label class="form-label">End Date</label>
+                <%= form.date_field :end_date, value: params[:end_date], class: 'form-control' %>
+              </div>
+
+              <!-- Booked By Filter -->
+              <div class="col-md-3">
+                <label class="form-label">Booked By</label>
+                <%= form.select :booked_by_filter, options_for_select([
+                  ['All', ''],
+                  ['Booked by Customer', 'customer'],
+                  ['Booked by Delivery Person', 'delivery_person'],
+                  ['Booked by Admin', 'admin']
+                ], params[:booked_by_filter]), {}, { class: 'form-select' } %>
+              </div>
+
+              <!-- Filter Button -->
+              <div class="col-md-2 d-flex align-items-end">
+                <%= form.submit "Apply Filters", class: "btn btn-primary" %>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Results Table -->
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Date</th>
+                  <th>Booked By</th>
+                  <th>Customer Name</th>
+                  <th>Product</th>
+                  <th>Amount After Discount</th>
+                  <th>Delivery Person</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if @delivery_assignments.any? %>
+                  <% @delivery_assignments.each do |assignment| %>
+                    <tr>
+                      <td>
+                        <%= assignment.scheduled_date.strftime("%d/%m/%Y") if assignment.scheduled_date %>
+                      </td>
+                      <td>
+                        <span class="badge bg-<%= case assignment.booked_by
+                          when 1 then 'success'
+                          when 2 then 'warning'
+                          when 0 then 'primary'
+                          else 'secondary'
+                        end %>">
+                          <%= assignment.booked_by_display %>
+                        </span>
+                      </td>
+                      <td>
+                        <%= assignment.customer_name %>
+                      </td>
+                      <td>
+                        <%= assignment.product_name %>
+                        <small class="text-muted d-block">
+                          Qty: <%= assignment.quantity %> <%= assignment.unit %>
+                        </small>
+                      </td>
+                      <td>
+                        <strong>₹<%= number_with_precision(assignment.final_amount || 0, precision: 2) %></strong>
+                        <% if assignment.has_discount? %>
+                          <small class="text-success d-block">
+                            <i class="fas fa-tag"></i> Discount: ₹<%= assignment.discount_amount %>
+                          </small>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= assignment.delivery_person_name %>
+                      </td>
+                      <td>
+                        <span class="<%= assignment.status_badge_class %>">
+                          <%= assignment.status == 'completed' ? 'Delivered' : 'Pending' %>
+                        </span>
+                        <% if assignment.overdue? %>
+                          <small class="text-danger d-block">
+                            <i class="fas fa-exclamation-triangle"></i> Overdue
+                          </small>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                <% else %>
+                  <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                      <i class="fas fa-search fa-2x mb-2"></i>
+                      <p>No delivery assignments found matching the selected criteria.</p>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if @delivery_assignments.respond_to?(:current_page) %>
+            <div class="d-flex justify-content-between align-items-center mt-4">
+              <div>
+                <small class="text-muted">
+                  Showing <%= @delivery_assignments.offset + 1 %> to
+                  <%= [@delivery_assignments.offset + @delivery_assignments.per_page, @delivery_assignments.total_count].min %>
+                  of <%= @delivery_assignments.total_count %> results
+                </small>
+              </div>
+              <%= paginate @delivery_assignments, theme: 'twitter-bootstrap-4' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dateFilter = document.getElementById('date_filter');
+  const startDateWrapper = document.getElementById('start_date_wrapper');
+  const endDateWrapper = document.getElementById('end_date_wrapper');
+
+  function toggleCustomDateFields() {
+    if (dateFilter.value === 'custom') {
+      startDateWrapper.style.display = 'block';
+      endDateWrapper.style.display = 'block';
+    } else {
+      startDateWrapper.style.display = 'none';
+      endDateWrapper.style.display = 'none';
+    }
+  }
+
+  dateFilter.addEventListener('change', toggleCustomDateFields);
+  toggleCustomDateFields(); // Initial call
+});
+</script>
