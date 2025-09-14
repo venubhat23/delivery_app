@@ -2,6 +2,7 @@ class ProcurementSchedule < ApplicationRecord
   belongs_to :user
   belongs_to :product, optional: true
   has_many :procurement_assignments, dependent: :destroy
+  has_many :procurement_invoices, dependent: :destroy
 
   validates :vendor_name, presence: true, length: { minimum: 2, maximum: 100 }
   validates :from_date, :to_date, presence: true
@@ -79,6 +80,18 @@ class ProcurementSchedule < ApplicationRecord
 
   def mark_as_cancelled!
     update!(status: 'cancelled', updated_at: Time.current)
+  end
+
+  def has_invoice?
+    procurement_invoices.any?
+  end
+
+  def latest_invoice
+    procurement_invoices.recent.first
+  end
+
+  def can_generate_invoice?
+    procurement_assignments.completed.any?
   end
 
   private

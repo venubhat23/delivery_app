@@ -101,7 +101,7 @@ class Invoice < ApplicationRecord
 
   def public_url(host: nil, port: nil)
     url_options = { token: share_token }
-    url_options[:host] = "https://steady-raccoon-enormous.ngrok-free.app"
+    url_options[:host] = "https://atmanirbharfarmbangalore.com"
     Rails.application.routes.url_helpers.public_invoice_url(url_options)
   end
 

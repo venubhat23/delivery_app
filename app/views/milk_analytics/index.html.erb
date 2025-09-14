@@ -47,6 +47,11 @@
             <i class="fas fa-calendar-alt me-1"></i>Procurement Calendar
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" href="<%= procurement_invoice_milk_analytics_path %>" target="_blank">
+            <i class="fas fa-file-invoice-dollar me-1"></i>Invoice
+          </a>
+        </li>
       </ul>
     </div>
   </div>
@@ -1310,16 +1315,63 @@
                 <h5 class="mb-0">
                   <i class="fas fa-list me-2"></i>Procurement Schedules
                 </h5>
-                <button class="btn btn-light btn-sm" onclick="refreshSchedulesList()">
-                  <i class="fas fa-sync me-1"></i>Refresh
-                </button>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary btn-sm" onclick="openCreateProcurementModal()">
+                    <i class="fas fa-plus me-1"></i>Create Procurement
+                  </button>
+                  <button class="btn btn-success btn-sm" id="bulkRescheduleBtn" onclick="bulkRescheduleSelected()" style="display: none;">
+                    <i class="fas fa-calendar-plus me-1"></i>Reschedule Selected
+                  </button>
+                  <button class="btn btn-warning btn-sm" onclick="copyLastMonthToCurrentMonth()">
+                    <i class="fas fa-copy me-1"></i>Copy Last Month
+                  </button>
+                  <button class="btn btn-outline-warning btn-sm" onclick="testCopyFunction()" title="Test Copy Function">
+                    <i class="fas fa-bug me-1"></i>Test
+                  </button>
+                  <button class="btn btn-light btn-sm" onclick="refreshSchedulesList()">
+                    <i class="fas fa-sync me-1"></i>Refresh
+                  </button>
+                </div>
               </div>
             </div>
             <div class="card-body">
+              <!-- Month Filter -->
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">
+                    <i class="fas fa-calendar me-1"></i>Select Month
+                  </label>
+                  <select class="form-select" id="scheduleMonthFilter" onchange="window.filterSchedulesByMonth()">
+                    <option value="current">Current Month</option>
+                    <option value="last">Last Month</option>
+                    <option value="all" selected>All Months</option>
+                  </select>
+                  <small id="filter-info" class="text-muted mt-1"></small>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">
+                    <i class="fas fa-check-square me-1"></i>Bulk Actions
+                  </label>
+                  <div>
+                    <button class="btn btn-outline-secondary btn-sm me-2" onclick="selectAllSchedules()">
+                      <i class="fas fa-check-square me-1"></i>Select All
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm me-2" onclick="clearAllSchedules()">
+                      <i class="fas fa-square me-1"></i>Clear All
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="window.filterSchedulesByMonth()" title="Test Filter">
+                      <i class="fas fa-filter me-1"></i>Test Filter
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="table-responsive">
                 <table class="table table-striped table-hover">
                   <thead class="table-dark">
                     <tr>
+                      <th style="width: 50px;">
+                        <input type="checkbox" class="form-check-input" id="selectAllCheckbox" onchange="toggleAllSchedules()">
+                      </th>
                       <th>Vendor</th>
                       <th>Product</th>
                       <th>Duration</th>
@@ -1332,7 +1384,19 @@
                   </thead>
                   <tbody id="schedules-table-body">
                     <% @procurement_schedules&.each do |schedule| %>
-                      <tr id="schedule-row-<%= schedule.id %>">
+                      <tr id="schedule-row-<%= schedule.id %>" 
+                          data-schedule-id="<%= schedule.id %>"
+                          data-month="<%= schedule.from_date.strftime('%Y-%m') %>"
+                          data-vendor="<%= schedule.vendor_name %>"
+                          data-product-id="<%= schedule.product_id %>"
+                          data-quantity="<%= schedule.quantity %>"
+                          data-buying-price="<%= schedule.buying_price %>"
+                          data-selling-price="<%= schedule.selling_price %>"
+                          data-unit="<%= schedule.unit %>">
+                        <td>
+                          <input type="checkbox" class="form-check-input schedule-checkbox" 
+                                 value="<%= schedule.id %>" onchange="updateBulkRescheduleButton()">
+                        </td>
                         <td><%= schedule.vendor_name %></td>
                         <td><%= schedule.product&.name || 'N/A' %></td>
                         <td>
@@ -1348,16 +1412,50 @@
                           </span>
                         </td>
                         <td>
-                          <button class="btn btn-sm btn-outline-primary me-1" 
-                                  onclick="editSchedule(<%= schedule.id %>)"
-                                  title="Edit">
-                            <i class="fas fa-edit"></i>
-                          </button>
-                          <button class="btn btn-sm btn-outline-danger" 
-                                  onclick="deleteScheduleSimple(<%= schedule.id %>)"
-                                  title="Delete">
-                            <i class="fas fa-trash"></i>
-                          </button>
+                          <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="editSchedule(<%= schedule.id %>)"
+                                    title="Edit">
+                              <i class="fas fa-edit"></i>
+                            </button>
+                            
+                            <% if schedule.can_generate_invoice? %>
+                              <button class="btn btn-sm btn-success" 
+                                      onclick="generateInvoiceFixed(<%= schedule.id %>); return false;"
+                                      title="Generate Invoice">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                              </button>
+                            <% else %>
+                              <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                        data-bs-toggle="dropdown" aria-expanded="false" 
+                                        title="No completed assignments yet">
+                                  <i class="fas fa-file-invoice-dollar"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                  <li class="px-3 py-2">
+                                    <small class="text-muted">
+                                      <i class="fas fa-info-circle me-1"></i>
+                                      No completed assignments yet.<br>
+                                      Complete some assignments first.
+                                    </small>
+                                  </li>
+                                  <li><hr class="dropdown-divider"></li>
+                                  <li>
+                                    <a class="dropdown-item text-warning" href="#" onclick="markAssignmentsCompleted(<%= schedule.id %>); return false;">
+                                      <i class="fas fa-check me-1"></i>Mark Some as Completed (Test)
+                                    </a>
+                                  </li>
+                                </ul>
+                              </div>
+                            <% end %>
+                            
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="deleteScheduleFixed(<%= schedule.id %>); return false;"
+                                    title="Delete">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     <% end %>
@@ -3330,7 +3428,7 @@ function deleteSchedule(scheduleId) {
 }
 
 
-// Debug function to check tab switching
+// Debug function to check tab switching and load invoice statuses
 document.addEventListener('DOMContentLoaded', function() {
   const schedulesTab = document.getElementById('schedules-tab');
   if (schedulesTab) {
@@ -3346,7 +3444,25 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 100);
     });
   }
-});
+  
+  // Check if we're currently on schedules tab and load invoice statuses
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('tab') === 'schedules' || schedulesTab.classList.contains('active')) {
+    setTimeout(() => {
+      // Initialize filter to show all schedules by default
+      const filterSelect = document.getElementById('scheduleMonthFilter');
+      if (filterSelect) {
+        filterSelect.value = 'all';
+        console.log('Initializing filter on page load...');
+        if (typeof window.filterSchedulesByMonth === 'function') {
+          window.filterSchedulesByMonth();
+        } else {
+          console.error('filterSchedulesByMonth function not found!');
+        }
+      }
+      checkAllInvoiceStatuses();
+    }, 1500); // Delay to ensure DOM is fully loaded
+  }
 });
 
 // Global functions for schedule management (accessible from onclick handlers)
@@ -3368,14 +3484,22 @@ function deleteScheduleSimple(scheduleId) {
   // Use AJAX to delete schedule
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
   
-  fetch(`/milk-procurement/${scheduleId}.json`, {
+  if (!csrfToken) {
+    showAlert('danger', 'Security token not found. Please refresh the page.');
+    return;
+  }
+  
+  fetch('<%= destroy_schedule_milk_analytics_path %>', {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'X-CSRF-Token': csrfToken,
       'X-Requested-With': 'XMLHttpRequest'
-    }
+    },
+    body: JSON.stringify({
+      schedule_id: scheduleId
+    })
   })
   .then(response => {
     if (response.status === 401) {
@@ -3647,6 +3771,362 @@ function refreshSchedulesList() {
   window.location.href = url.toString();
 }
 
+// Month filter functionality - FIXED VERSION
+window.filterSchedulesByMonth = function() {
+  console.log('=== FILTER FUNCTION CALLED ===');
+  
+  const filterSelect = document.getElementById('scheduleMonthFilter');
+  if (!filterSelect) {
+    console.error('Filter select not found!');
+    return;
+  }
+  
+  const filter = filterSelect.value;
+  console.log('Selected filter:', filter);
+  
+  // Get current date info
+  const today = new Date();
+  const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+  
+  // Calculate last month
+  const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const lastMonth = lastMonthDate.getFullYear() + '-' + String(lastMonthDate.getMonth() + 1).padStart(2, '0');
+  
+  console.log('Current month:', currentMonth);
+  console.log('Last month:', lastMonth);
+  
+  // Find table body
+  const tableBody = document.getElementById('schedules-table-body');
+  if (!tableBody) {
+    console.error('Table body not found!');
+    return;
+  }
+  
+  const rows = tableBody.querySelectorAll('tr');
+  console.log('Found rows:', rows.length);
+  
+  let visibleCount = 0;
+  let totalProcessed = 0;
+  
+  rows.forEach((row, index) => {
+    const rowMonth = row.getAttribute('data-month');
+    console.log(`Row ${index}: data-month="${rowMonth}"`);
+    
+    let shouldShow = true;
+    
+    switch(filter) {
+      case 'current':
+        shouldShow = rowMonth === currentMonth;
+        console.log(`Current month check: ${rowMonth} === ${currentMonth} = ${shouldShow}`);
+        break;
+      case 'last':
+        shouldShow = rowMonth === lastMonth;
+        console.log(`Last month check: ${rowMonth} === ${lastMonth} = ${shouldShow}`);
+        break;
+      case 'all':
+        shouldShow = true;
+        break;
+      default:
+        shouldShow = true;
+    }
+    
+    if (shouldShow) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+    
+    totalProcessed++;
+  });
+  
+  console.log(`=== FILTER COMPLETE ===`);
+  console.log(`Processed: ${totalProcessed} rows`);
+  console.log(`Visible: ${visibleCount} rows`);
+  console.log(`Hidden: ${totalProcessed - visibleCount} rows`);
+  
+  // Clear all selections when filter changes
+  if (typeof clearAllSchedules === 'function') {
+    clearAllSchedules();
+  }
+  
+  // Update UI feedback
+  const filterInfo = document.getElementById('filter-info');
+  if (filterInfo) {
+    filterInfo.textContent = `Showing ${visibleCount} of ${totalProcessed} schedules`;
+  }
+}
+
+// Checkbox functionality
+function toggleAllSchedules() {
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  const scheduleCheckboxes = document.querySelectorAll('.schedule-checkbox');
+  const visibleCheckboxes = Array.from(scheduleCheckboxes).filter(cb => 
+    cb.closest('tr').style.display !== 'none'
+  );
+  
+  visibleCheckboxes.forEach(checkbox => {
+    checkbox.checked = selectAllCheckbox.checked;
+  });
+  
+  updateBulkRescheduleButton();
+}
+
+function selectAllSchedules() {
+  const visibleCheckboxes = document.querySelectorAll('.schedule-checkbox');
+  visibleCheckboxes.forEach(checkbox => {
+    if (checkbox.closest('tr').style.display !== 'none') {
+      checkbox.checked = true;
+    }
+  });
+  updateBulkRescheduleButton();
+}
+
+function clearAllSchedules() {
+  const allCheckboxes = document.querySelectorAll('.schedule-checkbox, #selectAllCheckbox');
+  allCheckboxes.forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  updateBulkRescheduleButton();
+}
+
+function updateBulkRescheduleButton() {
+  const checkedSchedules = document.querySelectorAll('.schedule-checkbox:checked');
+  const bulkButton = document.getElementById('bulkRescheduleBtn');
+  
+  if (checkedSchedules.length > 0) {
+    bulkButton.style.display = 'inline-block';
+    bulkButton.innerHTML = `<i class="fas fa-calendar-plus me-1"></i>Reschedule Selected (${checkedSchedules.length})`;
+  } else {
+    bulkButton.style.display = 'none';
+  }
+}
+
+// Bulk reschedule functionality
+function bulkRescheduleSelected() {
+  const checkedSchedules = document.querySelectorAll('.schedule-checkbox:checked');
+  
+  if (checkedSchedules.length === 0) {
+    showAlert('warning', 'Please select at least one schedule to reschedule');
+    return;
+  }
+  
+  const selectedSchedulesData = Array.from(checkedSchedules).map(checkbox => {
+    const row = checkbox.closest('tr');
+    return {
+      id: row.getAttribute('data-schedule-id'),
+      vendor_name: row.getAttribute('data-vendor'),
+      product_id: row.getAttribute('data-product-id'),
+      quantity: row.getAttribute('data-quantity'),
+      buying_price: row.getAttribute('data-buying-price'),
+      selling_price: row.getAttribute('data-selling-price'),
+      unit: row.getAttribute('data-unit')
+    };
+  });
+  
+  // Show confirmation dialog
+  const confirmMessage = `Are you sure you want to reschedule ${selectedSchedulesData.length} selected schedule(s) for the current month?`;
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+  
+  // Send bulk reschedule request
+  fetch('<%= generate_procurement_for_current_month_milk_analytics_path %>', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({
+      selected_schedules: selectedSchedulesData
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert('success', data.message);
+      
+      // Show details if there were skipped schedules
+      if (data.skipped_schedules && data.skipped_schedules.length > 0) {
+        let skippedMessage = 'Skipped schedules:\\n';
+        data.skipped_schedules.forEach(skipped => {
+          skippedMessage += `- ${skipped.vendor} (${skipped.product}): ${skipped.reason}\\n`;
+        });
+        showAlert('info', skippedMessage);
+      }
+      
+      // Clear selections and refresh the schedules list
+      clearAllSchedules();
+      setTimeout(() => {
+        refreshSchedulesList();
+      }, 2000);
+    } else {
+      showAlert('danger', data.error || 'Failed to reschedule selected schedules');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('danger', 'An error occurred while rescheduling the schedules');
+  });
+}
+
+// Invoice generation functions
+function generatePurchaseInvoice(scheduleId) {
+  console.log('Generate invoice called for schedule:', scheduleId);
+  
+  if (!confirm('Are you sure you want to generate a purchase invoice for this schedule?')) {
+    return;
+  }
+
+  // Check if CSRF token exists
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  if (!csrfToken) {
+    console.error('CSRF token not found');
+    showAlert('danger', 'Security token not found. Please refresh the page.');
+    return;
+  }
+
+  const url = '<%= generate_purchase_invoice_milk_analytics_path %>';
+  console.log('Posting to URL:', url);
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.getAttribute('content')
+    },
+    body: JSON.stringify({
+      schedule_id: scheduleId
+    })
+  })
+  .then(response => {
+    console.log('Response status:', response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Response data:', data);
+    if (data.success) {
+      showAlert('success', data.message);
+      
+      // Update the invoice button to show preview option
+      updateInvoiceButton(scheduleId, {
+        id: data.invoice_id,
+        invoice_number: data.invoice_number,
+        status: data.invoice_status,
+        total_amount: data.total_amount
+      });
+    } else {
+      showAlert('danger', data.error || 'Failed to generate purchase invoice');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('danger', 'An error occurred while generating the invoice: ' + error.message);
+  });
+}
+
+function previewPurchaseInvoice(invoiceId, invoiceNumber) {
+  const url = '<%= preview_purchase_invoice_milk_analytics_path %>?invoice_id=' + invoiceId;
+  window.open(url, '_blank', 'width=1200,height=800,scrollbars=yes');
+}
+
+function updateInvoiceButton(scheduleId, invoiceData) {
+  const invoiceMenu = document.getElementById(`invoiceMenu${scheduleId}`);
+  const invoiceBtn = document.getElementById(`invoiceBtn${scheduleId}`);
+  
+  if (invoiceMenu && invoiceData) {
+    // Update button color and title
+    invoiceBtn.className = 'btn btn-sm btn-success dropdown-toggle';
+    invoiceBtn.title = `Invoice ${invoiceData.invoice_number} (${invoiceData.status})`;
+    
+    // Update dropdown menu
+    invoiceMenu.innerHTML = `
+      <li>
+        <a class="dropdown-item" href="#" onclick="previewPurchaseInvoice(${invoiceData.id}, '${invoiceData.invoice_number}')">
+          <i class="fas fa-eye me-1"></i>Preview Invoice ${invoiceData.invoice_number}
+        </a>
+      </li>
+      <li>
+        <a class="dropdown-item" href="#" onclick="generatePurchaseInvoice(${scheduleId})">
+          <i class="fas fa-sync me-1"></i>Regenerate Invoice
+        </a>
+      </li>
+      <li><hr class="dropdown-divider"></li>
+      <li class="px-3 py-2 small text-muted">
+        Status: <span class="badge bg-${invoiceData.status === 'generated' ? 'success' : 'warning'} small">${invoiceData.status.toUpperCase()}</span><br>
+        Amount: ₹${parseFloat(invoiceData.total_amount).toLocaleString('en-IN')}
+      </li>
+    `;
+  }
+}
+
+// Check invoice status for all schedules on page load
+function checkAllInvoiceStatuses() {
+  const scheduleRows = document.querySelectorAll('[data-schedule-id]');
+  
+  scheduleRows.forEach(row => {
+    const scheduleId = row.getAttribute('data-schedule-id');
+    checkInvoiceStatus(scheduleId);
+  });
+}
+
+function checkInvoiceStatus(scheduleId) {
+  fetch('<%= get_schedule_invoice_status_milk_analytics_path %>?schedule_id=' + scheduleId)
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.has_invoice && data.invoice) {
+      updateInvoiceButton(scheduleId, data.invoice);
+    }
+  })
+  .catch(error => {
+    console.error('Error checking invoice status:', error);
+  });
+}
+
+// Debug function to mark assignments as completed
+function markAssignmentsCompleted(scheduleId) {
+  if (!confirm('Mark some assignments as completed for testing? This will add sample completion data.')) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  if (!csrfToken) {
+    showAlert('danger', 'Security token not found. Please refresh the page.');
+    return;
+  }
+
+  fetch('<%= mark_assignments_completed_milk_analytics_path %>', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.getAttribute('content')
+    },
+    body: JSON.stringify({
+      schedule_id: scheduleId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert('success', data.message);
+      
+      // Refresh the page to show updated button state
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showAlert('danger', data.error || 'Failed to mark assignments as completed');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('danger', 'An error occurred while updating assignments');
+  });
+}
+
 // Global alert functions
 function showAlert(type, message) {
   const alertContainer = document.getElementById('alert-container') || createAlertContainer();
@@ -3675,6 +4155,256 @@ function createAlertContainer() {
   document.body.appendChild(container);
   return container;
 }
+
+// Fixed functions for delete and invoice generation
+window.deleteScheduleFixed = function(scheduleId) {
+  console.log('Delete function called with ID:', scheduleId);
+  
+  if (!confirm('Delete this schedule? This cannot be undone.')) {
+    return false;
+  }
+  
+  const token = document.querySelector('meta[name="csrf-token"]');
+  if (!token) {
+    alert('Please refresh the page and try again');
+    return false;
+  }
+  
+  fetch('<%= destroy_schedule_milk_analytics_path %>', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': token.getAttribute('content')
+    },
+    body: JSON.stringify({ schedule_id: scheduleId })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert('Deleted successfully');
+      location.reload();
+    } else {
+      alert('Delete failed: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(e => {
+    console.error(e);
+    alert('Delete error: ' + e.message);
+  });
+  
+  return false;
+}
+
+window.generateInvoiceFixed = function(scheduleId) {
+  console.log('Generate invoice called with ID:', scheduleId);
+  
+  if (!confirm('Generate purchase invoice for this schedule?')) {
+    return false;
+  }
+  
+  const token = document.querySelector('meta[name="csrf-token"]');
+  if (!token) {
+    alert('Please refresh the page and try again');
+    return false;
+  }
+  
+  fetch('<%= generate_purchase_invoice_milk_analytics_path %>', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': token.getAttribute('content')
+    },
+    body: JSON.stringify({ schedule_id: scheduleId })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert('Invoice generated: ' + data.invoice_number);
+      location.reload();
+    } else {
+      alert('Invoice generation failed: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(e => {
+    console.error(e);
+    alert('Invoice error: ' + e.message);
+  });
+  
+  return false;
+}
+
+// New functions for added buttons
+window.openCreateProcurementModal = function() {
+  console.log('Opening create procurement modal');
+  
+  // Check if modal exists, if not, show a simple prompt for now
+  const modal = document.getElementById('scheduleModal');
+  if (modal) {
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+  } else {
+    // Fallback: redirect to create procurement tab
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'procurement');
+    window.location.href = url.toString();
+  }
+}
+
+window.copyLastMonthToCurrentMonth = function() {
+  console.log('=== COPY LAST MONTH FUNCTION CALLED ===');
+  
+  if (!confirm('Copy all procurement schedules from last month to current month?\n\nThis will create new schedules for the current month based on last month\'s data.')) {
+    console.log('User cancelled the operation');
+    return false;
+  }
+  
+  console.log('User confirmed, proceeding with copy...');
+  
+  // Show loading message
+  alert('Copying schedules... Please wait.');
+  
+  const token = document.querySelector('meta[name="csrf-token"]');
+  if (!token) {
+    console.error('CSRF token not found');
+    alert('Security token not found. Please refresh the page and try again.');
+    return false;
+  }
+  
+  console.log('CSRF token found, making request...');
+  
+  const url = '<%= generate_procurement_for_current_month_milk_analytics_path %>';
+  console.log('Request URL:', url);
+  
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': token.getAttribute('content'),
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      copy_all_last_month: true
+    })
+  })
+  .then(response => {
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
+  })
+  .then(data => {
+    console.log('Response data:', data);
+    
+    if (data.success) {
+      let message = `✅ SUCCESS!\n\n`;
+      message += `Created: ${data.created_schedules ? data.created_schedules.length : 0} new schedules\n`;
+      
+      if (data.skipped_schedules && data.skipped_schedules.length > 0) {
+        message += `Skipped: ${data.skipped_schedules.length} schedules (already exist)\n\n`;
+        message += 'Skipped items:\n';
+        data.skipped_schedules.forEach(skipped => {
+          message += `- ${skipped.vendor} (${skipped.product || 'N/A'}): ${skipped.reason}\n`;
+        });
+      }
+      
+      alert(message);
+      
+      console.log('Copy successful, reloading page...');
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+      
+    } else {
+      console.error('Copy failed:', data.error);
+      alert('❌ Copy Failed\n\n' + (data.error || 'Unknown error occurred'));
+    }
+  })
+  .catch(error => {
+    console.error('Copy error:', error);
+    alert('❌ Copy Error\n\n' + error.message + '\n\nCheck browser console for details.');
+  });
+  
+  return false;
+}
+
+// Test function for copy last month
+window.testCopyFunction = function() {
+  console.log('=== TESTING COPY FUNCTION ===');
+  console.log('Copy function exists:', typeof window.copyLastMonthToCurrentMonth);
+  
+  const token = document.querySelector('meta[name="csrf-token"]');
+  console.log('CSRF token found:', !!token);
+  if (token) {
+    console.log('CSRF token content length:', token.getAttribute('content').length);
+  }
+  
+  const url = '<%= generate_procurement_for_current_month_milk_analytics_path %>';
+  console.log('API URL:', url);
+  
+  // Make a simple test request
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': token.getAttribute('content'),
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ test: true })
+  })
+  .then(response => {
+    console.log('Test response status:', response.status);
+    return response.text();
+  })
+  .then(text => {
+    console.log('Test response text:', text);
+    try {
+      const data = JSON.parse(text);
+      console.log('Test response parsed:', data);
+    } catch (e) {
+      console.log('Response is not JSON:', e.message);
+    }
+  })
+  .catch(error => {
+    console.error('Test request failed:', error);
+  });
+  
+  alert('Test completed. Check browser console for details.');
+}
+
+// Simple test function to debug filter
+window.testFilter = function() {
+  console.log('=== TESTING FILTER ===');
+  console.log('Filter function exists:', typeof window.filterSchedulesByMonth);
+  
+  const select = document.getElementById('scheduleMonthFilter');
+  console.log('Select element found:', !!select);
+  if (select) {
+    console.log('Current value:', select.value);
+  }
+  
+  const tableBody = document.getElementById('schedules-table-body');
+  console.log('Table body found:', !!tableBody);
+  if (tableBody) {
+    const rows = tableBody.querySelectorAll('tr');
+    console.log('Rows found:', rows.length);
+    rows.forEach((row, i) => {
+      console.log(`Row ${i}: data-month="${row.getAttribute('data-month')}"`);
+    });
+  }
+  
+  // Try to call the filter function
+  if (typeof window.filterSchedulesByMonth === 'function') {
+    window.filterSchedulesByMonth();
+  }
+}
+
+// Test functions are available
+console.log('Fixed functions loaded:', typeof window.deleteScheduleFixed, typeof window.generateInvoiceFixed);
+console.log('Filter function loaded:', typeof window.filterSchedulesByMonth);
 
 </script>
 

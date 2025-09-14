@@ -544,6 +544,419 @@ class MilkAnalyticsController < ApplicationController
     end
   end
 
+  def last_month_schedules
+    last_month_start = 1.month.ago.beginning_of_month
+    last_month_end = 1.month.ago.end_of_month
+    
+    @last_month_schedules = current_user.procurement_schedules
+                                       .where(from_date: last_month_start..last_month_end)
+                                       .includes(:product, :procurement_assignments)
+                                       .order(:from_date, :created_at)
+    
+    respond_to do |format|
+      format.json { 
+        render json: { 
+          success: true, 
+          schedules: @last_month_schedules.map do |schedule|
+            {
+              id: schedule.id,
+              vendor_name: schedule.vendor_name,
+              product_name: schedule.product&.name,
+              product_id: schedule.product_id,
+              from_date: schedule.from_date.strftime('%Y-%m-%d'),
+              to_date: schedule.to_date.strftime('%Y-%m-%d'),
+              quantity: schedule.quantity,
+              buying_price: schedule.buying_price,
+              selling_price: schedule.selling_price,
+              unit: schedule.unit,
+              status: schedule.status,
+              notes: schedule.notes,
+              assignments_count: schedule.procurement_assignments.count,
+              completion_percentage: schedule.completion_percentage
+            }
+          end
+        } 
+      }
+      format.html # Will create a separate view if needed
+    end
+  rescue => e
+    Rails.logger.error "Error fetching last month schedules: #{e.message}"
+    respond_to do |format|
+      format.json { render json: { success: false, error: e.message }, status: 500 }
+    end
+  end
+
+  def generate_procurement_for_current_month
+    begin
+      current_month_start = Date.current.beginning_of_month
+      current_month_end = Date.current.end_of_month
+      
+      created_schedules = []
+      skipped_schedules = []
+      
+      # Check if we have selected schedules from frontend or need to copy all last month schedules
+      if params[:selected_schedules].present?
+        # Handle bulk reschedule of selected schedules
+        selected_schedules_data = params[:selected_schedules]
+        
+        selected_schedules_data.each do |schedule_data|
+          # Check if similar schedule already exists for current month
+          existing_schedule = current_user.procurement_schedules
+                                         .where(
+                                           vendor_name: schedule_data[:vendor_name],
+                                           product_id: schedule_data[:product_id],
+                                           from_date: current_month_start..current_month_end
+                                         ).first
+          
+          if existing_schedule
+            skipped_schedules << {
+              vendor: schedule_data[:vendor_name],
+              product: Product.find_by(id: schedule_data[:product_id])&.name,
+              reason: 'Schedule already exists for this month'
+            }
+            next
+          end
+          
+          # Create new schedule for current month
+          new_schedule = current_user.procurement_schedules.create!(
+            vendor_name: schedule_data[:vendor_name],
+            product_id: schedule_data[:product_id],
+            from_date: current_month_start,
+            to_date: current_month_end,
+            quantity: schedule_data[:quantity],
+            buying_price: schedule_data[:buying_price],
+            selling_price: schedule_data[:selling_price],
+            unit: schedule_data[:unit],
+            status: 'active',
+            notes: "Rescheduled from selected schedule"
+          )
+          
+          created_schedules << {
+            id: new_schedule.id,
+            vendor_name: new_schedule.vendor_name,
+            product_name: new_schedule.product&.name,
+            from_date: new_schedule.from_date.strftime('%Y-%m-%d'),
+            to_date: new_schedule.to_date.strftime('%Y-%m-%d'),
+            quantity: new_schedule.quantity,
+            buying_price: new_schedule.buying_price,
+            selling_price: new_schedule.selling_price
+          }
+        end
+      else
+        # Original functionality - copy all last month schedules
+        last_month_start = 1.month.ago.beginning_of_month
+        last_month_end = 1.month.ago.end_of_month
+        
+        # Get last month schedules
+        last_month_schedules = current_user.procurement_schedules
+                                          .where(from_date: last_month_start..last_month_end)
+                                          .includes(:product)
+        
+        if last_month_schedules.empty?
+          respond_to do |format|
+            format.json { render json: { success: false, error: 'No schedules found for last month to copy' } }
+          end
+          return
+        end
+        
+        last_month_schedules.each do |last_schedule|
+          # Check if similar schedule already exists for current month
+          existing_schedule = current_user.procurement_schedules
+                                         .where(
+                                           vendor_name: last_schedule.vendor_name,
+                                           product_id: last_schedule.product_id,
+                                           from_date: current_month_start..current_month_end
+                                         ).first
+          
+          if existing_schedule
+            skipped_schedules << {
+              vendor: last_schedule.vendor_name,
+              product: last_schedule.product&.name,
+              reason: 'Schedule already exists for this month'
+            }
+            next
+          end
+          
+          # Create new schedule for current month
+          new_schedule = current_user.procurement_schedules.create!(
+            vendor_name: last_schedule.vendor_name,
+            product_id: last_schedule.product_id,
+            from_date: current_month_start,
+            to_date: current_month_end,
+            quantity: last_schedule.quantity,
+            buying_price: last_schedule.buying_price,
+            selling_price: last_schedule.selling_price,
+            unit: last_schedule.unit,
+            status: 'active',
+            notes: "Copied from #{last_month_start.strftime('%B %Y')} schedule"
+          )
+          
+          created_schedules << {
+            id: new_schedule.id,
+            vendor_name: new_schedule.vendor_name,
+            product_name: new_schedule.product&.name,
+            from_date: new_schedule.from_date.strftime('%Y-%m-%d'),
+            to_date: new_schedule.to_date.strftime('%Y-%m-%d'),
+            quantity: new_schedule.quantity,
+            buying_price: new_schedule.buying_price,
+            selling_price: new_schedule.selling_price
+          }
+        end
+      end
+      
+      respond_to do |format|
+        format.json { 
+          render json: { 
+            success: true, 
+            message: "Successfully created #{created_schedules.count} procurement schedules for current month",
+            created_schedules: created_schedules,
+            skipped_schedules: skipped_schedules
+          } 
+        }
+      end
+      
+    rescue => e
+      Rails.logger.error "Error generating procurement for current month: #{e.message}"
+      respond_to do |format|
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+      end
+    end
+  end
+
+  def procurement_invoice
+    @month = params[:month].present? ? Date.parse("#{params[:month]}-01") : Date.current.beginning_of_month
+    @year = @month.year
+    month_start = @month.beginning_of_month
+    month_end = @month.end_of_month
+    
+    # Get procurement assignments for the month
+    @procurement_assignments = current_user.procurement_assignments
+                                          .for_date_range(month_start, month_end)
+                                          .includes(:product, :procurement_schedule)
+                                          .completed
+                                          .order(:date, :vendor_name)
+    
+    # Calculate totals by vendor
+    @vendor_totals = @procurement_assignments.group_by(&:vendor_name).map do |vendor_name, assignments|
+      total_quantity = assignments.sum(&:actual_quantity)
+      total_cost = assignments.sum(&:actual_cost)
+      
+      {
+        vendor_name: vendor_name,
+        total_quantity: total_quantity,
+        total_cost: total_cost,
+        assignments: assignments.group_by(&:date)
+      }
+    end.sort_by { |v| v[:vendor_name] }
+    
+    # Calculate overall totals
+    @overall_totals = {
+      total_quantity: @procurement_assignments.sum(&:actual_quantity),
+      total_cost: @procurement_assignments.sum(&:actual_cost),
+      total_assignments: @procurement_assignments.count,
+      unique_vendors: @procurement_assignments.map(&:vendor_name).uniq.count
+    }
+    
+    respond_to do |format|
+      format.html # Will render procurement_invoice.html.erb
+      format.json { 
+        render json: { 
+          success: true,
+          month: @month.strftime('%B %Y'),
+          vendor_totals: @vendor_totals,
+          overall_totals: @overall_totals
+        } 
+      }
+      format.pdf do
+        # For PDF generation if needed later
+        render pdf: "procurement_invoice_#{@month.strftime('%Y_%m')}"
+      end
+    end
+  rescue => e
+    Rails.logger.error "Error generating procurement invoice: #{e.message}"
+    respond_to do |format|
+      format.json { render json: { success: false, error: e.message }, status: 500 }
+      format.html { 
+        flash[:alert] = "Error generating invoice: #{e.message}"
+        redirect_to milk_analytics_path 
+      }
+    end
+  end
+
+  def generate_purchase_invoice
+    begin
+      @schedule = current_user.procurement_schedules.find(params[:schedule_id])
+      
+      # Check if there are completed assignments
+      unless @schedule.can_generate_invoice?
+        respond_to do |format|
+          format.json { render json: { success: false, error: 'No completed assignments found to generate invoice' } }
+        end
+        return
+      end
+      
+      # Check if invoice already exists
+      existing_invoice = @schedule.latest_invoice
+      
+      if existing_invoice && existing_invoice.can_be_regenerated?
+        # Update existing invoice
+        existing_invoice.mark_as_generated!
+        invoice = existing_invoice
+      else
+        # Create new invoice
+        invoice = @schedule.procurement_invoices.create!(
+          user: current_user,
+          status: 'generated'
+        )
+        invoice.mark_as_generated!
+      end
+      
+      respond_to do |format|
+        format.json { 
+          render json: { 
+            success: true, 
+            message: 'Purchase invoice generated successfully',
+            invoice_id: invoice.id,
+            invoice_number: invoice.invoice_number,
+            invoice_status: invoice.status,
+            total_amount: invoice.total_amount
+          } 
+        }
+      end
+      
+    rescue => e
+      Rails.logger.error "Error generating purchase invoice: #{e.message}"
+      respond_to do |format|
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+      end
+    end
+  end
+
+  def preview_purchase_invoice
+    begin
+      @invoice = current_user.procurement_invoices.find(params[:invoice_id])
+      @schedule = @invoice.procurement_schedule
+      
+      respond_to do |format|
+        format.html { render 'purchase_invoice_preview', layout: 'invoice' }
+        format.json { 
+          render json: { 
+            success: true, 
+            invoice: {
+              id: @invoice.id,
+              invoice_number: @invoice.invoice_number,
+              invoice_date: @invoice.invoice_date,
+              status: @invoice.status,
+              vendor_name: @invoice.vendor_name,
+              total_amount: @invoice.total_amount,
+              invoice_items: @invoice.invoice_items,
+              schedule_details: @invoice.schedule_details,
+              totals: @invoice.invoice_totals
+            }
+          } 
+        }
+        format.pdf do
+          render pdf: "purchase_invoice_#{@invoice.invoice_number}",
+                 template: 'milk_analytics/purchase_invoice_preview.html.erb',
+                 layout: 'invoice'
+        end
+      end
+      
+    rescue ActiveRecord::RecordNotFound
+      respond_to do |format|
+        format.json { render json: { success: false, error: 'Invoice not found' }, status: 404 }
+        format.html { 
+          flash[:alert] = 'Invoice not found'
+          redirect_to milk_analytics_path(tab: 'schedules')
+        }
+      end
+    rescue => e
+      Rails.logger.error "Error previewing purchase invoice: #{e.message}"
+      respond_to do |format|
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+        format.html { 
+          flash[:alert] = "Error previewing invoice: #{e.message}"
+          redirect_to milk_analytics_path(tab: 'schedules')
+        }
+      end
+    end
+  end
+
+  def get_schedule_invoice_status
+    begin
+      @schedule = current_user.procurement_schedules.find(params[:schedule_id])
+      invoice = @schedule.latest_invoice
+      
+      respond_to do |format|
+        format.json { 
+          render json: { 
+            success: true,
+            has_invoice: @schedule.has_invoice?,
+            can_generate: @schedule.can_generate_invoice?,
+            invoice: invoice ? {
+              id: invoice.id,
+              invoice_number: invoice.invoice_number,
+              status: invoice.status,
+              total_amount: invoice.total_amount,
+              invoice_date: invoice.invoice_date
+            } : nil
+          } 
+        }
+      end
+      
+    rescue ActiveRecord::RecordNotFound
+      respond_to do |format|
+        format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+      end
+    rescue => e
+      Rails.logger.error "Error getting invoice status: #{e.message}"
+      respond_to do |format|
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+      end
+    end
+  end
+
+  # Debug method to mark assignments as completed for testing
+  def mark_assignments_completed
+    begin
+      @schedule = current_user.procurement_schedules.find(params[:schedule_id])
+      
+      # Mark some assignments as completed with sample data
+      assignments_to_complete = @schedule.procurement_assignments.pending.limit(5)
+      
+      if assignments_to_complete.empty?
+        respond_to do |format|
+          format.json { render json: { success: false, error: 'No pending assignments found to complete' } }
+        end
+        return
+      end
+      
+      assignments_to_complete.each do |assignment|
+        assignment.update!(
+          status: 'completed',
+          actual_quantity: assignment.planned_quantity * (0.8 + rand(0.4)), # Random between 80-120% of planned
+          completed_at: Time.current
+        )
+      end
+      
+      respond_to do |format|
+        format.json { 
+          render json: { 
+            success: true, 
+            message: "Marked #{assignments_to_complete.count} assignments as completed",
+            completed_count: assignments_to_complete.count
+          } 
+        }
+      end
+      
+    rescue => e
+      Rails.logger.error "Error marking assignments as completed: #{e.message}"
+      respond_to do |format|
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+      end
+    end
+  end
+
   private
 
   def calculate_main_kpis(start_date, end_date)

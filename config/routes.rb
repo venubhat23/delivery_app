@@ -303,6 +303,13 @@ Rails.application.routes.draw do
       get :inventory_analysis
       get :generate_reports
       get :saved_reports
+      get :last_month_schedules
+      post :generate_procurement_for_current_month
+      get :procurement_invoice
+      post :generate_purchase_invoice
+      get :preview_purchase_invoice
+      get :get_schedule_invoice_status
+      post :mark_assignments_completed
       post :create_schedule
       patch :update_schedule
       delete :destroy_schedule

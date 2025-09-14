@@ -1,0 +1,240 @@
+<% content_for :title, "Procurement Invoice - #{@month.strftime('%B %Y')}" %>
+
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h2 mb-1 text-dark fw-bold d-flex align-items-center">
+            <i class="fas fa-file-invoice-dollar text-primary me-2" style="font-size: 1.5rem;"></i>
+            Procurement Invoice
+          </h1>
+          <p class="text-muted mb-0">Monthly procurement summary for <%= @month.strftime('%B %Y') %></p>
+        </div>
+        <div class="d-flex gap-2">
+          <%= link_to milk_analytics_path, class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-arrow-left me-1"></i>Back to Analytics
+          <% end %>
+          <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print me-1"></i>Print Invoice
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Month Selection -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <label class="form-label fw-bold">
+            <i class="fas fa-calendar me-1"></i>Select Month
+          </label>
+          <%= form_with url: procurement_invoice_milk_analytics_path, method: :get, local: true, class: "d-flex gap-2" do |form| %>
+            <%= form.month_field :month, 
+                value: @month.strftime('%Y-%m'), 
+                class: "form-control flex-fill",
+                onchange: "this.form.submit()" %>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-search"></i>
+            </button>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overall Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-primary text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-title mb-1">Total Quantity</h6>
+              <h4 class="mb-0"><%= number_with_precision(@overall_totals[:total_quantity], precision: 1) %> L</h4>
+            </div>
+            <i class="fas fa-glass-milk fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-success text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-title mb-1">Total Cost</h6>
+              <h4 class="mb-0">₹<%= number_with_delimiter(@overall_totals[:total_cost].round(2)) %></h4>
+            </div>
+            <i class="fas fa-rupee-sign fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-info text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-title mb-1">Total Assignments</h6>
+              <h4 class="mb-0"><%= @overall_totals[:total_assignments] %></h4>
+            </div>
+            <i class="fas fa-tasks fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-warning text-dark">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-title mb-1">Unique Vendors</h6>
+              <h4 class="mb-0"><%= @overall_totals[:unique_vendors] %></h4>
+            </div>
+            <i class="fas fa-users fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor-wise Invoice Details -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-list-alt me-2"></i>Vendor-wise Procurement Summary
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <% if @vendor_totals.any? %>
+            <% @vendor_totals.each_with_index do |vendor_data, index| %>
+              <div class="p-4 border-bottom">
+                <!-- Vendor Header -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0 text-primary">
+                    <i class="fas fa-user-tie me-2"></i><%= vendor_data[:vendor_name] %>
+                  </h5>
+                  <div class="d-flex gap-3">
+                    <span class="badge bg-secondary fs-6">
+                      <%= number_with_precision(vendor_data[:total_quantity], precision: 1) %> L
+                    </span>
+                    <span class="badge bg-success fs-6">
+                      ₹<%= number_with_delimiter(vendor_data[:total_cost].round(2)) %>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Daily Breakdown -->
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped mb-0">
+                    <thead class="table-dark">
+                      <tr>
+                        <th>Date</th>
+                        <th>Quantity (L)</th>
+                        <th>Rate (₹/L)</th>
+                        <th>Total Cost (₹)</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% vendor_data[:assignments].each do |date, assignments| %>
+                        <% assignments.each do |assignment| %>
+                          <tr>
+                            <td><%= date.strftime('%d %b %Y') %></td>
+                            <td><%= number_with_precision(assignment.actual_quantity, precision: 1) %></td>
+                            <td>₹<%= assignment.buying_price %></td>
+                            <td>₹<%= number_with_delimiter(assignment.actual_cost.round(2)) %></td>
+                            <td>
+                              <span class="badge bg-<%= assignment.status == 'completed' ? 'success' : 'warning' %> text-uppercase">
+                                <%= assignment.status %>
+                              </span>
+                            </td>
+                          </tr>
+                        <% end %>
+                      <% end %>
+                    </tbody>
+                    <tfoot class="table-secondary fw-bold">
+                      <tr>
+                        <td>Total</td>
+                        <td><%= number_with_precision(vendor_data[:total_quantity], precision: 1) %> L</td>
+                        <td>-</td>
+                        <td>₹<%= number_with_delimiter(vendor_data[:total_cost].round(2)) %></td>
+                        <td>-</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-5">
+              <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No procurement data found</h5>
+              <p class="text-muted mb-0">No completed procurement assignments found for <%= @month.strftime('%B %Y') %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Footer -->
+  <% if @vendor_totals.any? %>
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm bg-light">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="fw-bold">Invoice Summary</h6>
+                <p class="mb-1"><strong>Period:</strong> <%= @month.strftime('%B %Y') %></p>
+                <p class="mb-1"><strong>Generated on:</strong> <%= Date.current.strftime('%d %B %Y') %></p>
+                <p class="mb-0"><strong>Generated by:</strong> <%= current_user.email %></p>
+              </div>
+              <div class="col-md-6 text-md-end">
+                <h6 class="fw-bold">Grand Total</h6>
+                <h4 class="text-success mb-1">₹<%= number_with_delimiter(@overall_totals[:total_cost].round(2)) %></h4>
+                <p class="mb-0 text-muted">
+                  (<%= number_with_precision(@overall_totals[:total_quantity], precision: 1) %> liters from 
+                  <%= @overall_totals[:unique_vendors] %> vendor<%= @overall_totals[:unique_vendors] == 1 ? '' : 's' %>)
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Print Styles -->
+<style>
+  @media print {
+    .btn, .form-control, .card-header .btn {
+      display: none !important;
+    }
+    
+    .card {
+      border: 1px solid #dee2e6 !important;
+      box-shadow: none !important;
+    }
+    
+    .container-fluid {
+      padding: 0 !important;
+    }
+    
+    .row {
+      margin: 0 !important;
+    }
+    
+    .col-12, .col-md-3, .col-md-4, .col-md-6 {
+      padding: 0 5px !important;
+    }
+  }
+</style>

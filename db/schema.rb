@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_29_065301) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_10_141206) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -140,7 +140,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_065301) do
     t.string "address_line"
     t.string "full_address"
     t.string "country"
+    t.integer "customer_type", default: 0
+    t.text "interval_days"
     t.index ["alt_phone_number"], name: "index_customers_on_alt_phone_number", where: "(alt_phone_number IS NOT NULL)"
+    t.index ["customer_type"], name: "index_customers_on_customer_type"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
     t.index ["email"], name: "index_customers_on_email", where: "(email IS NOT NULL)"
     t.index ["is_active"], name: "index_customers_on_is_active"
@@ -180,6 +183,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_065301) do
     t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0"
     t.decimal "final_amount_after_discount", precision: 10, scale: 2
     t.text "cancellation_reason"
+    t.integer "booked_by"
     t.index ["customer_id", "scheduled_date"], name: "index_delivery_assignments_on_customer_and_date"
     t.index ["customer_id", "scheduled_date"], name: "index_delivery_assignments_on_customer_id_and_scheduled_date"
     t.index ["customer_id"], name: "index_delivery_assignments_on_customer_id"
@@ -220,6 +224,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_065301) do
     t.integer "delivery_person_id"
     t.decimal "default_discount_amount", precision: 10, scale: 2, default: "0.0"
     t.boolean "cod", default: false
+    t.integer "booked_by"
     t.index ["customer_id"], name: "index_delivery_schedules_on_customer_id"
     t.index ["default_discount_amount"], name: "index_delivery_schedules_on_default_discount_amount"
     t.index ["delivery_person_id"], name: "index_delivery_schedules_on_delivery_person_id"
@@ -338,6 +343,27 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_065301) do
     t.index ["user_id"], name: "index_procurement_assignments_on_user_id"
     t.index ["vendor_name", "date"], name: "index_procurement_assignments_on_vendor_and_date"
     t.index ["vendor_name"], name: "index_procurement_assignments_on_vendor_name"
+  end
+
+  create_table "procurement_invoices", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "procurement_schedule_id", null: false
+    t.string "invoice_number", null: false
+    t.date "invoice_date", null: false
+    t.date "due_date"
+    t.string "status", default: "draft", null: false
+    t.decimal "total_amount", precision: 10, scale: 2, default: "0.0", null: false
+    t.string "vendor_name", null: false
+    t.text "invoice_data"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_date"], name: "index_procurement_invoices_on_invoice_date"
+    t.index ["invoice_number"], name: "index_procurement_invoices_on_invoice_number", unique: true
+    t.index ["procurement_schedule_id"], name: "index_procurement_invoices_on_procurement_schedule_id"
+    t.index ["status"], name: "index_procurement_invoices_on_status"
+    t.index ["user_id"], name: "index_procurement_invoices_on_user_id"
+    t.index ["vendor_name"], name: "index_procurement_invoices_on_vendor_name"
   end
 
   create_table "procurement_schedules", force: :cascade do |t|
@@ -695,6 +721,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_065301) do
   add_foreign_key "procurement_assignments", "procurement_schedules"
   add_foreign_key "procurement_assignments", "products"
   add_foreign_key "procurement_assignments", "users"
+  add_foreign_key "procurement_invoices", "procurement_schedules"
+  add_foreign_key "procurement_invoices", "users"
   add_foreign_key "procurement_schedules", "products"
   add_foreign_key "procurement_schedules", "users"
   add_foreign_key "products", "categories"

@@ -386,7 +386,7 @@ end
     
     # Generate WhatsApp URLs for each invoice
     whatsapp_urls = []
-    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'steady-raccoon-enormous.ngrok-free.app'
+    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
     
     invoices.each do |invoice|
       # Ensure share token exists
@@ -456,7 +456,7 @@ end
     @invoice.save! if @invoice.changed?
     
     # Generate public URL with explicit host (without port for WhatsApp)
-    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'steady-raccoon-enormous.ngrok-free.app'
+    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
     public_url = @invoice.public_url(host: host).gsub(':3000', '')
     
     # Build WhatsApp message

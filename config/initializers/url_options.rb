@@ -8,9 +8,9 @@ Rails.application.configure do
                      { host: 'atmanirbharfarm.work.gd', protocol: 'https' }
                    when 'development'
                      # Use ngrok host for development without port
-                     dev_host = ENV.fetch('APP_HOST', 'steady-raccoon-enormous.ngrok-free.app')
+                     dev_host = ENV.fetch('APP_HOST', 'atmanirbharfarmbangalore.com')
                      if dev_host.include?('ngrok') || dev_host != 'localhost'
-                       { host: dev_host, protocol: 'http' }
+                       { host: dev_host, protocol: 'https' }
                      else
                        { host: 'localhost', port: 3000, protocol: 'http' }
                      end

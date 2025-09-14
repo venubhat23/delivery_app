@@ -1,0 +1,246 @@
+<% content_for :title, "Purchase Invoice - #{@invoice.invoice_number}" %>
+
+<div class="container-fluid">
+  <!-- Invoice Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="mb-0">
+                <i class="fas fa-file-invoice-dollar me-2"></i>PURCHASE INVOICE
+              </h4>
+              <small class="opacity-75">Invoice #<%= @invoice.invoice_number %></small>
+            </div>
+            <div class="text-end">
+              <div class="mb-1"><strong>Invoice Date:</strong> <%= @invoice.invoice_date.strftime('%d %B %Y') %></div>
+              <div class="mb-1"><strong>Status:</strong> 
+                <span class="badge bg-<%= @invoice.status == 'generated' ? 'success' : 'warning' %>">
+                  <%= @invoice.status.upcase %>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Details -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="fas fa-building me-1"></i>Vendor Information</h6>
+        </div>
+        <div class="card-body">
+          <h5 class="text-primary"><%= @invoice.vendor_name %></h5>
+          <p class="text-muted mb-0">Procurement Schedule ID: #<%= @schedule.id %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="fas fa-calendar-alt me-1"></i>Schedule Period</h6>
+        </div>
+        <div class="card-body">
+          <p class="mb-1"><strong>From:</strong> <%= @schedule.from_date.strftime('%d %B %Y') %></p>
+          <p class="mb-1"><strong>To:</strong> <%= @schedule.to_date.strftime('%d %B %Y') %></p>
+          <p class="mb-0"><strong>Duration:</strong> <%= @schedule.duration_in_days %> days</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Items -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+          <h6 class="mb-0"><i class="fas fa-list me-1"></i>Invoice Items</h6>
+        </div>
+        <div class="card-body p-0">
+          <% if @invoice.invoice_items.any? %>
+            <div class="table-responsive">
+              <table class="table table-striped mb-0">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Date</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Unit</th>
+                    <th>Rate (₹)</th>
+                    <th class="text-end">Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @invoice.invoice_items.each do |item| %>
+                    <tr>
+                      <td><%= Date.parse(item['date']).strftime('%d %b %Y') %></td>
+                      <td><%= item['product_name'] %></td>
+                      <td><%= number_with_precision(item['quantity'], precision: 1) %></td>
+                      <td><%= item['unit'] %></td>
+                      <td>₹<%= item['rate'] %></td>
+                      <td class="text-end">₹<%= number_with_delimiter(item['amount'].round(2)) %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+                <tfoot class="table-secondary">
+                  <tr class="fw-bold">
+                    <td colspan="2">TOTAL</td>
+                    <td><%= number_with_precision(@invoice.invoice_totals['total_quantity'], precision: 1) %></td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td class="text-end">₹<%= number_with_delimiter(@invoice.invoice_totals['total_amount'].round(2)) %></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+              <h5 class="text-muted">No invoice items found</h5>
+              <p class="text-muted">This invoice doesn't have any completed assignments to show.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Summary -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0"><i class="fas fa-info-circle me-1"></i>Schedule Summary</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6">
+              <p class="mb-2"><strong>Planned Quantity:</strong> <%= @schedule.quantity %> <%= @schedule.unit %></p>
+              <p class="mb-2"><strong>Buying Price:</strong> ₹<%= @schedule.buying_price %></p>
+              <p class="mb-0"><strong>Selling Price:</strong> ₹<%= @schedule.selling_price %></p>
+            </div>
+            <div class="col-sm-6">
+              <p class="mb-2"><strong>Total Items:</strong> <%= @invoice.invoice_totals['item_count'] || 0 %></p>
+              <p class="mb-2"><strong>Completion:</strong> <%= @schedule.completion_percentage %>%</p>
+              <p class="mb-0"><strong>Product:</strong> <%= @schedule.product&.name || 'N/A' %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm bg-success text-white">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="fas fa-calculator me-1"></i>Invoice Total</h6>
+        </div>
+        <div class="card-body text-center">
+          <h2 class="mb-2">₹<%= number_with_delimiter(@invoice.total_amount.round(2)) %></h2>
+          <p class="mb-0 opacity-75">
+            (<%= number_with_precision(@invoice.invoice_totals['total_quantity'] || 0, precision: 1) %> liters)
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between">
+        <div>
+          <%= link_to milk_analytics_path(tab: 'schedules'), class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-arrow-left me-1"></i>Back to Schedules
+          <% end %>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print me-1"></i>Print Invoice
+          </button>
+          <% if defined?(request) && request.format.html? %>
+            <%= link_to preview_purchase_invoice_milk_analytics_path(invoice_id: @invoice.id, format: :pdf), 
+                      class: "btn btn-success", target: "_blank" do %>
+              <i class="fas fa-file-pdf me-1"></i>Download PDF
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Footer -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="fw-bold">Notes</h6>
+              <% if @invoice.notes.present? %>
+                <p class="mb-0"><%= simple_format(@invoice.notes) %></p>
+              <% else %>
+                <p class="text-muted mb-0">No additional notes for this invoice.</p>
+              <% end %>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <h6 class="fw-bold">Invoice Details</h6>
+              <p class="mb-1"><strong>Generated on:</strong> <%= @invoice.created_at.strftime('%d %B %Y at %I:%M %p') %></p>
+              <p class="mb-1"><strong>Generated by:</strong> <%= @invoice.user.email %></p>
+              <p class="mb-0"><strong>System:</strong> Milk Analytics Dashboard</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+  @media print {
+    .btn, .card-header .btn {
+      display: none !important;
+    }
+    
+    .card {
+      border: 1px solid #dee2e6 !important;
+      box-shadow: none !important;
+      page-break-inside: avoid;
+    }
+    
+    .container-fluid {
+      padding: 0 !important;
+    }
+    
+    .row {
+      margin: 0 !important;
+    }
+    
+    .col-12, .col-md-4, .col-md-6, .col-md-8 {
+      padding: 0 5px !important;
+    }
+    
+    h2, h4, h6 {
+      color: #000 !important;
+    }
+    
+    .text-primary, .text-success, .text-info {
+      color: #000 !important;
+    }
+    
+    .bg-primary, .bg-success, .bg-info, .bg-secondary {
+      background-color: #f8f9fa !important;
+      color: #000 !important;
+    }
+    
+    .badge {
+      border: 1px solid #000 !important;
+      background-color: #fff !important;
+      color: #000 !important;
+    }
+  }
+</style>
