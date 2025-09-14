@@ -553,29 +553,57 @@ class MilkAnalyticsController < ApplicationController
                                        .includes(:product, :procurement_assignments)
                                        .order(:from_date, :created_at)
     
+    # Also get last month assignments
+    @last_month_assignments = current_user.procurement_assignments
+                                         .where(date: last_month_start..last_month_end)
+                                         .includes(:product)
+                                         .order(:date, :created_at)
+
+    schedules_data = @last_month_schedules.map do |schedule|
+      {
+        id: schedule.id,
+        type: 'Schedule',
+        vendor_name: schedule.vendor_name,
+        product_name: schedule.product&.name,
+        product_id: schedule.product_id,
+        from_date: schedule.from_date.strftime('%Y-%m-%d'),
+        to_date: schedule.to_date.strftime('%Y-%m-%d'),
+        quantity: schedule.quantity,
+        buying_price: schedule.buying_price,
+        selling_price: schedule.selling_price,
+        unit: schedule.unit,
+        status: schedule.status,
+        notes: schedule.notes
+      }
+    end
+
+    assignments_data = @last_month_assignments.map do |assignment|
+      {
+        id: assignment.id,
+        type: 'Assignment',
+        vendor_name: assignment.vendor_name,
+        product_name: assignment.product&.name,
+        product_id: assignment.product_id,
+        date: assignment.date.strftime('%Y-%m-%d'),
+        quantity: assignment.planned_quantity,
+        buying_price: assignment.buying_price,
+        selling_price: assignment.selling_price,
+        unit: assignment.unit,
+        status: assignment.status,
+        notes: assignment.notes
+      }
+    end
+
+    all_items = schedules_data + assignments_data
+
     respond_to do |format|
-      format.json { 
-        render json: { 
-          success: true, 
-          schedules: @last_month_schedules.map do |schedule|
-            {
-              id: schedule.id,
-              vendor_name: schedule.vendor_name,
-              product_name: schedule.product&.name,
-              product_id: schedule.product_id,
-              from_date: schedule.from_date.strftime('%Y-%m-%d'),
-              to_date: schedule.to_date.strftime('%Y-%m-%d'),
-              quantity: schedule.quantity,
-              buying_price: schedule.buying_price,
-              selling_price: schedule.selling_price,
-              unit: schedule.unit,
-              status: schedule.status,
-              notes: schedule.notes,
-              assignments_count: schedule.procurement_assignments.count,
-              completion_percentage: schedule.completion_percentage
-            }
-          end
-        } 
+      format.json {
+        render json: {
+          success: true,
+          schedules: all_items,
+          month_name: last_month_start.strftime('%B %Y'),
+          total_items: all_items.count
+        }
       }
       format.html # Will create a separate view if needed
     end
@@ -594,9 +622,22 @@ class MilkAnalyticsController < ApplicationController
       created_schedules = []
       skipped_schedules = []
       
-      # Check if we have selected schedules from frontend or need to copy all last month schedules
-      if params[:selected_schedules].present?
-        # Handle bulk reschedule of selected schedules
+      # Check if we have selected items from the new UI or selected schedules from old functionality
+      if params[:selected_items].present?
+        # Handle new UI - selected items (schedules and assignments)
+        selected_items_data = params[:selected_items]
+
+        selected_items_data.each do |item_data|
+          if item_data[:type] == 'schedule'
+            # Create schedule for current month
+            create_schedule_from_item(item_data, current_month_start, current_month_end, created_schedules, skipped_schedules)
+          elsif item_data[:type] == 'assignment'
+            # Create assignments for current month
+            create_assignments_from_item(item_data, current_month_start, current_month_end, created_schedules, skipped_schedules)
+          end
+        end
+      elsif params[:selected_schedules].present?
+        # Handle bulk reschedule of selected schedules (old functionality)
         selected_schedules_data = params[:selected_schedules]
         
         selected_schedules_data.each do |schedule_data|
@@ -705,13 +746,14 @@ class MilkAnalyticsController < ApplicationController
       end
       
       respond_to do |format|
-        format.json { 
-          render json: { 
-            success: true, 
+        format.json {
+          render json: {
+            success: true,
             message: "Successfully created #{created_schedules.count} procurement schedules for current month",
+            created_count: created_schedules.count,
             created_schedules: created_schedules,
             skipped_schedules: skipped_schedules
-          } 
+          }
         }
       end
       
@@ -2301,6 +2343,99 @@ class MilkAnalyticsController < ApplicationController
       @milk_left = 0
       @milk_left_cost = 0
       @planned_profit = 0
+    end
+  end
+
+  private
+
+  def create_schedule_from_item(item_data, current_month_start, current_month_end, created_schedules, skipped_schedules)
+    # Check if similar schedule already exists for current month
+    existing_schedule = current_user.procurement_schedules
+                                   .where(
+                                     vendor_name: item_data[:vendor_name],
+                                     product_id: item_data[:product_id],
+                                     from_date: current_month_start..current_month_end
+                                   ).first
+
+    if existing_schedule
+      skipped_schedules << {
+        vendor: item_data[:vendor_name],
+        product: Product.find_by(id: item_data[:product_id])&.name,
+        reason: 'Schedule already exists for this month'
+      }
+      return
+    end
+
+    # Create new schedule for current month
+    new_schedule = current_user.procurement_schedules.create!(
+      vendor_name: item_data[:vendor_name],
+      product_id: item_data[:product_id],
+      from_date: current_month_start,
+      to_date: current_month_end,
+      quantity: item_data[:quantity],
+      buying_price: item_data[:buying_price],
+      selling_price: item_data[:selling_price],
+      unit: item_data[:unit],
+      status: 'active',
+      notes: "Copied from last month"
+    )
+
+    created_schedules << {
+      type: 'Schedule',
+      id: new_schedule.id,
+      vendor_name: new_schedule.vendor_name,
+      product_name: new_schedule.product&.name
+    }
+  end
+
+  def create_assignments_from_item(item_data, current_month_start, current_month_end, created_schedules, skipped_schedules)
+    # Create assignments for each day of the current month
+    current_days = (current_month_start..current_month_end).to_a
+
+    current_days.each do |date|
+      # Check if assignment already exists for this date and vendor/product
+      existing_assignment = current_user.procurement_assignments
+                                       .where(
+                                         date: date,
+                                         vendor_name: item_data[:vendor_name],
+                                         product_id: item_data[:product_id]
+                                       ).first
+
+      if existing_assignment
+        next # Skip this date, assignment already exists
+      end
+
+      # Create new assignment
+      begin
+        new_assignment = current_user.procurement_assignments.create!(
+          vendor_name: item_data[:vendor_name],
+          product_id: item_data[:product_id],
+          date: date,
+          planned_quantity: item_data[:quantity],
+          buying_price: item_data[:buying_price],
+          selling_price: item_data[:selling_price],
+          unit: item_data[:unit],
+          status: 'pending',
+          notes: "Copied from last month assignment"
+        )
+
+        # Only add to created_schedules array once per vendor/product combination
+        unless created_schedules.any? { |item|
+          item[:type] == 'Assignment' &&
+          item[:vendor_name] == item_data[:vendor_name] &&
+          item[:product_id] == item_data[:product_id]
+        }
+          created_schedules << {
+            type: 'Assignment',
+            id: new_assignment.id,
+            vendor_name: new_assignment.vendor_name,
+            product_name: new_assignment.product&.name
+          }
+        end
+      rescue => e
+        Rails.logger.error "Error creating assignment for #{date}: #{e.message}"
+        next
+      end
     end
   end
 end

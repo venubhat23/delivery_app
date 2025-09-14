@@ -1,26 +1,65 @@
 /* Shared Index Page Styles - Modern & Professional */
 /* This file ensures consistent styling across all index pages */
 
-/* CSS Variables - Essential for all pages */
+/* Enhanced CSS Variables - Professional Color System */
 :root {
+  /* Core Brand Colors */
   --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
   --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --info-gradient: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
   --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-  
+
+  /* Solid Colors for consistency */
+  --primary-color: #667eea;
+  --primary-dark: #764ba2;
+  --success-color: #4facfe;
+  --success-dark: #00f2fe;
+  --warning-color: #43e97b;
+  --warning-dark: #38f9d7;
+  --danger-color: #fa709a;
+  --danger-dark: #fee140;
+  --info-color: #17a2b8;
+  --info-dark: #138496;
+
+  /* Layout Variables */
   --sidebar-width: 280px;
   --header-height: 70px;
-  --border-radius: 12px;
-  --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  --box-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --border-radius: 15px;
+  --border-radius-lg: 20px;
+  --border-radius-sm: 10px;
+
+  /* Shadows */
+  --box-shadow: 0 10px 35px rgba(102, 126, 234, 0.08);
+  --box-shadow-hover: 0 20px 50px rgba(102, 126, 234, 0.15);
+  --box-shadow-card: 0 8px 30px rgba(0, 0, 0, 0.06);
+  --box-shadow-card-hover: 0 15px 40px rgba(0, 0, 0, 0.1);
+
+  /* Typography */
   --text-primary: #2d3748;
   --text-secondary: #718096;
+  --text-muted: #a0aec0;
+  --text-light: #e2e8f0;
+
+  /* Backgrounds */
+  --bg-primary: #667eea;
   --bg-light: #f8fafc;
   --bg-white: #ffffff;
+  --bg-gray-50: #f9fafb;
+  --bg-gray-100: #f3f4f6;
+  --bg-gray-200: #e5e7eb;
+
+  /* Borders */
   --border-color: #e2e8f0;
+  --border-color-light: #f1f5f9;
+  --border-color-dark: #cbd5e0;
+
+  /* Transitions */
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Enhanced Page Header - High specificity to override application.scss */

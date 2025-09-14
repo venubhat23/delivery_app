@@ -3,66 +3,61 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
-      <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 class="h2 mb-2">
-            <i class="fas fa-user-tag me-3 text-primary"></i>Customer Details
-          </h1>
-          <p class="text-muted mb-0">Manage customers categorized by delivery intervals</p>
+      <!-- Enhanced Header -->
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">
+              <i class="fas fa-user-tag me-3"></i>Customer Details
+            </h1>
+            <p class="mb-0">Manage customers categorized by delivery intervals</p>
+          </div>
+          <div class="d-flex gap-2">
+            <%= link_to customer_details_path(tab: 'all'), class: "btn #{'btn-light' if @active_tab == 'all'}" do %>
+              <i class="fas fa-users me-2"></i>All
+            <% end %>
+            <%= link_to customer_details_path(tab: 'regular'), class: "btn #{'btn-light' if @active_tab == 'regular'}" do %>
+              <i class="fas fa-calendar-check me-2"></i>Regular
+            <% end %>
+            <%= link_to customer_details_path(tab: 'interval'), class: "btn #{'btn-light' if @active_tab == 'interval'}" do %>
+              <i class="fas fa-clock me-2"></i>Interval
+            <% end %>
+          </div>
         </div>
       </div>
 
-      <!-- Statistics Cards -->
+      <!-- Enhanced Statistics Cards -->
       <div class="row mb-4">
         <div class="col-lg-4 col-md-6 mb-3">
-          <div class="card border-0 shadow-sm bg-primary text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="h2 mb-0"><%= @stats[:regular_count] %></div>
-                  <div class="small">Regular Customers</div>
-                  <div class="small opacity-75">Interval Days = 7</div>
-                </div>
-                <div class="display-6">
-                  <i class="fas fa-calendar-check"></i>
-                </div>
-              </div>
+          <div class="stats-card">
+            <div class="stats-icon">
+              <i class="fas fa-calendar-check"></i>
             </div>
+            <div class="stats-number"><%= @stats[:regular_count] %></div>
+            <div class="stats-label">Regular Customers</div>
+            <div class="stats-sublabel">Interval Days = 7</div>
           </div>
         </div>
 
         <div class="col-lg-4 col-md-6 mb-3">
-          <div class="card border-0 shadow-sm bg-success text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="h2 mb-0"><%= @stats[:interval_count] %></div>
-                  <div class="small">Interval Customers</div>
-                  <div class="small opacity-75">Interval Days < 3</div>
-                </div>
-                <div class="display-6">
-                  <i class="fas fa-clock"></i>
-                </div>
-              </div>
+          <div class="stats-card stats-card-success">
+            <div class="stats-icon">
+              <i class="fas fa-clock"></i>
             </div>
+            <div class="stats-number"><%= @stats[:interval_count] %></div>
+            <div class="stats-label">Interval Customers</div>
+            <div class="stats-sublabel">Interval Days < 3</div>
           </div>
         </div>
 
         <div class="col-lg-4 col-md-6 mb-3">
-          <div class="card border-0 shadow-sm bg-info text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="h2 mb-0"><%= @stats[:total_count] %></div>
-                  <div class="small">Total Customers</div>
-                  <div class="small opacity-75">With Interval Data</div>
-                </div>
-                <div class="display-6">
-                  <i class="fas fa-users"></i>
-                </div>
-              </div>
+          <div class="stats-card stats-card-info">
+            <div class="stats-icon">
+              <i class="fas fa-users"></i>
             </div>
+            <div class="stats-number"><%= @stats[:total_count] %></div>
+            <div class="stats-label">Total Customers</div>
+            <div class="stats-sublabel">With Interval Data</div>
           </div>
         </div>
       </div>
@@ -113,11 +108,25 @@
               <!-- Tab Description -->
               <div class="bg-light border-bottom p-3">
                 <% if @active_tab == 'regular' %>
-                  <div class="d-flex align-items-center">
-                    <i class="fas fa-calendar-check text-primary me-2"></i>
-                    <div>
-                      <strong>Regular Customers</strong>
-                      <small class="text-muted d-block">Customers with weekly delivery schedule (interval_days = 7)</small>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-calendar-check text-primary me-2"></i>
+                      <div>
+                        <strong>Regular Customers</strong>
+                        <small class="text-muted d-block">Customers with weekly delivery schedule (interval_days = 7)</small>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="form-check">
+                        <input type="checkbox" id="selectAllCustomers" class="form-check-input">
+                        <label class="form-check-label" for="selectAllCustomers">
+                          Select All (<span id="selectedCount">0</span>)
+                        </label>
+                      </div>
+                      <button type="button" id="copyFromLastMonth" class="btn btn-primary btn-sm" disabled>
+                        <i class="fas fa-copy me-1"></i>
+                        Copy From Last Month
+                      </button>
                     </div>
                   </div>
                 <% elsif @active_tab == 'interval' %>
@@ -144,6 +153,13 @@
                 <table class="table table-hover mb-0">
                   <thead class="table-light sticky-top">
                     <tr>
+                      <% if @active_tab == 'regular' %>
+                        <th width="50">
+                          <div class="form-check">
+                            <input type="checkbox" id="selectAllHeader" class="form-check-input">
+                          </div>
+                        </th>
+                      <% end %>
                       <th>Customer</th>
                       <th class="text-center">Interval Days</th>
                       <th>Contact</th>
@@ -157,6 +173,13 @@
                     <% if @customers.any? %>
                       <% @customers.each do |customer| %>
                         <tr>
+                          <% if @active_tab == 'regular' %>
+                            <td>
+                              <div class="form-check">
+                                <input type="checkbox" class="form-check-input customer-checkbox" data-customer-id="<%= customer.id %>">
+                              </div>
+                            </td>
+                          <% end %>
                           <td>
                             <div class="d-flex align-items-center">
                               <div class="avatar-sm bg-<%= customer.interval_days == '7' ? 'primary' : 'success' %> text-white rounded-circle d-flex align-items-center justify-content-center me-3">
@@ -237,13 +260,19 @@
                             <% end %>
                           </td>
                           <td class="text-center">
-                            <% recent_assignment = customer.delivery_assignments.order(created_at: :desc).first %>
+                            <% recent_assignment = @recent_assignments_by_customer[customer.id] %>
                             <% if recent_assignment %>
                               <div class="small">
                                 <div class="fw-semibold">
                                   <%= recent_assignment.scheduled_date&.strftime("%d/%m/%Y") %>
                                 </div>
-                                <span class="<%= recent_assignment.status_badge_class %>">
+                                <span class="<%= case recent_assignment.status
+                                  when 'pending' then 'badge bg-warning text-dark'
+                                  when 'in_progress' then 'badge bg-info text-white'
+                                  when 'completed' then 'badge bg-success text-white'
+                                  when 'cancelled' then 'badge bg-danger text-white'
+                                  else 'badge bg-secondary text-white'
+                                end %>">
                                   <%= recent_assignment.status.humanize %>
                                 </span>
                               </div>
@@ -268,7 +297,7 @@
                       <% end %>
                     <% else %>
                       <tr>
-                        <td colspan="7" class="text-center py-5">
+                        <td colspan="<%= @active_tab == 'regular' ? '8' : '7' %>" class="text-center py-5">
                           <div class="empty-state">
                             <div class="mb-3">
                               <i class="fas fa-users fa-3x text-muted"></i>
@@ -380,3 +409,105 @@
     border-radius: 12px;
   }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Only run this script on the regular customers tab
+  if (window.location.search.includes('tab=regular') || (!window.location.search.includes('tab=') && '<%= @active_tab %>' === 'regular')) {
+    const selectAllCheckbox = document.getElementById('selectAllCustomers');
+    const selectAllHeaderCheckbox = document.getElementById('selectAllHeader');
+    const copyButton = document.getElementById('copyFromLastMonth');
+    const customerCheckboxes = document.querySelectorAll('.customer-checkbox');
+    const selectedCountSpan = document.getElementById('selectedCount');
+
+    // Function to update the selected count and button state
+    function updateSelection() {
+      const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
+      const count = checkedBoxes.length;
+
+      selectedCountSpan.textContent = count;
+      copyButton.disabled = count === 0;
+
+      // Update select all checkbox states
+      if (count === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+        selectAllHeaderCheckbox.indeterminate = false;
+        selectAllHeaderCheckbox.checked = false;
+      } else if (count === customerCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+        selectAllHeaderCheckbox.indeterminate = false;
+        selectAllHeaderCheckbox.checked = true;
+      } else {
+        selectAllCheckbox.indeterminate = true;
+        selectAllHeaderCheckbox.indeterminate = true;
+      }
+    }
+
+    // Handle select all functionality
+    function toggleAllCustomers(checked) {
+      customerCheckboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+      });
+      updateSelection();
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+      toggleAllCustomers(this.checked);
+      selectAllHeaderCheckbox.checked = this.checked;
+    });
+
+    selectAllHeaderCheckbox.addEventListener('change', function() {
+      toggleAllCustomers(this.checked);
+      selectAllCheckbox.checked = this.checked;
+    });
+
+    // Handle individual customer checkbox changes
+    customerCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateSelection);
+    });
+
+    // Handle copy from last month button
+    copyButton.addEventListener('click', function() {
+      const checkedCustomers = Array.from(document.querySelectorAll('.customer-checkbox:checked'))
+        .map(checkbox => checkbox.dataset.customerId);
+
+      if (checkedCustomers.length === 0) {
+        alert('Please select at least one customer.');
+        return;
+      }
+
+      if (confirm(`Copy delivery assignments and schedules from last month for ${checkedCustomers.length} selected customer(s)?`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/customer_details/copy_from_last_month';
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'authenticity_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        // Add selected customer IDs
+        checkedCustomers.forEach(customerId => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'customer_ids[]';
+          input.value = customerId;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+
+    // Initialize
+    updateSelection();
+  }
+});
+</script>

@@ -317,11 +317,11 @@
         <table class="table table-hover mb-0">
           <thead>
             <tr>
-              <th width="10%"><i class="fas fa-image me-1"></i>Image</th>
-              <th width="35%"><i class="fas fa-user me-1"></i>Customer Details</th>
-              <th width="20%"><i class="fas fa-truck me-1"></i>Delivery Person</th>
-              <th width="20%"><i class="fas fa-calendar me-1"></i>Added</th>
-              <th width="15%"><i class="fas fa-cogs me-1"></i>Actions</th>
+              <th width="8%" class="text-center"><i class="fas fa-image me-1"></i>Image</th>
+              <th width="30%"><i class="fas fa-user me-1"></i>Customer Details</th>
+              <th width="20%" class="text-center"><i class="fas fa-truck me-1"></i>Delivery Person</th>
+              <th width="17%" class="text-center"><i class="fas fa-calendar me-1"></i>Added</th>
+              <th width="25%" class="text-center"><i class="fas fa-cogs me-1"></i>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -331,103 +331,93 @@
                   data-customer-name="<%= customer.name %>"
                   data-customer-image="<%= customer.image_url %>"
                   style="cursor: pointer;">
-                <td>
-                  <div class="customer-image-cell text-center">
+                <td class="text-center align-middle">
+                  <div class="customer-image-cell">
                     <% if customer.image_url.present? %>
-                      <img src="<%= customer.image_url %>" 
-                           alt="<%= customer.name %>" 
+                      <img src="<%= customer.image_url %>"
+                           alt="<%= customer.name %>"
                            class="customer-table-image rounded-circle"
-                           style="width: 40px; height: 40px; object-fit: cover;">
+                           style="width: 45px; height: 45px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     <% else %>
                       <div class="customer-avatar-small bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
-                           style="width: 40px; height: 40px; font-size: 14px;">
+                           style="width: 45px; height: 45px; font-size: 16px; font-weight: 600;">
                         <%= customer.name.first.upcase %>
                       </div>
                     <% end %>
                   </div>
                 </td>
-                <td>
+                <td class="align-middle">
                   <div class="customer-details-cell">
-                    <div>
-                        <div class="customer-name">
-                          <strong class="text-primary"><%= customer.name %></strong>
-                          <% if customer.member_id.present? %>
-                            <code class="text-muted ms-2">ID: <%= customer.member_id %></code>
-                          <% end %>
+                    <div class="customer-name mb-2">
+                      <strong class="text-primary d-block"><%= customer.name %></strong>
+                      <% if customer.member_id.present? %>
+                        <small class="text-muted">ID: <%= customer.member_id %></small>
+                      <% end %>
+                    </div>
+
+                    <div class="customer-contact-info">
+                      <% if customer.phone_number.present? %>
+                        <div class="text-muted small mb-1">
+                          <i class="fas fa-phone me-2 text-primary"></i><%= customer.phone_number %>
                         </div>
-                        
-                        <div class="customer-contact mt-1">
-                          <% if customer.phone_number.present? %>
-                            <div class="text-muted small">
-                              <i class="fas fa-phone me-1 text-primary"></i><%= customer.phone_number %>
-                            </div>
-                          <% end %>
+                      <% end %>
+
+                      <% if customer.address.present? %>
+                        <div class="text-muted small mb-1" title="<%= customer.address %>">
+                          <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                          <%= truncate(customer.address, length: 30) %>
                         </div>
-                        
-                        <div class="customer-address mt-1">
-                          <% if customer.address.present? %>
-                            <div class="text-muted small" title="<%= customer.address %>">
-                              <i class="fas fa-map-marker-alt me-1 text-muted"></i>
-                              <%= truncate(customer.address, length: 20) %>
-                            </div>
-                          <% end %>
-                          <% if customer.latitude.present? && customer.longitude.present? %>
-                            <div class="text-muted small">
-                              <i class="fas fa-map-pin me-1 text-success"></i>
-                              <%= customer.latitude.round(6) %>, <%= customer.longitude.round(6) %>
-                            </div>
-                          <% end %>
+                      <% end %>
+
+                      <% if customer.latitude.present? && customer.longitude.present? %>
+                        <div class="text-muted small">
+                          <i class="fas fa-map-pin me-2 text-success"></i>
+                          Geo-located
                         </div>
+                      <% end %>
                     </div>
                   </div>
                 </td>
-                <td>
+                <td class="text-center align-middle">
                   <% if customer.delivery_person.present? %>
                     <div class="delivery-person-badge">
-                      <div class="d-flex align-items-center">
-                        <div class="delivery-person-mini-avatar me-2">
-                          <%= customer.delivery_person.name.first.upcase %>
-                        </div>
-                        <div>
-                          <span class="badge bg-primary">
-                            <i class="fas fa-truck me-1"></i>
-                            <%= customer.delivery_person.name %>
-                          </span>
-                        </div>
-                      </div>
+                      <span class="badge bg-primary px-3 py-2">
+                        <i class="fas fa-truck me-1"></i>
+                        <%= customer.delivery_person.name %>
+                      </span>
                     </div>
                   <% else %>
-                    <span class="badge bg-warning text-dark">
+                    <span class="badge bg-warning text-dark px-3 py-2">
                       <i class="fas fa-exclamation-triangle me-1"></i>
                       Not Assigned
                     </span>
                   <% end %>
                 </td>
-                <td>
+                <td class="text-center align-middle">
                   <div class="added-info">
-                    <div class="text-muted">
+                    <div class="text-muted mb-1">
                       <i class="fas fa-calendar me-1"></i>
                       <%= customer.created_at.strftime("%b %d, %Y") %>
                     </div>
-                    <div class="text-muted small mt-1">
+                    <div class="text-muted small">
                       <i class="fas fa-user me-1"></i>
                       <%= customer.user&.name || 'Unknown' %>
                     </div>
                   </div>
                 </td>
-                <td>
-                  <div class="btn-group" role="group">
-                    <%= link_to customer_path(customer), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
+                <td class="text-center align-middle">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <%= link_to customer_path(customer), class: "btn btn-outline-primary", title: "View Details" do %>
                       <i class="fas fa-eye"></i>
                     <% end %>
-                    <%= link_to edit_customer_path(customer), class: "btn btn-sm btn-outline-warning", title: "Edit Customer" do %>
+                    <%= link_to edit_customer_path(customer), class: "btn btn-outline-warning", title: "Edit Customer" do %>
                       <i class="fas fa-edit"></i>
                     <% end %>
                     <% if customer.delivery_person.present? %>
-                      <button type="button" 
-                              class="btn btn-sm btn-outline-info" 
-                              title="Unassign Delivery Person"
-                              data-bs-toggle="modal" 
+                      <button type="button"
+                              class="btn btn-outline-info"
+                              title="Reassign Delivery Person"
+                              data-bs-toggle="modal"
                               data-bs-target="#unassignModal"
                               data-customer-id="<%= customer.id %>"
                               data-customer-name="<%= customer.name %>"
@@ -439,7 +429,7 @@
                     <%= button_to customer_path(customer),
                         method: :delete,
                         form: { "data-turbo-confirm": "Are you sure you want to delete this customer?", class: "d-inline" },
-                        class: "btn btn-sm btn-outline-danger",
+                        class: "btn btn-outline-danger",
                         title: "Delete Customer" do %>
                       <i class="fas fa-trash"></i>
                     <% end %>
@@ -787,6 +777,8 @@
   overflow: hidden;
   box-shadow: none;
   margin: 0;
+  table-layout: fixed;
+  width: 100%;
 }
 
 .table thead th {
@@ -818,9 +810,46 @@
 }
 
 .customer-row td {
-  padding: 1.5rem 1rem;
+  padding: 1rem 0.75rem;
   vertical-align: middle;
   border-color: rgba(102, 126, 234, 0.05);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Specific column styling */
+.customer-details-cell {
+  max-width: 100%;
+}
+
+.customer-details-cell .customer-name {
+  line-height: 1.3;
+}
+
+.customer-contact-info {
+  line-height: 1.4;
+}
+
+.customer-contact-info .small {
+  font-size: 0.8rem;
+}
+
+/* Improved button group styling */
+.btn-group-sm .btn {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  margin: 0 1px;
+}
+
+.btn-group-sm .btn i {
+  font-size: 0.75rem;
+}
+
+/* Badge improvements */
+.badge.px-3.py-2 {
+  font-size: 0.75rem;
+  border-radius: 12px;
 }
 
 /* Enhanced Customer Avatar */

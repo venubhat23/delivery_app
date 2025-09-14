@@ -1,77 +1,58 @@
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h1 class="h2">
-    <i class="fas fa-bullhorn me-2"></i>Ad Management
-  </h1>
-  <div class="btn-toolbar mb-2 mb-md-0">
-    <%= link_to new_advertisement_path, class: "btn btn-primary" do %>
-      <i class="fas fa-plus me-2"></i>Create Ad
-    <% end %>
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-bullhorn me-3"></i>Advertisement Management
+      </h1>
+      <p class="mb-0">Create and manage your advertising campaigns</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_advertisement_path, class: "btn btn-primary" do %>
+        <i class="fas fa-plus me-2"></i>Create Ad
+      <% end %>
+    </div>
   </div>
 </div>
 
-<!-- Statistics Cards -->
+<!-- Enhanced Statistics Cards -->
 <div class="row mb-4">
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-primary shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Ads</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @total_advertisements %></div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-bullhorn fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-bullhorn"></i>
       </div>
+      <div class="stats-number"><%= @total_advertisements %></div>
+      <div class="stats-label">Total Ads</div>
     </div>
   </div>
 
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-success shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Ads</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @active_count %></div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-check-circle"></i>
       </div>
+      <div class="stats-number"><%= @active_count %></div>
+      <div class="stats-label">Active Ads</div>
     </div>
   </div>
 
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-info shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Currently Running</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @current_count %></div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-play-circle"></i>
       </div>
+      <div class="stats-number"><%= @current_count %></div>
+      <div class="stats-label">Currently Running</div>
     </div>
   </div>
 
-  <div class="col-xl-3 col-md-6 mb-4">
-    <div class="card border-left-warning shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Inactive Ads</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @inactive_count %></div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-pause-circle fa-2x text-gray-300"></i>
-          </div>
-        </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-pause-circle"></i>
       </div>
+      <div class="stats-number"><%= @inactive_count %></div>
+      <div class="stats-label">Inactive Ads</div>
     </div>
   </div>
 </div>
@@ -252,44 +233,3 @@
   <% end %>
 <% end %>
 
-<style>
-.border-left-primary {
-  border-left: 0.25rem solid #4e73df !important;
-}
-
-.border-left-success {
-  border-left: 0.25rem solid #1cc88a !important;
-}
-
-.border-left-info {
-  border-left: 0.25rem solid #36b9cc !important;
-}
-
-.border-left-warning {
-  border-left: 0.25rem solid #f6c23e !important;
-}
-
-.text-xs {
-  font-size: 0.7rem;
-}
-
-.text-gray-300 {
-  color: #dddfeb !important;
-}
-
-.text-gray-400 {
-  color: #b7b9cc !important;
-}
-
-.text-gray-500 {
-  color: #858796 !important;
-}
-
-.text-gray-800 {
-  color: #5a5c69 !important;
-}
-
-.shadow {
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
-}
-</style>

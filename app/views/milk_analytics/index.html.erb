@@ -1335,20 +1335,26 @@
               </div>
             </div>
             <div class="card-body">
-              <!-- Month Filter -->
+              <!-- Month Filter and Copy Actions -->
               <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="form-label fw-bold">
                     <i class="fas fa-calendar me-1"></i>Select Month
                   </label>
-                  <select class="form-select" id="scheduleMonthFilter" onchange="window.filterSchedulesByMonth()">
+                  <select class="form-select" id="scheduleMonthFilter" onchange="window.filterSchedulesByMonth()" style="width: 100% !important; display: block !important;">
+                    <option value="all" selected>All Months</option>
                     <option value="current">Current Month</option>
                     <option value="last">Last Month</option>
-                    <option value="all" selected>All Months</option>
                   </select>
+                  <!-- Backup button solution if dropdown doesn't work -->
+                  <div id="month-filter-buttons" class="btn-group mt-2" role="group" style="display: none;">
+                    <button type="button" class="btn btn-outline-primary btn-sm active" data-filter="all" onclick="setMonthFilter('all')">All Months</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-filter="current" onclick="setMonthFilter('current')">Current Month</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-filter="last" onclick="setMonthFilter('last')">Last Month</button>
+                  </div>
                   <small id="filter-info" class="text-muted mt-1"></small>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="form-label fw-bold">
                     <i class="fas fa-check-square me-1"></i>Bulk Actions
                   </label>
@@ -1359,10 +1365,18 @@
                     <button class="btn btn-outline-secondary btn-sm me-2" onclick="clearAllSchedules()">
                       <i class="fas fa-square me-1"></i>Clear All
                     </button>
-                    <button class="btn btn-outline-info btn-sm" onclick="window.filterSchedulesByMonth()" title="Test Filter">
-                      <i class="fas fa-filter me-1"></i>Test Filter
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">
+                    <i class="fas fa-copy me-1"></i>Copy From Last Month
+                  </label>
+                  <div>
+                    <button class="btn btn-warning btn-sm" onclick="showLastMonthCopyModal()">
+                      <i class="fas fa-copy me-1"></i>Copy Last Month
                     </button>
                   </div>
+                  <small class="text-muted">Copy schedules & assignments from last month</small>
                 </div>
               </div>
               <div class="table-responsive">
@@ -1695,6 +1709,25 @@
   background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;
   border: 2px solid #4e73df !important;
   border-right: none !important;
+}
+
+/* Ensure the month filter select remains a select element */
+#scheduleMonthFilter {
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  appearance: menulist !important;
+  display: block !important;
+  width: 100% !important;
+  background-color: #fff !important;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 0.375rem !important;
+  padding: 0.375rem 2.25rem 0.375rem 0.75rem !important;
+}
+
+#scheduleMonthFilter:focus {
+  border-color: #86b7fe !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
 }
 </style>
 
@@ -3452,12 +3485,36 @@ document.addEventListener('DOMContentLoaded', function() {
       // Initialize filter to show all schedules by default
       const filterSelect = document.getElementById('scheduleMonthFilter');
       if (filterSelect) {
-        filterSelect.value = 'all';
-        console.log('Initializing filter on page load...');
-        if (typeof window.filterSchedulesByMonth === 'function') {
-          window.filterSchedulesByMonth();
+        console.log('Filter select element found:', filterSelect);
+        console.log('Element type:', filterSelect.tagName);
+        console.log('Element class:', filterSelect.className);
+
+        // Ensure it's a select element and not converted
+        if (filterSelect.tagName !== 'SELECT') {
+          console.error('scheduleMonthFilter is not a SELECT element!', filterSelect);
+          // Show backup buttons if select is not working
+          const backupButtons = document.getElementById('month-filter-buttons');
+          if (backupButtons) {
+            backupButtons.style.display = 'flex';
+            filterSelect.style.display = 'none';
+            console.log('Showing backup filter buttons');
+          }
         } else {
-          console.error('filterSchedulesByMonth function not found!');
+          filterSelect.value = 'all';
+          console.log('Initializing filter on page load...');
+          if (typeof window.filterSchedulesByMonth === 'function') {
+            window.filterSchedulesByMonth();
+          } else {
+            console.error('filterSchedulesByMonth function not found!');
+          }
+        }
+      } else {
+        console.error('scheduleMonthFilter element not found!');
+        // Show backup buttons if select element not found
+        const backupButtons = document.getElementById('month-filter-buttons');
+        if (backupButtons) {
+          backupButtons.style.display = 'flex';
+          console.log('Showing backup filter buttons');
         }
       }
       checkAllInvoiceStatuses();
@@ -3771,90 +3828,21 @@ function refreshSchedulesList() {
   window.location.href = url.toString();
 }
 
-// Month filter functionality - FIXED VERSION
+// Month filter functionality - IMPROVED VERSION
 window.filterSchedulesByMonth = function() {
   console.log('=== FILTER FUNCTION CALLED ===');
-  
+
   const filterSelect = document.getElementById('scheduleMonthFilter');
   if (!filterSelect) {
     console.error('Filter select not found!');
     return;
   }
-  
+
   const filter = filterSelect.value;
   console.log('Selected filter:', filter);
-  
-  // Get current date info
-  const today = new Date();
-  const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
-  
-  // Calculate last month
-  const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const lastMonth = lastMonthDate.getFullYear() + '-' + String(lastMonthDate.getMonth() + 1).padStart(2, '0');
-  
-  console.log('Current month:', currentMonth);
-  console.log('Last month:', lastMonth);
-  
-  // Find table body
-  const tableBody = document.getElementById('schedules-table-body');
-  if (!tableBody) {
-    console.error('Table body not found!');
-    return;
-  }
-  
-  const rows = tableBody.querySelectorAll('tr');
-  console.log('Found rows:', rows.length);
-  
-  let visibleCount = 0;
-  let totalProcessed = 0;
-  
-  rows.forEach((row, index) => {
-    const rowMonth = row.getAttribute('data-month');
-    console.log(`Row ${index}: data-month="${rowMonth}"`);
-    
-    let shouldShow = true;
-    
-    switch(filter) {
-      case 'current':
-        shouldShow = rowMonth === currentMonth;
-        console.log(`Current month check: ${rowMonth} === ${currentMonth} = ${shouldShow}`);
-        break;
-      case 'last':
-        shouldShow = rowMonth === lastMonth;
-        console.log(`Last month check: ${rowMonth} === ${lastMonth} = ${shouldShow}`);
-        break;
-      case 'all':
-        shouldShow = true;
-        break;
-      default:
-        shouldShow = true;
-    }
-    
-    if (shouldShow) {
-      row.style.display = '';
-      visibleCount++;
-    } else {
-      row.style.display = 'none';
-    }
-    
-    totalProcessed++;
-  });
-  
-  console.log(`=== FILTER COMPLETE ===`);
-  console.log(`Processed: ${totalProcessed} rows`);
-  console.log(`Visible: ${visibleCount} rows`);
-  console.log(`Hidden: ${totalProcessed - visibleCount} rows`);
-  
-  // Clear all selections when filter changes
-  if (typeof clearAllSchedules === 'function') {
-    clearAllSchedules();
-  }
-  
-  // Update UI feedback
-  const filterInfo = document.getElementById('filter-info');
-  if (filterInfo) {
-    filterInfo.textContent = `Showing ${visibleCount} of ${totalProcessed} schedules`;
-  }
+
+  // Use the centralized filter logic
+  applyMonthFilter(filter);
 }
 
 // Checkbox functionality
@@ -4405,6 +4393,405 @@ window.testFilter = function() {
 // Test functions are available
 console.log('Fixed functions loaded:', typeof window.deleteScheduleFixed, typeof window.generateInvoiceFixed);
 console.log('Filter function loaded:', typeof window.filterSchedulesByMonth);
+
+// Last Month Copy Functionality
+window.showLastMonthCopyModal = function() {
+  console.log('Showing last month copy modal');
+
+  // Show loading state first
+  const modalHtml = `
+    <div class="modal fade" id="lastMonthCopyModal" tabindex="-1" aria-labelledby="lastMonthCopyModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-white">
+            <h5 class="modal-title" id="lastMonthCopyModalLabel">
+              <i class="fas fa-copy me-2"></i>Copy From Last Month
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div id="lastMonthDataContainer">
+              <div class="text-center py-4">
+                <div class="spinner-border text-warning mb-3" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Loading Last Month Data...</h5>
+                <p class="text-muted">Please wait while we fetch procurement schedules and assignments from last month</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-warning" id="copySelectedBtn" onclick="copySelectedToCurrentMonth()" disabled>
+              <i class="fas fa-copy me-1"></i>Copy Selected Items
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Remove existing modal if any
+  const existingModal = document.getElementById('lastMonthCopyModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  // Add modal to DOM
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('lastMonthCopyModal'));
+  modal.show();
+
+  // Load last month data
+  loadLastMonthData();
+};
+
+window.loadLastMonthData = function() {
+  // Calculate last month date
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const yearMonth = lastMonth.getFullYear() + '-' + String(lastMonth.getMonth() + 1).padStart(2, '0');
+
+  fetch('/milk-supply-analytics/last_month_schedules', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    displayLastMonthData(data);
+  })
+  .catch(error => {
+    console.error('Error loading last month data:', error);
+    document.getElementById('lastMonthDataContainer').innerHTML = `
+      <div class="text-center py-4">
+        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+        <h5>Error Loading Data</h5>
+        <p class="text-muted">Failed to load last month's data. Please try again.</p>
+        <button class="btn btn-outline-primary" onclick="loadLastMonthData()">
+          <i class="fas fa-refresh me-1"></i>Retry
+        </button>
+      </div>
+    `;
+  });
+};
+
+window.displayLastMonthData = function(data) {
+  const container = document.getElementById('lastMonthDataContainer');
+
+  if (!data.schedules || data.schedules.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <h5>No Last Month Data</h5>
+        <p class="text-muted">No procurement schedules or assignments found for last month.</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <div class="mb-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h6>Select items to copy from <strong>${data.month_name}</strong>:</h6>
+        <div>
+          <button class="btn btn-sm btn-outline-primary" onclick="selectAllLastMonth()">Select All</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="clearAllLastMonth()">Clear All</button>
+        </div>
+      </div>
+    </div>
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+      <table class="table table-sm table-striped">
+        <thead class="table-warning sticky-top">
+          <tr>
+            <th style="width: 50px;">
+              <input type="checkbox" class="form-check-input" id="selectAllLastMonthChk" onchange="toggleAllLastMonth()">
+            </th>
+            <th>Type</th>
+            <th>Vendor</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Buying Price</th>
+            <th>Selling Price</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  data.schedules.forEach(item => {
+    const itemType = item.type || 'Schedule';
+    const badgeClass = itemType === 'Schedule' ? 'bg-primary' : 'bg-info';
+
+    html += `
+      <tr>
+        <td>
+          <input type="checkbox" class="form-check-input last-month-item"
+                 value="${item.id}"
+                 data-type="${itemType.toLowerCase()}"
+                 data-vendor="${item.vendor_name}"
+                 data-product-id="${item.product_id}"
+                 data-quantity="${item.quantity}"
+                 data-buying-price="${item.buying_price}"
+                 data-selling-price="${item.selling_price}"
+                 data-unit="${item.unit}"
+                 onchange="updateCopyButton()">
+        </td>
+        <td><span class="badge ${badgeClass}">${itemType}</span></td>
+        <td>${item.vendor_name}</td>
+        <td>${item.product_name || 'N/A'}</td>
+        <td>${item.quantity} ${item.unit}</td>
+        <td>₹${item.buying_price}</td>
+        <td>₹${item.selling_price}</td>
+        <td>
+          <span class="badge bg-${item.status === 'active' ? 'success' : 'secondary'}">
+            ${item.status}
+          </span>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-3">
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Note:</strong> This will create new procurement schedules and assignments for the current month
+        based on your selected items from last month.
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+  updateCopyButton();
+};
+
+// Backup filter function for button-based filtering
+window.setMonthFilter = function(filterValue) {
+  console.log('Setting month filter via buttons:', filterValue);
+
+  // Update button states
+  const buttons = document.querySelectorAll('#month-filter-buttons button');
+  buttons.forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('data-filter') === filterValue) {
+      btn.classList.add('active');
+    }
+  });
+
+  // Apply the filter using the same logic
+  applyMonthFilter(filterValue);
+};
+
+// Centralized filter logic that works for both select and buttons
+window.applyMonthFilter = function(filter) {
+  console.log('Applying month filter:', filter);
+
+  // Get current date info
+  const today = new Date();
+  const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+
+  // Calculate last month
+  const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const lastMonth = lastMonthDate.getFullYear() + '-' + String(lastMonthDate.getMonth() + 1).padStart(2, '0');
+
+  console.log('Current month:', currentMonth);
+  console.log('Last month:', lastMonth);
+
+  // Find table body
+  const tableBody = document.getElementById('schedules-table-body');
+  if (!tableBody) {
+    console.error('Table body not found!');
+    return;
+  }
+
+  const rows = tableBody.querySelectorAll('tr');
+  console.log('Found rows:', rows.length);
+
+  let visibleCount = 0;
+  let totalProcessed = 0;
+
+  rows.forEach((row, index) => {
+    const rowMonth = row.getAttribute('data-month');
+    console.log(`Row ${index}: data-month="${rowMonth}"`);
+
+    let shouldShow = true;
+
+    switch(filter) {
+      case 'current':
+        shouldShow = rowMonth === currentMonth;
+        console.log(`Current month check: ${rowMonth} === ${currentMonth} = ${shouldShow}`);
+        break;
+      case 'last':
+        shouldShow = rowMonth === lastMonth;
+        console.log(`Last month check: ${rowMonth} === ${lastMonth} = ${shouldShow}`);
+        break;
+      case 'all':
+        shouldShow = true;
+        break;
+      default:
+        shouldShow = true;
+    }
+
+    if (shouldShow) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+
+    totalProcessed++;
+  });
+
+  console.log(`Filter completed: ${visibleCount}/${totalProcessed} rows shown`);
+
+  // Update info text
+  const filterInfo = document.getElementById('filter-info');
+  if (filterInfo) {
+    let infoText = '';
+    switch(filter) {
+      case 'current':
+        infoText = `Showing ${visibleCount} schedules for current month (${currentMonth})`;
+        break;
+      case 'last':
+        infoText = `Showing ${visibleCount} schedules for last month (${lastMonth})`;
+        break;
+      case 'all':
+        infoText = `Showing all ${visibleCount} schedules`;
+        break;
+    }
+    filterInfo.textContent = infoText;
+  }
+
+  // Update bulk actions visibility based on visible rows
+  const bulkActions = document.querySelector('.bulk-actions');
+  if (bulkActions) {
+    if (visibleCount > 0) {
+      bulkActions.style.display = '';
+    } else {
+      bulkActions.style.display = 'none';
+    }
+  }
+
+  // Clear all selections when filter changes
+  if (typeof clearAllSchedules === 'function') {
+    clearAllSchedules();
+  }
+};
+
+// Helper functions for last month copy modal
+window.selectAllLastMonth = function() {
+  const checkboxes = document.querySelectorAll('.last-month-item');
+  checkboxes.forEach(cb => cb.checked = true);
+  document.getElementById('selectAllLastMonthChk').checked = true;
+  updateCopyButton();
+};
+
+window.clearAllLastMonth = function() {
+  const checkboxes = document.querySelectorAll('.last-month-item');
+  checkboxes.forEach(cb => cb.checked = false);
+  document.getElementById('selectAllLastMonthChk').checked = false;
+  updateCopyButton();
+};
+
+window.toggleAllLastMonth = function() {
+  const selectAll = document.getElementById('selectAllLastMonthChk');
+  const checkboxes = document.querySelectorAll('.last-month-item');
+  checkboxes.forEach(cb => cb.checked = selectAll.checked);
+  updateCopyButton();
+};
+
+window.updateCopyButton = function() {
+  const selectedCount = document.querySelectorAll('.last-month-item:checked').length;
+  const copyBtn = document.getElementById('copySelectedBtn');
+
+  if (selectedCount > 0) {
+    copyBtn.disabled = false;
+    copyBtn.innerHTML = `<i class="fas fa-copy me-1"></i>Copy ${selectedCount} Selected Items`;
+  } else {
+    copyBtn.disabled = true;
+    copyBtn.innerHTML = `<i class="fas fa-copy me-1"></i>Copy Selected Items`;
+  }
+};
+
+window.copySelectedToCurrentMonth = function() {
+  const selectedItems = document.querySelectorAll('.last-month-item:checked');
+
+  if (selectedItems.length === 0) {
+    alert('Please select at least one item to copy.');
+    return;
+  }
+
+  const itemsData = Array.from(selectedItems).map(item => ({
+    id: item.value,
+    type: item.dataset.type,
+    vendor_name: item.dataset.vendor,
+    product_id: item.dataset.productId,
+    quantity: item.dataset.quantity,
+    buying_price: item.dataset.buyingPrice,
+    selling_price: item.dataset.sellingPrice,
+    unit: item.dataset.unit
+  }));
+
+  if (!confirm(`Copy ${selectedItems.length} selected items from last month to current month?\\n\\nThis will create new procurement schedules and assignments for the current month based on your selection.`)) {
+    return;
+  }
+
+  // Show loading
+  const copyBtn = document.getElementById('copySelectedBtn');
+  const originalText = copyBtn.innerHTML;
+  copyBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Copying...';
+  copyBtn.disabled = true;
+
+  fetch('/milk-supply-analytics/generate_procurement_for_current_month', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({
+      selected_items: itemsData
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      let message = `✅ SUCCESS!\\n\\nCopied ${data.created_count || 0} items to current month.`;
+
+      if (data.skipped_items && data.skipped_items.length > 0) {
+        message += `\\n\\nSkipped ${data.skipped_items.length} items (already exist or conflicts).`;
+      }
+
+      alert(message);
+
+      // Close modal and refresh page
+      const modal = bootstrap.Modal.getInstance(document.getElementById('lastMonthCopyModal'));
+      modal.hide();
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+    } else {
+      alert('Error: ' + (data.error || 'Failed to copy items'));
+      copyBtn.innerHTML = originalText;
+      copyBtn.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred while copying items.');
+    copyBtn.innerHTML = originalText;
+    copyBtn.disabled = false;
+  });
+};
 
 </script>
 

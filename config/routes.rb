@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "customer_details", to: "customer_details#index"
+  post "customer_details/copy_from_last_month", to: "customer_details#copy_from_last_month"
   root 'dashboard#index'
 
   # Orders routes
