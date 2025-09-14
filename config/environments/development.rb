@@ -12,8 +12,7 @@ Rails.application.configure do
     "13.232.153.224",                # Allow requests from the production server IP
     "atmanirbharfarmbangalore.com"
   ].compact
-
-
+    config.hosts << "localhost:3002"
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
 
@@ -49,11 +48,11 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
 
-  default_host = ENV.fetch('APP_HOST', 'steady-raccoon-enormous.ngrok-free.app')
+  default_host = ENV.fetch('APP_HOST', 'atmanirbharfarmbangalore.com')
   config.action_mailer.default_url_options = { host: default_host }
 
   # Set default URL options for the main application routes
-  config.action_controller.default_url_options = { host: default_host }
+  config.action_controller.default_url_options = { host: default_host, port: nil }
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

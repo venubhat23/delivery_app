@@ -9,7 +9,7 @@ class Product < ApplicationRecord
     greater_than: 0,
     message: "must be greater than 0" 
   }
-  validates :description, length: { maximum: 500 }
+  validates :description, length: { maximum: 5000 }
 
   # Associations
   belongs_to :category
