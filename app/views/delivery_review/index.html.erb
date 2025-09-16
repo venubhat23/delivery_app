@@ -4,80 +4,108 @@
     <p class="text-muted">Track and analyze delivery performance and customer delivery details</p>
   </div>
 
-  <div class="filter-section card mb-3" data-enhanced-selects>
+  <div class="filter-section card mb-4" data-enhanced-selects>
+    <div class="card-header">
+      <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Delivery Filters</h5>
+    </div>
     <div class="card-body">
-      <form id="deliveryReviewFilters" class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">Select Customer</label>
-          <select id="filterCustomer" class="form-select">
-            <option value="all" selected>All Customers</option>
-            <% @customers.each do |c| %>
-              <option value="<%= c.id %>"><%= c.name %> - <%= c.phone_number %> (<%= c.member_id %>)</option>
-            <% end %>
-          </select>
+      <form id="deliveryReviewFilters">
+        <!-- Main Filters Row -->
+        <div class="row g-3 mb-3">
+          <div class="col-lg-3 col-md-6">
+            <label class="form-label fw-semibold">👤 Customer</label>
+            <select id="filterCustomer" class="form-select form-select-enhanced">
+              <option value="all" selected>All Customers</option>
+              <% @customers.each do |c| %>
+                <option value="<%= c.id %>" data-phone="<%= c.phone_number %>" data-member="<%= c.member_id %>">
+                  <%= c.name.truncate(25) %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-lg-2 col-md-6">
+            <label class="form-label fw-semibold">📅 Date Range</label>
+            <select id="filterDate" class="form-select form-select-enhanced">
+              <option value="monthly" selected>Monthly</option>
+              <option value="weekly">Weekly</option>
+              <option value="today">Today</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          <div class="col-lg-2 col-md-6">
+            <label class="form-label fw-semibold">📦 Product</label>
+            <select id="filterProduct" class="form-select form-select-enhanced">
+              <option value="all" selected>All Products</option>
+              <% @products.each do |p| %>
+                <option value="<%= p.id %>"><%= p.name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-lg-2 col-md-6">
+            <label class="form-label fw-semibold">🏷️ Status</label>
+            <select id="filterStatus" class="form-select form-select-enhanced">
+              <option value="all" selected>All Status</option>
+              <option value="completed">✅ Completed</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="cancelled">❌ Cancelled</option>
+            </select>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <label class="form-label fw-semibold">🚚 Delivery Person</label>
+            <select id="filterDeliveryPerson" class="form-select form-select-enhanced">
+              <option value="all" selected>All Delivery Persons</option>
+              <% @delivery_persons.each do |dp| %>
+                <option value="<%= dp.id %>"><%= dp.name %></option>
+              <% end %>
+            </select>
+          </div>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label">Date Range</label>
-          <select id="filterDate" class="form-select">
-            <option value="monthly" selected>Monthly</option>
-            <option value="weekly">Weekly</option>
-            <option value="today">Today</option>
-            <option value="custom">Custom Range</option>
-          </select>
+        <!-- Custom Date Range Row -->
+        <div class="row g-3 mb-3 d-none" id="customDateRange">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Start Date</label>
+            <input type="date" id="startDate" class="form-control" value="<%= Date.today.to_s %>" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">End Date</label>
+            <input type="date" id="endDate" class="form-control" value="<%= Date.today.to_s %>" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">🔍 Search</label>
+            <input type="text" id="globalSearch" class="form-control" placeholder="Search customer name or product..." />
+          </div>
         </div>
 
-        <div class="col-md-2 d-none" id="customStartWrap">
-          <label class="form-label">Start Date</label>
-          <input type="date" id="startDate" class="form-control" value="<%= Date.today.to_s %>" />
-        </div>
-        <div class="col-md-2 d-none" id="customEndWrap">
-          <label class="form-label">End Date</label>
-          <input type="date" id="endDate" class="form-control" value="<%= Date.today.to_s %>" />
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label">Product</label>
-          <select id="filterProduct" class="form-select">
-            <option value="all" selected>All Products</option>
-            <% @products.each do |p| %>
-              <option value="<%= p.id %>"><%= p.name %></option>
-            <% end %>
-          </select>
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label">Status</label>
-          <select id="filterStatus" class="form-select">
-            <option value="all" selected>All</option>
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Delivery Person</label>
-          <select id="filterDeliveryPerson" class="form-select">
-            <option value="all" selected>All Delivery Persons</option>
-            <% @delivery_persons.each do |dp| %>
-              <option value="<%= dp.id %>"><%= dp.name %></option>
-            <% end %>
-          </select>
-        </div>
-
-        <div class="col-md-2">
-          <label class="form-label">Search</label>
-          <input type="text" id="globalSearch" class="form-control" placeholder="Customer/Product" />
-        </div>
-
-        <div class="col-md-12 text-end">
-          <button type="button" id="applyFiltersBtn" class="btn btn-primary me-2">Apply Filters</button>
-          <button type="button" id="bulkCompleteBtn" class="btn btn-success me-2" style="display: none;">
-            <i class="fas fa-check-circle me-1"></i><span id="bulkCompleteText">Complete 0</span>
-          </button>
-          <button type="button" id="exportCsvBtn" class="btn btn-outline-secondary me-2">Export CSV</button>
-          <button type="button" id="printBtn" class="btn btn-outline-secondary">Print</button>
+        <!-- Search Row (when custom dates are hidden) -->
+        <div class="row g-3 mb-3" id="searchRow">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">🔍 Search</label>
+            <input type="text" id="globalSearchMain" class="form-control" placeholder="Search customer name or product..." />
+          </div>
+          <div class="col-md-8 d-flex align-items-end">
+            <!-- Action Buttons -->
+            <div class="btn-group me-2" role="group">
+              <button type="button" id="applyFiltersBtn" class="btn btn-primary px-4">
+                <i class="fas fa-search me-1"></i>Apply Filters
+              </button>
+              <button type="button" id="bulkCompleteBtn" class="btn btn-success" style="display: none;">
+                <i class="fas fa-check-circle me-1"></i><span id="bulkCompleteText">Complete 0</span>
+              </button>
+            </div>
+            <div class="btn-group" role="group">
+              <button type="button" id="exportCsvBtn" class="btn btn-outline-primary">
+                <i class="fas fa-download me-1"></i>Export CSV
+              </button>
+              <button type="button" id="printBtn" class="btn btn-outline-secondary">
+                <i class="fas fa-print me-1"></i>Print
+              </button>
+            </div>
+          </div>
         </div>
       </form>
     </div>
@@ -149,6 +177,251 @@
   </div>
 </div>
 
+<style>
+/* Enhanced Delivery Review Dropdown Styles */
+.delivery-review-page .filter-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.delivery-review-page .filter-section .card-header {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.delivery-review-page .form-select-enhanced {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25rem;
+}
+
+.delivery-review-page .form-select-enhanced:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(99, 102, 241, 0.15);
+  background-color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.delivery-review-page .form-select-enhanced:hover:not(:focus) {
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.delivery-review-page .focused-filter {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+.delivery-review-page .form-control {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.delivery-review-page .form-control:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(99, 102, 241, 0.15);
+  background-color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.delivery-review-page .form-control:hover:not(:focus) {
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.delivery-review-page .form-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.delivery-review-page .btn {
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.delivery-review-page .btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.delivery-review-page .btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.delivery-review-page .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+}
+
+.delivery-review-page .btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.delivery-review-page .btn-success:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.delivery-review-page .btn-outline-primary {
+  background: transparent;
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.delivery-review-page .btn-outline-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+}
+
+.delivery-review-page .btn-outline-secondary {
+  background: transparent;
+  border-color: #6b7280;
+  color: #6b7280;
+}
+
+.delivery-review-page .btn-outline-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.3);
+}
+
+/* Enhanced dropdown animations */
+.delivery-review-page .form-select-enhanced {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.delivery-review-page .form-control {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Select2 custom theme for this page */
+.delivery-review-page .select2-container--bootstrap-5 .select2-dropdown {
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  animation: slideInDown 0.2s ease-out;
+}
+
+.delivery-review-page .select2-container--bootstrap-5 .select2-selection {
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  min-height: 44px;
+  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-review-page .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .delivery-review-page .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .delivery-review-page .btn-group .btn {
+    margin-bottom: 0.5rem;
+    border-radius: 10px !important;
+  }
+
+  .delivery-review-page .form-select-enhanced,
+  .delivery-review-page .form-control {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Loading states */
+.delivery-review-page .loading {
+  position: relative;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.delivery-review-page .loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  border-top: 2px solid #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+</style>
+
 <script>
 (function() {
   'use strict';
@@ -174,10 +447,16 @@
 
   function toggleCustomDates() {
     var type = document.getElementById('filterDate').value;
-    var s = document.getElementById('customStartWrap');
-    var e = document.getElementById('customEndWrap');
-    if (type === 'custom') { s.classList.remove('d-none'); e.classList.remove('d-none'); }
-    else { s.classList.add('d-none'); e.classList.add('d-none'); }
+    var customDateRange = document.getElementById('customDateRange');
+    var searchRow = document.getElementById('searchRow');
+
+    if (type === 'custom') {
+      customDateRange.classList.remove('d-none');
+      searchRow.classList.add('d-none');
+    } else {
+      customDateRange.classList.add('d-none');
+      searchRow.classList.remove('d-none');
+    }
   }
 
   // Fixed date handling - v2025-09-01-07:05
@@ -189,7 +468,7 @@
       product_id: document.getElementById('filterProduct').value,
       status: document.getElementById('filterStatus').value,
       delivery_person_id: document.getElementById('filterDeliveryPerson').value,
-      search: document.getElementById('globalSearch').value.trim()
+      search: (document.getElementById('globalSearch') ? document.getElementById('globalSearch').value.trim() : document.getElementById('globalSearchMain').value.trim())
     };
     
     // SIMPLE DATE HANDLING - NO CONVERSION
@@ -292,10 +571,18 @@
 
 
   document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Select2 if available
-    if (window.jQuery && jQuery.fn.select2) {
-      jQuery('#filterCustomer, #filterProduct, #filterStatus, #filterDeliveryPerson').select2({ theme: 'bootstrap-5', width: '100%' });
-    }
+    // Initialize enhanced selects
+    initializeEnhancedSelects();
+
+    // Add hover effects and better styling
+    document.querySelectorAll('.form-select-enhanced').forEach(function(select) {
+      select.addEventListener('focus', function() {
+        this.parentElement.classList.add('focused-filter');
+      });
+      select.addEventListener('blur', function() {
+        this.parentElement.classList.remove('focused-filter');
+      });
+    });
     document.getElementById('filterDate').addEventListener('change', toggleCustomDates);
     document.getElementById('applyFiltersBtn').addEventListener('click', fetchData);
     document.getElementById('bulkCompleteBtn').addEventListener('click', handleBulkComplete);
@@ -550,6 +837,42 @@
       btn.disabled = false;
       btn.innerHTML = originalText;
     });
+  }
+
+  function initializeEnhancedSelects() {
+    // Try Select2 first, fallback to custom styling
+    if (window.jQuery && jQuery.fn.select2) {
+      jQuery('.form-select-enhanced').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        dropdownAutoWidth: true,
+        placeholder: function() {
+          return jQuery(this).data('placeholder') || jQuery(this).find('option:first').text();
+        },
+        templateResult: function(state) {
+          if (!state.id) return state.text;
+
+          var $state = jQuery('<span></span>');
+          $state.text(state.text);
+
+          // Add phone and member info for customer dropdown
+          if (state.element && state.element.dataset) {
+            if (state.element.dataset.phone && state.element.dataset.member) {
+              var $info = jQuery('<small class="text-muted d-block"></small>');
+              $info.text('📞 ' + state.element.dataset.phone + ' | ID: ' + state.element.dataset.member);
+              $state.append($info);
+            }
+          }
+
+          return $state;
+        }
+      });
+    } else {
+      // Fallback: Add custom styling classes
+      document.querySelectorAll('.form-select-enhanced').forEach(function(select) {
+        select.classList.add('enhanced-dropdown');
+      });
+    }
   }
 
 })();

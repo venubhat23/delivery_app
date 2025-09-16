@@ -45,87 +45,117 @@ class DashboardController < ApplicationController
   end
 
   def calculate_delivery_analytics_for_date(date, range)
-    # Get completed deliveries for the specified date
-    @todays_deliveries = DeliveryAssignment.completed
-                                          .for_date(date)
-                                          .includes(:product, :customer)
-    
-    # Calculate specified date totals
+    # Optimize with single queries using SQL aggregation
+    date_range = date.beginning_of_day..date.end_of_day
+
+    # Use find_by_sql approach to avoid exec_query issues
+    sql = <<-SQL
+      SELECT
+        COUNT(*) as count,
+        SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_amount,
+        SUM(CASE WHEN products.unit_type = 'liters' THEN delivery_assignments.quantity ELSE 0 END) as total_liters,
+        COUNT(CASE WHEN categories.name ILIKE '%milk%' OR products.name ILIKE '%milk%' THEN 1 END) as milk_products_count
+      FROM delivery_assignments
+      INNER JOIN products ON products.id = delivery_assignments.product_id
+      LEFT JOIN categories ON products.category_id = categories.id
+      WHERE delivery_assignments.status = 'completed'
+      AND delivery_assignments.scheduled_date = '#{date}'
+    SQL
+
+    result = ActiveRecord::Base.connection.select_one(sql)
+    today_stats = result
+
     @total_delivered_today = {
-      count: @todays_deliveries.count,
-      total_amount: calculate_total_amount(@todays_deliveries),
-      total_liters: calculate_total_liters(@todays_deliveries),
-      milk_products_count: count_milk_products(@todays_deliveries)
+      count: today_stats&.[]('count')&.to_i || 0,
+      total_amount: today_stats&.[]('total_amount')&.to_f || 0,
+      total_liters: today_stats&.[]('total_liters')&.to_f || 0,
+      milk_products_count: today_stats&.[]('milk_products_count')&.to_i || 0
     }
-    
-    # Get deliveries for the month containing the specified date
+
+    # Monthly stats with raw SQL
     month_start = date.beginning_of_month
     month_end = date.end_of_month
-    
-    @monthly_deliveries = DeliveryAssignment.completed
-                                           .where(completed_at: month_start..month_end)
-                                           .includes(:product, :customer)
-    
-    # Calculate monthly totals
+
+    monthly_sql = <<-SQL
+      SELECT
+        COUNT(*) as count,
+        SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_amount,
+        SUM(CASE WHEN products.unit_type = 'liters' THEN delivery_assignments.quantity ELSE 0 END) as total_liters,
+        COUNT(CASE WHEN categories.name ILIKE '%milk%' OR products.name ILIKE '%milk%' THEN 1 END) as milk_products_count
+      FROM delivery_assignments
+      INNER JOIN products ON products.id = delivery_assignments.product_id
+      LEFT JOIN categories ON products.category_id = categories.id
+      WHERE delivery_assignments.status = 'completed'
+      AND delivery_assignments.completed_at BETWEEN '#{month_start}' AND '#{month_end}'
+    SQL
+
+    monthly_stats = ActiveRecord::Base.connection.select_one(monthly_sql)
+
     @total_delivered_monthly = {
-      count: @monthly_deliveries.count,
-      total_amount: calculate_total_amount(@monthly_deliveries),
-      total_liters: calculate_total_liters(@monthly_deliveries),
-      milk_products_count: count_milk_products(@monthly_deliveries)
+      count: monthly_stats&.[]('count')&.to_i || 0,
+      total_amount: monthly_stats&.[]('total_amount')&.to_f || 0,
+      total_liters: monthly_stats&.[]('total_liters')&.to_f || 0,
+      milk_products_count: monthly_stats&.[]('milk_products_count')&.to_i || 0
     }
-    
-    # Get delivery analytics for the last 7 days from the specified date
+
+    # Optimized weekly data calculation
     @weekly_delivery_data = calculate_weekly_delivery_data(date)
-    
-    # Get top delivered products for the last 30 days from the specified date
+
+    # Optimized top products calculation
     @top_delivered_products = get_top_delivered_products(date)
   end
 
-  def calculate_total_amount(deliveries)
-    deliveries.sum { |delivery| delivery.total_amount }
-  end
+  # Optimized helper methods for analytics
+  def calculate_weekly_delivery_data(date)
+    # Get data for 7 days ending on the specified date
+    end_date = date
+    start_date = date - 6.days
 
-  def calculate_total_liters(deliveries)
-    deliveries.joins(:product)
-              .where(products: { unit_type: 'liters' })
-              .sum(:quantity)
-  end
-
-  def count_milk_products(deliveries)
-    deliveries.joins(:product)
-              .joins('JOIN categories ON products.category_id = categories.id')
-              .where('categories.name ILIKE ? OR products.name ILIKE ?', '%milk%', '%milk%')
-              .count
-  end
-
-  def calculate_weekly_delivery_data(end_date = Date.current)
-    data = []
-    7.times do |i|
-      date = end_date - i.days
-      daily_deliveries = DeliveryAssignment.completed.for_date(date).includes(:product)
-      
-      data.unshift({
-        date: date,
-        day: date.strftime('%a'),
-        count: daily_deliveries.count,
-        amount: calculate_total_amount(daily_deliveries),
-        liters: calculate_total_liters(daily_deliveries)
-      })
-    end
-    data
-  end
-
-  def get_top_delivered_products(end_date = Date.current)
-    start_date = end_date - 30.days
-    
-    DeliveryAssignment.completed
-                     .where(completed_at: start_date..end_date)
+    DeliveryAssignment.unscoped
+                     .where(status: 'completed')
                      .joins(:product)
-                     .group('products.id, products.name, products.unit_type, products.price')
-                     .select('products.*, SUM(delivery_assignments.quantity) as total_delivered, 
-                             COUNT(delivery_assignments.id) as delivery_count,
-                             SUM(delivery_assignments.quantity * products.price) as total_revenue')
-                     .order('total_delivered DESC')
-                     .limit(5)
+                     .where(scheduled_date: start_date..end_date)
+                     .group('DATE(scheduled_date)')
+                     .order('DATE(scheduled_date)')
+                     .select(
+                       'DATE(scheduled_date) as date',
+                       'COUNT(*) as count',
+                       'SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_amount'
+                     ).map do |day_data|
+      {
+        date: day_data.date,
+        count: day_data.count,
+        total_amount: day_data.total_amount&.to_f || 0
+      }
+    end
   end
+
+  def get_top_delivered_products(date)
+    # Get top 5 products by delivery count for last 30 days
+    end_date = date
+    start_date = date - 29.days
+
+    DeliveryAssignment.unscoped
+                     .where(status: 'completed')
+                     .joins(:product)
+                     .where(scheduled_date: start_date..end_date)
+                     .group('products.id, products.name, products.unit_type')
+                     .order('SUM(delivery_assignments.quantity) DESC')
+                     .limit(5)
+                     .select(
+                       'products.id',
+                       'products.name',
+                       'products.unit_type',
+                       'SUM(delivery_assignments.quantity) as total_delivered',
+                       'SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_revenue'
+                     ).map do |product_data|
+      OpenStruct.new(
+        name: product_data.name,
+        unit_type: product_data.unit_type,
+        total_delivered: product_data.total_delivered&.to_f || 0,
+        total_revenue: product_data.total_revenue&.to_f || 0
+      )
+    end
+  end
+
 end

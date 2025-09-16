@@ -1,0 +1,22 @@
+<% content_for :title, "Milk Analytics Dashboard" %>
+
+<div class="container-fluid">
+  <%= render 'navigation' %>
+
+  <!-- Tab Content -->
+  <div class="tab-content" id="milkAnalyticsTabContent">
+    <% active_tab = params[:tab].presence || 'dashboard' %>
+
+    <%= render 'dashboard_tab' %>
+    <%= render 'reports_tab' %>
+    <%= render 'procurement_tab' %>
+    <%= render 'schedules_tab' %>
+    <%= render 'calendar_tab' %>
+    <%= render 'procurement_schedule_tab' %>
+
+  </div>
+</div>
+
+<%= render 'styles' %>
+<%= render 'javascript' %>
+<%= render 'modals' %>

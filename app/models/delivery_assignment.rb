@@ -21,7 +21,7 @@ class DeliveryAssignment < ApplicationRecord
   before_save :calculate_and_set_final_amount
   before_save :set_completed_at_if_completed
 
-  # SCOPES
+  # OPTIMIZED SCOPES with N+1 prevention
   scope :pending, -> { where(status: 'pending') }
   scope :in_progress, -> { where(status: 'in_progress') }
   scope :completed, -> { where(status: 'completed') }
@@ -31,6 +31,7 @@ class DeliveryAssignment < ApplicationRecord
   scope :by_delivery_person, ->(user_id) { where(user_id: user_id) }
   scope :by_customer, ->(customer_id) { where(customer_id: customer_id) if customer_id.present? }
   scope :for_date, ->(date) { where(scheduled_date: date) }
+  scope :for_date_range, ->(start_date, end_date) { where(scheduled_date: start_date..end_date) }
   scope :scheduled, -> { where.not(delivery_schedule_id: nil) }
   scope :one_time, -> { where(delivery_schedule_id: nil) }
   scope :booked_by_customer, -> { where(booked_by: 1) }
@@ -44,6 +45,23 @@ class DeliveryAssignment < ApplicationRecord
     where(completed_at: start_date..end_date)
   }
   scope :search_by_customer, ->(term) { joins(:customer).where("customers.name ILIKE ?", "%#{term}%") }
+
+  # N+1 Prevention Scopes
+  scope :with_associations, -> { includes(:customer, :user, :product, :delivery_schedule, :invoice) }
+  scope :with_basic_data, -> { includes(:customer, :user, :product) }
+  scope :with_names, -> {
+    select('delivery_assignments.*')
+    .joins(:customer, :user, :product)
+    .select('customers.name as customer_name, users.name as user_name, products.name as product_name')
+  }
+
+  # Performance optimized scopes for analytics
+  scope :completed_with_amounts, -> {
+    completed.joins(:product)
+    .select('delivery_assignments.*, products.price')
+  }
+
+  scope :overdue, -> { pending.where('scheduled_date < ?', Date.current) }
 
   # INSTANCE METHODS
   def delivery_person

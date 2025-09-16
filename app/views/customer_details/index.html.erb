@@ -124,8 +124,14 @@
                         </label>
                       </div>
                       <button type="button" id="copyFromLastMonth" class="btn btn-primary btn-sm" disabled>
-                        <i class="fas fa-copy me-1"></i>
-                        Copy From Last Month
+                        <span class="copy-btn-content">
+                          <i class="fas fa-copy me-1"></i>
+                          Copy From Last Month
+                        </span>
+                        <span class="copy-btn-loading d-none">
+                          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Processing...
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -408,6 +414,22 @@
   .card {
     border-radius: 12px;
   }
+
+  .copy-btn-loading .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  #copyFromLastMonth:disabled {
+    opacity: 0.8;
+  }
+
+  .customer-checkbox:disabled,
+  #selectAllCustomers:disabled,
+  #selectAllHeader:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 </style>
 
 <script>
@@ -479,6 +501,21 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       if (confirm(`Copy delivery assignments and schedules from last month for ${checkedCustomers.length} selected customer(s)?`)) {
+        // Show loading state
+        const copyBtnContent = copyButton.querySelector('.copy-btn-content');
+        const copyBtnLoading = copyButton.querySelector('.copy-btn-loading');
+
+        copyBtnContent.classList.add('d-none');
+        copyBtnLoading.classList.remove('d-none');
+        copyButton.disabled = true;
+
+        // Disable all checkboxes during processing
+        customerCheckboxes.forEach(checkbox => {
+          checkbox.disabled = true;
+        });
+        selectAllCheckbox.disabled = true;
+        selectAllHeaderCheckbox.disabled = true;
+
         // Create form and submit
         const form = document.createElement('form');
         form.method = 'POST';

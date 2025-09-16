@@ -4,9 +4,9 @@ class CustomersController < ApplicationController
   before_action :set_customer, only: [:show, :edit, :update, :destroy]
   
   def index
-    # Optimize queries with proper includes to prevent N+1 queries
-    @customers = Customer.includes(:user, :delivery_person, :delivery_assignments, :invoices)
-    
+    # Use optimized scope to prevent N+1 queries with counts and aggregations
+    @customers = Customer.for_index.active
+
     # Filter by delivery person if selected
     if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all'
       @customers = @customers.where(delivery_person_id: params[:delivery_person_id])
@@ -14,37 +14,42 @@ class CustomersController < ApplicationController
     else
       @selected_delivery_person_id = 'all'
     end
-    
+
     # Search by term across multiple fields
     if params[:search].present?
       term = params[:search].strip
-      # If exact member_id match exists, redirect to that customer
-      exact_customer = Customer.find_by(member_id: term)
-      exact_customer ||= Customer.find_by(phone_number: term)
-      exact_customer ||= Customer.find_by(alt_phone_number: term)
-      exact_customer ||= Customer.find_by(email: term)
+      # Optimized exact match with single query
+      exact_customer = Customer.with_basic_associations
+                              .where(
+                                "member_id = :term OR phone_number = :term OR alt_phone_number = :term OR email = :term",
+                                term: term
+                              ).first
       if exact_customer
         redirect_to exact_customer and return
       end
       @customers = @customers.search(term)
     end
-    
+
     @customers = @customers.order(:name)
-    @total_customers = @customers.count
-    
+
+    # Get count before pagination to avoid multiple queries
+    @total_customers = @customers.except(:select, :group).count
+
     # Add pagination - 50 customers per page
     @customers = @customers.page(params[:page]).per(50)
-    
-    # Get all delivery people for the dropdown
-    @delivery_people = User.delivery_people.order(:name)
+
+    # Optimized delivery people query - only load what's needed
+    @delivery_people = User.delivery_people.select(:id, :name).order(:name)
   end
 
   def search_suggestions
     query = params[:q].to_s.strip
-    
+
     if query.present?
-      customers = Customer.includes(:delivery_person)
-                         .where("name ILIKE ? OR phone_number ILIKE ? OR address ILIKE ? OR member_id ILIKE ?", 
+      # Optimized query with only necessary fields selected
+      customers = Customer.with_delivery_person
+                         .select(:id, :name, :phone_number, :address, :member_id, :delivery_person_id)
+                         .where("name ILIKE ? OR phone_number ILIKE ? OR address ILIKE ? OR member_id ILIKE ?",
                                 "%#{query}%", "%#{query}%", "%#{query}%", "%#{query}%")
                          .limit(10)
                          .order(:name)
@@ -55,11 +60,15 @@ class CustomersController < ApplicationController
     render json: {
       customers: customers.map do |customer|
         {
+          id: customer.id,
           name: customer.name,
           phone_number: customer.phone_number,
           address: customer.address,
           member_id: customer.member_id,
-          delivery_person: customer.delivery_person ? { name: customer.delivery_person.name } : nil
+          delivery_person: customer.delivery_person ? {
+            id: customer.delivery_person.id,
+            name: customer.delivery_person.name
+          } : nil
         }
       end
     }

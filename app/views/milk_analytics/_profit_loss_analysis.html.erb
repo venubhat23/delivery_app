@@ -1,0 +1,152 @@
+<!-- Profit & Loss Analysis -->
+<div class="row mb-4">
+  <div class="col-12">
+    <h6 class="text-warning mb-3">
+      <i class="fas fa-chart-line me-2"></i>Profit & Loss Analysis
+    </h6>
+
+    <div class="row">
+      <!-- P&L Summary -->
+      <div class="col-md-6 mb-3">
+        <div class="card border-warning">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📊 Profit & Loss Summary</h6>
+          </div>
+          <div class="card-body">
+            <% profit = (@total_revenue || 0) - (@total_cost || 0) %>
+            <% margin = (@total_revenue && @total_revenue > 0) ? (profit * 100.0 / @total_revenue).round(2) : 0 %>
+
+            <table class="table table-sm mb-0">
+              <tr>
+                <td><strong>Total Revenue:</strong></td>
+                <td class="text-end text-success">₹<%= number_with_delimiter(@total_revenue || 0, precision: 2) %></td>
+              </tr>
+              <tr>
+                <td><strong>Total Cost:</strong></td>
+                <td class="text-end text-danger">₹<%= number_with_delimiter(@total_cost || 0, precision: 2) %></td>
+              </tr>
+              <tr class="table-active">
+                <td><strong>Net Profit/Loss:</strong></td>
+                <td class="text-end <%= profit >= 0 ? 'text-success' : 'text-danger' %>">
+                  <strong>₹<%= number_with_delimiter(profit, precision: 2) %></strong>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Profit Margin:</strong></td>
+                <td class="text-end <%= margin >= 0 ? 'text-success' : 'text-danger' %>">
+                  <strong><%= margin %>%</strong>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- P&L Formula -->
+      <div class="col-md-6 mb-3">
+        <div class="card border-info">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">🧮 Profit Calculation Formula</h6>
+          </div>
+          <div class="card-body">
+            <div class="formula-box p-3 bg-light rounded">
+              <p class="mb-2"><strong>Net Profit =</strong></p>
+              <p class="mb-2">Total Revenue - Total Procurement Cost</p>
+              <hr class="my-2">
+              <p class="mb-2"><strong>Profit Margin =</strong></p>
+              <p class="mb-0">(Net Profit ÷ Total Revenue) × 100</p>
+            </div>
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              Basic P&L calculation excluding operational expenses
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📈 Key Performance Indicators</h6>
+          </div>
+          <div class="card-body">
+            <div class="row text-center">
+              <div class="col-md-3">
+                <div class="border rounded p-3 mb-2">
+                  <h5 class="<%= profit >= 0 ? 'text-success' : 'text-danger' %> mb-1">
+                    <%= profit >= 0 ? '+' : '' %>₹<%= number_with_delimiter(profit, precision: 0) %>
+                  </h5>
+                  <small class="text-muted">Net Profit</small>
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="border rounded p-3 mb-2">
+                  <h5 class="<%= margin >= 15 ? 'text-success' : margin >= 5 ? 'text-warning' : 'text-danger' %> mb-1">
+                    <%= margin %>%
+                  </h5>
+                  <small class="text-muted">Profit Margin</small>
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="border rounded p-3 mb-2">
+                  <% delivery_rate = (@total_liters && @total_liters > 0) ? ((@total_delivered.to_f / @total_liters) * 100).round(1) : 0 %>
+                  <h5 class="<%= delivery_rate >= 90 ? 'text-success' : delivery_rate >= 70 ? 'text-warning' : 'text-danger' %> mb-1">
+                    <%= delivery_rate %>%
+                  </h5>
+                  <small class="text-muted">Delivery Rate</small>
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="border rounded p-3 mb-2">
+                  <% avg_cost_per_liter = (@total_liters && @total_liters > 0) ? (@total_cost.to_f / @total_liters).round(2) : 0 %>
+                  <h5 class="text-primary mb-1">
+                    ₹<%= avg_cost_per_liter %>
+                  </h5>
+                  <small class="text-muted">Cost per Liter</small>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-3">
+
+            <!-- Status Indicators -->
+            <div class="row">
+              <div class="col-12">
+                <h6 class="mb-2">Business Health Indicators:</h6>
+                <div class="d-flex flex-wrap gap-2">
+                  <% if margin >= 15 %>
+                    <span class="badge bg-success">Excellent Margin</span>
+                  <% elsif margin >= 5 %>
+                    <span class="badge bg-warning">Fair Margin</span>
+                  <% else %>
+                    <span class="badge bg-danger">Low Margin</span>
+                  <% end %>
+
+                  <% if delivery_rate >= 90 %>
+                    <span class="badge bg-success">High Delivery Rate</span>
+                  <% elsif delivery_rate >= 70 %>
+                    <span class="badge bg-warning">Moderate Delivery Rate</span>
+                  <% else %>
+                    <span class="badge bg-danger">Low Delivery Rate</span>
+                  <% end %>
+
+                  <% if profit > 0 %>
+                    <span class="badge bg-success">Profitable</span>
+                  <% else %>
+                    <span class="badge bg-danger">Loss Making</span>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

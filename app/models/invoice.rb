@@ -172,6 +172,14 @@ class Invoice < ApplicationRecord
     return all if query.blank?
     joins(:customer).where("customers.name ILIKE ?", "#{query}%")
   }
+
+  # Performance optimized scopes
+  scope :with_customer_and_items, -> { includes(:customer, :invoice_items => :product) }
+  scope :with_totals, -> {
+    left_joins(:invoice_items)
+    .select('invoices.*, COALESCE(SUM(invoice_items.quantity * invoice_items.unit_price), 0) as calculated_total')
+    .group('invoices.id')
+  }
   
   # Callbacks
   before_create :generate_invoice_number

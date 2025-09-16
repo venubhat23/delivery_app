@@ -1,0 +1,224 @@
+<!-- Dashboard & Reports Tab -->
+<% active_tab = local_assigns[:active_tab] || 'dashboard' %>
+<div class="tab-pane fade <%= 'show active' if active_tab == 'dashboard' %>" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+  <!-- Filter Section -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body py-2">
+          <%= form_with url: milk_analytics_path, method: :get, local: true, class: "d-flex flex-wrap align-items-end gap-3" do |form| %>
+            <!-- Hidden field to maintain dashboard tab -->
+            <%= form.hidden_field :tab, value: 'dashboard' %>
+
+            <!-- Product Filter -->
+            <div class="flex-fill" style="min-width: 200px; max-width: 300px;">
+              <label class="form-label fw-bold text-primary mb-1">
+                <i class="fas fa-box me-1"></i>Product Filter
+              </label>
+              <%= form.select :product_id,
+                  options_for_select([['All Products', '']] +
+                    Product.all.map { |p| ["#{p.name} (#{p.unit_type})", p.id] },
+                    params[:product_id]),
+                  {},
+                  {
+                    class: "form-select",
+                    onchange: "this.form.submit()"
+                  } %>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="flex-fill" style="min-width: 150px; max-width: 200px;">
+              <label class="form-label fw-bold text-primary mb-1">
+                <i class="fas fa-calendar me-1"></i>Date Range
+              </label>
+              <%= form.select :date_range,
+                  options_for_select([
+                    ['Today', 'today'],
+                    ['Weekly', 'weekly'],
+                    ['Monthly', 'monthly'],
+                    ['Custom Range', 'custom']
+                  ], params[:date_range] || 'monthly'),
+                  {},
+                  {
+                    class: "form-select",
+                    id: "date-range-select",
+                    onchange: "toggleCustomDates(); this.form.submit()"
+                  } %>
+            </div>
+
+            <!-- Custom Date Fields -->
+            <div class="custom-dates d-flex gap-2" style="<%= params[:date_range] == 'custom' ? '' : 'display: none;' %>">
+              <div>
+                <label class="form-label fw-bold text-primary mb-1">From Date</label>
+                <%= form.date_field :from_date,
+                    value: params[:from_date] || Date.today.to_s,
+                    class: "form-control",
+                    style: "min-width: 140px;" %>
+              </div>
+              <div>
+                <label class="form-label fw-bold text-primary mb-1">To Date</label>
+                <%= form.date_field :to_date,
+                    value: params[:to_date] || Date.today.to_s,
+                    class: "form-control",
+                    style: "min-width: 140px;" %>
+              </div>
+              <div class="align-self-end">
+                <%= form.submit "Apply", class: "btn btn-primary" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Procurement Dashboard - 8 Cards Only -->
+  <div class="row mb-4">
+    <!-- Card 1: Active Vendors -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-primary text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Vendors</div>
+              <div class="h3 mb-0 fw-bold"><%= @dashboard_stats[:total_vendors] || 0 %></div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-users fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Liters Purchased -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-info text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Liters Purchased</div>
+              <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_purchased] || 0).round(2)) %>L</div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-tint fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Purchase Amount -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-warning text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Total Purchased Amount</div>
+              <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_purchased_amount] || 0).round(1)) %></div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-rupee-sign fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Liters Delivered -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-success text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Liters Delivered</div>
+              <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:liters_delivered] || 0).round(1)) %>L</div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-truck fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Pending Quantity -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-warning text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Pending Quantity</div>
+              <div class="h3 mb-0 fw-bold"><%= number_with_delimiter((@dashboard_stats[:total_pending_quantity] || 0).round(1)) %>L</div>
+              <div class="text-white-75 small">Received - Delivered</div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-balance-scale fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Revenue After Discount -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-primary text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Revenue After Discount</div>
+              <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:total_amount_collected] || 0).round(2)) %></div>
+              <div class="text-white-75 small">Total delivery earnings</div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-money-bill-wave fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Loss -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-danger text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Loss Amount</div>
+              <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:loss_amount] || 0).round(1)) %></div>
+              <div class="text-white-75 small">Cost exceeds revenue</div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-arrow-down fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Profit Amount -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card gradient-success text-white shadow-lg h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <div class="text-white-75 text-uppercase mb-1 fw-bold small">Profit Amount</div>
+              <div class="h3 mb-0 fw-bold">₹<%= number_with_delimiter((@dashboard_stats[:profit_amount] || 0).round(1)) %></div>
+              <div class="text-white-75 small">Revenue exceeds cost</div>
+            </div>
+            <div class="ms-3">
+              <i class="fas fa-arrow-up fa-2x text-white opacity-75"></i>
+            </div>
+          </div>
+          <div class="mt-2">
+            <div class="text-white-75 small fw-bold">Utilization Rate</div>
+            <div class="h5 mb-0 fw-bold text-white"><%= (@dashboard_stats[:utilization_rate] || 0).round(1) %>%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%= render 'summary_tables' %>
+  <%= render 'detailed_calculations' %>
+</div>

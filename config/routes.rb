@@ -320,6 +320,10 @@ Rails.application.routes.draw do
       patch :update_schedule
       delete :destroy_schedule
       get :get_schedule
+      get :filter_schedules_by_month
+      post :procurement_schedules_data
+      post :copy_schedules_from_last_month
+      delete :delete_individual_schedule
     end
     
     member do

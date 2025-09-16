@@ -46,7 +46,7 @@ class Customer < ApplicationRecord
   # Custom validation to ensure both lat and lng are provided together
   validate :coordinates_presence
 
-  # Scopes
+  # Optimized Scopes with proper includes to prevent N+1 queries
   scope :assigned, -> { where.not(delivery_person_id: nil) }
   scope :unassigned, -> { where(delivery_person_id: nil) }
   scope :with_coordinates, -> { where.not(latitude: nil, longitude: nil) }
@@ -61,6 +61,44 @@ class Customer < ApplicationRecord
   scope :by_delivery_person, ->(dp) { where(delivery_person: dp) }
   scope :recent, -> { order(created_at: :desc) }
   scope :active, -> { where(is_active: true) }
+
+  # N+1 Prevention Scopes
+  scope :with_delivery_person, -> { includes(:delivery_person) }
+  scope :with_user, -> { includes(:user) }
+  scope :with_full_associations, -> {
+    includes(:user, :delivery_person, :delivery_assignments, :delivery_schedules, :invoices, :customer_preference)
+  }
+  scope :with_basic_associations, -> { includes(:user, :delivery_person) }
+  scope :with_delivery_data, -> {
+    includes(:delivery_assignments, :delivery_schedules, delivery_assignments: :product)
+  }
+
+  # Performance optimized scopes
+  scope :with_delivery_counts, -> {
+    left_joins(:delivery_assignments)
+    .select('customers.*, COUNT(delivery_assignments.id) as delivery_assignments_count')
+    .group('customers.id')
+  }
+
+  scope :with_invoice_totals, -> {
+    left_joins(:invoices)
+    .select('customers.*, COALESCE(SUM(invoices.total_amount), 0) as total_invoice_amount')
+    .group('customers.id')
+  }
+
+  # Combined scope to avoid SELECT conflicts when chaining
+  scope :with_stats, -> {
+    left_joins(:delivery_assignments, :invoices)
+    .select('customers.*',
+            'COUNT(DISTINCT delivery_assignments.id) as delivery_assignments_count',
+            'COALESCE(SUM(invoices.total_amount), 0) as total_invoice_amount')
+    .group('customers.id')
+  }
+
+  # Simplified scope for index pages - just basic associations
+  scope :for_index, -> {
+    includes(:user, :delivery_person)
+  }
 
   # Customer type scopes (Legacy - based on customer_type field)
   scope :regular_customers_legacy, -> { where(customer_type: 0) }
@@ -468,25 +506,35 @@ class Customer < ApplicationRecord
     Product.find_by(id: regular_product_id)&.name
   end
 
-  # Delivery related methods
+  # Optimized Delivery related methods to prevent N+1 queries
   def total_deliveries
-    deliveries.count
+    # Use preloaded data if available
+    if respond_to?(:delivery_assignments_count) && delivery_assignments_count.present?
+      delivery_assignments_count
+    else
+      delivery_assignments.count
+    end
   end
 
   def pending_deliveries
-    deliveries.where(status: 'pending').count
+    delivery_assignments.where(status: 'pending').count
   end
 
   def completed_deliveries
-    deliveries.where(status: 'completed').count
+    delivery_assignments.where(status: 'completed').count
   end
 
   def last_delivery_date
-    deliveries.order(:delivery_date).last&.delivery_date
+    delivery_assignments.completed.order(:scheduled_date).last&.scheduled_date
   end
 
   def delivery_assignments_count
-    delivery_assignments.count
+    # Use preloaded count if available
+    if respond_to?(:delivery_assignments_count) && attributes['delivery_assignments_count'].present?
+      attributes['delivery_assignments_count']
+    else
+      delivery_assignments.count
+    end
   end
 
   def active_schedules
@@ -497,13 +545,18 @@ class Customer < ApplicationRecord
     active_schedules.exists?
   end
 
-  # Invoice related methods
+  # Optimized Invoice related methods
   def total_invoices
     invoices.count
   end
 
   def total_invoice_amount
-    invoices.sum(:total_amount) || 0
+    # Use preloaded data if available
+    if respond_to?(:total_invoice_amount) && attributes['total_invoice_amount'].present?
+      attributes['total_invoice_amount'].to_f
+    else
+      invoices.sum(:total_amount) || 0
+    end
   end
 
   def pending_invoice_amount

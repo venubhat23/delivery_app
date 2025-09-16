@@ -1,0 +1,104 @@
+<!-- Delivery Revenue Analysis -->
+<div class="row mb-4">
+  <div class="col-12">
+    <h6 class="text-success mb-3">
+      <i class="fas fa-truck me-2"></i>Delivery Revenue Analysis
+    </h6>
+
+    <div class="row">
+      <!-- Total Delivery Summary -->
+      <div class="col-md-6 mb-3">
+        <div class="card border-success">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">🚚 Total Delivery Overview</h6>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm mb-0">
+              <tr>
+                <td><strong>Total Delivered:</strong></td>
+                <td class="text-end"><%= number_with_delimiter(@total_delivered || 0) %> L</td>
+              </tr>
+              <tr>
+                <td><strong>Total Revenue:</strong></td>
+                <td class="text-end">₹<%= number_with_delimiter(@total_revenue || 0, precision: 2) %></td>
+              </tr>
+              <tr>
+                <td><strong>Average Selling Price:</strong></td>
+                <td class="text-end">
+                  ₹<%= (@total_delivered && @total_delivered > 0) ? (@total_revenue.to_f / @total_delivered).round(2) : 0 %> per L
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Delivery Rate:</strong></td>
+                <td class="text-end">
+                  <%= (@total_liters && @total_liters > 0) ? ((@total_delivered.to_f / @total_liters) * 100).round(1) : 0 %>%
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Formula -->
+      <div class="col-md-6 mb-3">
+        <div class="card border-warning">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">💰 Revenue Calculation Formula</h6>
+          </div>
+          <div class="card-body">
+            <div class="formula-box p-3 bg-light rounded">
+              <p class="mb-2"><strong>Total Revenue =</strong></p>
+              <p class="mb-2">Σ (Delivered Quantity × Selling Price)</p>
+              <hr class="my-2">
+              <p class="mb-2"><strong>Delivery Efficiency =</strong></p>
+              <p class="mb-0">(Total Delivered ÷ Total Procured) × 100</p>
+            </div>
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              Revenue from all customer deliveries for the selected period
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery Summary by Product (if available) -->
+    <% if @delivery_summary.present? && @delivery_summary.any? %>
+      <div class="mt-3">
+        <h6 class="text-secondary mb-2">
+          <i class="fas fa-box me-2"></i>Product-wise Delivery Breakdown
+        </h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-striped">
+            <thead class="table-dark">
+              <tr>
+                <th>Product</th>
+                <th class="text-end">Quantity Delivered (L)</th>
+                <th class="text-end">Revenue (₹)</th>
+                <th class="text-end">Avg Price (₹/L)</th>
+                <th class="text-end">Revenue Share (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% total_revenue = @delivery_summary.sum { |d| d[:total_revenue] || 0 } %>
+              <% @delivery_summary.each do |delivery| %>
+                <tr>
+                  <td><%= delivery[:product_name] || 'N/A' %></td>
+                  <td class="text-end"><%= number_with_delimiter(delivery[:total_delivered] || 0) %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(delivery[:total_revenue] || 0, precision: 2) %></td>
+                  <td class="text-end">
+                    ₹<%= (delivery[:total_delivered] && delivery[:total_delivered] > 0) ?
+                          (delivery[:total_revenue].to_f / delivery[:total_delivered]).round(2) : 0 %>
+                  </td>
+                  <td class="text-end">
+                    <%= total_revenue > 0 ? ((delivery[:total_revenue] || 0) * 100.0 / total_revenue).round(1) : 0 %>%
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

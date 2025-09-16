@@ -1,0 +1,954 @@
+<!-- JavaScript for Tab and Form Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize date range selector
+  const dateRangeSelect = document.querySelector('select[name="date_range"]');
+  if (dateRangeSelect) {
+    toggleCustomDates();
+  }
+
+  // Initialize product search functionality
+  initializeProductSearch();
+
+  // Initialize procurement schedule tab
+  initializeProcurementScheduleTab();
+});
+
+// Toggle custom date fields based on date range selection
+function toggleCustomDates() {
+  const dateRangeSelect = document.getElementById('date-range-select');
+  const customDates = document.querySelector('.custom-dates');
+
+  if (dateRangeSelect && customDates) {
+    const isCustom = dateRangeSelect.value === 'custom';
+    customDates.style.display = isCustom ? 'flex' : 'none';
+  }
+}
+
+// Product search functionality
+function initializeProductSearch() {
+  const searchInput = document.getElementById('product-search');
+  const searchResults = document.getElementById('product-search-results');
+  const selectedDisplay = document.getElementById('selected-product-display');
+  const dropdownContainer = document.getElementById('product-dropdown-container');
+  const hiddenInput = document.getElementById('selected-product-id');
+
+  if (!searchInput) return;
+
+  let searchTimeout;
+
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+
+    if (query.length < 2) {
+      searchResults.style.display = 'none';
+      return;
+    }
+
+    searchTimeout = setTimeout(() => {
+      performProductSearch(query);
+    }, 300);
+  });
+
+  searchInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      searchResults.style.display = 'none';
+    }, 200);
+  });
+}
+
+function performProductSearch(query) {
+  // This would typically make an AJAX call to search products
+  // For now, we'll use a simple client-side filter
+  const dropdown = document.getElementById('product-dropdown');
+  if (!dropdown) return;
+
+  const options = Array.from(dropdown.options);
+  const matches = options.filter(option =>
+    option.text.toLowerCase().includes(query.toLowerCase()) && option.value !== ''
+  );
+
+  displaySearchResults(matches);
+}
+
+function displaySearchResults(matches) {
+  const searchResults = document.getElementById('product-search-results');
+  if (!searchResults) return;
+
+  if (matches.length === 0) {
+    searchResults.innerHTML = '<div class="list-group-item text-muted">No products found</div>';
+  } else {
+    const html = matches.map(option =>
+      `<div class="list-group-item list-group-item-action" onclick="selectProduct('${option.value}', '${option.text}')">
+        ${option.text}
+      </div>`
+    ).join('');
+    searchResults.innerHTML = html;
+  }
+
+  searchResults.style.display = 'block';
+}
+
+function selectProduct(productId, productText) {
+  const hiddenInput = document.getElementById('selected-product-id');
+  const selectedDisplay = document.getElementById('selected-product-display');
+  const selectedInfo = document.getElementById('selected-product-info');
+  const searchInput = document.getElementById('product-search');
+  const searchResults = document.getElementById('product-search-results');
+  const dropdownContainer = document.getElementById('product-dropdown-container');
+
+  if (hiddenInput) hiddenInput.value = productId;
+  if (selectedInfo) selectedInfo.innerHTML = `<strong>Selected:</strong> ${productText}`;
+  if (selectedDisplay) selectedDisplay.style.display = 'block';
+  if (searchInput) searchInput.value = '';
+  if (searchResults) searchResults.style.display = 'none';
+  if (dropdownContainer) dropdownContainer.style.display = 'none';
+}
+
+function clearProductSelection() {
+  const hiddenInput = document.getElementById('selected-product-id');
+  const selectedDisplay = document.getElementById('selected-product-display');
+  const dropdownContainer = document.getElementById('product-dropdown-container');
+  const dropdown = document.getElementById('product-dropdown');
+
+  if (hiddenInput) hiddenInput.value = '';
+  if (selectedDisplay) selectedDisplay.style.display = 'none';
+  if (dropdownContainer) dropdownContainer.style.display = 'block';
+  if (dropdown) dropdown.selectedIndex = 0;
+}
+
+function resetProcurementForm() {
+  const form = document.querySelector('form');
+  if (form) {
+    form.reset();
+    clearProductSelection();
+  }
+}
+
+// ===== Procurement Schedule Tab Functions =====
+
+function initializeProcurementScheduleTab() {
+  const procurementScheduleTab = document.getElementById('procurement-schedule-tab');
+  const monthFilter = document.getElementById('monthFilter');
+  const vendorFilter = document.getElementById('vendorFilter');
+
+  if (procurementScheduleTab) {
+    procurementScheduleTab.addEventListener('click', function() {
+      loadProcurementSchedules();
+    });
+  }
+
+  if (monthFilter) {
+    monthFilter.addEventListener('change', function() {
+      loadProcurementSchedules();
+    });
+  }
+
+  if (vendorFilter) {
+    vendorFilter.addEventListener('change', function() {
+      loadProcurementSchedules();
+    });
+  }
+
+  // Load procurement schedules if tab is active
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('tab') === 'procurement_schedule' || procurementScheduleTab?.classList.contains('active')) {
+    loadProcurementSchedules();
+  }
+}
+
+// Load procurement schedules based on filters
+function loadProcurementSchedules() {
+  const monthFilter = document.getElementById('monthFilter');
+  const vendorFilter = document.getElementById('vendorFilter');
+  const tableBody = document.getElementById('procurementScheduleTableBody');
+  const scheduleCount = document.getElementById('scheduleCount');
+
+  if (!tableBody) return;
+
+  const monthValue = monthFilter ? monthFilter.value : 'current';
+  const vendorValue = vendorFilter ? vendorFilter.value : 'all';
+
+  // Show loading state
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="8" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 mb-0">Loading procurement schedules...</p>
+      </td>
+    </tr>
+  `;
+
+  // Prepare request data
+  const requestData = {
+    month_filter: monthValue,
+    vendor_filter: vendorValue
+  };
+
+  // Make AJAX request
+  fetch('/milk-supply-analytics/procurement_schedules_data', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify(requestData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      updateProcurementScheduleTable(data.schedules);
+      if (scheduleCount) {
+        scheduleCount.innerHTML = `
+          <i class="fas fa-info-circle me-1"></i>
+          Showing ${data.schedules.length} procurement schedules
+        `;
+      }
+    } else {
+      showErrorMessage(data.message || 'Failed to load procurement schedules');
+    }
+  })
+  .catch(error => {
+    console.error('Error loading procurement schedules:', error);
+    showErrorMessage('Failed to load procurement schedules. Please try again.');
+  });
+}
+
+// Update procurement schedule table with data
+function updateProcurementScheduleTable(schedules) {
+  const tableBody = document.getElementById('procurementScheduleTableBody');
+  if (!tableBody) return;
+
+  if (!schedules || schedules.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="10" class="text-center py-4">
+          <div class="text-muted">
+            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+            <h5>No Procurement Schedules Found</h5>
+            <p>No schedules match the selected filters.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const tableRows = schedules.map(schedule => {
+    const statusBadge = getStatusBadge(schedule.status);
+    const fromDate = new Date(schedule.from_date).toLocaleDateString('en-IN');
+    const toDate = new Date(schedule.to_date).toLocaleDateString('en-IN');
+    const duration = Math.ceil((new Date(schedule.to_date) - new Date(schedule.from_date)) / (1000 * 60 * 60 * 24)) + 1;
+    const totalAmount = (schedule.quantity * schedule.buying_price * duration).toFixed(2);
+
+    return `
+      <tr data-schedule-id="${schedule.id}">
+        <td>
+          <div class="form-check">
+            <input class="form-check-input schedule-checkbox" type="checkbox" value="${schedule.id}" onchange="updateSelectionState()">
+            <label class="form-check-label">
+              <span class="visually-hidden">Select schedule</span>
+            </label>
+          </div>
+        </td>
+        <td>
+          <strong>${fromDate}</strong> - <strong>${toDate}</strong>
+          <br>
+          <small class="text-muted">${duration} day${duration > 1 ? 's' : ''}</small>
+        </td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+              <i class="fas fa-truck"></i>
+            </div>
+            <div>
+              <strong>${schedule.vendor_name || 'Unknown'}</strong>
+              <br>
+              <small class="text-muted">${schedule.vendor_contact || ''}</small>
+            </div>
+          </div>
+        </td>
+        <td>
+          <strong>${schedule.product_name}</strong>
+          <br>
+          <small class="text-muted">${schedule.product_unit || 'unit'}</small>
+        </td>
+        <td>
+          <span class="badge bg-secondary px-2 py-1">
+            ${schedule.quantity} ${schedule.product_unit || 'units'}/day
+          </span>
+          <br>
+          <small class="text-muted">Total: ${(schedule.quantity * duration).toFixed(2)} ${schedule.product_unit || 'units'}</small>
+        </td>
+        <td>
+          <strong>₹${schedule.buying_price}</strong>
+          <br>
+          <small class="text-muted">per ${schedule.product_unit || 'unit'}</small>
+        </td>
+        <td>
+          <strong class="text-success">₹${totalAmount}</strong>
+        </td>
+        <td>${statusBadge}</td>
+        <td>
+          <small>
+            <strong>${schedule.created_by_name || 'System'}</strong>
+            <br>
+            <span class="text-muted">${schedule.created_at ? new Date(schedule.created_at).toLocaleDateString('en-IN') : ''}</span>
+          </small>
+        </td>
+        <td>
+          <div class="btn-group-vertical" style="gap: 2px;">
+            <button class="btn btn-outline-danger btn-sm"
+                    onclick="deleteIndividualSchedule(${schedule.id}, '${schedule.vendor_name}', this)"
+                    title="Delete Schedule">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tableBody.innerHTML = tableRows;
+}
+
+// Get status badge HTML
+function getStatusBadge(status) {
+  const statusConfig = {
+    'active': { class: 'bg-success', icon: 'fas fa-check-circle', text: 'Active' },
+    'completed': { class: 'bg-primary', icon: 'fas fa-flag-checkered', text: 'Completed' },
+    'pending': { class: 'bg-warning text-dark', icon: 'fas fa-clock', text: 'Pending' },
+    'cancelled': { class: 'bg-danger', icon: 'fas fa-times-circle', text: 'Cancelled' },
+    'inactive': { class: 'bg-secondary', icon: 'fas fa-pause-circle', text: 'Inactive' }
+  };
+
+  const config = statusConfig[status] || statusConfig['pending'];
+  return `
+    <span class="badge ${config.class} px-2 py-1">
+      <i class="${config.icon} me-1"></i>${config.text}
+    </span>
+  `;
+}
+
+// Refresh procurement schedules
+function refreshProcurementSchedules() {
+  loadProcurementSchedules();
+}
+
+// Make function globally accessible
+window.refreshProcurementSchedules = refreshProcurementSchedules;
+
+// Show error message in table
+function showErrorMessage(message) {
+  const tableBody = document.getElementById('procurementScheduleTableBody');
+  if (tableBody) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="10" class="text-center py-4">
+          <div class="text-danger">
+            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+            <h5>Error Loading Data</h5>
+            <p>${message}</p>
+            <button class="btn btn-outline-primary btn-sm" onclick="refreshProcurementSchedules()">
+              <i class="fas fa-sync-alt me-1"></i>Try Again
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+// Checkbox selection functions
+function toggleSelectAll() {
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  const scheduleCheckboxes = document.querySelectorAll('.schedule-checkbox');
+
+  scheduleCheckboxes.forEach(checkbox => {
+    checkbox.checked = selectAllCheckbox.checked;
+  });
+
+  updateSelectionState();
+}
+
+function updateSelectionState() {
+  const scheduleCheckboxes = document.querySelectorAll('.schedule-checkbox');
+  const checkedBoxes = document.querySelectorAll('.schedule-checkbox:checked');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  const selectionInfoBar = document.getElementById('selectionInfoBar');
+  const selectionCount = document.getElementById('selectionCount');
+  const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+  // Update select all checkbox state
+  if (scheduleCheckboxes.length > 0) {
+    selectAllCheckbox.checked = checkedBoxes.length === scheduleCheckboxes.length;
+    selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < scheduleCheckboxes.length;
+  }
+
+  // Update selection info bar
+  if (checkedBoxes.length > 0) {
+    selectionInfoBar.style.display = 'block';
+    selectionCount.textContent = checkedBoxes.length;
+    deleteSelectedBtn.style.display = 'inline-block';
+  } else {
+    selectionInfoBar.style.display = 'none';
+    deleteSelectedBtn.style.display = 'none';
+  }
+}
+
+function clearSelection() {
+  const scheduleCheckboxes = document.querySelectorAll('.schedule-checkbox');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+  scheduleCheckboxes.forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  selectAllCheckbox.checked = false;
+  selectAllCheckbox.indeterminate = false;
+
+  updateSelectionState();
+}
+
+function getSelectedScheduleIds() {
+  const checkedBoxes = document.querySelectorAll('.schedule-checkbox:checked');
+  return Array.from(checkedBoxes).map(checkbox => parseInt(checkbox.value));
+}
+
+function deleteSelectedSchedules() {
+  const selectedIds = getSelectedScheduleIds();
+
+  if (selectedIds.length === 0) {
+    alert('Please select at least one schedule to delete.');
+    return;
+  }
+
+  if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected schedule(s)? This action cannot be undone.`)) {
+    return;
+  }
+
+  // TODO: Implement batch delete functionality
+  console.log('Deleting schedules:', selectedIds);
+  alert('Delete functionality will be implemented in the next update.');
+}
+
+// Copy from Last Month functionality
+function copySchedulesFromLastMonth() {
+  if (!confirm('This will copy all procurement schedules from last month (August 2025) to current month (September 2025) and create delivery assignments. Continue?')) {
+    return;
+  }
+
+  const copyFromLastMonthBtn = document.getElementById('copyFromLastMonthBtn');
+  const originalText = copyFromLastMonthBtn.innerHTML;
+
+  // Show loading state on button
+  copyFromLastMonthBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+  copyFromLastMonthBtn.disabled = true;
+
+  // Show attractive loading overlay
+  showCopyLoadingOverlay();
+
+  // Make API request to copy schedules
+  fetch('/milk-supply-analytics/copy_schedules_from_last_month', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({
+      from_month: '2025-08',
+      to_month: '2025-09'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Hide loading overlay
+    hideCopyLoadingOverlay();
+
+    if (data.success) {
+      showSuccessMessage(`Successfully copied ${data.copied_schedules || 0} schedule(s) and created ${data.created_assignments || 0} delivery assignment(s)!`);
+      // Refresh the table to show new data
+      loadProcurementSchedules();
+    } else {
+      showErrorAlert(`Error: ${data.message || 'Failed to copy schedules from last month'}`);
+    }
+  })
+  .catch(error => {
+    console.error('Error copying schedules:', error);
+    hideCopyLoadingOverlay();
+    showErrorAlert('Failed to copy schedules. Please try again.');
+  })
+  .finally(() => {
+    // Restore button state
+    copyFromLastMonthBtn.innerHTML = originalText;
+    copyFromLastMonthBtn.disabled = false;
+  });
+}
+
+// Loading overlay functions
+function showCopyLoadingOverlay() {
+  // Remove existing overlay if any
+  hideCopyLoadingOverlay();
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'copyLoadingOverlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
+  `;
+
+  // Create loading content
+  const loadingContent = document.createElement('div');
+  loadingContent.style.cssText = `
+    background: white;
+    padding: 3rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    animation: fadeInScale 0.3s ease-out;
+  `;
+
+  loadingContent.innerHTML = `
+    <div style="margin-bottom: 1.5rem;">
+      <div style="width: 80px; height: 80px; margin: 0 auto 1rem; position: relative;">
+        <div class="spinner-border text-primary" role="status" style="width: 80px; height: 80px; border-width: 6px;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px;">
+          <i class="fas fa-copy text-primary"></i>
+        </div>
+      </div>
+    </div>
+
+    <h5 class="mb-3 text-primary fw-bold">
+      <i class="fas fa-magic me-2"></i>
+      Copying Schedules
+    </h5>
+
+    <div class="mb-3">
+      <div class="progress mb-2" style="height: 8px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+             role="progressbar" style="width: 100%"></div>
+      </div>
+    </div>
+
+    <p class="text-muted mb-0" id="loadingStatusText">
+      <i class="fas fa-calendar-alt me-2"></i>
+      Copying schedules from August 2025 to September 2025...
+    </p>
+
+    <div class="mt-3">
+      <small class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        This may take a few moments
+      </small>
+    </div>
+  `;
+
+  // Add CSS animation
+  if (!document.getElementById('copyLoadingStyles')) {
+    const style = document.createElement('style');
+    style.id = 'copyLoadingStyles';
+    style.textContent = `
+      @keyframes fadeInScale {
+        from {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes pulseIcon {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.1); }
+      }
+
+      #copyLoadingOverlay .fas.fa-copy {
+        animation: pulseIcon 2s ease-in-out infinite;
+      }
+
+      @keyframes rotateBackground {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  overlay.appendChild(loadingContent);
+  document.body.appendChild(overlay);
+
+  // Add status text animation
+  animateLoadingText();
+}
+
+function hideCopyLoadingOverlay() {
+  const overlay = document.getElementById('copyLoadingOverlay');
+  if (overlay) {
+    overlay.style.animation = 'fadeOut 0.3s ease-in';
+    setTimeout(() => {
+      overlay.remove();
+    }, 300);
+  }
+
+  // Clear any running animations
+  if (window.loadingTextInterval) {
+    clearInterval(window.loadingTextInterval);
+  }
+}
+
+function animateLoadingText() {
+  const statusMessages = [
+    '<i class="fas fa-search me-2"></i>Finding schedules from August 2025...',
+    '<i class="fas fa-copy me-2"></i>Copying schedule details...',
+    '<i class="fas fa-calendar-plus me-2"></i>Creating delivery assignments...',
+    '<i class="fas fa-check-circle me-2"></i>Validating copied data...',
+    '<i class="fas fa-cog fa-spin me-2"></i>Finalizing process...'
+  ];
+
+  let currentIndex = 0;
+  const statusElement = document.getElementById('loadingStatusText');
+
+  if (statusElement) {
+    window.loadingTextInterval = setInterval(() => {
+      statusElement.innerHTML = statusMessages[currentIndex];
+      currentIndex = (currentIndex + 1) % statusMessages.length;
+    }, 1500);
+  }
+}
+
+// Enhanced alert functions
+function showSuccessMessage(message) {
+  // Create success modal instead of basic alert
+  const successOverlay = document.createElement('div');
+  successOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  `;
+
+  successOverlay.innerHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);">
+      <div style="color: #28a745; font-size: 3rem; margin-bottom: 1rem;">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h5 class="text-success mb-3">Success!</h5>
+      <p class="mb-3">${message}</p>
+      <button class="btn btn-success" onclick="this.closest('div').parentElement.remove()">
+        <i class="fas fa-thumbs-up me-2"></i>Great!
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(successOverlay);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (successOverlay.parentElement) {
+      successOverlay.remove();
+    }
+  }, 5000);
+}
+
+function showErrorAlert(message) {
+  // Create error modal instead of basic alert
+  const errorOverlay = document.createElement('div');
+  errorOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  `;
+
+  errorOverlay.innerHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);">
+      <div style="color: #dc3545; font-size: 3rem; margin-bottom: 1rem;">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h5 class="text-danger mb-3">Error</h5>
+      <p class="mb-3">${message}</p>
+      <button class="btn btn-danger" onclick="this.closest('div').parentElement.remove()">
+        <i class="fas fa-times me-2"></i>Close
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(errorOverlay);
+}
+
+// Delete Individual Schedule functionality
+function deleteIndividualSchedule(scheduleId, vendorName, buttonElement) {
+  if (!confirm(`Are you sure you want to delete the schedule for "${vendorName}"?\n\nThis will permanently delete:\n• The procurement schedule\n• All associated procurement assignments\n• All related delivery assignments\n\nThis action cannot be undone.`)) {
+    return;
+  }
+
+  // Show loading state on the specific button
+  const originalContent = buttonElement.innerHTML;
+  buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  buttonElement.disabled = true;
+
+  // Show attractive delete loading overlay
+  showDeleteLoadingOverlay(vendorName);
+
+  // Make API request to delete schedule
+  fetch(`/milk-supply-analytics/delete_individual_schedule`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({
+      schedule_id: scheduleId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Hide loading overlay
+    hideDeleteLoadingOverlay();
+
+    if (data.success) {
+      const records = data.deleted_records;
+      showDeleteSuccessMessage(`Schedule for "${vendorName}" deleted successfully!`, records);
+
+      // Remove the row from the table immediately for better UX
+      const row = buttonElement.closest('tr');
+      if (row) {
+        row.style.transition = 'all 0.3s ease';
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+          row.remove();
+          // Update selection state in case this row was selected
+          updateSelectionState();
+        }, 300);
+      }
+
+      // Refresh the table to ensure data consistency
+      setTimeout(() => {
+        loadProcurementSchedules();
+      }, 1000);
+    } else {
+      showErrorAlert(`Error: ${data.message || 'Failed to delete schedule'}`);
+      // Restore button state on error
+      buttonElement.innerHTML = originalContent;
+      buttonElement.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting schedule:', error);
+    hideDeleteLoadingOverlay();
+    showErrorAlert('Failed to delete schedule. Please try again.');
+
+    // Restore button state on error
+    buttonElement.innerHTML = originalContent;
+    buttonElement.disabled = false;
+  });
+}
+
+// Delete loading overlay functions
+function showDeleteLoadingOverlay(vendorName) {
+  // Remove existing overlay if any
+  hideDeleteLoadingOverlay();
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'deleteLoadingOverlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(220, 53, 69, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
+  `;
+
+  // Create loading content
+  const loadingContent = document.createElement('div');
+  loadingContent.style.cssText = `
+    background: white;
+    padding: 3rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    animation: fadeInScale 0.3s ease-out;
+    border: 3px solid #dc3545;
+  `;
+
+  loadingContent.innerHTML = `
+    <div style="margin-bottom: 1.5rem;">
+      <div style="width: 80px; height: 80px; margin: 0 auto 1rem; position: relative;">
+        <div class="spinner-border text-danger" role="status" style="width: 80px; height: 80px; border-width: 6px;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px;">
+          <i class="fas fa-trash text-danger"></i>
+        </div>
+      </div>
+    </div>
+
+    <h5 class="mb-3 text-danger fw-bold">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      Deleting Schedule
+    </h5>
+
+    <div class="mb-3">
+      <div class="progress mb-2" style="height: 8px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger"
+             role="progressbar" style="width: 100%"></div>
+      </div>
+    </div>
+
+    <p class="text-muted mb-0" id="deleteLoadingStatusText">
+      <i class="fas fa-user me-2"></i>
+      Deleting schedule for "${vendorName}"...
+    </p>
+
+    <div class="mt-3">
+      <small class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        Removing all associated data
+      </small>
+    </div>
+  `;
+
+  overlay.appendChild(loadingContent);
+  document.body.appendChild(overlay);
+
+  // Add status text animation
+  animateDeleteLoadingText(vendorName);
+}
+
+function hideDeleteLoadingOverlay() {
+  const overlay = document.getElementById('deleteLoadingOverlay');
+  if (overlay) {
+    overlay.style.animation = 'fadeOut 0.3s ease-in';
+    setTimeout(() => {
+      overlay.remove();
+    }, 300);
+  }
+
+  // Clear any running animations
+  if (window.deleteLoadingTextInterval) {
+    clearInterval(window.deleteLoadingTextInterval);
+  }
+}
+
+function animateDeleteLoadingText(vendorName) {
+  const statusMessages = [
+    `<i class="fas fa-search me-2"></i>Finding schedule for "${vendorName}"...`,
+    `<i class="fas fa-unlink me-2"></i>Removing procurement assignments...`,
+    `<i class="fas fa-calendar-times me-2"></i>Deleting delivery assignments...`,
+    `<i class="fas fa-file-invoice me-2"></i>Clearing invoice records...`,
+    `<i class="fas fa-trash me-2"></i>Finalizing deletion...`
+  ];
+
+  let currentIndex = 0;
+  const statusElement = document.getElementById('deleteLoadingStatusText');
+
+  if (statusElement) {
+    window.deleteLoadingTextInterval = setInterval(() => {
+      statusElement.innerHTML = statusMessages[currentIndex];
+      currentIndex = (currentIndex + 1) % statusMessages.length;
+    }, 1200);
+  }
+}
+
+// Enhanced delete success message
+function showDeleteSuccessMessage(message, deletedRecords) {
+  const successOverlay = document.createElement('div');
+  successOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  `;
+
+  const recordsInfo = deletedRecords ? `
+    <div class="mt-3 text-start">
+      <small class="text-muted">
+        <strong>Deleted Records:</strong><br>
+        • Procurement assignments: ${deletedRecords.deleted_assignments || 0}<br>
+        • Delivery assignments: ${deletedRecords.deleted_delivery_assignments || 0}<br>
+        • Product: ${deletedRecords.product_name || 'N/A'}
+      </small>
+    </div>
+  ` : '';
+
+  successOverlay.innerHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 450px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);">
+      <div style="color: #28a745; font-size: 3rem; margin-bottom: 1rem;">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h5 class="text-success mb-3">Successfully Deleted!</h5>
+      <p class="mb-3">${message}</p>
+      ${recordsInfo}
+      <button class="btn btn-success mt-3" onclick="this.closest('div').parentElement.remove()">
+        <i class="fas fa-thumbs-up me-2"></i>Got it!
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(successOverlay);
+
+  // Auto remove after 8 seconds
+  setTimeout(() => {
+    if (successOverlay.parentElement) {
+      successOverlay.remove();
+    }
+  }, 8000);
+}
+
+// Make functions globally accessible
+window.toggleSelectAll = toggleSelectAll;
+window.updateSelectionState = updateSelectionState;
+window.clearSelection = clearSelection;
+window.deleteSelectedSchedules = deleteSelectedSchedules;
+window.copySchedulesFromLastMonth = copySchedulesFromLastMonth;
+window.deleteIndividualSchedule = deleteIndividualSchedule;
+window.showCopyLoadingOverlay = showCopyLoadingOverlay;
+window.hideCopyLoadingOverlay = hideCopyLoadingOverlay;
+window.showDeleteLoadingOverlay = showDeleteLoadingOverlay;
+window.hideDeleteLoadingOverlay = hideDeleteLoadingOverlay;
+
+</script>

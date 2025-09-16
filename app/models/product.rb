@@ -28,6 +28,14 @@ class Product < ApplicationRecord
   scope :by_category, ->(category_id) { where(category_id: category_id) }
   scope :search, ->(term) { where("name ILIKE ? OR description ILIKE ?", "%#{term}%", "%#{term}%") }
 
+  # Performance optimized scopes
+  scope :with_delivery_count, -> {
+    left_joins(:delivery_assignments)
+    .select('products.*, COUNT(delivery_assignments.id) as delivery_assignments_count')
+    .group('products.id')
+  }
+  scope :popular, -> { joins(:delivery_assignments).group('products.id').order('COUNT(delivery_assignments.id) DESC') }
+
   # Instance methods
   def low_stock?
     available_quantity.to_f < 10

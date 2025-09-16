@@ -1,0 +1,75 @@
+<!-- Vendor Information -->
+<div class="col-md-6">
+  <%= form.label :vendor_name, "Vendor/Farm Name", class: "form-label fw-bold" %>
+  <%= form.text_field :vendor_name,
+      class: "form-control",
+      placeholder: "e.g., Nandi Milk Goshala",
+      required: true %>
+  <div class="form-text">
+    <i class="fas fa-info-circle me-1"></i>Name of the farm or milk vendor
+  </div>
+</div>
+
+<div class="col-md-6">
+  <%= form.label :unit, "Unit of Measurement", class: "form-label fw-bold" %>
+  <%= form.select :unit,
+      options_for_select([
+        ['Liters', 'liters'],
+        ['Gallons', 'gallons']
+      ], 'liters'),
+      {}, { class: "form-select", required: true } %>
+</div>
+
+<!-- Date Range -->
+<div class="col-md-6">
+  <%= form.label :from_date, "From Date", class: "form-label fw-bold" %>
+  <%= form.date_field :from_date, class: "form-control", required: true,
+      value: Date.current %>
+</div>
+
+<div class="col-md-6">
+  <%= form.label :to_date, "To Date", class: "form-label fw-bold" %>
+  <%= form.date_field :to_date, class: "form-control", required: true,
+      value: Date.current + 30.days %>
+</div>
+
+<!-- Quantities and Pricing -->
+<div class="col-md-4">
+  <%= form.label :quantity, "Daily Quantity", class: "form-label fw-bold" %>
+  <%= form.number_field :quantity,
+      class: "form-control",
+      placeholder: "100.00",
+      step: 0.01,
+      min: 0.01,
+      required: true %>
+  <div class="form-text">Liters per day</div>
+</div>
+
+<div class="col-md-4">
+  <%= form.label :buying_price, "Buying Price (₹/L)", class: "form-label fw-bold" %>
+  <%= form.number_field :buying_price,
+      class: "form-control",
+      placeholder: "90.00",
+      step: 0.01,
+      min: 0.01,
+      required: true %>
+  <div class="form-text">Cost per liter</div>
+</div>
+
+<div class="col-md-4">
+  <%= form.label :selling_price, "Selling Price (₹/L)", class: "form-label fw-bold" %>
+  <%= form.number_field :selling_price,
+      class: "form-control",
+      placeholder: "100.00",
+      step: 0.01,
+      min: 0.01,
+      required: true %>
+  <div class="form-text">Price per liter to customers</div>
+</div>
+
+<!-- Additional Information -->
+<div class="col-12">
+  <%= form.label :notes, "Notes (Optional)", class: "form-label fw-bold" %>
+  <%= form.text_area :notes, class: "form-control", rows: 3,
+      placeholder: "Any additional notes about this procurement schedule..." %>
+</div>

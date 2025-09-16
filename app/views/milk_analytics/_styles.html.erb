@@ -1,0 +1,148 @@
+<!-- Custom Styles -->
+<style>
+/* Product Dropdown Styling */
+.product-search {
+  position: relative;
+}
+
+#product-search-results {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Card styling */
+.card {
+  border-radius: 12px;
+}
+
+.copy-btn-loading .spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+#copyFromLastMonth:disabled {
+  opacity: 0.8;
+}
+
+.customer-checkbox:disabled,
+#selectAllCustomers:disabled,
+#selectAllHeader:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Gradient backgrounds for cards */
+.gradient-primary {
+  background: linear-gradient(45deg, #007bff, #0056b3);
+}
+
+.gradient-info {
+  background: linear-gradient(45deg, #17a2b8, #117a8b);
+}
+
+.gradient-success {
+  background: linear-gradient(45deg, #28a745, #1e7e34);
+}
+
+.gradient-warning {
+  background: linear-gradient(45deg, #ffc107, #e0a800);
+}
+
+.gradient-danger {
+  background: linear-gradient(45deg, #dc3545, #c82333);
+}
+
+/* Table styling */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+/* Loading states */
+.spinner-border {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-pills {
+    flex-direction: column;
+  }
+
+  .nav-pills .nav-item {
+    margin-bottom: 0.25rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+/* Form styling */
+.form-select:focus,
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(45deg, #0056b3, #004085);
+  transform: translateY(-1px);
+}
+
+/* Alert styling */
+.alert {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.alert-info {
+  background: linear-gradient(45deg, #d1ecf1, #bee5eb);
+  color: #0c5460;
+}
+
+.alert-success {
+  background: linear-gradient(45deg, #d4edda, #c3e6cb);
+  color: #155724;
+}
+
+/* Badge styling */
+.badge {
+  font-weight: 500;
+}
+
+/* Custom scrollbar */
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+</style>

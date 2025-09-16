@@ -38,7 +38,23 @@
       <div class="stats-icon">
         <i class="fas fa-user-check"></i>
       </div>
-      <div class="stats-number"><%= @customers.select { |c| c.delivery_person.present? }.count %></div>
+      <div class="stats-number">
+        <%# Optimized: Use single iteration instead of multiple selects %>
+        <%
+          assigned_count = 0
+          unassigned_count = 0
+          geolocated_count = 0
+          @customers.each do |customer|
+            if customer.delivery_person.present?
+              assigned_count += 1
+            else
+              unassigned_count += 1
+            end
+            geolocated_count += 1 if customer.latitude.present? && customer.longitude.present?
+          end
+        %>
+        <%= assigned_count %>
+      </div>
       <div class="stats-label">Assigned</div>
     </div>
   </div>
@@ -47,7 +63,7 @@
       <div class="stats-icon">
         <i class="fas fa-user-times"></i>
       </div>
-      <div class="stats-number"><%= @customers.select { |c| c.delivery_person.blank? }.count %></div>
+      <div class="stats-number"><%= unassigned_count %></div>
       <div class="stats-label">Unassigned</div>
     </div>
   </div>
@@ -56,7 +72,7 @@
       <div class="stats-icon">
         <i class="fas fa-map-marker-alt"></i>
       </div>
-      <div class="stats-number"><%= @customers.select { |c| c.latitude.present? && c.longitude.present? }.count %></div>
+      <div class="stats-number"><%= geolocated_count %></div>
       <div class="stats-label">Geo-Located</div>
     </div>
   </div>

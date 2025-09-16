@@ -40,7 +40,11 @@ class MilkAnalyticsController < ApplicationController
     calculate_daily_calculations
     # Get procurement schedules for the schedules table
     get_procurement_schedules
-    
+
+    # Set up vendors for dropdown
+    vendor_names = current_user.procurement_assignments.distinct.pluck(:vendor_name).compact.sort
+    @vendors = vendor_names.map.with_index { |name, index| OpenStruct.new(id: name, name: name) }
+
     respond_to do |format|
       format.html
       format.json do
@@ -53,6 +57,264 @@ class MilkAnalyticsController < ApplicationController
           total_profit: @total_profit
         }
       end
+    end
+  end
+
+  def procurement_schedules_data
+    begin
+      month_filter = params[:month_filter] || 'current'
+      vendor_filter = params[:vendor_filter] || 'all'
+
+      # Determine date range based on month filter
+      case month_filter
+      when 'current'
+        start_date = Date.current.beginning_of_month
+        end_date = Date.current.end_of_month
+      when 'last'
+        start_date = Date.current.prev_month.beginning_of_month
+        end_date = Date.current.prev_month.end_of_month
+      when 'all'
+        start_date = 6.months.ago.beginning_of_month
+        end_date = Date.current.end_of_month
+      else
+        start_date = Date.current.beginning_of_month
+        end_date = Date.current.end_of_month
+      end
+
+      # Base query for procurement schedules
+      schedules_query = current_user.procurement_schedules
+        .includes(:product, :user)
+        .where("from_date <= ? AND to_date >= ?", end_date, start_date)
+        .order(:from_date)
+
+      # Apply vendor filter
+      if vendor_filter != 'all' && vendor_filter.present?
+        schedules_query = schedules_query.where(vendor_name: vendor_filter)
+      end
+
+      schedules = schedules_query.map do |schedule|
+        {
+          id: schedule.id,
+          from_date: schedule.from_date,
+          to_date: schedule.to_date,
+          vendor_name: schedule.vendor_name,
+          vendor_contact: '',
+          product_name: schedule.product&.name,
+          product_unit: schedule.unit,
+          quantity: schedule.quantity,
+          buying_price: schedule.buying_price,
+          selling_price: schedule.selling_price,
+          status: schedule.status,
+          created_by_name: schedule.user&.name,
+          created_at: schedule.created_at
+        }
+      end
+
+      render json: {
+        success: true,
+        schedules: schedules,
+        total_count: schedules.count
+      }
+    rescue => e
+      Rails.logger.error "Error loading procurement schedules: #{e.message}"
+      render json: {
+        success: false,
+        message: 'Failed to load procurement schedules',
+        error: e.message
+      }, status: 500
+    end
+  end
+
+  def copy_schedules_from_last_month
+    begin
+      from_month = params[:from_month] || '2025-08'
+      to_month = params[:to_month] || '2025-09'
+
+      # Parse months to get date ranges
+      from_start_date = Date.parse("#{from_month}-01")
+      from_end_date = from_start_date.end_of_month
+
+      to_start_date = Date.parse("#{to_month}-01")
+      to_end_date = to_start_date.end_of_month
+
+      # Find schedules from the source month (August 2025)
+      source_schedules = current_user.procurement_schedules
+                                    .where(from_date: from_start_date..from_end_date)
+                                    .where(status: ['active', 'completed'])
+
+      if source_schedules.empty?
+        return render json: {
+          success: false,
+          message: "No active schedules found for #{from_start_date.strftime('%B %Y')}"
+        }
+      end
+
+      copied_schedules = 0
+      created_assignments = 0
+      errors = []
+
+      source_schedules.each do |source_schedule|
+        begin
+          # Check if schedule already exists for current month with same vendor and product
+          existing_schedule = current_user.procurement_schedules
+                                         .where(
+                                           from_date: to_start_date..to_end_date,
+                                           vendor_name: source_schedule.vendor_name,
+                                           product_id: source_schedule.product_id
+                                         ).first
+
+          if existing_schedule
+            Rails.logger.info "Schedule already exists for vendor #{source_schedule.vendor_name} in #{to_month}, skipping..."
+            next
+          end
+
+          # Create new schedule for current month
+          new_schedule = current_user.procurement_schedules.create!(
+            vendor_name: source_schedule.vendor_name,
+            product_id: source_schedule.product_id,
+            from_date: to_start_date,
+            to_date: to_end_date,
+            quantity: source_schedule.quantity,
+            buying_price: source_schedule.buying_price,
+            selling_price: source_schedule.selling_price,
+            unit: source_schedule.unit,
+            status: 'active',
+            notes: "Copied from #{from_start_date.strftime('%B %Y')} schedule"
+          )
+
+          copied_schedules += 1
+
+          # Create delivery assignments for all days in the target month
+          (to_start_date..to_end_date).each do |date|
+            # Check if delivery assignment already exists
+            existing_assignment = DeliveryAssignment.where(
+              scheduled_date: date,
+              product_id: source_schedule.product_id
+            ).first
+
+            unless existing_assignment
+              # Create delivery assignment
+              DeliveryAssignment.create!(
+                product_id: source_schedule.product_id,
+                scheduled_date: date,
+                quantity: source_schedule.quantity,
+                unit_price: source_schedule.selling_price,
+                total_amount: source_schedule.quantity * source_schedule.selling_price,
+                status: 'pending',
+                created_at: Time.current,
+                updated_at: Time.current
+              )
+              created_assignments += 1
+            end
+          end
+
+        rescue => e
+          Rails.logger.error "Error copying schedule #{source_schedule.id}: #{e.message}"
+          errors << "Failed to copy schedule for #{source_schedule.vendor_name}: #{e.message}"
+        end
+      end
+
+      if errors.any? && copied_schedules == 0
+        render json: {
+          success: false,
+          message: "Failed to copy schedules: #{errors.join(', ')}"
+        }
+      else
+        render json: {
+          success: true,
+          message: "Successfully processed schedules",
+          copied_schedules: copied_schedules,
+          created_assignments: created_assignments,
+          errors: errors
+        }
+      end
+
+    rescue => e
+      Rails.logger.error "Error in copy_schedules_from_last_month: #{e.message}"
+      render json: {
+        success: false,
+        message: "Failed to copy schedules from last month",
+        error: e.message
+      }, status: 500
+    end
+  end
+
+  def delete_individual_schedule
+    begin
+      schedule_id = params[:schedule_id]
+
+      if schedule_id.blank?
+        return render json: {
+          success: false,
+          message: 'Schedule ID is required'
+        }, status: 400
+      end
+
+      # Find the schedule
+      schedule = current_user.procurement_schedules.find(schedule_id)
+
+      if schedule.nil?
+        return render json: {
+          success: false,
+          message: 'Schedule not found'
+        }, status: 404
+      end
+
+      deleted_records = {
+        schedule_id: schedule.id,
+        vendor_name: schedule.vendor_name,
+        product_name: schedule.product&.name,
+        deleted_assignments: 0,
+        deleted_delivery_assignments: 0
+      }
+
+      # Delete associated procurement assignments
+      procurement_assignments = current_user.procurement_assignments
+                                           .where(
+                                             vendor_name: schedule.vendor_name,
+                                             product_id: schedule.product_id
+                                           )
+                                           .where(date: schedule.from_date..schedule.to_date)
+
+      deleted_records[:deleted_assignments] = procurement_assignments.count
+      procurement_assignments.destroy_all
+
+      # Delete associated delivery assignments if they exist
+      if defined?(DeliveryAssignment) && schedule.product_id.present?
+        delivery_assignments = DeliveryAssignment.where(
+          product_id: schedule.product_id,
+          scheduled_date: schedule.from_date..schedule.to_date
+        )
+        deleted_records[:deleted_delivery_assignments] = delivery_assignments.count
+        delivery_assignments.destroy_all
+      end
+
+      # Delete associated procurement invoices
+      schedule.procurement_invoices.destroy_all if schedule.respond_to?(:procurement_invoices)
+
+      # Finally delete the schedule itself
+      schedule.destroy!
+
+      Rails.logger.info "Successfully deleted schedule #{schedule_id} and associated records"
+
+      render json: {
+        success: true,
+        message: "Schedule for #{deleted_records[:vendor_name]} deleted successfully",
+        deleted_records: deleted_records
+      }
+
+    rescue ActiveRecord::RecordNotFound
+      render json: {
+        success: false,
+        message: 'Schedule not found'
+      }, status: 404
+    rescue => e
+      Rails.logger.error "Error deleting schedule: #{e.message}"
+      render json: {
+        success: false,
+        message: 'Failed to delete schedule',
+        error: e.message
+      }, status: 500
     end
   end
 
@@ -227,8 +489,9 @@ class MilkAnalyticsController < ApplicationController
       end
     end
     
-    # Available vendors for dropdown
-    @vendors = current_user.procurement_assignments.distinct.pluck(:vendor_name).compact.sort
+    # Available vendors for dropdown - get distinct vendor names with fake IDs
+    vendor_names = current_user.procurement_assignments.distinct.pluck(:vendor_name).compact.sort
+    @vendors = vendor_names.map.with_index { |name, index| OpenStruct.new(id: name, name: name) }
   end
 
   def profit_analysis
@@ -469,6 +732,74 @@ class MilkAnalyticsController < ApplicationController
   rescue ActiveRecord::RecordNotFound
     respond_to do |format|
       format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+    end
+  end
+
+  def filter_schedules_by_month
+    Rails.logger.info "=== FILTER_SCHEDULES_BY_MONTH CALLED ==="
+    Rails.logger.info "Month filter: #{params[:month_filter]}"
+    Rails.logger.info "User: #{current_user&.email}"
+
+    month_filter = params[:month_filter] || 'all'
+
+    # Calculate date ranges based on filter
+    case month_filter
+    when 'current'
+      start_date = Date.current.beginning_of_month
+      end_date = Date.current.end_of_month
+    when 'last'
+      start_date = 1.month.ago.beginning_of_month
+      end_date = 1.month.ago.end_of_month
+    else # 'all'
+      start_date = nil
+      end_date = nil
+    end
+
+    # Get filtered schedules
+    schedules_query = current_user.procurement_schedules
+                                 .includes(:procurement_assignments, :product)
+                                 .preload(:product, procurement_assignments: :product)
+
+    if start_date && end_date
+      schedules_query = schedules_query.where(
+        "from_date >= ? AND from_date <= ?",
+        start_date, end_date
+      )
+    end
+
+    @procurement_schedules = schedules_query.order(:from_date, :created_at)
+
+    respond_to do |format|
+      format.json do
+        schedules_data = @procurement_schedules.map do |schedule|
+          {
+            id: schedule.id,
+            vendor_name: schedule.vendor_name,
+            product_name: schedule.product&.name || 'N/A',
+            from_date: schedule.from_date.strftime('%d %b - '),
+            to_date: schedule.to_date.strftime('%d %b %Y'),
+            quantity: schedule.quantity,
+            buying_price: schedule.buying_price,
+            selling_price: schedule.selling_price,
+            status: schedule.status,
+            unit: schedule.unit,
+            notes: schedule.notes,
+            month: schedule.from_date.strftime('%Y-%m'),
+            product_id: schedule.product_id
+          }
+        end
+
+        render json: {
+          success: true,
+          schedules: schedules_data,
+          count: schedules_data.length
+        }
+      end
+    end
+  rescue => e
+    Rails.logger.error "Error filtering schedules: #{e.message}"
+    respond_to do |format|
+      format.json { render json: { success: false, error: e.message }, status: 500 }
     end
   end
 
@@ -1218,19 +1549,28 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def calculate_vendor_performance(start_date, end_date)
-    current_user.procurement_assignments
-               .for_date_range(start_date, end_date)
-               .group_by(&:vendor_name)
-               .map do |vendor, assignments|
-      completed_assignments = assignments.select { |a| a.status == 'completed' }
-      assignments_with_actual_quantity = assignments.select { |a| a.actual_quantity.present? }
-      
+    # Use SQL aggregation for vendor performance
+    vendor_stats = current_user.procurement_assignments
+                               .for_date_range(start_date, end_date)
+                               .group(:vendor_name)
+                               .select(
+                                 'vendor_name',
+                                 'COUNT(*) as total_assignments',
+                                 'COUNT(CASE WHEN status = \'completed\' THEN 1 END) as completed_assignments',
+                                 'AVG(CASE WHEN actual_quantity IS NOT NULL THEN actual_quantity END) as avg_quantity',
+                                 'SUM(COALESCE(actual_profit, 0)) as total_profit',
+                                 'STDDEV(buying_price) as price_variance'
+                               ).map do |result|
+      reliability = result.total_assignments > 0 ? (result.completed_assignments.to_f / result.total_assignments * 100).round(2) : 0
+      # Calculate price consistency: higher variance = lower consistency
+      price_consistency = result.price_variance.to_f == 0 ? 100 : [100 - (result.price_variance.to_f * 10), 0].max.round(2)
+
       {
-        vendor: vendor,
-        reliability: assignments.empty? ? 0 : (completed_assignments.count.to_f / assignments.count * 100).round(2),
-        average_quantity: assignments_with_actual_quantity.empty? ? 0 : (assignments_with_actual_quantity.sum(&:actual_quantity).to_f / assignments_with_actual_quantity.count).round(2),
-        total_profit: assignments.sum(&:actual_profit),
-        price_consistency: calculate_price_consistency(assignments)
+        vendor: result.vendor_name,
+        reliability: reliability,
+        average_quantity: result.avg_quantity&.round(2) || 0,
+        total_profit: result.total_profit&.to_f || 0,
+        price_consistency: price_consistency
       }
     end.sort_by { |v| -v[:reliability] }
   end
@@ -1378,28 +1718,26 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def calculate_summaries
-    # Vendor summary with safe nil handling - filter by current user
+    # Vendor summary with optimized SQL GROUP BY instead of Ruby group_by
     procurement_data = current_user.procurement_assignments.for_date_range(@start_date, @end_date)
-    
+
     # Apply product filter if specified
     if @product_id.present?
       procurement_data = procurement_data.where(product_id: @product_id)
     end
-    
-    if procurement_data.any?
-      @vendor_summary = procurement_data.group_by(&:vendor_name)
-                                      .map do |vendor_name, assignments|
-        # Use ONLY planned quantities - not actual
-        planned_quantity = assignments.sum { |a| a.planned_quantity || 0 }
-        planned_amount = assignments.sum { |a| (a.planned_quantity || 0) * a.buying_price }
-        {
-          name: vendor_name || 'Unknown Vendor',
-          quantity: planned_quantity,
-          amount: planned_amount
-        }
-      end
-    else
-      @vendor_summary = []
+
+    # Use SQL aggregation instead of Ruby iteration
+    @vendor_summary = procurement_data.group(:vendor_name)
+                                     .select(
+                                       'vendor_name',
+                                       'SUM(COALESCE(planned_quantity, 0)) as total_quantity',
+                                       'SUM(COALESCE(planned_quantity, 0) * buying_price) as total_amount'
+                                     ).map do |result|
+      {
+        name: result.vendor_name || 'Unknown Vendor',
+        quantity: result.total_quantity&.to_f || 0,
+        amount: result.total_amount&.to_f || 0
+      }
     end
     
     # Delivery summary with safe nil handling and error recovery
@@ -1479,29 +1817,33 @@ class MilkAnalyticsController < ApplicationController
   end
 
   def generate_vendor_performance_report(from_date, to_date)
+    # Use SQL aggregation for vendor performance data
     vendors_data = ProcurementAssignment.for_date_range(from_date, to_date)
-                                       .group_by(&:vendor_name)
-                                       .map do |vendor_name, assignments|
-      total_assignments = assignments.count
-      completed_assignments = assignments.count { |a| a.status == 'completed' }
+                                       .group(:vendor_name)
+                                       .select(
+                                         'vendor_name',
+                                         'COUNT(*) as total_assignments',
+                                         'COUNT(CASE WHEN status = \'completed\' THEN 1 END) as completed_assignments',
+                                         'SUM(COALESCE(actual_quantity, planned_quantity, 0)) as total_quantity',
+                                         'SUM(CASE WHEN actual_quantity IS NOT NULL THEN actual_cost ELSE planned_cost END) as total_cost',
+                                         'AVG(buying_price) as avg_price'
+                                       ).map do |result|
+      total_assignments = result.total_assignments
+      completed_assignments = result.completed_assignments
       reliability = total_assignments > 0 ? (completed_assignments.to_f / total_assignments * 100).round(2) : 0
-      
-      total_quantity = assignments.sum { |a| a.actual_quantity || a.planned_quantity || 0 }
-      total_cost = assignments.sum { |a| a.actual_quantity ? a.actual_cost : a.planned_cost }
-      avg_price = assignments.map(&:buying_price).sum / assignments.count if assignments.count > 0
-      
+
       {
-        vendor_name: vendor_name || 'Unknown',
+        vendor_name: result.vendor_name || 'Unknown',
         total_assignments: total_assignments,
         completed_assignments: completed_assignments,
         reliability_percentage: reliability,
-        total_quantity: total_quantity,
-        total_cost: total_cost,
-        average_price: avg_price&.round(2) || 0,
-        performance_score: ((reliability + (total_quantity > 0 ? 100 : 0)) / 2).round(2)
+        total_quantity: result.total_quantity&.to_f || 0,
+        total_cost: result.total_cost&.to_f || 0,
+        average_price: result.avg_price&.round(2) || 0,
+        performance_score: ((reliability + (result.total_quantity&.to_f > 0 ? 100 : 0)) / 2).round(2)
       }
     end
-    
+
     vendors_data.sort_by { |v| -v[:performance_score] }
   end
 
@@ -1988,7 +2330,7 @@ class MilkAnalyticsController < ApplicationController
     @vendor_analysis = assignments_array.group_by(&:vendor_name).map do |vendor, assignments|
       total_quantity = assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 }
       total_amount = assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
-      
+
       {
         vendor_name: vendor,
         total_liters: total_quantity,
@@ -1996,11 +2338,11 @@ class MilkAnalyticsController < ApplicationController
         average_price: total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
       }
     end.sort_by { |v| -v[:total_amount] }
-    
+
     # Daily procurement tracking
     @daily_procurement = (@start_date..@end_date).map do |date|
       daily_assignments = assignments_array.select { |a| a.date == date }
-      
+
       {
         date: date,
         vendors_engaged: daily_assignments.map(&:vendor_name).uniq.count,
@@ -2008,33 +2350,29 @@ class MilkAnalyticsController < ApplicationController
         total_amount: daily_assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
       }
     end.select { |day| day[:total_liters] > 0 }
-    
-    # Daily delivery information
-    @daily_delivery = (@start_date..@end_date).map do |date|
-      begin
-        daily_deliveries = delivery_query.where(scheduled_date: date)
-        
+
+    # Daily delivery information - OPTIMIZED to avoid N+1 queries
+    begin
+      # Single query to get all delivery data with proper includes
+      delivery_data = delivery_query
+        .includes(:customer)
+        .select(:scheduled_date, :customer_id, :quantity, :id)
+        .group_by(&:scheduled_date)
+
+      @daily_delivery = (@start_date..@end_date).map do |date|
+        daily_deliveries = delivery_data[date] || []
+
         {
           date: date,
-          customers_served: begin
-            daily_deliveries.joins(:customer).distinct.count(:customer_id)
-          rescue => e
-            Rails.logger.warn "Cannot join customer table for daily deliveries on #{date}: #{e.message}"
-            0
-          end,
-          total_liters: daily_deliveries.sum(:quantity) || 0,
+          customers_served: daily_deliveries.map(&:customer_id).uniq.count,
+          total_liters: daily_deliveries.sum(&:quantity) || 0,
           assignments_completed: daily_deliveries.count
         }
-      rescue => e
-        Rails.logger.error "Error calculating daily deliveries for #{date}: #{e.message}"
-        {
-          date: date,
-          customers_served: 0,
-          total_liters: 0,
-          assignments_completed: 0
-        }
-      end
-    end.select { |day| day[:total_liters] > 0 }
+      end.select { |day| day[:total_liters] > 0 }
+    rescue => e
+      Rails.logger.error "Error calculating daily deliveries: #{e.message}"
+      @daily_delivery = []
+    end
   end
   
   def set_instance_variables_from_cache(cached_data)
@@ -2083,7 +2421,7 @@ class MilkAnalyticsController < ApplicationController
       delivery_totals = {
         total_deliveries: delivery_query.count,
         total_customers: begin
-          delivery_query.joins(:customer).distinct.count(:customer_id)
+          delivery_query.includes(:customer).distinct.count(:customer_id)
         rescue => e
           Rails.logger.warn "Cannot join customer table: #{e.message}"
           delivery_query.distinct.count(:customer_id) rescue 0
@@ -2092,21 +2430,20 @@ class MilkAnalyticsController < ApplicationController
         total_revenue: delivery_query.sum(:final_amount_after_discount) || 0
       }
 
-      # Build status-wise summary expected by the view
-      grouped_by_status = delivery_query.group_by(&:status)
-      delivery_summary = grouped_by_status.map do |status, assignments|
-        status_revenue = 0
-        assignments.each do |assignment|
-          status_revenue += assignment.final_amount_after_discount || 0
-        end
+      # Build status-wise summary expected by the view - OPTIMIZED to avoid N+1
+      status_summary = delivery_query
+        .group(:status)
+        .select('status, COUNT(*) as count, SUM(quantity) as total_quantity, SUM(final_amount_after_discount) as total_revenue')
+
+      delivery_summary = status_summary.map do |record|
         {
-          status: status || 'unknown',
-          count: assignments.count,
-          quantity: assignments.sum { |a| a.quantity || 0 },
-          revenue: status_revenue
+          status: record.status || 'unknown',
+          count: record.count,
+          quantity: record.total_quantity || 0,
+          revenue: record.total_revenue || 0
         }
       end
-      
+
       [delivery_totals, delivery_summary]
     rescue => e
       Rails.logger.error "Error calculating delivery summary: #{e.message}"
@@ -2127,7 +2464,7 @@ class MilkAnalyticsController < ApplicationController
     vendor_analysis = assignments_array.group_by(&:vendor_name).map do |vendor, assignments|
       total_quantity = assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 }
       total_amount = assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
-      
+
       {
         vendor_name: vendor,
         total_liters: total_quantity,
@@ -2135,11 +2472,11 @@ class MilkAnalyticsController < ApplicationController
         average_price: total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
       }
     end.sort_by { |v| -v[:total_amount] }
-    
+
     # Daily procurement tracking
     daily_procurement = (@start_date..@end_date).map do |date|
       daily_assignments = assignments_array.select { |a| a.date == date }
-      
+
       {
         date: date,
         vendors_engaged: daily_assignments.map(&:vendor_name).uniq.count,
@@ -2147,33 +2484,29 @@ class MilkAnalyticsController < ApplicationController
         total_amount: daily_assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
       }
     end.select { |day| day[:total_liters] > 0 }
-    
-    # Daily delivery information
-    daily_delivery = (@start_date..@end_date).map do |date|
-      begin
-        daily_deliveries = delivery_query.where(scheduled_date: date)
-        
+
+    # Daily delivery information - OPTIMIZED to avoid N+1 queries
+    begin
+      # Single query to get all delivery data with proper includes
+      delivery_data = delivery_query
+        .includes(:customer)
+        .select(:scheduled_date, :customer_id, :quantity, :id)
+        .group_by(&:scheduled_date)
+
+      daily_delivery = (@start_date..@end_date).map do |date|
+        daily_deliveries = delivery_data[date] || []
+
         {
           date: date,
-          customers_served: begin
-            daily_deliveries.joins(:customer).distinct.count(:customer_id)
-          rescue => e
-            Rails.logger.warn "Cannot join customer table for daily deliveries on #{date}: #{e.message}"
-            0
-          end,
-          total_liters: daily_deliveries.sum(:quantity) || 0,
+          customers_served: daily_deliveries.map(&:customer_id).uniq.count,
+          total_liters: daily_deliveries.sum(&:quantity) || 0,
           assignments_completed: daily_deliveries.count
         }
-      rescue => e
-        Rails.logger.error "Error calculating daily deliveries for #{date}: #{e.message}"
-        {
-          date: date,
-          customers_served: 0,
-          total_liters: 0,
-          assignments_completed: 0
-        }
-      end
-    end.select { |day| day[:total_liters] > 0 }
+      end.select { |day| day[:total_liters] > 0 }
+    rescue => e
+      Rails.logger.error "Error calculating daily deliveries: #{e.message}"
+      daily_delivery = []
+    end
     
     [vendor_analysis, daily_procurement, daily_delivery]
   end

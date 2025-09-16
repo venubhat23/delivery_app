@@ -30,45 +30,39 @@ class DeliveryAssignmentsController < ApplicationController
     # Convert date to string format for database comparison if needed
     filter_date_str = filter_date.to_s
     
-    # Optimize queries with proper includes to prevent N+1 queries
-    @delivery_assignments = DeliveryAssignment.includes(
-      :user, 
-      :delivery_person, 
-      :product, 
-      :customer, 
-      :delivery_schedule,
-      :invoice
-    ).where("DATE(scheduled_date) = ?", filter_date_str)
-     .order(created_at: :desc)
-    
-    # Filter by status if provided
+    # Build base query for date filtering
+    base_query = DeliveryAssignment.where("DATE(scheduled_date) = ?", filter_date_str)
+
+    # Apply filters to base query
     if params[:status].present?
-      @delivery_assignments = @delivery_assignments.where(status: params[:status])
-    end
-    
-    # Filter by delivery person if provided
-    if params[:delivery_person_id].present?
-      @delivery_assignments = @delivery_assignments.joins(:delivery_person)
-                                            .where(delivery_person: { id: params[:delivery_person_id] })
+      base_query = base_query.where(status: params[:status])
     end
 
-    # Search by customer name
+    if params[:delivery_person_id].present?
+      base_query = base_query.where(user_id: params[:delivery_person_id])
+    end
+
     if params[:search].present?
-      @delivery_assignments = @delivery_assignments.search_by_customer(params[:search])
+      base_query = base_query.search_by_customer(params[:search])
     end
 
     if params[:customer_id].present?
-      @delivery_assignments = @delivery_assignments.where(customer_id: params[:customer_id])
+      base_query = base_query.where(customer_id: params[:customer_id])
     end
 
-    # Store filtered assignments for statistics before pagination
-    @filtered_assignments = @delivery_assignments
-    
-    # Calculate statistics for all filtered assignments (not just current page)
-    @total_assignments = @filtered_assignments.count
-    @pending_assignments = @filtered_assignments.where(status: 'pending').count
-    @completed_assignments = @filtered_assignments.where(status: 'completed').count
-    @overdue_assignments = @filtered_assignments.where(status: 'pending').where('scheduled_date < ?', Date.current).count
+    # Calculate statistics using the base query (without custom select)
+    stats = base_query.group(:status).count
+
+    # Calculate overdue count using base query
+    overdue_count = base_query.where(status: 'pending', scheduled_date: ...Date.current).count
+
+    # Now create the optimized query for display with includes
+    @delivery_assignments = base_query.with_basic_data.order(created_at: :desc)
+
+    @total_assignments = stats.values.sum
+    @pending_assignments = stats['pending'] || 0
+    @completed_assignments = stats['completed'] || 0
+    @overdue_assignments = overdue_count
     @completion_rate = @total_assignments > 0 ? ((@completed_assignments.to_f / @total_assignments) * 100).round(1) : 0
 
     # Add pagination - 50 assignments per page

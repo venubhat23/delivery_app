@@ -1,0 +1,60 @@
+<!-- Header with Navigation Tabs -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h1 class="h2 mb-1 text-dark fw-bold d-flex align-items-center">
+          <i class="fas fa-glass-milk text-primary me-2" style="font-size: 1.5rem;"></i>
+          Milk Analytics
+        </h1>
+        <p class="text-muted mb-0">Comprehensive milk procurement and delivery analytics</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <% active_tab = local_assigns[:active_tab] || params[:tab].presence || 'dashboard' %>
+    <ul class="nav nav-pills nav-fill" id="milkAnalyticsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <%= 'active' if active_tab == 'dashboard' %>" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard"
+                type="button" role="tab" aria-controls="dashboard" aria-selected="false">
+          <i class="fas fa-chart-line me-1"></i>Dashboard
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <%= 'active' if active_tab == 'reports' %>" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports"
+                type="button" role="tab" aria-controls="reports" aria-selected="false">
+          <i class="fas fa-file-alt me-1"></i>Daily Report
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <%= 'active' if active_tab == 'procurement' %>" id="procurement-tab" data-bs-toggle="pill" data-bs-target="#procurement"
+                type="button" role="tab" aria-controls="procurement" aria-selected="false">
+          <i class="fas fa-plus me-1"></i>Create Procurement
+        </button>
+      </li>
+      <li class="nav-item" role="presentation" style="display: none;">
+        <button class="nav-link <%= 'active' if active_tab == 'schedules' %>" id="schedules-tab" data-bs-toggle="pill" data-bs-target="#schedules"
+                type="button" role="tab" aria-controls="schedules" aria-selected="false">
+          <i class="fas fa-list me-1"></i>Schedules
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <%= 'active' if active_tab == 'calendar' %>" id="calendar-tab" data-bs-toggle="pill" data-bs-target="#calendar"
+                type="button" role="tab" aria-controls="calendar" aria-selected="true">
+          <i class="fas fa-calendar-alt me-1"></i>Procurement Calendar
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <%= 'active' if active_tab == 'procurement_schedule' %>" id="procurement-schedule-tab" data-bs-toggle="pill" data-bs-target="#procurement-schedule"
+                type="button" role="tab" aria-controls="procurement-schedule" aria-selected="false">
+          <i class="fas fa-clipboard-list me-1"></i>Procurement Schedule
+        </button>
+      </li>
+      <li class="nav-item" role="presentation" style="display: none;">
+        <a class="nav-link" href="<%= procurement_invoice_milk_analytics_path %>" target="_blank">
+          <i class="fas fa-file-invoice-dollar me-1"></i>Invoice
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

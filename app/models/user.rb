@@ -29,6 +29,16 @@ class User < ApplicationRecord
   scope :delivery_people, -> { where(role: 'delivery_person') }
   scope :admins, -> { where(role: 'admin') }
   scope :regular_users, -> { where(role: 'user') }
+
+  # Performance optimized scopes
+  scope :delivery_people_with_customer_counts, -> {
+    delivery_people.left_joins(:assigned_customers)
+                   .select('users.*, COUNT(customers.id) as customers_count')
+                   .group('users.id')
+  }
+  scope :with_assignments_for_date, ->(date) {
+    joins(:delivery_assignments).where(delivery_assignments: { scheduled_date: date })
+  }
   
   # Instance methods
   def delivery_person?
@@ -43,18 +53,25 @@ class User < ApplicationRecord
     role == 'customer'
   end
   
-  def can_take_customers?
-    return false unless delivery_person?
-    assigned_customers.count < 200
-  end
   
-  def available_customer_slots
-    return 0 unless delivery_person?
-    [200 - assigned_customers.count, 0].max
-  end
   
   def customer_count
-    delivery_person? ? assigned_customers.count : 0
+    if delivery_person?
+      # Use cached count if available from scope, otherwise query
+      try(:customers_count) || assigned_customers.count
+    else
+      0
+    end
+  end
+
+  def available_customer_slots
+    return 0 unless delivery_person?
+    [200 - customer_count, 0].max
+  end
+
+  def can_take_customers?
+    return false unless delivery_person?
+    customer_count < 200
   end
   
   # Get unassigned customers for assignment
