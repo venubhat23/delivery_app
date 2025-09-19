@@ -701,7 +701,7 @@
         --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
         --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
         
-        --sidebar-width: 280px;
+        --sidebar-width: 240px;
         --sidebar-collapsed-width: 70px;
         --header-height: 70px;
         --border-radius: 12px;
@@ -1003,11 +1003,11 @@
       /* Responsive Design */
       @media (max-width: 1024px) {
         .sidebar {
-          width: 260px;
+          width: var(--sidebar-width);
         }
         
         .main-content {
-          margin-left: 260px;
+          margin-left: var(--sidebar-width);
         }
       }
       

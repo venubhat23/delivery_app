@@ -84,12 +84,8 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def create
-    # Check if multiple dates mode is enabled
-    if params[:enable_multiple_dates] == 'on' && params[:delivery_dates].present?
-      create_multiple_dates_deliveries
-    else
-      create_single_delivery
-    end
+    # Create deliveries based on start and end date range
+    create_date_range_deliveries
   end
 
   def edit
@@ -374,7 +370,7 @@ class DeliveryAssignmentsController < ApplicationController
   def delivery_assignment_params
     da_params = params.require(:delivery_assignment).permit(
       :customer_id, :product_id, :quantity, :unit,
-      :scheduled_date, :special_instructions, :status, :priority,
+      :scheduled_date, :start_date, :end_date, :special_instructions, :status, :priority,
       :delivery_person_id, :discount_amount, :final_amount_after_discount,
       additional_products: [:product_id, :quantity, :unit]
     ).dup  # Create a copy to avoid modifying original params
@@ -391,10 +387,10 @@ class DeliveryAssignmentsController < ApplicationController
     if da_params[:discount_amount].present? || da_params[:final_amount_after_discount].present?
       discount_amount = da_params[:discount_amount].to_f
       final_amount = da_params[:final_amount_after_discount].to_f
-      
+
       # Ensure discount amount is not negative
       da_params[:discount_amount] = [discount_amount, 0].max
-      
+
       # Ensure final amount is not negative
       da_params[:final_amount_after_discount] = [final_amount, 0].max
     end
@@ -444,54 +440,124 @@ class DeliveryAssignmentsController < ApplicationController
     end
   end
 
-  def create_multiple_dates_deliveries
-    assignment_params = delivery_assignment_params.except(:additional_products)
-    delivery_dates = params[:delivery_dates].split(',').map(&:strip)
-    
-    created_count = 0
-    failed_dates = []
-    
-    # Validate that we have valid dates
-    if delivery_dates.empty?
+  def create_date_range_deliveries
+    assignment_params = delivery_assignment_params.except(:start_date, :end_date, :additional_products)
+    additional_products_hash = params[:additional_products] || {}
+
+    start_date = Date.parse(delivery_assignment_params[:start_date]) rescue nil
+    end_date = Date.parse(delivery_assignment_params[:end_date]) rescue nil
+
+    # Validate dates
+    if start_date.nil? || end_date.nil?
       @delivery_assignment = DeliveryAssignment.new(assignment_params)
-      @delivery_assignment.errors.add(:base, "Please select at least one delivery date")
+      @delivery_assignment.errors.add(:base, "Please provide valid start and end dates")
       load_form_data
       render :new
       return
     end
-    
-    # Create delivery assignment for each selected date
-    delivery_dates.each do |date_str|
-      begin
-        # Parse the date (should be in YYYY-MM-DD format from frontend)
-        delivery_date = Date.parse(date_str)
-        
-        # Create assignment for this date
-        assignment = DeliveryAssignment.new(assignment_params.merge(scheduled_date: delivery_date))
-        assignment.status = 'pending' if assignment.status.blank?
-        
-        if assignment.save
-          created_count += 1
-        else
-          failed_dates << date_str
-        end
-        
-      rescue Date::Error
-        failed_dates << date_str
-      end
-    end
-    
-    # Provide feedback
-    if created_count > 0
-      if failed_dates.empty?
-        notice_message = "Successfully created #{created_count} delivery assignments for #{created_count} dates."
-      else
-        notice_message = "Created #{created_count} delivery assignments. Failed to create for: #{failed_dates.join(', ')}"
-      end
-      redirect_to delivery_assignments_path, notice: notice_message
-    else
+
+    if start_date > end_date
       @delivery_assignment = DeliveryAssignment.new(assignment_params)
-      @delivery_assignment.errors.add(:base, "Failed to create any delivery assignments. Please check your input.")
+      @delivery_assignment.errors.add(:base, "End date must be after or same as start date")
+      load_form_data
+      render :new
+      return
+    end
+
+    created_schedules = 0
+    created_assignments = 0
+    failed_dates = []
+
+    begin
+      ActiveRecord::Base.transaction do
+        # First, create a delivery schedule for the date range
+        delivery_schedule = DeliverySchedule.create!(
+          customer_id: assignment_params[:customer_id],
+          user_id: assignment_params[:user_id],
+          product_id: assignment_params[:product_id],
+          start_date: start_date,
+          end_date: end_date,
+          frequency: 'daily',
+          status: 'active',
+          default_quantity: assignment_params[:quantity] || 1,
+          default_unit: assignment_params[:unit] || 'pieces',
+          default_discount_amount: assignment_params[:discount_amount] || 0
+        )
+
+        created_schedules += 1
+
+        # Create delivery assignments for each date in the range
+        current_date = start_date
+        while current_date <= end_date
+          # Create main assignment for current date
+          assignment = DeliveryAssignment.new(
+            assignment_params.merge(
+              scheduled_date: current_date,
+              delivery_schedule_id: delivery_schedule.id
+            )
+          )
+          assignment.status = 'pending' if assignment.status.blank?
+
+          if assignment.save
+            # Calculate and save final amount
+            assignment.calculate_final_amount_after_discount if assignment.respond_to?(:calculate_final_amount_after_discount)
+            created_assignments += 1
+
+            # Create additional product assignments for the same date
+            additional_products_hash.each do |index, product_data|
+              next if product_data['product_id'].blank?
+
+              additional_assignment = DeliveryAssignment.new(
+                customer_id: assignment.customer_id,
+                user_id: assignment.user_id,
+                product_id: product_data['product_id'],
+                quantity: product_data['quantity'],
+                unit: product_data['unit'] || 'pieces',
+                discount_amount: product_data['discount_amount'] || 0,
+                scheduled_date: current_date,
+                special_instructions: assignment.special_instructions,
+                status: 'pending',
+                delivery_schedule_id: delivery_schedule.id
+              )
+
+              if additional_assignment.save
+                additional_assignment.calculate_final_amount_after_discount if additional_assignment.respond_to?(:calculate_final_amount_after_discount)
+                created_assignments += 1
+              end
+            end
+          else
+            failed_dates << current_date.to_s
+          end
+
+          current_date += 1.day
+        end
+      end
+
+      # Provide feedback
+      if created_assignments > 0
+        total_days = (end_date - start_date).to_i + 1
+        if failed_dates.empty?
+          notice_message = "Successfully created #{created_schedules} delivery schedule(s) and #{created_assignments} delivery assignment(s) for #{total_days} days."
+        else
+          notice_message = "Created #{created_schedules} delivery schedule(s) and #{created_assignments} delivery assignment(s). Failed to create assignments for: #{failed_dates.join(', ')}"
+        end
+        redirect_to delivery_assignments_path, notice: notice_message
+      else
+        @delivery_assignment = DeliveryAssignment.new(assignment_params)
+        @delivery_assignment.errors.add(:base, "Failed to create any delivery assignments. Please check your input.")
+        load_form_data
+        render :new
+      end
+
+    rescue ActiveRecord::RecordInvalid => e
+      @delivery_assignment = DeliveryAssignment.new(assignment_params)
+      @delivery_assignment.errors.add(:base, "Failed to create deliveries: #{e.message}")
+      load_form_data
+      render :new
+    rescue => e
+      Rails.logger.error "Error creating date range deliveries: #{e.message}"
+      @delivery_assignment = DeliveryAssignment.new(assignment_params)
+      @delivery_assignment.errors.add(:base, "An error occurred while creating deliveries.")
       load_form_data
       render :new
     end
