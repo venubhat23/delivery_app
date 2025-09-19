@@ -137,6 +137,7 @@
                   <th>Total Liters</th>
                   <th>Primary Product</th>
                   <th>Days/Total Assignments</th>
+                  <th>Estimated Amount</th>
                   <th>Pattern</th>
                   <th>Delivery Schedule</th>
                   <th>Action</th>
@@ -183,6 +184,11 @@
                             <%= data[:total_assignments] %> total assignments
                           </small>
                         </div>
+                      </td>
+                      <td>
+                        <span class="fw-semibold text-success">
+                          ₹<%= number_with_precision(data[:estimated_amount] || 0, precision: 2) %>
+                        </span>
                       </td>
                       <td>
                         <% case data[:pattern] %>
@@ -1080,57 +1086,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Attach event listeners to modal content
-  function attachModalEventListeners() {
-    // Complete Till Today button
-    const completeTillTodayBtn = modalContent.querySelector('.complete-till-today-btn');
-    if (completeTillTodayBtn) {
-      completeTillTodayBtn.addEventListener('click', function() {
-        const customerId = this.dataset.customerId;
-        const month = this.dataset.month;
-        const year = this.dataset.year;
-
-        if (confirm('Are you sure you want to mark all pending assignments till today as completed?')) {
-          fetch(`<%= complete_till_today_customer_patterns_path %>`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-              customer_id: customerId,
-              month: month,
-              year: year
-            })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              showMessage(data.message, 'success');
-              reloadModalContent(customerId, month, year);
-            } else {
-              showMessage(data.message, 'error');
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            showMessage('❌ Error completing assignments', 'error');
-          });
-        }
-      });
-    }
-
-    // Remove All Assignments button (look in entire modal, not just content)
-    const removeAllBtn = document.querySelector('#deliveryAssignmentsModal .remove-all-assignments-btn');
-    console.log('Looking for remove all button:', removeAllBtn);
-    if (removeAllBtn) {
-      // Remove existing event listener if any
-      removeAllBtn.removeEventListener('click', handleRemoveAllClick);
-      removeAllBtn.addEventListener('click', handleRemoveAllClick);
-    }
-  }
 
   // Remove All button click handler (defined outside to avoid duplication)
   function handleRemoveAllClick() {
@@ -1211,8 +1166,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Attach other event listeners to modal content
-  function attachOtherModalEventListeners() {
+  // Continue with other modal event listeners
+  function attachModalEventListeners() {
+    // Remove All Assignments button (look in entire modal, not just content)
+    const removeAllBtn = document.querySelector('#deliveryAssignmentsModal .remove-all-assignments-btn');
+    console.log('Looking for remove all button:', removeAllBtn);
+    if (removeAllBtn) {
+      // Remove existing event listener if any
+      removeAllBtn.removeEventListener('click', handleRemoveAllClick);
+      removeAllBtn.addEventListener('click', handleRemoveAllClick);
+    }
     // Complete Till Today button
     const completeTillTodayBtn = modalContent.querySelector('.complete-till-today-btn');
     if (completeTillTodayBtn) {

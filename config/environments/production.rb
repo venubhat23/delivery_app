@@ -88,7 +88,9 @@ Rails.application.configure do
   config.hosts = [
     "atmanirbharfarm.work.gd",     # Allow requests from main domain
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
-    ENV['APP_HOST']                 # Allow requests from environment-specific host
+    "delivery-app-ieu2.onrender.com", # Allow requests from Render domain
+    /.*\.onrender\.com/,           # Allow requests from all Render domains
+    ENV['APP_HOST']                # Allow requests from environment-specific host
   ].compact
   
   # Skip DNS rebinding protection for the default health check endpoint.

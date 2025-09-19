@@ -668,6 +668,11 @@ class Customer < ApplicationRecord
         .select { |d| d.product_unit_type == 'liters' }
         .sum(&:quantity)
 
+      # Calculate estimated amount (sum of final_amount_after_discount)
+      estimated_amount = deliveries.sum do |delivery|
+        delivery.final_amount_after_discount.to_f || 0
+      end
+
       # Find primary product (most frequent)
       primary_product = if deliveries.any?
         product_counts = deliveries.group_by(&:product_id)
@@ -688,6 +693,7 @@ class Customer < ApplicationRecord
         primary_product: primary_product,
         delivery_days: delivery_days,
         days_delivered: delivery_days.length,
+        estimated_amount: estimated_amount.round(2),
         pattern: pattern,
         pattern_description: get_pattern_description(delivery_days, days_in_month),
         deliveries: deliveries,

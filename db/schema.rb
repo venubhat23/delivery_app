@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_19_014633) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_19_023306) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -146,6 +146,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_19_014633) do
     t.integer "regular_product_id"
     t.string "regular_delivery_person"
     t.string "regular_delivery_person_from_assignment"
+    t.string "monthly_pattern", default: "irregular"
+    t.datetime "pattern_updated_at"
     t.index ["alt_phone_number"], name: "index_customers_on_alt_phone_number", where: "(alt_phone_number IS NOT NULL)"
     t.index ["customer_type"], name: "index_customers_on_customer_type"
     t.index ["delivery_person_id", "is_active"], name: "index_customers_delivery_person_active"
@@ -154,6 +156,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_19_014633) do
     t.index ["is_active"], name: "index_customers_on_is_active"
     t.index ["latitude", "longitude"], name: "index_customers_on_latitude_and_longitude", where: "((latitude IS NOT NULL) AND (longitude IS NOT NULL))"
     t.index ["member_id"], name: "index_customers_on_member_id", unique: true, where: "(member_id IS NOT NULL)"
+    t.index ["monthly_pattern"], name: "index_customers_on_monthly_pattern"
     t.index ["name"], name: "index_customers_on_name"
     t.index ["preferred_language"], name: "index_customers_on_preferred_language"
     t.index ["user_id"], name: "index_customers_on_user_id"
