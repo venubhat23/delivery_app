@@ -12,7 +12,7 @@ class Customer < ApplicationRecord
   belongs_to :delivery_person, class_name: 'User', optional: true
   has_many :deliveries, dependent: :destroy
   has_many :delivery_assignments, dependent: :destroy, counter_cache: true
-  has_many :delivery_schedules, dependent: :destroy, counter_cache: true
+  has_many :delivery_schedules, dependent: :destroy
   has_many :invoices, dependent: :destroy, counter_cache: true
   has_many :faqs, dependent: :destroy
   has_many :support_tickets, dependent: :destroy

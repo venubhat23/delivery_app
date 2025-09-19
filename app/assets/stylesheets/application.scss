@@ -54,12 +54,12 @@ body {
 /* Main Layout Structure Override */
 .main-wrapper {
   flex: 1;
-  margin-left: 240px !important;
+  margin-left: 260px !important;
   background: var(--bg-secondary);
   min-height: 100vh;
   position: relative;
-  width: calc(100% - 240px) !important;
-  max-width: calc(100% - 240px) !important;
+  width: calc(100% - 260px) !important;
+  max-width: calc(100% - 260px) !important;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -176,7 +176,7 @@ div[class*="wrapper"] {
   --danger-color: #e53e3e;
 
   /* Layout System */
-  --sidebar-width: 240px;
+  --sidebar-width: 260px;
   --sidebar-collapsed-width: 80px;
   --header-height: 75px;
   --content-padding: 1.5rem;
@@ -1748,7 +1748,7 @@ body {
 @media (min-width: 1400px) {
   :root {
     --content-padding: 3rem;
-    --sidebar-width: 320px;
+    --sidebar-width: 260px;
   }
 
   .container-xxl {
@@ -1771,7 +1771,7 @@ body {
 @media (min-width: 992px) and (max-width: 1199.98px) {
   :root {
     --content-padding: 2rem;
-    --sidebar-width: 280px;
+    --sidebar-width: 260px;
   }
 
   .card-body {
@@ -2210,7 +2210,7 @@ body {
 @media (min-width: 1600px) {
   :root {
     --content-padding: 3.5rem;
-    --sidebar-width: 340px;
+    --sidebar-width: 260px;
   }
 
   .container-fluid {

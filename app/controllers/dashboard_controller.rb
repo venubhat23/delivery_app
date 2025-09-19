@@ -2,7 +2,7 @@ class DashboardController < ApplicationController
   def index
     @total_customers = Customer.count
     @total_products = Product.count
-    @pending_deliveries = Delivery.where(status: 'pending').count
+    @pending_deliveries = DeliveryAssignment.where(status: 'pending').count
     @total_invoices = Invoice.count
     
     # Additional data for dynamic sections
@@ -45,57 +45,30 @@ class DashboardController < ApplicationController
   end
 
   def calculate_delivery_analytics_for_date(date, range)
-    # Optimize with single queries using SQL aggregation
-    date_range = date.beginning_of_day..date.end_of_day
-
-    # Use find_by_sql approach to avoid exec_query issues
-    sql = <<-SQL
-      SELECT
-        COUNT(*) as count,
-        SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_amount,
-        SUM(CASE WHEN products.unit_type = 'liters' THEN delivery_assignments.quantity ELSE 0 END) as total_liters,
-        COUNT(CASE WHEN categories.name ILIKE '%milk%' OR products.name ILIKE '%milk%' THEN 1 END) as milk_products_count
-      FROM delivery_assignments
-      INNER JOIN products ON products.id = delivery_assignments.product_id
-      LEFT JOIN categories ON products.category_id = categories.id
-      WHERE delivery_assignments.status = 'completed'
-      AND delivery_assignments.scheduled_date = '#{date}'
-    SQL
-
-    result = ActiveRecord::Base.connection.select_one(sql)
-    today_stats = result
+    # Today's stats
+    today_assignments = DeliveryAssignment.joins(:product)
+                                         .where(status: 'completed', scheduled_date: date)
 
     @total_delivered_today = {
-      count: today_stats&.[]('count')&.to_i || 0,
-      total_amount: today_stats&.[]('total_amount')&.to_f || 0,
-      total_liters: today_stats&.[]('total_liters')&.to_f || 0,
-      milk_products_count: today_stats&.[]('milk_products_count')&.to_i || 0
+      count: today_assignments.count,
+      total_amount: today_assignments.sum(&:final_amount),
+      total_liters: today_assignments.joins(:product).where(products: { unit_type: 'liters' }).sum(:quantity),
+      milk_products_count: today_assignments.joins(:product).where("products.name ILIKE '%milk%'").count
     }
 
-    # Monthly stats with raw SQL
+    # Monthly stats
     month_start = date.beginning_of_month
     month_end = date.end_of_month
 
-    monthly_sql = <<-SQL
-      SELECT
-        COUNT(*) as count,
-        SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_amount,
-        SUM(CASE WHEN products.unit_type = 'liters' THEN delivery_assignments.quantity ELSE 0 END) as total_liters,
-        COUNT(CASE WHEN categories.name ILIKE '%milk%' OR products.name ILIKE '%milk%' THEN 1 END) as milk_products_count
-      FROM delivery_assignments
-      INNER JOIN products ON products.id = delivery_assignments.product_id
-      LEFT JOIN categories ON products.category_id = categories.id
-      WHERE delivery_assignments.status = 'completed'
-      AND delivery_assignments.completed_at BETWEEN '#{month_start}' AND '#{month_end}'
-    SQL
-
-    monthly_stats = ActiveRecord::Base.connection.select_one(monthly_sql)
+    monthly_assignments = DeliveryAssignment.joins(:product)
+                                           .where(status: 'completed')
+                                           .where(completed_at: month_start..month_end)
 
     @total_delivered_monthly = {
-      count: monthly_stats&.[]('count')&.to_i || 0,
-      total_amount: monthly_stats&.[]('total_amount')&.to_f || 0,
-      total_liters: monthly_stats&.[]('total_liters')&.to_f || 0,
-      milk_products_count: monthly_stats&.[]('milk_products_count')&.to_i || 0
+      count: monthly_assignments.count,
+      total_amount: monthly_assignments.sum(&:final_amount),
+      total_liters: monthly_assignments.joins(:product).where(products: { unit_type: 'liters' }).sum(:quantity),
+      milk_products_count: monthly_assignments.joins(:product).where("products.name ILIKE '%milk%'").count
     }
 
     # Optimized weekly data calculation
@@ -111,21 +84,22 @@ class DashboardController < ApplicationController
     end_date = date
     start_date = date - 6.days
 
-    DeliveryAssignment.unscoped
-                     .where(status: 'completed')
-                     .joins(:product)
-                     .where(scheduled_date: start_date..end_date)
-                     .group('DATE(scheduled_date)')
-                     .order('DATE(scheduled_date)')
-                     .select(
-                       'DATE(scheduled_date) as date',
-                       'COUNT(*) as count',
-                       'SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_amount'
-                     ).map do |day_data|
+    # Get all assignments for the week
+    assignments = DeliveryAssignment.joins(:product)
+                                   .where(status: 'completed')
+                                   .where(scheduled_date: start_date..end_date)
+                                   .includes(:product)
+
+    # Group by date
+    daily_data = assignments.group_by { |assignment| assignment.scheduled_date.to_date }
+
+    # Convert to required format
+    (start_date.to_date..end_date.to_date).map do |date|
+      day_assignments = daily_data[date] || []
       {
-        date: day_data.date,
-        count: day_data.count,
-        total_amount: day_data.total_amount&.to_f || 0
+        date: date.to_s,
+        count: day_assignments.count,
+        total_amount: day_assignments.sum(&:final_amount)
       }
     end
   end
@@ -135,26 +109,25 @@ class DashboardController < ApplicationController
     end_date = date
     start_date = date - 29.days
 
-    DeliveryAssignment.unscoped
-                     .where(status: 'completed')
-                     .joins(:product)
-                     .where(scheduled_date: start_date..end_date)
-                     .group('products.id, products.name, products.unit_type')
-                     .order('SUM(delivery_assignments.quantity) DESC')
-                     .limit(5)
-                     .select(
-                       'products.id',
-                       'products.name',
-                       'products.unit_type',
-                       'SUM(delivery_assignments.quantity) as total_delivered',
-                       'SUM(COALESCE(final_amount_after_discount, products.price * delivery_assignments.quantity)) as total_revenue'
-                     ).map do |product_data|
-      OpenStruct.new(
-        name: product_data.name,
-        unit_type: product_data.unit_type,
-        total_delivered: product_data.total_delivered&.to_f || 0,
-        total_revenue: product_data.total_revenue&.to_f || 0
-      )
+    # Use Rails query and group in Ruby to avoid SQL issues
+    assignments = DeliveryAssignment.joins(:product)
+                                   .where(status: 'completed')
+                                   .where(scheduled_date: start_date..end_date)
+                                   .includes(:product)
+
+    # Group by product and calculate totals
+    product_stats = assignments.group_by(&:product).map do |product, product_assignments|
+      {
+        name: product.name,
+        unit_type: product.unit_type,
+        total_delivered: product_assignments.sum(&:quantity),
+        total_revenue: product_assignments.sum(&:final_amount)
+      }
+    end
+
+    # Sort by total delivered and take top 5
+    product_stats.sort_by { |p| -p[:total_delivered] }.first(5).map do |stats|
+      OpenStruct.new(stats)
     end
   end
 

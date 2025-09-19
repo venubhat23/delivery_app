@@ -84,8 +84,24 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def create
-    # Create deliveries based on start and end date range
-    create_date_range_deliveries
+    # Check which date selection mode is being used
+    date_selection_mode = params[:date_selection_mode]
+
+    case date_selection_mode
+    when 'multiple_dates'
+      # Use the old multiple dates calendar functionality
+      if params[:delivery_dates].present?
+        create_multiple_dates_deliveries
+      else
+        @delivery_assignment = DeliveryAssignment.new(delivery_assignment_params)
+        @delivery_assignment.errors.add(:base, "Please select at least one delivery date")
+        load_form_data
+        render :new
+      end
+    else
+      # Default to date range mode (new functionality)
+      create_date_range_deliveries
+    end
   end
 
   def edit
@@ -361,6 +377,21 @@ class DeliveryAssignmentsController < ApplicationController
 
   private
 
+  def parse_date(date_string)
+    return nil if date_string.blank?
+
+    # Handle DD.MM.YYYY format (European format)
+    if date_string.match?(/^\d{2}\.\d{2}\.\d{4}$/)
+      day, month, year = date_string.split('.')
+      Date.new(year.to_i, month.to_i, day.to_i)
+    else
+      # Try standard parsing for other formats
+      Date.parse(date_string)
+    end
+  rescue ArgumentError, Date::Error
+    nil
+  end
+
   def set_delivery_assignment
     @delivery_assignment = DeliveryAssignment.find(params[:id])
   rescue ActiveRecord::RecordNotFound
@@ -440,12 +471,89 @@ class DeliveryAssignmentsController < ApplicationController
     end
   end
 
+  def create_multiple_dates_deliveries
+    assignment_params = delivery_assignment_params.except(:start_date, :end_date, :additional_products)
+    delivery_dates = params[:delivery_dates].split(',').map(&:strip)
+    additional_products_hash = params[:additional_products] || {}
+
+    created_count = 0
+    failed_dates = []
+
+    # Validate that we have valid dates
+    if delivery_dates.empty?
+      @delivery_assignment = DeliveryAssignment.new(assignment_params)
+      @delivery_assignment.errors.add(:base, "Please select at least one delivery date")
+      load_form_data
+      render :new
+      return
+    end
+
+    # Create delivery assignment for each selected date
+    delivery_dates.each do |date_str|
+      begin
+        # Parse the date (should be in YYYY-MM-DD format from frontend)
+        delivery_date = Date.parse(date_str)
+
+        # Create main assignment for this date
+        assignment = DeliveryAssignment.new(assignment_params.merge(scheduled_date: delivery_date, booked_by: 0))
+        assignment.status = 'pending' if assignment.status.blank?
+
+        if assignment.save
+          created_count += 1
+
+          # Create additional product assignments for the same date
+          additional_products_hash.each do |index, product_data|
+            next if product_data['product_id'].blank?
+
+            additional_assignment = DeliveryAssignment.new(
+              customer_id: assignment.customer_id,
+              user_id: assignment.user_id,
+              product_id: product_data['product_id'],
+              quantity: product_data['quantity'],
+              unit: product_data['unit'] || 'pieces',
+              discount_amount: product_data['discount_amount'] || 0,
+              scheduled_date: delivery_date,
+              special_instructions: assignment.special_instructions,
+              status: 'pending',
+              booked_by: 0  # 0 = Admin booked
+            )
+
+            if additional_assignment.save
+              created_count += 1
+            end
+          end
+        else
+          failed_dates << date_str
+        end
+
+      rescue Date::Error
+        failed_dates << date_str
+      end
+    end
+
+    # Provide feedback
+    if created_count > 0
+      if failed_dates.empty?
+        notice_message = "Successfully created #{created_count} delivery assignments for #{delivery_dates.length} dates."
+      else
+        notice_message = "Created #{created_count} delivery assignments. Failed to create for: #{failed_dates.join(', ')}"
+      end
+      redirect_to delivery_assignments_path, notice: notice_message
+    else
+      @delivery_assignment = DeliveryAssignment.new(assignment_params)
+      @delivery_assignment.errors.add(:base, "Failed to create any delivery assignments. Please check your input.")
+      load_form_data
+      render :new
+    end
+  end
+
   def create_date_range_deliveries
     assignment_params = delivery_assignment_params.except(:start_date, :end_date, :additional_products)
     additional_products_hash = params[:additional_products] || {}
 
-    start_date = Date.parse(delivery_assignment_params[:start_date]) rescue nil
-    end_date = Date.parse(delivery_assignment_params[:end_date]) rescue nil
+    # Parse dates - handle DD.MM.YYYY format
+    start_date = parse_date(delivery_assignment_params[:start_date])
+    end_date = parse_date(delivery_assignment_params[:end_date])
 
     # Validate dates
     if start_date.nil? || end_date.nil?
@@ -471,7 +579,7 @@ class DeliveryAssignmentsController < ApplicationController
     begin
       ActiveRecord::Base.transaction do
         # First, create a delivery schedule for the date range
-        delivery_schedule = DeliverySchedule.create!(
+        delivery_schedule = DeliverySchedule.new(
           customer_id: assignment_params[:customer_id],
           user_id: assignment_params[:user_id],
           product_id: assignment_params[:product_id],
@@ -484,6 +592,8 @@ class DeliveryAssignmentsController < ApplicationController
           default_discount_amount: assignment_params[:discount_amount] || 0
         )
 
+        # Save the delivery schedule
+        delivery_schedule.save!
         created_schedules += 1
 
         # Create delivery assignments for each date in the range
@@ -493,14 +603,17 @@ class DeliveryAssignmentsController < ApplicationController
           assignment = DeliveryAssignment.new(
             assignment_params.merge(
               scheduled_date: current_date,
-              delivery_schedule_id: delivery_schedule.id
+              delivery_schedule_id: delivery_schedule.id,
+              booked_by: 0  # 0 = Admin booked
             )
           )
           assignment.status = 'pending' if assignment.status.blank?
 
           if assignment.save
-            # Calculate and save final amount
-            assignment.calculate_final_amount_after_discount if assignment.respond_to?(:calculate_final_amount_after_discount)
+            # Calculate final amount if method exists
+            if assignment.respond_to?(:calculate_final_amount_after_discount)
+              assignment.calculate_final_amount_after_discount
+            end
             created_assignments += 1
 
             # Create additional product assignments for the same date
@@ -517,11 +630,14 @@ class DeliveryAssignmentsController < ApplicationController
                 scheduled_date: current_date,
                 special_instructions: assignment.special_instructions,
                 status: 'pending',
-                delivery_schedule_id: delivery_schedule.id
+                delivery_schedule_id: delivery_schedule.id,
+                booked_by: 0  # 0 = Admin booked
               )
 
               if additional_assignment.save
-                additional_assignment.calculate_final_amount_after_discount if additional_assignment.respond_to?(:calculate_final_amount_after_discount)
+                if additional_assignment.respond_to?(:calculate_final_amount_after_discount)
+                  additional_assignment.calculate_final_amount_after_discount
+                end
                 created_assignments += 1
               end
             end

@@ -5,7 +5,7 @@
   position: fixed !important;
   top: 70px !important;
   left: 0 !important;
-  width: 280px !important;
+  width: 260px !important;
   height: calc(100vh - 70px) !important;
   background: #ffffff !important;
   border-right: 1px solid #e2e8f0 !important;
@@ -17,7 +17,7 @@
 }
 
 .main-content {
-  margin-left: 280px !important;
+  margin-left: 260px !important;
   margin-top: 70px !important;
   padding: 2rem !important;
   min-height: calc(100vh - 70px) !important;
