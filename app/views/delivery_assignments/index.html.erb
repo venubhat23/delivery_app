@@ -259,7 +259,7 @@
         all_today_count = all_today_pending.count
         
         # Get current filtered results pending assignments
-        current_filtered_pending_ids = @filtered_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current).pluck(:id)
+        current_filtered_pending_ids = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current).pluck(:id)
         current_filtered_count = current_filtered_pending_ids.size
         
         # Check if filters are applied (status, delivery_person, search, or non-today date)

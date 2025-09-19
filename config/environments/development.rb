@@ -10,9 +10,11 @@ Rails.application.configure do
     ENV['APP_HOST'],                 # Allow requests from environment-specific host
     "atmanirbharfarm.work.gd",
     "13.232.153.224",                # Allow requests from the production server IP
-    "atmanirbharfarmbangalore.com"
+    "atmanirbharfarmbangalore.com",
+    "delivery-app-ieu2.onrender.com"
   ].compact
     config.hosts << "localhost:3002"
+    config.hosts << "localhost:3000"
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
 
@@ -58,7 +60,8 @@ Rails.application.configure do
   config.active_support.deprecation = :log
 
   # Raise an error on page load if there are pending migrations.
-  config.active_record.migration_error = :page_load
+  # Disabled for performance - checking migrations on every request is slow
+  # config.active_record.migration_error = :page_load
 
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true

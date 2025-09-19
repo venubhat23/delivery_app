@@ -1,4 +1,20 @@
 Rails.application.routes.draw do
+  # Customer Patterns Analysis
+  resources :customer_patterns, path: 'customer-patterns', only: [:index] do
+    collection do
+      get :customer_deliveries
+      post :complete_till_today
+      get :get_pending_count
+      post :complete_all_till_today
+      post :remove_all_assignments
+    end
+
+    member do
+      get :edit_assignment
+      patch :update_assignment
+      delete :delete_assignment
+    end
+  end
   get "customer_details", to: "customer_details#index"
   post "customer_details/copy_from_last_month", to: "customer_details#copy_from_last_month"
   root 'dashboard#index'
@@ -315,6 +331,8 @@ Rails.application.routes.draw do
       post :generate_purchase_invoice
       get :preview_purchase_invoice
       get :get_schedule_invoice_status
+      get :view_schedule_invoice
+      post :create_procurement_invoices_for_all
       post :mark_assignments_completed
       post :create_schedule
       patch :update_schedule

@@ -53,14 +53,14 @@
         overflow-x: hidden;
       }
 
-      /* Premium Sidebar Design */
+      /* Modern E-commerce Sidebar Design */
       .sidebar {
         width: 240px !important;
         min-width: 240px !important;
         max-width: 240px !important;
-        background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-        border-right: 1px solid var(--border-light);
-        box-shadow: var(--shadow-xl);
+        background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+        border-right: 1px solid #e2e8f0;
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
         position: fixed;
         top: 0;
         left: 0;
@@ -142,15 +142,16 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        padding: 0.875rem 0.75rem;
-        border-radius: var(--radius-md);
-        color: var(--text-secondary);
+        padding: 1rem 0.75rem;
+        border-radius: 12px;
+        color: #4a5568;
         text-decoration: none;
         font-weight: 500;
-        margin-bottom: 0.25rem;
-        transition: var(--transition-fast);
+        margin-bottom: 0.5rem;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
+        border: 1px solid transparent;
       }
 
       .nav-link::before {
@@ -167,9 +168,11 @@
 
       .nav-link:hover,
       .nav-link.active {
-        color: var(--primary-600);
-        background: var(--primary-50);
-        transform: translateX(4px);
+        color: #667eea;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transform: translateX(8px);
+        border-color: rgba(102, 126, 234, 0.2);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
       }
 
       .nav-link:hover::before,
@@ -201,16 +204,16 @@
         margin-right: 0 !important;
       }
 
-      /* Professional Header */
+      /* Modern E-commerce Header */
       .main-header {
         height: 75px;
-        background: var(--bg-primary);
-        border-bottom: 1px solid var(--border-light);
-        box-shadow: var(--shadow-sm);
+        background: rgba(255, 255, 255, 0.95);
+        border-bottom: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 1.5rem;
+        padding: 0 2rem;
         position: fixed;
         top: 0;
         left: 240px;
@@ -250,17 +253,20 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        padding: 0.5rem;
-        border-radius: var(--radius-full);
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-light);
-        transition: var(--transition-fast);
+        padding: 0.75rem 1rem;
+        border-radius: 25px;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border: 1px solid #e2e8f0;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       }
 
       .header-user:hover {
-        background: var(--primary-50);
-        border-color: var(--primary-200);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-color: rgba(102, 126, 234, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
       }
 
       .header-avatar {
@@ -1308,6 +1314,16 @@
                     "aria-current": (current_page?(customers_path) || controller_name == 'customers') ? "page" : nil do %>
                   <i class="fas fa-users nav-icon" aria-hidden="true"></i>
                   <span class="nav-text">Customers</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
+                <%= link_to customer_patterns_path,
+                    class: "nav-link #{'active' if current_page?(customer_patterns_path) || controller_name == 'customer_patterns'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(customer_patterns_path) || controller_name == 'customer_patterns') ? "page" : nil do %>
+                  <i class="fas fa-chart-bar nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">📊 Customer Patterns</span>
                 <% end %>
               </li>
 

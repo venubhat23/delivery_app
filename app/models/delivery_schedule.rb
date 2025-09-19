@@ -1,5 +1,5 @@
 class DeliverySchedule < ApplicationRecord
-  belongs_to :customer
+  belongs_to :customer, counter_cache: true
   belongs_to :user, foreign_key: 'user_id' # delivery person
   belongs_to :product, optional: true
   has_many :delivery_assignments, dependent: :destroy

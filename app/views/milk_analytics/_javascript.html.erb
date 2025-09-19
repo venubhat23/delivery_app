@@ -300,7 +300,13 @@ function updateProcurementScheduleTable(schedules) {
           </small>
         </td>
         <td>
-          <div class="btn-group-vertical" style="gap: 2px;">
+          <div class="btn-group-vertical" style="gap: 2px;" id="actions-${schedule.id}">
+            <button class="btn btn-outline-primary btn-sm"
+                    onclick="generateInvoice(${schedule.id}, '${schedule.vendor_name}', this)"
+                    title="Generate Invoice"
+                    id="invoice-btn-${schedule.id}">
+              <i class="fas fa-file-invoice-dollar"></i>
+            </button>
             <button class="btn btn-outline-danger btn-sm"
                     onclick="deleteIndividualSchedule(${schedule.id}, '${schedule.vendor_name}', this)"
                     title="Delete Schedule">
@@ -313,6 +319,11 @@ function updateProcurementScheduleTable(schedules) {
   }).join('');
 
   tableBody.innerHTML = tableRows;
+
+  // Check invoice status for each schedule
+  schedules.forEach(schedule => {
+    checkInvoiceStatus(schedule.id);
+  });
 }
 
 // Get status badge HTML
@@ -941,6 +952,271 @@ function showDeleteSuccessMessage(message, deletedRecords) {
 
 // Make functions globally accessible
 window.toggleSelectAll = toggleSelectAll;
+// Invoice Generation Function
+function generateInvoice(scheduleId, vendorName, button) {
+  // Show attractive loading overlay
+  showInvoiceLoadingOverlay(vendorName);
+
+  // Disable the button and show loading state
+  const originalHTML = button.innerHTML;
+  button.disabled = true;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  // Make AJAX request to generate invoice
+  fetch(`/milk-supply-analytics/generate_purchase_invoice?schedule_id=${scheduleId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      // Hide loading overlay
+      hideInvoiceLoadingOverlay();
+
+      // Show success message
+      showSuccessToast(`Invoice generated successfully for ${vendorName}!`);
+
+      // Update the actions to show view button
+      updateInvoiceActions(scheduleId, true, data.invoice_number, data.invoice_date);
+
+      // If there's a PDF URL, trigger download
+      if (data.pdf_url) {
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = data.pdf_url;
+        a.download = `procurement_invoice_${vendorName.replace(/\s+/g, '_')}_${scheduleId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } else {
+      throw new Error(data.error || 'Failed to generate invoice');
+    }
+  })
+  .catch(error => {
+    console.error('Error generating invoice:', error);
+    hideInvoiceLoadingOverlay();
+    showErrorToast('Failed to generate invoice. Please try again.');
+  })
+  .finally(() => {
+    // Restore button state
+    button.disabled = false;
+    button.innerHTML = originalHTML;
+  });
+}
+
+// Show invoice loading overlay
+function showInvoiceLoadingOverlay(vendorName, title = 'Generating Invoice') {
+  // Remove existing overlay if any
+  const existingOverlay = document.getElementById('invoiceLoadingOverlay');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'invoiceLoadingOverlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+  `;
+
+  // Create loading content
+  const loadingContent = document.createElement('div');
+  loadingContent.style.cssText = `
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 3rem;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    max-width: 450px;
+    color: white;
+    animation: fadeInScale 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  `;
+
+  loadingContent.innerHTML = `
+    <div style="margin-bottom: 2rem;">
+      <div style="width: 100px; height: 100px; margin: 0 auto 1.5rem; position: relative;">
+        <div class="spinner-border" role="status" style="width: 100px; height: 100px; border-width: 8px; border-color: rgba(255,255,255,0.3); border-top-color: white;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30px;">
+          <i class="fas fa-file-invoice-dollar" style="color: white; animation: pulseInvoice 2s ease-in-out infinite;"></i>
+        </div>
+      </div>
+    </div>
+
+    <h4 class="mb-3 fw-bold">
+      <i class="fas fa-magic me-2"></i>
+      ${title}
+    </h4>
+
+    <div class="mb-3">
+      <div class="progress mb-2" style="height: 10px; background: rgba(255,255,255,0.2);">
+        <div class="progress-bar progress-bar-striped progress-bar-animated"
+             role="progressbar" style="width: 100%; background: linear-gradient(90deg, #ffd700, #ff6b6b);"></div>
+      </div>
+    </div>
+
+    <p class="mb-2" style="font-size: 1.1rem;">
+      <i class="fas fa-user-tie me-2"></i>
+      <strong>${vendorName}</strong>
+    </p>
+
+    <p class="text-light mb-0" style="opacity: 0.9;">
+      <i class="fas fa-clock me-2"></i>
+      Creating procurement invoice...
+    </p>
+
+    <div class="mt-3">
+      <small style="opacity: 0.8;">
+        <i class="fas fa-info-circle me-1"></i>
+        This may take a few moments
+      </small>
+    </div>
+  `;
+
+  // Add CSS animation for invoice loading
+  if (!document.getElementById('invoiceLoadingStyles')) {
+    const style = document.createElement('style');
+    style.id = 'invoiceLoadingStyles';
+    style.textContent = `
+      @keyframes fadeInScale {
+        from {
+          opacity: 0;
+          transform: scale(0.7) translateY(50px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      @keyframes pulseInvoice {
+        0%, 100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.2);
+          opacity: 0.8;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  overlay.appendChild(loadingContent);
+  document.body.appendChild(overlay);
+}
+
+// Hide invoice loading overlay
+function hideInvoiceLoadingOverlay() {
+  const overlay = document.getElementById('invoiceLoadingOverlay');
+  if (overlay) {
+    overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+    setTimeout(() => {
+      overlay.remove();
+    }, 300);
+  }
+}
+
+// Show success toast
+function showSuccessToast(message) {
+  showToast(message, 'success');
+}
+
+// Show error toast
+function showErrorToast(message) {
+  showToast(message, 'error');
+}
+
+// Generic toast function
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  const bgColor = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff';
+  const icon = type === 'success' ? 'fas fa-check-circle' : type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
+
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${bgColor};
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    z-index: 10000;
+    animation: slideInRight 0.4s ease-out forwards;
+    max-width: 350px;
+  `;
+
+  toast.innerHTML = `
+    <div style="display: flex; align-items: center;">
+      <i class="${icon} me-2" style="font-size: 1.2rem;"></i>
+      <span>${message}</span>
+    </div>
+  `;
+
+  // Add slide animation
+  if (!document.getElementById('toastStyles')) {
+    const style = document.createElement('style');
+    style.id = 'toastStyles';
+    style.textContent = `
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOutRight {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(toast);
+
+  // Auto remove after 4 seconds
+  setTimeout(() => {
+    toast.style.animation = 'slideOutRight 0.4s ease-out forwards';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 400);
+  }, 4000);
+}
+
 window.updateSelectionState = updateSelectionState;
 window.clearSelection = clearSelection;
 window.deleteSelectedSchedules = deleteSelectedSchedules;
@@ -950,5 +1226,96 @@ window.showCopyLoadingOverlay = showCopyLoadingOverlay;
 window.hideCopyLoadingOverlay = hideCopyLoadingOverlay;
 window.showDeleteLoadingOverlay = showDeleteLoadingOverlay;
 window.hideDeleteLoadingOverlay = hideDeleteLoadingOverlay;
+// Check invoice status for a schedule
+function checkInvoiceStatus(scheduleId) {
+  fetch(`/milk-supply-analytics/get_schedule_invoice_status?schedule_id=${scheduleId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.has_invoice) {
+      updateInvoiceActions(scheduleId, true, data.invoice_number, data.invoice_date);
+    }
+  })
+  .catch(error => {
+    console.log('Error checking invoice status:', error);
+  });
+}
+
+// View existing invoice
+function viewInvoice(scheduleId, vendorName) {
+  // Show loading overlay
+  showInvoiceLoadingOverlay(vendorName, 'Viewing Invoice');
+
+  // Open invoice in new tab using existing method
+  const url = `/milk-supply-analytics/view_schedule_invoice?schedule_id=${scheduleId}`;
+  window.open(url, '_blank');
+
+  // Hide loading overlay after a short delay
+  setTimeout(() => {
+    hideInvoiceLoadingOverlay();
+  }, 1000);
+}
+
+// Update invoice actions to show appropriate buttons
+function updateInvoiceActions(scheduleId, hasInvoice, invoiceNumber = '', invoiceDate = '') {
+  const actionsContainer = document.getElementById(`actions-${scheduleId}`);
+  if (!actionsContainer) return;
+
+  const invoiceBtn = document.getElementById(`invoice-btn-${scheduleId}`);
+  if (!invoiceBtn) return;
+
+  if (hasInvoice) {
+    // Update the generate button to show it's generated and add view button
+    invoiceBtn.className = 'btn btn-success btn-sm';
+    invoiceBtn.title = `Invoice Generated: ${invoiceNumber}`;
+    invoiceBtn.innerHTML = '<i class="fas fa-check-circle"></i>';
+
+    // Add view button if it doesn't exist
+    const existingViewBtn = document.getElementById(`view-btn-${scheduleId}`);
+    if (!existingViewBtn) {
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn btn-outline-info btn-sm';
+      viewBtn.id = `view-btn-${scheduleId}`;
+      viewBtn.title = 'View Invoice';
+      viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+      viewBtn.onclick = function() {
+        const vendorName = this.closest('tr').querySelector('td:nth-child(2)').textContent.trim();
+        viewInvoice(scheduleId, vendorName);
+      };
+
+      // Insert before the delete button
+      const deleteBtn = actionsContainer.querySelector('button:last-child');
+      actionsContainer.insertBefore(viewBtn, deleteBtn);
+    }
+
+    // Add invoice info tooltip
+    if (invoiceNumber && invoiceDate) {
+      invoiceBtn.setAttribute('data-bs-toggle', 'tooltip');
+      invoiceBtn.setAttribute('data-bs-placement', 'left');
+      invoiceBtn.setAttribute('title', `Invoice: ${invoiceNumber}\nDate: ${invoiceDate}`);
+    }
+  } else {
+    // Reset to generate button
+    invoiceBtn.className = 'btn btn-outline-primary btn-sm';
+    invoiceBtn.title = 'Generate Invoice';
+    invoiceBtn.innerHTML = '<i class="fas fa-file-invoice-dollar"></i>';
+
+    // Remove view button if it exists
+    const viewBtn = document.getElementById(`view-btn-${scheduleId}`);
+    if (viewBtn) {
+      viewBtn.remove();
+    }
+  }
+}
+
+window.generateInvoice = generateInvoice;
+window.viewInvoice = viewInvoice;
+window.checkInvoiceStatus = checkInvoiceStatus;
+window.updateInvoiceActions = updateInvoiceActions;
 
 </script>

@@ -1,0 +1,125 @@
+<div class="modal-header">
+  <h5 class="modal-title">
+    ✏️ Edit Assignment - <%= assignment.customer.name %>
+    <small class="text-muted">(<%= assignment.scheduled_date.strftime("%d %b %Y") %>)</small>
+  </h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+  <%= form_with model: assignment, url: "#", local: false, id: "edit-assignment-form", data: { assignment_id: assignment.id } do |form| %>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <%= form.label :scheduled_date, "Delivery Date", class: "form-label" %>
+          <%= form.date_field :scheduled_date, class: "form-control" %>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <%= form.label :status, "Status", class: "form-label" %>
+          <%= form.select :status,
+              options_for_select([
+                ['Pending', 'pending'],
+                ['In Progress', 'in_progress'],
+                ['Completed', 'completed'],
+                ['Cancelled', 'cancelled']
+              ], assignment.status),
+              {},
+              { class: "form-select" } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <%= form.label :quantity, "Quantity", class: "form-label" %>
+          <div class="input-group">
+            <%= form.number_field :quantity, class: "form-control", step: 0.1, min: 0 %>
+            <span class="input-group-text"><%= assignment.unit %></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <%= form.label :discount_amount, "Discount Amount", class: "form-label" %>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <%= form.number_field :discount_amount, class: "form-control", step: 0.01, min: 0 %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card bg-light">
+          <div class="card-body">
+            <h6 class="card-title">Assignment Details</h6>
+            <div class="row">
+              <div class="col-md-4">
+                <strong>Product:</strong><br>
+                <span class="badge bg-secondary"><%= assignment.product.name %></span>
+              </div>
+              <div class="col-md-4">
+                <strong>Unit Price:</strong><br>
+                ₹<%= number_with_precision(assignment.product.price, precision: 2) %>
+              </div>
+              <div class="col-md-4">
+                <strong>Delivery Person:</strong><br>
+                <span class="badge bg-info"><%= assignment.user.name %></span>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-md-4">
+                <strong>Total Amount:</strong><br>
+                <span id="calculated-total">₹<%= number_with_precision(assignment.total_amount, precision: 2) %></span>
+              </div>
+              <div class="col-md-4">
+                <strong>After Discount:</strong><br>
+                <span id="calculated-final" class="fw-bold">₹<%= number_with_precision(assignment.final_amount, precision: 2) %></span>
+              </div>
+              <div class="col-md-4">
+                <strong>Discount %:</strong><br>
+                <span id="calculated-discount-percent"><%= assignment.discount_percentage %>%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+  <button type="button" class="btn btn-primary save-assignment-btn" data-assignment-id="<%= assignment.id %>">
+    💾 Save Changes
+  </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('edit-assignment-form');
+  const quantityInput = form.querySelector('#delivery_assignment_quantity');
+  const discountInput = form.querySelector('#delivery_assignment_discount_amount');
+  const unitPrice = <%= assignment.product.price %>;
+
+  function updateCalculations() {
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const discount = parseFloat(discountInput.value) || 0;
+    const total = quantity * unitPrice;
+    const finalAmount = Math.max(total - discount, 0);
+    const discountPercent = total > 0 ? ((discount / total) * 100).toFixed(2) : 0;
+
+    document.getElementById('calculated-total').textContent = `₹${total.toFixed(2)}`;
+    document.getElementById('calculated-final').textContent = `₹${finalAmount.toFixed(2)}`;
+    document.getElementById('calculated-discount-percent').textContent = `${discountPercent}%`;
+  }
+
+  if (quantityInput) quantityInput.addEventListener('input', updateCalculations);
+  if (discountInput) discountInput.addEventListener('input', updateCalculations);
+});
+</script>

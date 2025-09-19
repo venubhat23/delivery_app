@@ -1161,10 +1161,10 @@ class MilkAnalyticsController < ApplicationController
     begin
       @schedule = current_user.procurement_schedules.find(params[:schedule_id])
       
-      # Check if there are assignments to generate invoice from
+      # Check if there are completed assignments
       unless @schedule.can_generate_invoice?
         respond_to do |format|
-          format.json { render json: { success: false, error: 'No procurement assignments found to generate invoice' } }
+          format.json { render json: { success: false, error: 'No completed assignments found to generate invoice' } }
         end
         return
       end
@@ -2997,6 +2997,27 @@ class MilkAnalyticsController < ApplicationController
     rescue => e
       Rails.logger.error "Error viewing procurement invoice: #{e.message}"
       render json: { error: "Failed to view invoice" }, status: :internal_server_error
+    end
+  end
+
+  # Check if invoice exists for a schedule
+  def check_invoice_status
+    begin
+      schedule_id = params[:id]
+      schedule = ProcurementSchedule.find(schedule_id)
+      invoice = ProcurementInvoice.find_by(procurement_schedule: schedule)
+
+      render json: {
+        has_invoice: invoice.present?,
+        invoice_status: invoice&.status,
+        invoice_number: invoice&.invoice_number,
+        invoice_date: invoice&.invoice_date&.strftime('%d %b %Y')
+      }
+    rescue ActiveRecord::RecordNotFound
+      render json: { has_invoice: false }
+    rescue => e
+      Rails.logger.error "Error checking invoice status: #{e.message}"
+      render json: { has_invoice: false }
     end
   end
 

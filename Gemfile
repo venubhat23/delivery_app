@@ -28,6 +28,8 @@ group :development do
   gem 'pry-rails'
 end
 gem 'wicked_pdf'
+gem 'prawn'
+gem 'prawn-table'
 gem 'wkhtmltopdf-binary'
 
 

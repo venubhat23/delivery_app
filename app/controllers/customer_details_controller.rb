@@ -4,47 +4,35 @@ class CustomerDetailsController < ApplicationController
   def index
     @active_tab = params[:tab] || 'all'
 
-    # Optimized query with proper includes to avoid N+1 queries
-    base_includes = [
-      :user,
-      { delivery_person: [] }, # delivery_person is a User model
-      {
-        delivery_assignments: [
-          :product,
-          :user # delivery person for the assignment
-        ]
-      }
-    ]
-
+    # Highly optimized query to minimize database hits
     case @active_tab
     when 'regular'
-      @customers = Customer.regular_customers
-                           .includes(base_includes)
-                           .order(:name)
-                           .page(params[:page])
-                           .per(50)
+      base_query = Customer.regular_customers
     when 'interval'
-      @customers = Customer.interval_customers
-                           .includes(base_includes)
-                           .order(:name)
-                           .page(params[:page])
-                           .per(50)
+      base_query = Customer.interval_customers
     else # 'all'
-      @customers = Customer.all_customers_with_intervals
-                           .includes(base_includes)
-                           .order(:name)
-                           .page(params[:page])
-                           .per(50)
+      base_query = Customer.all_customers_with_intervals
     end
 
-    # Preload the most recent delivery assignment for each customer to avoid N+1
-    # Using PostgreSQL DISTINCT ON for efficient latest record per customer
+    # Single optimized query with all necessary includes
+    @customers = base_query
+                  .includes(
+                    :user,
+                    :delivery_person,
+                    delivery_assignments: [:product, :user]
+                  )
+                  .order(:name)
+                  .page(params[:page])
+                  .per(50)
+
+    # Preload recent assignments efficiently in a single query
     if @customers.present?
       customer_ids = @customers.map(&:id)
 
-      # PostgreSQL DISTINCT ON approach - more efficient than window functions for this use case
+      # Single optimized query for recent assignments with all associations
       @recent_assignments_by_customer = DeliveryAssignment
-        .select('DISTINCT ON (customer_id) customer_id, id, status, scheduled_date, created_at')
+        .includes(:product, :user)
+        .select('DISTINCT ON (customer_id) customer_id, id, status, scheduled_date, created_at, product_id, user_id')
         .where(customer_id: customer_ids)
         .order('customer_id, created_at DESC')
         .index_by(&:customer_id)
@@ -52,21 +40,22 @@ class CustomerDetailsController < ApplicationController
       @recent_assignments_by_customer = {}
     end
 
-    # Statistics for display - optimize with single query using CASE statements
-    # Using raw SQL to avoid GROUP BY issues with .first method
-    stats_result = Customer.connection.execute(
-      "SELECT COUNT(*) as total_count,
-       COUNT(CASE WHEN interval_days = '7' THEN 1 END) as regular_count,
-       COUNT(CASE WHEN interval_days::integer < 3 THEN 1 END) as interval_count
-       FROM customers
-       WHERE interval_days IS NOT NULL"
-    ).first
+    # Single efficient statistics query
+    @stats = Rails.cache.fetch("customer_stats_#{Customer.maximum(:updated_at)}", expires_in: 5.minutes) do
+      stats_result = Customer.connection.execute(
+        "SELECT COUNT(*) as total_count,
+         COUNT(CASE WHEN interval_days = '7' THEN 1 END) as regular_count,
+         COUNT(CASE WHEN interval_days::integer < 3 THEN 1 END) as interval_count
+         FROM customers
+         WHERE interval_days IS NOT NULL"
+      ).first
 
-    @stats = {
-      regular_count: stats_result['regular_count'].to_i,
-      interval_count: stats_result['interval_count'].to_i,
-      total_count: stats_result['total_count'].to_i
-    }
+      {
+        regular_count: stats_result['regular_count'].to_i,
+        interval_count: stats_result['interval_count'].to_i,
+        total_count: stats_result['total_count'].to_i
+      }
+    end
   end
 
   def copy_from_last_month

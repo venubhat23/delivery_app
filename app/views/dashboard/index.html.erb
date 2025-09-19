@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body class="bg-light">
-<div class="container-fluid p-4">
+<div class="container-fluid" style="padding: 0.5rem 1.5rem;">
 
 <!-- Enhanced Dashboard -->
 <div class="page-header">
@@ -119,13 +119,13 @@
           <h5 class="mb-0">
             <i class="fas fa-truck-fast me-2 text-primary"></i>Total Delivered - Milk Supply & Analytics
           </h5>
-          <div class="d-flex gap-2">
-            <input type="date" id="analytics-date-picker" class="form-control form-control-sm" 
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <input type="date" id="analytics-date-picker" class="form-control form-control-sm"
                    value="<%= Date.current.strftime('%Y-%m-%d') %>" style="width: 160px;">
-            <button id="refresh-analytics" class="btn btn-primary btn-sm">
+            <button id="refresh-analytics" class="btn btn-primary btn-sm d-flex align-items-center">
               <i class="fas fa-sync-alt me-1"></i>Refresh
             </button>
-            <span class="badge bg-success" id="current-date-badge">Today: <%= Date.current.strftime('%b %d, %Y') %></span>
+            <span class="badge bg-success d-flex align-items-center" id="current-date-badge">Today: <%= Date.current.strftime('%b %d, %Y') %></span>
           </div>
         </div>
       </div>
@@ -1009,6 +1009,21 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
+}
+
+/* Analytics Header Alignment */
+.delivery-analytics-card .card-header .d-flex {
+  align-items: center;
+}
+
+.delivery-analytics-card .card-header .d-flex .gap-2 > * {
+  height: fit-content;
+}
+
+/* Page Header Improvements */
+.page-header {
+  margin-bottom: 1rem;
+  margin-top: 0;
 }
 
 /* Responsive Design */

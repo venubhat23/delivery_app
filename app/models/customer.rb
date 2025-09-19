@@ -11,9 +11,9 @@ class Customer < ApplicationRecord
   belongs_to :user
   belongs_to :delivery_person, class_name: 'User', optional: true
   has_many :deliveries, dependent: :destroy
-  has_many :delivery_assignments, dependent: :destroy
-  has_many :delivery_schedules, dependent: :destroy
-  has_many :invoices, dependent: :destroy
+  has_many :delivery_assignments, dependent: :destroy, counter_cache: true
+  has_many :delivery_schedules, dependent: :destroy, counter_cache: true
+  has_many :invoices, dependent: :destroy, counter_cache: true
   has_many :faqs, dependent: :destroy
   has_many :support_tickets, dependent: :destroy
   has_many :customer_addresses, dependent: :destroy
@@ -508,12 +508,8 @@ class Customer < ApplicationRecord
 
   # Optimized Delivery related methods to prevent N+1 queries
   def total_deliveries
-    # Use preloaded data if available
-    if respond_to?(:delivery_assignments_count) && delivery_assignments_count.present?
-      delivery_assignments_count
-    else
-      delivery_assignments.count
-    end
+    # Use counter cache if available, fallback to count
+    read_attribute(:delivery_assignments_count) || delivery_assignments.count
   end
 
   def pending_deliveries
@@ -529,12 +525,8 @@ class Customer < ApplicationRecord
   end
 
   def delivery_assignments_count
-    # Use preloaded count if available
-    if respond_to?(:delivery_assignments_count) && attributes['delivery_assignments_count'].present?
-      attributes['delivery_assignments_count']
-    else
-      delivery_assignments.count
-    end
+    # Use counter cache column
+    read_attribute(:delivery_assignments_count) || delivery_assignments.count
   end
 
   def active_schedules
@@ -547,11 +539,11 @@ class Customer < ApplicationRecord
 
   # Optimized Invoice related methods
   def total_invoices
-    invoices.count
+    read_attribute(:invoices_count) || invoices.count
   end
 
   def total_invoice_amount
-    # Use preloaded data if available
+    # Use preloaded data if available, otherwise calculate
     if respond_to?(:total_invoice_amount) && attributes['total_invoice_amount'].present?
       attributes['total_invoice_amount'].to_f
     else
@@ -617,6 +609,120 @@ class Customer < ApplicationRecord
 
   def self.available_for_assignment
     unassigned.includes(:user)
+  end
+
+  # Monthly customer pattern analysis - OPTIMIZED with delivery person filtering
+  def self.analyze_monthly_patterns(month = Date.current.month, year = Date.current.year, delivery_person_id = nil)
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+    days_in_month = end_date.day
+
+    # Filter customers by delivery person if specified
+    customer_scope = delivery_person_id.present? ?
+      Customer.where(delivery_person_id: delivery_person_id) :
+      Customer.all
+
+    # Get ALL delivery assignments (not just completed) for the month
+    delivery_query = DeliveryAssignment
+      .joins(:customer, :product, :user)
+      .left_joins(customer: :delivery_person)
+      .where(scheduled_date: start_date..end_date) # Remove status filter to include ALL
+
+    # Apply delivery person filter if specified
+    if delivery_person_id.present?
+      delivery_query = delivery_query.where(customers: { delivery_person_id: delivery_person_id })
+    end
+
+    delivery_data = delivery_query.select(
+      'delivery_assignments.*',
+      'customers.id as customer_id',
+      'customers.name as customer_name',
+      'customers.phone_number as customer_phone',
+      'products.name as product_name',
+      'products.unit_type as product_unit_type',
+      'users.name as delivery_person_name'
+    )
+
+    # Group data by customer to avoid N+1
+    customer_deliveries = delivery_data.group_by(&:customer_id)
+
+    # Get all customers that have deliveries this month
+    customer_ids = customer_deliveries.keys
+    customers_map = Customer.where(id: customer_ids)
+      .includes(:delivery_person, :user)
+      .index_by(&:id)
+
+    # Get all products for the deliveries in one query
+    product_ids = delivery_data.map(&:product_id).uniq
+    products_map = Product.where(id: product_ids).index_by(&:id)
+
+    # Process ALL customers in the scope (whether they have deliveries or not)
+    results = customer_scope.includes(:delivery_person, :user).map do |customer|
+      deliveries = customer_deliveries[customer.id] || []
+
+      # Calculate metrics from the deliveries
+      delivery_days = deliveries.map { |d| d.scheduled_date.day }.uniq.sort
+
+      # Calculate total liters from ALL delivery statuses
+      total_liters = deliveries
+        .select { |d| d.product_unit_type == 'liters' }
+        .sum(&:quantity)
+
+      # Find primary product (most frequent)
+      primary_product = if deliveries.any?
+        product_counts = deliveries.group_by(&:product_id)
+          .transform_values(&:count)
+        most_frequent_product_id = product_counts.max_by { |_, count| count }.first
+        products_map[most_frequent_product_id]
+      else
+        nil
+      end
+
+      # Determine customer pattern
+      pattern = determine_customer_pattern(delivery_days, days_in_month, total_liters)
+
+      {
+        customer: customer,
+        delivery_person_name: customer.delivery_person_name,
+        total_liters: total_liters.round(2),
+        primary_product: primary_product,
+        delivery_days: delivery_days,
+        days_delivered: delivery_days.length,
+        pattern: pattern,
+        pattern_description: get_pattern_description(delivery_days, days_in_month),
+        deliveries: deliveries,
+        total_assignments: deliveries.length
+      }
+    end
+
+    results
+  end
+
+  def self.determine_customer_pattern(delivery_days, days_in_month, total_liters)
+    return 'irregular' if delivery_days.empty?
+
+    # Regular: delivered every day and at least 0.5 liters total
+    if delivery_days.length >= (days_in_month * 0.9) && total_liters >= 0.5
+      'regular'
+    # Interval: missed only 1-2 days
+    elsif delivery_days.length >= (days_in_month - 2) && total_liters >= 0.5
+      'interval'
+    else
+      'irregular'
+    end
+  end
+
+  def self.get_pattern_description(delivery_days, days_in_month)
+    return 'No deliveries' if delivery_days.empty?
+
+    if delivery_days.length >= (days_in_month * 0.9)
+      'Every day'
+    elsif delivery_days.length >= (days_in_month - 2)
+      missed_days = (1..days_in_month).to_a - delivery_days
+      "Missed: #{missed_days.join(', ')}"
+    else
+      "Days: #{delivery_days.join(', ')}"
+    end
   end
 
   # Helper methods for new features

@@ -91,7 +91,8 @@ class ProcurementSchedule < ApplicationRecord
   end
 
   def can_generate_invoice?
-    procurement_assignments.completed.any?
+    # Can generate invoice if there are either completed assignments OR any assignments with planned data
+    procurement_assignments.completed.any? || procurement_assignments.any?
   end
 
   private

@@ -105,7 +105,7 @@ class CustomersController < ApplicationController
           success_message += " Created delivery schedules for #{products_count} product(s)." if products_count > 0
         end
         
-        format.html { redirect_to @customer, notice: success_message }
+        format.html { redirect_to customer_path(@customer), notice: success_message }
         format.json { render json: { success: true, customer: @customer, message: success_message } }
       else
         # Reload dropdown data on failure

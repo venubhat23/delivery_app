@@ -2,7 +2,7 @@
 require 'securerandom'
 
 class Invoice < ApplicationRecord
-  belongs_to :customer
+  belongs_to :customer, counter_cache: true
   has_many :invoice_items, dependent: :destroy
   has_many :products, through: :invoice_items
   has_many :delivery_assignments, dependent: :nullify
