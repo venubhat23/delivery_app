@@ -138,8 +138,7 @@
                   <th>Primary Product</th>
                   <th>Days/Total Assignments</th>
                   <th>Estimated Amount</th>
-                  <th>Pattern</th>
-                  <th>Delivery Schedule</th>
+                  <th>Pattern & Schedule</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -191,19 +190,19 @@
                         </span>
                       </td>
                       <td>
-                        <% case data[:pattern] %>
-                        <% when 'regular' %>
-                          <span class="badge bg-success">🟢 Regular</span>
-                        <% when 'interval' %>
-                          <span class="badge bg-warning text-dark">🟡 Interval</span>
-                        <% when 'irregular' %>
-                          <span class="badge bg-danger">🔴 Irregular</span>
-                        <% end %>
-                      </td>
-                      <td>
-                        <small class="text-muted">
-                          <%= data[:pattern_description] %>
-                        </small>
+                        <div class="d-flex flex-column align-items-start gap-1">
+                          <% case data[:pattern] %>
+                          <% when 'regular' %>
+                            <span class="badge bg-success">🟢 Regular</span>
+                          <% when 'interval' %>
+                            <span class="badge bg-warning text-dark">🟡 Interval</span>
+                          <% when 'irregular' %>
+                            <span class="badge bg-danger">🔴 Irregular</span>
+                          <% end %>
+                          <small class="text-muted">
+                            <%= data[:pattern_description] %>
+                          </small>
+                        </div>
                       </td>
                       <td>
                         <div class="d-flex gap-2 justify-content-center">

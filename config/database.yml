@@ -2,15 +2,15 @@ default: &default
   adapter: postgresql
   encoding: unicode
   pool: 5
-  host: atmanirbharfarm-db-master.c5yskc8umpd4.ap-south-1.rds.amazonaws.com
+  host: dpg-d36i5fjuibrs739c9h80-a
   port: 5432
-  username: atmanirbharfarm
-  password: atmanirbharfarm-db-master-password
-  # url: postgres://milk_delivery_app2_user:NLycabZcxnVsuRPHpEB1StBfJr4VomEV@dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com:5432/milk_delivery_app2
+  username: atma_nirbhar_farm_db_user
+  password: 0F30EugdHfYajacs30xqh0kmAiB0Xj0P
+  # url: postgresql://atma_nirbhar_farm_db_user:0F30EugdHfYajacs30xqh0kmAiB0Xj0P@dpg-d36i5fjuibrs739c9h80-a/atma_nirbhar_farm_db
 
 development:
   <<: *default
-  database: atmanirbharfarm_db
+  database: atma_nirbhar_farm_db
 
 test:
   <<: *default
@@ -21,35 +21,35 @@ production:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d1dotrripnbc73dh6ku0-a
+    host: dpg-d36i5fjuibrs739c9h80-a
     port: 5432
-    database: milk_delivery_app2
-    username: milk_delivery_app2_user
-    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
+    database: atma_nirbhar_farm_db
+    username: atma_nirbhar_farm_db_user
+    password: 0F30EugdHfYajacs30xqh0kmAiB0Xj0P
   cable:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com
+    host: dpg-d36i5fjuibrs739c9h80-a
     port: 5432
-    database: milk_delivery_app2
-    username: milk_delivery_app2_user
-    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
+    database: atma_nirbhar_farm_db
+    username: atma_nirbhar_farm_db_user
+    password: 0F30EugdHfYajacs30xqh0kmAiB0Xj0P
   queue:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com
+    host: dpg-d36i5fjuibrs739c9h80-a
     port: 5432
-    database: milk_delivery_app2
-    username: milk_delivery_app2_user
-    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
+    database: atma_nirbhar_farm_db
+    username: atma_nirbhar_farm_db_user
+    password: 0F30EugdHfYajacs30xqh0kmAiB0Xj0P
   cache:
     adapter: postgresql
     encoding: unicode
     pool: 5
-    host: dpg-d1dotrripnbc73dh6ku0-a.oregon-postgres.render.com
+    host: dpg-d36i5fjuibrs739c9h80-a
     port: 5432
-    database: milk_delivery_app2
-    username: milk_delivery_app2_user
-    password: NLycabZcxnVsuRPHpEB1StBfJr4VomEV
+    database: atma_nirbhar_farm_db
+    username: atma_nirbhar_farm_db_user
+    password: 0F30EugdHfYajacs30xqh0kmAiB0Xj0P
