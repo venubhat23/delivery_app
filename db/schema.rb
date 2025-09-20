@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_19_023306) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_20_054334) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "admin_settings", force: :cascade do |t|
     t.string "business_name"
@@ -149,6 +150,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_19_023306) do
     t.string "monthly_pattern", default: "irregular"
     t.datetime "pattern_updated_at"
     t.index ["alt_phone_number"], name: "index_customers_on_alt_phone_number", where: "(alt_phone_number IS NOT NULL)"
+    t.index ["created_at"], name: "idx_customers_created_at"
     t.index ["customer_type"], name: "index_customers_on_customer_type"
     t.index ["delivery_person_id", "is_active"], name: "index_customers_delivery_person_active"
     t.index ["delivery_person_id"], name: "index_customers_on_delivery_person_id"
@@ -203,11 +205,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_19_023306) do
     t.index ["invoice_id"], name: "index_delivery_assignments_on_invoice_id"
     t.index ["product_id", "scheduled_date", "quantity"], name: "index_delivery_assignments_product_date_quantity"
     t.index ["product_id", "scheduled_date", "status"], name: "index_delivery_assignments_composite"
+    t.index ["product_id", "status", "completed_at"], name: "idx_delivery_product_status_completed"
+    t.index ["product_id", "status", "scheduled_date"], name: "idx_delivery_product_status_date"
     t.index ["product_id"], name: "index_delivery_assignments_on_product_id"
     t.index ["scheduled_date", "final_amount_after_discount"], name: "index_delivery_assignments_date_revenue"
     t.index ["scheduled_date", "product_id"], name: "index_delivery_assignments_completed", where: "((status)::text = 'completed'::text)"
     t.index ["scheduled_date", "quantity", "final_amount_after_discount"], name: "index_delivery_assignments_date_qty_revenue"
     t.index ["scheduled_date", "status"], name: "index_delivery_assignments_on_date_and_status"
+    t.index ["status", "completed_at", "product_id"], name: "idx_delivery_status_completed_product"
+    t.index ["status", "completed_at"], name: "idx_delivery_status_completed_at"
+    t.index ["status", "scheduled_date"], name: "idx_delivery_status_scheduled_date"
     t.index ["user_id"], name: "index_delivery_assignments_on_user_id"
   end
 
@@ -221,184 +228,3 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_19_023306) do
     t.index ["product_id"], name: "index_delivery_items_on_product_id"
   end
 
-  create_table "delivery_schedules", force: :cascade do |t|
-    t.bigint "customer_id", null: false
-    t.bigint "user_id", null: false
-    t.string "frequency"
-    t.date "start_date"
-    t.date "end_date"
-    t.string "status"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.decimal "default_quantity", precision: 8, scale: 2, default: "1.0"
-    t.string "default_unit", default: "pieces"
-    t.bigint "product_id"
-    t.integer "delivery_person_id"
-    t.decimal "default_discount_amount", precision: 10, scale: 2, default: "0.0"
-    t.boolean "cod", default: false
-    t.integer "booked_by"
-    t.index ["customer_id"], name: "index_delivery_schedules_on_customer_id"
-    t.index ["default_discount_amount"], name: "index_delivery_schedules_on_default_discount_amount"
-    t.index ["delivery_person_id"], name: "index_delivery_schedules_on_delivery_person_id"
-    t.index ["product_id"], name: "index_delivery_schedules_on_product_id"
-    t.index ["user_id"], name: "index_delivery_schedules_on_user_id"
-  end
-
-  create_table "faqs", force: :cascade do |t|
-    t.string "category"
-    t.text "question", null: false
-    t.text "answer", null: false
-    t.string "locale", default: "en", null: false
-    t.boolean "is_active", default: true, null: false
-    t.integer "sort_order", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "customer_id", null: false
-    t.boolean "submitted_by_user"
-    t.integer "status"
-    t.text "admin_response"
-    t.index ["category", "locale"], name: "index_faqs_on_category_and_locale"
-    t.index ["customer_id"], name: "index_faqs_on_customer_id"
-    t.index ["is_active"], name: "index_faqs_on_is_active"
-    t.index ["locale"], name: "index_faqs_on_locale"
-    t.index ["sort_order"], name: "index_faqs_on_sort_order"
-  end
-
-  create_table "invoice_items", force: :cascade do |t|
-    t.bigint "invoice_id", null: false
-    t.bigint "product_id", null: false
-    t.decimal "quantity"
-    t.decimal "unit_price"
-    t.decimal "total_price"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["invoice_id"], name: "index_invoice_items_on_invoice_id"
-    t.index ["product_id"], name: "index_invoice_items_on_product_id"
-  end
-
-  create_table "invoices", force: :cascade do |t|
-    t.bigint "customer_id", null: false
-    t.float "total_amount"
-    t.string "status"
-    t.date "invoice_date"
-    t.date "due_date"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "invoice_number"
-    t.string "invoice_type", default: "manual"
-    t.datetime "paid_at"
-    t.datetime "last_reminder_sent_at"
-    t.text "notes"
-    t.string "phone_number"
-    t.string "share_token"
-    t.datetime "shared_at"
-    t.index ["customer_id"], name: "index_invoices_on_customer_id"
-    t.index ["due_date"], name: "index_invoices_on_due_date"
-    t.index ["invoice_date"], name: "index_invoices_on_invoice_date"
-    t.index ["invoice_number"], name: "index_invoices_on_invoice_number", unique: true
-    t.index ["invoice_type"], name: "index_invoices_on_invoice_type"
-    t.index ["share_token"], name: "index_invoices_on_share_token", unique: true
-    t.index ["status"], name: "index_invoices_on_status"
-  end
-
-  create_table "milk_products", force: :cascade do |t|
-    t.string "name"
-    t.string "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "order_items", force: :cascade do |t|
-    t.bigint "order_id", null: false
-    t.bigint "product_id", null: false
-    t.decimal "quantity"
-    t.decimal "unit_price"
-    t.decimal "total_price"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["order_id"], name: "index_order_items_on_order_id"
-    t.index ["product_id"], name: "index_order_items_on_product_id"
-  end
-
-  create_table "orders", force: :cascade do |t|
-    t.bigint "customer_id", null: false
-    t.string "status"
-    t.decimal "total_amount"
-    t.text "notes"
-    t.datetime "order_date"
-    t.datetime "delivery_date"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["customer_id"], name: "index_orders_on_customer_id"
-  end
-
-  create_table "parties", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "mobile_number", null: false
-    t.string "gst_number"
-    t.text "shipping_address"
-    t.string "shipping_pincode"
-    t.string "shipping_city"
-    t.string "shipping_state"
-    t.text "billing_address"
-    t.string "billing_pincode"
-    t.bigint "user_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["gst_number"], name: "index_parties_on_gst_number"
-    t.index ["mobile_number"], name: "index_parties_on_mobile_number"
-    t.index ["name"], name: "index_parties_on_name"
-    t.index ["user_id"], name: "index_parties_on_user_id"
-  end
-
-  create_table "procurement_assignments", force: :cascade do |t|
-    t.bigint "procurement_schedule_id", null: false
-    t.string "vendor_name", null: false
-    t.date "date", null: false
-    t.decimal "planned_quantity", precision: 10, scale: 2, null: false
-    t.decimal "actual_quantity", precision: 10, scale: 2
-    t.decimal "buying_price", precision: 10, scale: 2, null: false
-    t.decimal "selling_price", precision: 10, scale: 2, null: false
-    t.string "status", default: "pending"
-    t.text "notes"
-    t.string "unit", default: "liters"
-    t.bigint "user_id", null: false
-    t.datetime "completed_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "product_id"
-    t.index ["date"], name: "index_procurement_assignments_on_date"
-    t.index ["procurement_schedule_id", "date"], name: "idx_on_procurement_schedule_id_date_cd15031368"
-    t.index ["procurement_schedule_id"], name: "index_procurement_assignments_on_procurement_schedule_id"
-    t.index ["product_id", "date"], name: "index_procurement_assignments_on_product_and_date"
-    t.index ["product_id"], name: "index_procurement_assignments_on_product_id"
-    t.index ["status", "date"], name: "index_procurement_assignments_on_status_and_date"
-    t.index ["status"], name: "index_procurement_assignments_on_status"
-    t.index ["user_id", "date", "vendor_name"], name: "index_procurement_assignments_user_date_vendor"
-    t.index ["user_id", "date"], name: "index_procurement_assignments_on_user_and_date"
-    t.index ["user_id", "vendor_name", "date"], name: "index_procurement_assignments_composite"
-    t.index ["user_id"], name: "index_procurement_assignments_on_user_id"
-    t.index ["vendor_name", "date"], name: "index_procurement_assignments_on_vendor_and_date"
-    t.index ["vendor_name"], name: "index_procurement_assignments_on_vendor_name"
-  end
-
-  create_table "procurement_invoices", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "procurement_schedule_id", null: false
-    t.string "invoice_number", null: false
-    t.date "invoice_date", null: false
-    t.date "due_date"
-    t.string "status", default: "draft", null: false
-    t.decimal "total_amount", precision: 10, scale: 2, default: "0.0", null: false
-    t.string "vendor_name", null: false
-    t.text "invoice_data"
-    t.text "notes"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["invoice_date"], name: "index_procurement_invoices_on_invoice_date"
-    t.index ["invoice_number"], name: "index_procurement_invoices_on_invoice_number", unique: true
-    t.index ["procurement_schedule_id"], name: "index_procurement_invoices_on_procurement_schedule_id"
-    t.index ["status"], name: "index_procurement_invoices_on_status"
-    t.index ["user_id"], name: "index_procurement_invoices_on_user_id"
-    t.index ["vendor_name"], name: "index_procurement_invoices_on_vendor_name"
-  end

@@ -1,96 +1,136 @@
 <% content_for :title, "Orders" %>
 
+<!-- Enhanced Orders Index Page -->
 <div class="container-fluid">
-  <div class="row">
+  <div class="row" style="margin-top: 2rem;">
     <div class="col-12">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h3 class="card-title mb-0">
-            <i class="fas fa-shopping-cart me-2"></i>
-            Orders Management
-          </h3>
-          <div class="d-flex align-items-center gap-3">
-            <div class="d-flex gap-2">
-              <span class="badge bg-light text-dark">
-                <i class="fas fa-clock me-1"></i>
-                Pending: <%= @pending_count %>
-              </span>
-              <span class="badge bg-light text-dark">
-                <i class="fas fa-check-circle me-1"></i>
-                Delivered: <%= @delivered_count %>
-              </span>
-              <span class="badge bg-light text-dark">
-                <i class="fas fa-list me-1"></i>
-                Total: <%= @total_count %>
-              </span>
-            </div>
-          </div>
-        </div>
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-shopping-cart me-3"></i>Orders Management
+      </h1>
+      <p class="text-muted mb-0">Manage delivery orders and track delivery progress</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_delivery_assignment_path, class: "btn btn-primary" do %>
+        <i class="fas fa-plus me-2"></i>New Order
+      <% end %>
+    </div>
+  </div>
+</div>
 
-        <div class="card-body p-0">
-          <!-- Filters Section -->
-          <div class="border-bottom p-4 bg-light">
-            <%= form_with url: orders_path, method: :get, class: "d-flex flex-wrap gap-3 align-items-end", local: true do |form| %>
-              <!-- Date Range Filter -->
-              <div class="form-group">
-                <label class="form-label fw-bold text-secondary">
-                  <i class="fas fa-calendar me-1"></i>
-                  Date Range
-                </label>
-                <%= form.select :date_filter, options_for_select([
-                  ['Today', 'today'],
-                  ['Weekly', 'weekly'],
-                  ['Monthly', 'monthly'],
-                  ['Custom Range', 'custom']
-                ], params[:date_filter] || 'today'), {}, {
-                  class: 'form-select form-select-sm',
-                  id: 'date_filter',
-                  style: 'min-width: 150px;'
-                } %>
-              </div>
+<!-- Enhanced Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-list"></i>
+      </div>
+      <div class="stats-number"><%= @total_count %></div>
+      <div class="stats-label">Total Orders</div>
+    </div>
+  </div>
 
-              <!-- Custom Date Range -->
-              <div class="form-group" id="start_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
-                <label class="form-label fw-bold text-secondary">Start Date</label>
-                <%= form.date_field :start_date, value: params[:start_date], class: 'form-control form-control-sm', style: 'min-width: 140px;' %>
-              </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stats-number"><%= @pending_count %></div>
+      <div class="stats-label">Pending Orders</div>
+    </div>
+  </div>
 
-              <div class="form-group" id="end_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
-                <label class="form-label fw-bold text-secondary">End Date</label>
-                <%= form.date_field :end_date, value: params[:end_date], class: 'form-control form-control-sm', style: 'min-width: 140px;' %>
-              </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stats-number"><%= @delivered_count %></div>
+      <div class="stats-label">Delivered Orders</div>
+    </div>
+  </div>
 
-              <!-- Booked By Filter -->
-              <div class="form-group">
-                <label class="form-label fw-bold text-secondary">
-                  <i class="fas fa-user-tag me-1"></i>
-                  Booked By
-                </label>
-                <%= form.select :booked_by_filter, options_for_select([
-                  ['All', ''],
-                  ['Booked by Customer', 'customer'],
-                  ['Booked by Delivery Person', 'delivery_person'],
-                  ['Booked by Admin', 'admin']
-                ], params[:booked_by_filter]), {}, {
-                  class: 'form-select form-select-sm',
-                  style: 'min-width: 180px;'
-                } %>
-              </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-percentage"></i>
+      </div>
+      <div class="stats-number"><%= @total_count > 0 ? ((@delivered_count.to_f / @total_count) * 100).round(1) : 0 %>%</div>
+      <div class="stats-label">Completion Rate</div>
+    </div>
+  </div>
+</div>
 
-              <!-- Filter Button -->
-              <div class="form-group">
-                <%= form.submit "Apply Filters", class: "btn btn-primary btn-sm" %>
-                <% if params[:date_filter].present? || params[:booked_by_filter].present? %>
-                  <%= link_to "Clear", orders_path, class: "btn btn-outline-secondary btn-sm ms-2" %>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
+<!-- Filters -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-filter me-2"></i>Filters & Search
+    </h6>
+  </div>
+  <div class="card-body">
+    <%= form_with url: orders_path, method: :get, local: true, class: "row g-3" do |form| %>
+      <div class="col-md-3">
+        <%= form.select :date_filter,
+            options_for_select([
+              ['Today', 'today'],
+              ['Weekly', 'weekly'],
+              ['Monthly', 'monthly'],
+              ['Custom Range', 'custom']
+            ], params[:date_filter] || 'today'),
+            {},
+            { class: "form-select", id: 'date_filter' } %>
+      </div>
 
-          <!-- Results Table -->
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead class="table-dark sticky-top">
+      <div class="col-md-2" id="start_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
+        <%= form.date_field :start_date, value: params[:start_date], class: 'form-control', placeholder: 'Start Date' %>
+      </div>
+
+      <div class="col-md-2" id="end_date_wrapper" style="<%= 'display: none;' unless params[:date_filter] == 'custom' %>">
+        <%= form.date_field :end_date, value: params[:end_date], class: 'form-control', placeholder: 'End Date' %>
+      </div>
+
+      <div class="col-md-3">
+        <%= form.select :booked_by_filter,
+            options_for_select([
+              ['All Booking Types', ''],
+              ['Booked by Customer', 'customer'],
+              ['Booked by Delivery Person', 'delivery_person'],
+              ['Booked by Admin', 'admin']
+            ], params[:booked_by_filter]),
+            {},
+            { class: "form-select" } %>
+      </div>
+
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-search me-2"></i>Apply Filters
+        </button>
+        <% if params[:date_filter].present? || params[:booked_by_filter].present? %>
+          <%= link_to orders_path, class: "btn btn-outline-secondary ms-2" do %>
+            <i class="fas fa-times me-2"></i>Clear
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-list me-2"></i>All Orders
+    </h6>
+  </div>
+  <div class="card-body">
+
+    <% if @delivery_assignments.any? %>
+      <div class="table-responsive">
+        <table class="table table-bordered" width="100%" cellspacing="0">
+          <thead>
                 <tr>
                   <th class="text-center" style="width: 120px;">
                     <i class="fas fa-calendar-alt me-1"></i>
@@ -255,69 +295,406 @@
             </table>
           </div>
 
-          <!-- Pagination -->
-          <% if @delivery_assignments.respond_to?(:current_page) %>
-            <div class="card-footer bg-light">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted">
-                  <% if @delivery_assignments.total_count > 0 %>
-                    Showing <%= @delivery_assignments.offset_value + 1 %> to
-                    <%= [@delivery_assignments.offset_value + @delivery_assignments.limit_value, @delivery_assignments.total_count].min %>
-                    of <%= @delivery_assignments.total_count %> results
-                  <% else %>
-                    No results found
-                  <% end %>
-                </div>
-                <% if @delivery_assignments.total_pages > 1 %>
-                  <div>
-                    <%= paginate @delivery_assignments, theme: 'twitter-bootstrap-4',
-                        params: { date_filter: params[:date_filter],
-                                 booked_by_filter: params[:booked_by_filter],
-                                 start_date: params[:start_date],
-                                 end_date: params[:end_date] } %>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
+      <!-- Pagination -->
+      <% if @delivery_assignments.respond_to?(:current_page) %>
+        <div class="d-flex justify-content-center mt-4">
+          <%= paginate @delivery_assignments %>
         </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="fas fa-shopping-cart fa-3x text-gray-300 mb-3"></i>
+        <h4 class="text-gray-500">No Orders Found</h4>
+        <p class="text-gray-400 mb-4">No delivery assignments found matching the selected criteria. Try adjusting your filters or date range.</p>
+        <%= link_to new_delivery_assignment_path, class: "btn btn-primary" do %>
+          <i class="fas fa-plus me-2"></i>Create Your First Order
+        <% end %>
       </div>
-    </div>
+    <% end %>
   </div>
 </div>
 
 <style>
-  .avatar-sm {
-    width: 40px;
-    height: 40px;
-    font-size: 14px;
+/* Enhanced Orders Index Styles - Modern & Professional */
+
+/* Page Layout Improvements */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 0 0 0 60px;
+}
+
+.stats-card:hover {
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: var(--primary-gradient);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  z-index: 2;
+}
+
+.stats-card .stats-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card .stats-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card-success::before {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning::before {
+  background: var(--warning-gradient);
+}
+
+.stats-card-danger::before {
+  background: var(--danger-gradient);
+}
+
+.stats-card-info::before {
+  background: var(--dark-gradient);
+}
+
+.stats-card-success .stats-icon {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning .stats-icon {
+  background: var(--warning-gradient);
+}
+
+.stats-card-danger .stats-icon {
+  background: var(--danger-gradient);
+}
+
+.stats-card-info .stats-icon {
+  background: var(--dark-gradient);
+}
+
+/* Enhanced Filter Card */
+.card {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1.5rem 2rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+/* Enhanced Table */
+.table {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: none;
+  margin: 0;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  padding: 1.5rem 1rem;
+  border: none;
+  position: relative;
+}
+
+.table thead th i {
+  opacity: 0.8;
+  margin-right: 0.5rem;
+}
+
+.table tbody tr {
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+}
+
+.table tbody tr:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  transform: translateX(8px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+}
+
+.table tbody td {
+  padding: 1.5rem 1rem;
+  vertical-align: middle;
+  border-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Enhanced Badges */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+/* Enhanced Empty State */
+.text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* Enhanced Form Controls */
+.form-select, .form-control {
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Button Enhancements */
+.btn {
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8, #6b46c1);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-outline-secondary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  background: transparent;
+}
+
+.btn-outline-secondary:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* Avatar Styling */
+.avatar-sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* CSS Variables */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --border-color: #e2e8f0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 1.5rem;
+    text-align: center;
   }
 
-  .empty-state {
-    padding: 2rem;
+  .stats-card {
+    margin-bottom: 1.5rem;
   }
 
-  .table th {
-    border-top: none;
-    font-weight: 600;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  .table tbody tr:hover {
+    transform: translateX(4px);
   }
 
-  .table td {
-    vertical-align: middle;
-    padding: 1rem 0.75rem;
-  }
-
-  .badge {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-  }
-
-  .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  .card-body {
+    padding: 1.5rem;
   }
 </style>
 
@@ -341,3 +718,6 @@ document.addEventListener('DOMContentLoaded', function() {
   toggleCustomDateFields(); // Initial call
 });
 </script>
+    </div>
+  </div>
+</div>

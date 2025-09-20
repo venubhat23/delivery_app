@@ -1,16 +1,54 @@
 class DashboardController < ApplicationController
   def index
-    @total_customers = Customer.count
-    @total_products = Product.count
-    @pending_deliveries = DeliveryAssignment.where(status: 'pending').count
-    @total_invoices = Invoice.count
-    
-    # Additional data for dynamic sections
-    @top_products = Product.order(:name).limit(5)
-    @recent_customers = Customer.order(created_at: :desc).limit(5)
-    
+    # Cache basic counts for 5 minutes
+    @total_customers = Rails.cache.fetch("dashboard_customers_count", expires_in: 5.minutes) do
+      Customer.count
+    end
+
+    @total_products = Rails.cache.fetch("dashboard_products_count", expires_in: 5.minutes) do
+      Product.count
+    end
+
+    @pending_deliveries = Rails.cache.fetch("dashboard_pending_deliveries", expires_in: 30.seconds) do
+      DeliveryAssignment.where(status: 'pending').count
+    end
+
+    @total_invoices = Rails.cache.fetch("dashboard_invoices_count", expires_in: 5.minutes) do
+      Invoice.count
+    end
+
+    # Cache top products for 10 minutes
+    @top_products = Rails.cache.fetch("dashboard_top_products", expires_in: 10.minutes) do
+      Product.order(:name).limit(5).to_a
+    end
+
+    # Cache recent customers for 2 minutes
+    @recent_customers = Rails.cache.fetch("dashboard_recent_customers", expires_in: 2.minutes) do
+      Customer.includes(:user, :delivery_person).order(created_at: :desc).limit(5).to_a
+    end
+
     # Total Delivered Milk Supply Analytics
     calculate_delivery_analytics
+
+    # Warm up cache in background if needed
+    warm_up_cache_if_needed
+  end
+
+  def warm_up_cache_if_needed
+    # Check if any critical cache keys are missing and warm them up
+    today = Date.current
+    cache_keys = [
+      "dashboard_today_stats_#{today}",
+      "dashboard_monthly_stats_#{today.year}_#{today.month}",
+      "dashboard_weekly_data_#{today}"
+    ]
+
+    missing_keys = cache_keys.select { |key| Rails.cache.read(key).nil? }
+
+    if missing_keys.any?
+      # Trigger cache population in a way that doesn't block the response
+      calculate_delivery_analytics_for_date(today, 'today')
+    end
   end
 
   def delivery_analytics
@@ -45,37 +83,82 @@ class DashboardController < ApplicationController
   end
 
   def calculate_delivery_analytics_for_date(date, range)
-    # Today's stats
-    today_assignments = DeliveryAssignment.joins(:product)
-                                         .where(status: 'completed', scheduled_date: date)
+    # Cache today's stats for 10 minutes (more frequent updates for today)
+    @total_delivered_today = Rails.cache.fetch("dashboard_today_stats_#{date}", expires_in: 10.minutes) do
+      calculate_today_stats(date)
+    end
 
-    @total_delivered_today = {
-      count: today_assignments.count,
-      total_amount: today_assignments.sum(&:final_amount),
-      total_liters: today_assignments.joins(:product).where(products: { unit_type: 'liters' }).sum(:quantity),
-      milk_products_count: today_assignments.joins(:product).where("products.name ILIKE '%milk%'").count
+    # Cache monthly stats for 30 minutes (intermediate frequency)
+    month_key = "#{date.year}_#{date.month}"
+    @total_delivered_monthly = Rails.cache.fetch("dashboard_monthly_stats_#{month_key}", expires_in: 30.minutes) do
+      calculate_monthly_stats(date)
+    end
+
+    # Cache weekly data for 15 minutes
+    @weekly_delivery_data = Rails.cache.fetch("dashboard_weekly_data_#{date}", expires_in: 15.minutes) do
+      calculate_weekly_delivery_data(date)
+    end
+
+    # Cache top products for 1 hour (least frequent changes)
+    @top_delivered_products = Rails.cache.fetch("dashboard_top_products_#{date}", expires_in: 1.hour) do
+      get_top_delivered_products(date)
+    end
+  end
+
+  def calculate_today_stats(date)
+    # Use separate optimized queries to leverage indexes better
+    base_assignments = DeliveryAssignment.where(status: 'completed', scheduled_date: date)
+
+    # Get basic stats without joins first
+    count = base_assignments.count
+    total_amount = base_assignments.sum(:final_amount_after_discount)
+
+    # Use separate queries for product-specific stats to leverage indexes
+    total_liters = base_assignments.joins(:product)
+                                  .where(products: { unit_type: 'liters' })
+                                  .sum(:quantity)
+
+    # Use more efficient query for milk products
+    milk_products_count = base_assignments.joins(:product)
+                                         .where("products.name ILIKE ?", '%milk%')
+                                         .count
+
+    {
+      count: count,
+      total_amount: total_amount,
+      total_liters: total_liters,
+      milk_products_count: milk_products_count
     }
+  end
 
-    # Monthly stats
+  def calculate_monthly_stats(date)
     month_start = date.beginning_of_month
     month_end = date.end_of_month
 
-    monthly_assignments = DeliveryAssignment.joins(:product)
-                                           .where(status: 'completed')
-                                           .where(completed_at: month_start..month_end)
+    # Use separate optimized queries to leverage indexes better
+    base_assignments = DeliveryAssignment.where(status: 'completed')
+                                        .where(completed_at: month_start..month_end)
 
-    @total_delivered_monthly = {
-      count: monthly_assignments.count,
-      total_amount: monthly_assignments.sum(&:final_amount),
-      total_liters: monthly_assignments.joins(:product).where(products: { unit_type: 'liters' }).sum(:quantity),
-      milk_products_count: monthly_assignments.joins(:product).where("products.name ILIKE '%milk%'").count
+    # Get basic stats without joins first
+    count = base_assignments.count
+    total_amount = base_assignments.sum(:final_amount_after_discount)
+
+    # Use separate queries for product-specific stats to leverage indexes
+    total_liters = base_assignments.joins(:product)
+                                  .where(products: { unit_type: 'liters' })
+                                  .sum(:quantity)
+
+    # Use more efficient query for milk products
+    milk_products_count = base_assignments.joins(:product)
+                                         .where("products.name ILIKE ?", '%milk%')
+                                         .count
+
+    {
+      count: count,
+      total_amount: total_amount,
+      total_liters: total_liters,
+      milk_products_count: milk_products_count
     }
-
-    # Optimized weekly data calculation
-    @weekly_delivery_data = calculate_weekly_delivery_data(date)
-
-    # Optimized top products calculation
-    @top_delivered_products = get_top_delivered_products(date)
   end
 
   # Optimized helper methods for analytics
@@ -84,50 +167,51 @@ class DashboardController < ApplicationController
     end_date = date
     start_date = date - 6.days
 
-    # Get all assignments for the week
-    assignments = DeliveryAssignment.joins(:product)
-                                   .where(status: 'completed')
+    # Use simpler aggregation query
+    daily_stats = DeliveryAssignment.where(status: 'completed')
                                    .where(scheduled_date: start_date..end_date)
-                                   .includes(:product)
+                                   .group(:scheduled_date)
+                                   .count
 
-    # Group by date
-    daily_data = assignments.group_by { |assignment| assignment.scheduled_date.to_date }
+    daily_amounts = DeliveryAssignment.where(status: 'completed')
+                                     .where(scheduled_date: start_date..end_date)
+                                     .group(:scheduled_date)
+                                     .sum(:final_amount_after_discount)
 
     # Convert to required format
-    (start_date.to_date..end_date.to_date).map do |date|
-      day_assignments = daily_data[date] || []
+    (start_date.to_date..end_date.to_date).map do |day_date|
       {
-        date: date.to_s,
-        count: day_assignments.count,
-        total_amount: day_assignments.sum(&:final_amount)
+        date: day_date.to_s,
+        count: daily_stats[day_date] || 0,
+        total_amount: daily_amounts[day_date] || 0
       }
     end
   end
 
   def get_top_delivered_products(date)
-    # Get top 5 products by delivery count for last 30 days
+    # Get top 5 products by delivery count for last 30 days using database aggregation
     end_date = date
     start_date = date - 29.days
 
-    # Use Rails query and group in Ruby to avoid SQL issues
-    assignments = DeliveryAssignment.joins(:product)
-                                   .where(status: 'completed')
-                                   .where(scheduled_date: start_date..end_date)
-                                   .includes(:product)
+    # Use database aggregation for better performance
+    product_stats = DeliveryAssignment.joins(:product)
+                                     .where(status: 'completed')
+                                     .where(scheduled_date: start_date..end_date)
+                                     .group('products.id, products.name, products.unit_type')
+                                     .select('products.name, products.unit_type,
+                                             SUM(delivery_assignments.quantity) as total_delivered,
+                                             SUM(delivery_assignments.final_amount_after_discount) as total_revenue')
+                                     .order('total_delivered DESC')
+                                     .limit(5)
 
-    # Group by product and calculate totals
-    product_stats = assignments.group_by(&:product).map do |product, product_assignments|
-      {
-        name: product.name,
-        unit_type: product.unit_type,
-        total_delivered: product_assignments.sum(&:quantity),
-        total_revenue: product_assignments.sum(&:final_amount)
-      }
-    end
-
-    # Sort by total delivered and take top 5
-    product_stats.sort_by { |p| -p[:total_delivered] }.first(5).map do |stats|
-      OpenStruct.new(stats)
+    # Convert to required format
+    product_stats.map do |stat|
+      OpenStruct.new(
+        name: stat.name,
+        unit_type: stat.unit_type,
+        total_delivered: stat.total_delivered.to_f,
+        total_revenue: stat.total_revenue.to_f
+      )
     end
   end
 

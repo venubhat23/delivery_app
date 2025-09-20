@@ -963,7 +963,7 @@ function generateInvoice(scheduleId, vendorName, button) {
   button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
   // Make AJAX request to generate invoice
-  fetch(`/milk-supply-analytics/generate_purchase_invoice?schedule_id=${scheduleId}`, {
+  fetch(`/milk-supply-analytics/generate_procurement_invoice?schedule_id=${scheduleId}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,110 +1,441 @@
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h1 class="h2">
-    <i class="fas fa-tags me-2"></i>Categories
-    <span class="badge bg-secondary ms-2"><%= @total_categories %></span>
-  </h1>
-  <div class="btn-toolbar mb-2 mb-md-0">
-    <%= link_to new_category_path, class: "btn btn-primary" do %>
-      <i class="fas fa-plus me-2"></i>New Category
-    <% end %>
+<!-- Enhanced Categories Index Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">
+              <i class="fas fa-tags me-3"></i>Category Management
+            </h1>
+            <p class="text-muted mb-0">Organize your products with categories</p>
+          </div>
+          <div class="d-flex gap-2">
+            <div class="badge-container me-3">
+              <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                <i class="fas fa-list me-1"></i>
+                Total: <%= @total_categories %>
+              </span>
+            </div>
+            <%= link_to new_category_path, class: "btn btn-primary" do %>
+              <i class="fas fa-plus me-2"></i>Add Category
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories Table -->
+      <% if @categories.any? %>
+        <div class="card mt-4">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">
+                <i class="fas fa-list me-2"></i>Categories List
+              </h6>
+              <span class="badge bg-primary"><%= @categories.count %> items</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">
+                      <i class="fas fa-tags me-1"></i>Category
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-info-circle me-1"></i>Description
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-box me-1"></i>Products
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-rupee-sign me-1"></i>Total Value
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-cogs me-1"></i>Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @categories.each do |category| %>
+                    <tr class="category-row">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="category-avatar me-3">
+                            <%= category.name.first.upcase %>
+                          </div>
+                          <div>
+                            <div class="category-dot me-2" style="background-color: <%= category.color %>"></div>
+                            <%= link_to category.name, category_path(category), class: "text-decoration-none fw-bold text-primary" %>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="text-muted">
+                          <%= category.description.present? ? truncate(category.description, length: 80) : "No description" %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge bg-info px-3 py-2">
+                          <i class="fas fa-box me-1"></i>
+                          <%= category.products_count %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="fw-bold text-success fs-6">
+                          ₹<%= number_with_precision(category.total_products_value, precision: 2) %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <%= link_to category_path(category), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
+                            <i class="fas fa-eye"></i>
+                          <% end %>
+                          <%= link_to edit_category_path(category), class: "btn btn-sm btn-outline-warning", title: "Edit Category" do %>
+                            <i class="fas fa-edit"></i>
+                          <% end %>
+                          <%= button_to category_path(category),
+                              method: :delete,
+                              form: { "data-turbo-confirm": "Are you sure you want to delete this category? All associated products will be uncategorized.", class: "d-inline" },
+                              class: "btn btn-sm btn-outline-danger",
+                              title: "Delete Category" do %>
+                            <i class="fas fa-trash"></i>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="card mt-4">
+          <div class="card-body">
+            <div class="empty-state">
+              <i class="fas fa-tags"></i>
+              <h4>No Categories Found</h4>
+              <p>Start organizing your products by creating your first category.</p>
+              <%= link_to new_category_path, class: "btn btn-primary mt-3" do %>
+                <i class="fas fa-plus me-2"></i>Create First Category
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
   </div>
 </div>
 
-<% if @categories.any? %>
-  <div class="table-responsive">
-    <table class="table table-striped table-hover">
-      <thead class="table-primary">
-        <tr>
-          <th scope="col">
-            <i class="fas fa-tags me-1"></i>Category
-          </th>
-          <th scope="col">
-            <i class="fas fa-info-circle me-1"></i>Description
-          </th>
-          <th scope="col">
-            <i class="fas fa-box me-1"></i>Products
-          </th>
-          <th scope="col">
-            <i class="fas fa-rupee-sign me-1"></i>Total Value
-          </th>
-          <th scope="col">
-            <i class="fas fa-cogs me-1"></i>Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @categories.each do |category| %>
-          <tr>
-            <td>
-              <div class="d-flex align-items-center">
-                <div class="me-2" style="width: 20px; height: 20px; border-radius: 50%; background-color: <%= category.color %>"></div>
-                <%= link_to category.name, category_path(category), class: "text-decoration-none fw-bold" %>
-              </div>
-            </td>
-            <td>
-              <span class="text-muted">
-                <%= category.description.present? ? truncate(category.description, length: 100) : "No description" %>
-              </span>
-            </td>
-            <td>
-              <span class="badge bg-info fs-6">
-                <%= category.products_count %>
-              </span>
-            </td>
-            <td>
-              <span class="fw-bold text-success">
-                <i class="fas fa-rupee-sign"></i><%= number_with_precision(category.total_products_value, precision: 2) %>
-              </span>
-            </td>
-            <td>
-              <div class="btn-group" role="group">
-                <%= link_to category_path(category), class: "btn btn-outline-primary btn-sm" do %>
-                  <i class="fas fa-eye"></i>
-                <% end %>
-                <%= link_to edit_category_path(category), class: "btn btn-outline-warning btn-sm" do %>
-                  <i class="fas fa-edit"></i>
-                <% end %>
-                <%= button_to category_path(category), 
-                    method: :delete,
-                    form: { "data-turbo-confirm": "Are you sure you want to delete this category? All associated products will be uncategorized.", class: "d-inline" },
-                    class: "btn btn-outline-danger btn-sm" do %>
-                  <i class="fas fa-trash"></i>
-                <% end %>
-              </div>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-<% else %>
-  <div class="text-center py-5">
-    <i class="fas fa-tags fa-3x text-muted mb-3"></i>
-    <h3 class="text-muted">No categories yet</h3>
-    <p class="text-muted">Create your first category to organize your products better.</p>
-    <%= link_to new_category_path, class: "btn btn-primary" do %>
-      <i class="fas fa-plus me-2"></i>Create First Category
-    <% end %>
-  </div>
-<% end %>
-
 <style>
-.table th {
-  border-top: none;
+/* Enhanced Categories Index Styles - Modern & Professional */
+
+/* Page Layout Improvements */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+.page-header .badge {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Card */
+.card {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1.5rem 2rem;
+}
+
+.card-body {
+  padding: 0;
+}
+
+/* Enhanced Table */
+.table {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: none;
+  margin: 0;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   font-weight: 600;
-  color: #5a5c69;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  padding: 1.5rem 1rem;
+  border: none;
+  position: relative;
 }
 
-.btn-group .btn {
-  border-radius: 0.35rem !important;
-  margin-right: 4px;
+.table thead th i {
+  opacity: 0.8;
+  margin-right: 0.5rem;
 }
 
+.category-row {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+}
+
+.category-row:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  transform: translateX(8px) scale(1.01);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+}
+
+.category-row td {
+  padding: 1.5rem 1rem;
+  vertical-align: middle;
+  border-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Enhanced Category Avatar */
+.category-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.category-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+}
+
+/* Enhanced Category Dot */
+.category-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.category-dot:hover {
+  transform: scale(1.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced Badges */
 .badge {
-  font-size: 0.85em;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
-.table-hover tbody tr:hover {
-  background-color: rgba(0,123,255,.075);
+.badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.badge.bg-info {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+/* Enhanced Action Buttons */
+.btn-group .btn {
+  border-radius: 12px !important;
+  margin-right: 6px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+.btn-outline-primary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.btn-outline-warning {
+  border: 2px solid #f59e0b;
+  color: #f59e0b;
+  background: transparent;
+}
+
+.btn-outline-warning:hover {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+.btn-outline-danger {
+  border: 2px solid #ef4444;
+  color: #ef4444;
+  background: transparent;
+}
+
+.btn-outline-danger:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* Enhanced Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.empty-state i {
+  font-size: 5rem;
+  opacity: 0.2;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state h4 {
+  color: #374151;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .category-row:hover {
+    transform: translateX(4px);
+  }
+
+  .btn-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-group .btn {
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>

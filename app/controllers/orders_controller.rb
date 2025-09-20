@@ -2,25 +2,43 @@ class OrdersController < ApplicationController
   before_action :require_login
 
   def index
+    # Use base query without select for counting
+    base_query = filter_assignments_for_count
+
+    # Get paginated results with includes to prevent N+1 queries
     @delivery_assignments = filter_assignments
                            .includes(:customer, :user, :product)
                            .order(created_at: :desc)
                            .page(params[:page])
                            .per(50)
 
-    @total_count = filter_assignments.count
-
-    # Calculate summary stats for display
-    @pending_count = filter_assignments.where(status: ['pending', 'in_progress']).count
-    @delivered_count = filter_assignments.where(status: 'completed').count
+    # Calculate all counts in a single query using group
+    counts = base_query.group(:status).count
+    @total_count = counts.values.sum
+    @pending_count = counts['pending'].to_i + counts['in_progress'].to_i
+    @delivered_count = counts['completed'].to_i
   end
 
   private
 
   def filter_assignments
+    # Use full model for better compatibility with view methods
     assignments = DeliveryAssignment.all
 
-    # Date filter
+    # Date filter (apply early to reduce dataset)
+    assignments = apply_date_filter(assignments)
+
+    # Booked by filter
+    assignments = apply_booked_by_filter(assignments)
+
+    assignments
+  end
+
+  def filter_assignments_for_count
+    # Use base query without select for counting operations
+    assignments = DeliveryAssignment.all
+
+    # Date filter (apply early to reduce dataset)
     assignments = apply_date_filter(assignments)
 
     # Booked by filter

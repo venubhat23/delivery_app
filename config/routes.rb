@@ -331,6 +331,7 @@ Rails.application.routes.draw do
       post :generate_purchase_invoice
       get :preview_purchase_invoice
       get :get_schedule_invoice_status
+      post :generate_procurement_invoice
       get :view_schedule_invoice
       post :create_procurement_invoices_for_all
       post :mark_assignments_completed
