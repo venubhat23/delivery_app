@@ -1,95 +1,93 @@
 <% content_for :title, "Customer Patterns - #{@month_name}" %>
 
 <div class="container-fluid">
-  <!-- Header -->
-  <div class="row mb-4" style="margin-top: 2rem;">
+  <div class="row" style="margin-top: 2rem;">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h1 class="h3 mb-1">📊 Customer Patterns Analysis</h1>
-          <p class="text-muted mb-0">Monthly delivery pattern analysis for <%= @month_name %></p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-          <!-- Complete All Till Today Button -->
-          <button type="button" class="btn btn-success complete-all-btn"
-                  id="completeAllTillTodayBtn"
-                  data-month="<%= @current_month %>"
-                  data-year="<%= @current_year %>"
-                  data-delivery-person-id="<%= @delivery_person_id %>"
-                  style="display: none;">
-            <span class="btn-text">
-              ✅ Complete All Till Today (<span id="pending-count-display">0</span>)
-            </span>
-            <span class="btn-loader" style="display: none;">
-              <div class="spinner-border spinner-border-sm text-white me-2" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-              Processing...
-            </span>
-          </button>
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-chart-line me-3"></i>Customer Patterns Analysis
+      </h1>
+      <p class="text-muted mb-0">Monthly delivery pattern analysis for <%= @month_name %></p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <!-- Complete All Till Today Button -->
+      <button type="button" class="btn btn-success complete-all-btn"
+              id="completeAllTillTodayBtn"
+              data-month="<%= @current_month %>"
+              data-year="<%= @current_year %>"
+              data-delivery-person-id="<%= @delivery_person_id %>"
+              style="display: none;">
+        <span class="btn-text">
+          <i class="fas fa-check-circle me-2"></i>Complete All Till Today (<span id="pending-count-display">0</span>)
+        </span>
+        <span class="btn-loader" style="display: none;">
+          <div class="spinner-border spinner-border-sm text-white me-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          Processing...
+        </span>
+      </button>
 
-          <!-- Filters Form -->
-          <%= form_with url: customer_patterns_path, method: :get, local: true, class: "d-flex gap-2 flex-wrap" do |form| %>
-            <!-- Delivery Person Filter -->
-            <%= form.select :delivery_person_id,
-                options_from_collection_for_select(@delivery_people, :id, :name, @delivery_person_id),
-                { prompt: "🚚 All Delivery People" },
-                { class: "form-select", style: "width: auto; min-width: 200px;" } %>
+      <!-- Filters Form -->
+      <%= form_with url: customer_patterns_path, method: :get, local: true, class: "d-flex gap-2 flex-wrap" do |form| %>
+        <!-- Delivery Person Filter -->
+        <%= form.select :delivery_person_id,
+            options_from_collection_for_select(@delivery_people, :id, :name, @delivery_person_id),
+            { prompt: "🚚 All Delivery People" },
+            { class: "form-select", style: "width: auto; min-width: 200px;" } %>
 
-            <!-- Month/Year Selector -->
-            <%= form.select :month, options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, @current_month),
-                { prompt: "Select Month" }, { class: "form-select", style: "width: auto;" } %>
-            <%= form.select :year, options_for_select((2023..Date.current.year+1).map { |y| [y, y] }, @current_year),
-                { prompt: "Select Year" }, { class: "form-select", style: "width: auto;" } %>
-            <%= form.submit "🔍 Filter", class: "btn btn-primary", id: "filter-submit-btn" %>
-          <% end %>
-        </div>
-      </div>
+        <!-- Month/Year Selector -->
+        <%= form.select :month, options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, @current_month),
+            { prompt: "Select Month" }, { class: "form-select", style: "width: auto;" } %>
+        <%= form.select :year, options_for_select((2023..Date.current.year+1).map { |y| [y, y] }, @current_year),
+            { prompt: "Select Year" }, { class: "form-select", style: "width: auto;" } %>
+        <%= form.submit "🔍 Filter", class: "btn btn-primary", id: "filter-submit-btn" %>
+      <% end %>
     </div>
   </div>
+</div>
 
-  <!-- Summary Cards -->
-  <div class="row mb-4">
-    <div class="col-md-3">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-2 mb-2">👥</div>
-          <h3 class="text-primary mb-1"><%= @total_customers %></h3>
-          <p class="text-muted mb-0">Total Customers</p>
-        </div>
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-users"></i>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-2 mb-2">🟢</div>
-          <h3 class="text-success mb-1"><%= @regular_count %></h3>
-          <p class="text-muted mb-0">Regular Customers</p>
-          <small class="text-muted">≥0.5L daily</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-2 mb-2">🟡</div>
-          <h3 class="text-warning mb-1"><%= @interval_count %></h3>
-          <p class="text-muted mb-0">Interval Customers</p>
-          <small class="text-muted">Missed 1-2 days</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-2 mb-2">🔴</div>
-          <h3 class="text-danger mb-1"><%= @irregular_count %></h3>
-          <p class="text-muted mb-0">Irregular Customers</p>
-          <small class="text-muted">Sporadic deliveries</small>
-        </div>
-      </div>
+      <div class="stats-number"><%= @total_customers %></div>
+      <div class="stats-label">Total Customers</div>
     </div>
   </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stats-number"><%= @regular_count %></div>
+      <div class="stats-label">Regular Customers</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stats-number"><%= @interval_count %></div>
+      <div class="stats-label">Interval Customers</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="stats-number"><%= @irregular_count %></div>
+      <div class="stats-label">Irregular Customers</div>
+    </div>
+  </div>
+</div>
 
   <!-- Filter Buttons -->
   <div class="row mb-3">
@@ -132,80 +130,93 @@
             <table class="table table-hover mb-0">
               <thead class="table-light">
                 <tr>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">CUSTOMER NAME</th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">DELIVERY PERSON</th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">TOTAL LITERS & PRIMARY PRODUCT</th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">DAYS/TOTAL ASSIGNMENTS</th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">ESTIMATED AMOUNT</th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">PATTERN & SCHEDULE</th>
-                  <th class="text-nowrap fw-bold text-center" style="background-color: #7b68ee; color: white;">ACTION</th>
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 180px; width: 15%;">
+                    <i class="fas fa-user me-1"></i>CUSTOMER NAME
+                  </th>
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 140px; width: 12%;">
+                    <i class="fas fa-truck me-1"></i>DELIVERY PERSON
+                  </th>
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 160px; width: 15%;">
+                    <i class="fas fa-tint me-1"></i>LITERS & PRODUCT
+                  </th>
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 140px; width: 12%;">
+                    <i class="fas fa-calendar me-1"></i>DAYS/ASSIGNMENTS
+                  </th>
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 120px; width: 10%;">
+                    <i class="fas fa-rupee-sign me-1"></i>AMOUNT
+                  </th>
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 180px; width: 20%;">
+                    <i class="fas fa-chart-line me-1"></i>PATTERN & SCHEDULE
+                  </th>
+                  <th class="text-nowrap fw-bold text-center" style="background-color: #7b68ee; color: white; min-width: 120px; width: 10%;">
+                    <i class="fas fa-cogs me-1"></i>ACTION
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <% if @customer_patterns.any? %>
                   <% @customer_patterns.each do |data| %>
-                    <tr>
-                      <td class="align-middle">
+                    <tr class="customer-pattern-row">
+                      <td class="align-middle" style="min-width: 180px;">
                         <div class="d-flex align-items-center">
-                          <div class="avatar-circle me-2">
+                          <div class="avatar-circle me-3">
                             <%= data[:customer].name.first.upcase %>
                           </div>
-                          <div>
-                            <div class="fw-bold text-dark"><%= data[:customer].name %></div>
+                          <div class="flex-grow-1">
+                            <div class="fw-bold text-dark mb-1"><%= data[:customer].name %></div>
                             <small class="text-muted">ID: <%= data[:customer].id %></small>
                           </div>
                         </div>
                       </td>
-                      <td class="align-middle">
-                        <span class="badge bg-info fs-6 p-2">
+                      <td class="align-middle text-center" style="min-width: 140px;">
+                        <span class="badge bg-info p-2">
                           <%= data[:delivery_person_name] %>
                         </span>
                       </td>
-                      <td class="align-middle text-center">
+                      <td class="align-middle text-center" style="min-width: 160px;">
                         <div class="d-flex flex-column align-items-center gap-2">
                           <span class="fs-5 fw-bold text-primary"><%= data[:total_liters] %> L</span>
                           <% if data[:primary_product] %>
-                            <span class="badge bg-secondary fs-6 p-2">
-                              <%= data[:primary_product].name %>
+                            <span class="badge bg-secondary p-1" style="font-size: 0.7rem;">
+                              <%= truncate(data[:primary_product].name, length: 12) %>
                             </span>
                           <% else %>
-                            <span class="text-muted">No product</span>
+                            <span class="text-muted small">No product</span>
                           <% end %>
                         </div>
                       </td>
-                      <td class="align-middle text-center">
+                      <td class="align-middle text-center" style="min-width: 140px;">
                         <div class="d-flex flex-column align-items-center gap-1">
-                          <span class="badge bg-primary fs-6 p-2">
+                          <span class="badge bg-primary p-2">
                             <%= data[:days_delivered] %> DAYS
                           </span>
-                          <small class="text-muted">
-                            <%= data[:total_assignments] %> total assignments
+                          <small class="text-muted" style="font-size: 0.7rem;">
+                            <%= data[:total_assignments] %> assignments
                           </small>
                         </div>
                       </td>
-                      <td class="align-middle text-center">
-                        <span class="fs-5 fw-bold text-success">
-                          ₹<%= number_with_precision(data[:estimated_amount] || 0, precision: 2) %>
+                      <td class="align-middle text-center" style="min-width: 120px;">
+                        <span class="fw-bold text-success">
+                          ₹<%= number_with_precision(data[:estimated_amount] || 0, precision: 0) %>
                         </span>
                       </td>
-                      <td class="align-middle text-center">
+                      <td class="align-middle text-center" style="min-width: 180px; max-width: 180px;">
                         <div class="d-flex flex-column align-items-center gap-1">
                           <% case data[:pattern] %>
                           <% when 'regular' %>
-                            <span class="badge bg-success fs-6 p-2">REGULAR</span>
+                            <span class="badge bg-success p-2">REGULAR</span>
                           <% when 'interval' %>
-                            <span class="badge bg-warning text-dark fs-6 p-2">INTERVAL</span>
+                            <span class="badge bg-warning text-dark p-2">INTERVAL</span>
                           <% when 'irregular' %>
-                            <span class="badge bg-danger fs-6 p-2">IRREGULAR</span>
+                            <span class="badge bg-danger p-2">IRREGULAR</span>
                           <% end %>
-                          <small class="text-muted">
-                            <%= data[:pattern_description] %>
+                          <small class="text-muted text-center" style="font-size: 0.7rem; line-height: 1.2; word-wrap: break-word;">
+                            <%= truncate(data[:pattern_description], length: 25) %>
                           </small>
                         </div>
                       </td>
-                      <td class="align-middle">
-                        <div class="d-flex gap-2 justify-content-center">
-                          <!-- View Customer -->
+                      <td class="align-middle text-center" style="min-width: 120px;">
+                        <div class="d-flex gap-1 justify-content-center flex-wrap">
                           <%= link_to customer_path(data[:customer]),
                               class: "btn btn-sm btn-outline-primary",
                               title: "View Customer",
@@ -213,7 +224,6 @@
                             <i class="fas fa-user"></i>
                           <% end %>
 
-                          <!-- View Deliveries -->
                           <button type="button"
                                   class="btn btn-sm btn-outline-success view-deliveries-btn"
                                   data-customer-id="<%= data[:customer].id %>"
@@ -249,6 +259,146 @@
 </div>
 
 <style>
+/* Enhanced Page Header Styles - Consistent with Products Page */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 0 0 0 60px;
+}
+
+.stats-card:hover {
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  z-index: 2;
+}
+
+.stats-card .stats-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card .stats-label {
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* CSS Variables for Consistent Styling */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+}
   .avatar-circle {
     width: 40px;
     height: 40px;
@@ -290,18 +440,135 @@
     vertical-align: middle;
   }
 
-  .table tbody tr:hover {
-    background-color: #f8f9fc;
-    transform: translateX(2px);
-    transition: all 0.2s ease;
+  .customer-pattern-row {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+  }
+
+  .customer-pattern-row:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+    transform: translateX(8px) scale(1.01);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+  }
+
+  .customer-pattern-row td {
+    padding: 1.5rem 1rem;
+    vertical-align: middle;
+    border-color: rgba(102, 126, 234, 0.05);
+  }
+
+  /* Ensure table width and proper column distribution */
+  .table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 1200px;
+  }
+
+  /* Responsive table adjustments */
+  @media (max-width: 1400px) {
+    .table {
+      min-width: 1000px;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .table {
+      min-width: 900px;
+      font-size: 0.85rem;
+    }
+
+    .customer-pattern-row td {
+      padding: 1rem 0.75rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .customer-pattern-row:hover {
+      transform: translateX(4px);
+    }
+
+    .table {
+      min-width: 800px;
+      font-size: 0.8rem;
+    }
+
+    .customer-pattern-row td {
+      padding: 0.75rem 0.5rem;
+    }
   }
 
   .badge {
     font-size: 0.75rem;
+    border-radius: 15px;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  }
+
+  .badge.bg-info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+  }
+
+  .badge.bg-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  }
+
+  .badge.bg-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  }
+
+  .badge.bg-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  }
+
+  .badge.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+
+  .badge.bg-secondary {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
   }
 
   .btn {
     border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: transparent;
+  }
+
+  .btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+
+  .btn-outline-success {
+    border: 2px solid #10b981;
+    color: #10b981;
+    background: transparent;
+  }
+
+  .btn-outline-success:hover {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
   }
 
   .form-select {

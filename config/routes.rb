@@ -43,6 +43,9 @@ Rails.application.routes.draw do
     get 'delivery_people/search', to: 'users#search_delivery_people'
     get 'categories/search', to: 'categories#search'
     get 'parties/search', to: 'parties#search'
+
+    # Instagram Analytics API
+    get 'instagram/posts/:id', to: 'instagram_analytics#post_details'
     
     # Settings API routes
     namespace :v1 do

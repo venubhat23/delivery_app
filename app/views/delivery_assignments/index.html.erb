@@ -1,356 +1,205 @@
-<!-- Modern Delivery Assignments Header -->
-<div class="modern-page-header" style="margin-top: 2rem;">
-  <div class="container-fluid">
-    <div class="row align-items-center">
-      <div class="col-lg-8 col-md-7">
-        <div class="header-content">
-          <div class="d-flex align-items-center mb-2">
-            <div class="header-icon">
-              <i class="fas fa-truck"></i>
-            </div>
-            <div>
-              <h1 class="page-title mb-0">Delivery Assignments</h1>
-              <div class="date-badge-container">
-                <% if @current_date != Date.today %>
-                  <span class="modern-badge badge-info">
-                    <i class="fas fa-calendar-alt me-1"></i>
-                    <%= @current_date.strftime("%d %b %Y") %>
-                    <% if @current_date < Date.today %>
-                      <i class="fas fa-history ms-1" title="Past date"></i>
-                    <% elsif @current_date > Date.today %>
-                      <i class="fas fa-clock ms-1" title="Future date"></i>
-                    <% end %>
-                  </span>
-                <% else %>
-                  <span class="modern-badge badge-today">
-                    <i class="fas fa-calendar-day me-1"></i>TODAY
-                  </span>
-                <% end %>
-              </div>
-            </div>
-          </div>
-          <p class="page-subtitle">
-            Manage delivery assignments and track delivery progress
-            <% unless @current_date == Date.today %>
-              - Viewing <%= @current_date.strftime("%A, %d %B %Y") %>
-            <% end %>
-          </p>
-        </div>
-      </div>
-      <div class="col-lg-4 col-md-5">
-        <div class="header-actions">
-          <%= link_to new_delivery_assignment_path, class: "btn btn-primary btn-lg modern-btn-primary" do %>
-            <i class="fas fa-plus me-2"></i>New Assignment
-          <% end %>
-        </div>
-      </div>
+<!-- Delivery Assignments Header -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-truck me-3"></i>Delivery Assignments
+        <% if @current_date != Date.today %>
+          <span class="badge bg-info ms-2">
+            <i class="fas fa-calendar-alt me-1"></i>
+            <%= @current_date.strftime("%d %b %Y") %>
+          </span>
+        <% else %>
+          <span class="badge bg-success ms-2">
+            <i class="fas fa-calendar-day me-1"></i>TODAY
+          </span>
+        <% end %>
+      </h1>
+      <p class="text-muted mb-0">Manage delivery assignments and track delivery progress</p>
     </div>
-  </div>
-</div>
-
-<% total = @total_assignments %>
-<% completed = @completed_assignments %>
-<% pending = @pending_assignments %>
-<% overdue = @overdue_assignments %>
-<% percentage = @completion_rate %>
-
-<!-- Modern Stats Dashboard -->
-<div class="stats-dashboard mb-4">
-  <div class="container-fluid">
-    <div class="row g-3">
-      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
-        <div class="modern-stats-card primary">
-          <div class="stats-content">
-            <div class="stats-header">
-              <div class="stats-icon-wrapper">
-                <i class="fas fa-clipboard-list"></i>
-              </div>
-              <div class="stats-trend">
-                <i class="fas fa-arrow-up text-success"></i>
-              </div>
-            </div>
-            <div class="stats-body">
-              <h3 class="stats-number"><%= total %></h3>
-              <p class="stats-label">Total Assignments</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
-        <div class="modern-stats-card warning">
-          <div class="stats-content">
-            <div class="stats-header">
-              <div class="stats-icon-wrapper">
-                <i class="fas fa-clock"></i>
-              </div>
-              <div class="stats-trend">
-                <span class="stats-badge">Pending</span>
-              </div>
-            </div>
-            <div class="stats-body">
-              <h3 class="stats-number"><%= pending %></h3>
-              <p class="stats-label">Pending</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
-        <div class="modern-stats-card success">
-          <div class="stats-content">
-            <div class="stats-header">
-              <div class="stats-icon-wrapper">
-                <i class="fas fa-check-circle"></i>
-              </div>
-              <div class="stats-trend">
-                <i class="fas fa-arrow-up text-success"></i>
-              </div>
-            </div>
-            <div class="stats-body">
-              <h3 class="stats-number"><%= completed %></h3>
-              <p class="stats-label">Completed</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
-        <div class="modern-stats-card danger">
-          <div class="stats-content">
-            <div class="stats-header">
-              <div class="stats-icon-wrapper">
-                <i class="fas fa-exclamation-triangle"></i>
-              </div>
-              <div class="stats-trend">
-                <span class="stats-badge urgent">Urgent</span>
-              </div>
-            </div>
-            <div class="stats-body">
-              <h3 class="stats-number"><%= overdue %></h3>
-              <p class="stats-label">Overdue</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl col-lg-2 col-md-4 col-sm-6">
-        <div class="modern-stats-card info">
-          <div class="stats-content">
-            <div class="stats-header">
-              <div class="stats-icon-wrapper">
-                <i class="fas fa-percentage"></i>
-              </div>
-              <div class="stats-trend">
-                <i class="fas fa-chart-line text-info"></i>
-              </div>
-            </div>
-            <div class="stats-body">
-              <h3 class="stats-number"><%= percentage %>%</h3>
-              <p class="stats-label">Completion Rate</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modern Filter Panel -->
-<div class="modern-filter-panel mb-4">
-  <div class="container-fluid">
-    <div class="filter-header">
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="filter-title">
-          <i class="fas fa-filter me-2"></i>
-          <span>Filter Assignments</span>
-        </div>
-        <div class="filter-toggle" id="filterToggle">
-          <i class="fas fa-chevron-up"></i>
-        </div>
-      </div>
-    </div>
-    <div class="filter-content" id="filterContent">
-      <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "modern-filter-form", id: "delivery-filter-form" do |form| %>
-        <div class="row g-3 align-items-end">
-          <div class="col-lg-3 col-md-6">
-            <label class="modern-filter-label">
-              <i class="fas fa-user me-1"></i>Customer
-            </label>
-            <div class="customer-search-container position-relative">
-              <input type="text" 
-                     class="form-control modern-input customer-search-input" 
-                     id="customer-search-input"
-                     placeholder="Search customers by name..."
-                     autocomplete="off">
-              <div class="search-icon">
-                <i class="fas fa-search"></i>
-              </div>
-              <%= form.hidden_field :customer_id, id: 'customer-select', value: params[:customer_id] %>
-              <div class="customer-suggestions" id="customer-suggestions" style="display: none;">
-                <!-- Customer suggestions will be populated here -->
-              </div>
-              <div class="customer-loading" id="customer-loading" style="display: none;">
-                <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
-              </div>
-              <div class="selected-customer" id="selected-customer" style="display: none;">
-                <div class="selected-customer-info">
-                  <div class="selected-customer-name"></div>
-                  <div class="selected-customer-phone"></div>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary clear-customer">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-2 col-md-6">
-            <label class="modern-filter-label">
-              <i class="fas fa-calendar me-1"></i>Date
-            </label>
-            <%= form.date_field :date, 
-                                value: params[:date].present? ? params[:date] : Date.current, 
-                                class: "form-control modern-input", 
-                                title: "Select date to view assignments",
-                                id: "date-filter-input" %>
-          </div>
-          <div class="col-lg-2 col-md-6">
-            <label class="modern-filter-label">
-              <i class="fas fa-info-circle me-1"></i>Status
-            </label>
-            <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search statuses...">
-              <%= form.select :status, options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
-                              { include_blank: false },
-                              { class: "form-select modern-input", data: { "searchable-select-target" => "select" }, id: "status-filter-select" } %>
-            </div>
-          </div>
-          <div class="col-lg-2 col-md-6">
-            <label class="modern-filter-label">
-              <i class="fas fa-truck me-1"></i>Delivery Person
-            </label>
-            <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search delivery people...">
-              <%= form.select :delivery_person_id,
-                              options_for_select([['All Delivery People', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
-                              { include_blank: false },
-                              { class: "form-select modern-input", data: { "searchable-select-target" => "select" }, id: "delivery-person-filter-select" } %>
-            </div>
-          </div>
-          <div class="col-lg-3 col-md-12">
-            <div class="d-flex gap-2 align-items-end h-100">
-              <button type="submit" class="btn btn-primary modern-btn-primary">
-                <i class="fas fa-search me-1"></i>Filter
-              </button>
-              <a href="<%= delivery_assignments_path %>" class="btn btn-outline-secondary modern-btn-secondary" id="clear-filters-btn">
-                <i class="fas fa-times me-1"></i>Clear All
-              </a>
-            </div>
-          </div>
-        </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_delivery_assignment_path, class: "btn btn-primary" do %>
+        <i class="fas fa-plus me-2"></i>New Assignment
       <% end %>
     </div>
   </div>
 </div>
 
-<!-- Action Buttons Section -->
-<div class="actions-section mb-4">
-  <div class="container-fluid">
-    <div class="row align-items-center">
-      <div class="col-md-8">
-        <!-- Bulk Actions -->
-        <% 
-        # Get all today's pending assignments (regardless of filters)
-        all_today_pending = DeliveryAssignment.where(status: 'pending').where('scheduled_date <= ?', Date.current)
-        all_today_count = all_today_pending.count
-        
-        # Get current filtered results pending assignments
-        current_filtered_pending_ids = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current).pluck(:id)
-        current_filtered_count = current_filtered_pending_ids.size
-        
-        # Check if filters are applied (status, delivery_person, search, or non-today date)
-        filters_applied = params[:status].present? || params[:delivery_person_id].present? || params[:search].present?
-        %>
-        
-        <% if all_today_count > 0 || current_filtered_count > 0 %>
-          <div class="d-flex gap-2 justify-content-end">
-            <!-- Button 1: Complete All Today -->
-            <% if all_today_count > 0 %>
-              <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline" do |form| %>
-                <%= form.hidden_field :complete_type, value: "all_today" %>
-                <%= form.submit "Complete All (#{all_today_count})", 
-                    class: "btn btn-outline-success btn-sm", 
-                    title: "Complete all pending assignments for today",
-                    data: { 
-                      confirm: "Are you sure you want to mark all #{all_today_count} pending assignment(s) for today as completed? This action cannot be undone." 
-                    } %>
-              <% end %>
-            <% end %>
-            
-            <!-- Button 2: Complete Current Results (filtered or paginated) -->
-            <% if current_filtered_count > 0 %>
-              <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline" do |form| %>
-                <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
-                <%= form.hidden_field :search, value: params[:search] %>
-                <%= form.hidden_field :date, value: params[:date] %>
-                <%= form.hidden_field :complete_type, value: "filtered" %>
-                <% current_filtered_pending_ids.each do |id| %>
-                  <%= hidden_field_tag 'assignment_ids[]', id %>
-                <% end %>
-                <% 
-                  button_text = if filters_applied
-                    "Complete (#{current_filtered_count})"
-                  else
-                    # No filters, so it's paginated results
-                    current_page_count = [@delivery_assignments.size, current_filtered_count].min
-                    "Complete (#{current_page_count})"
-                  end
-                %>
-                <%= form.submit button_text, 
-                    class: "btn btn-success btn-sm", 
-                    title: filters_applied ? "Complete filtered pending assignments" : "Complete pending assignments on current page",
-                    data: { 
-                      confirm: "Are you sure you want to mark #{current_filtered_count} pending assignment(s) as completed? This action cannot be undone." 
-                    } %>
-              <% end %>
-            <% end %>
-          </div>
-        <% end %>
-        
-        <!-- Navigation and Clear Buttons -->
-        <div class="d-flex gap-2 justify-content-end mt-3">
-          <% if params[:status].present? || params[:delivery_person_id].present? || params[:search].present? || (params[:date].present? && params[:date] != Date.today.to_s) %>
-            <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary btn-sm" do %>
-              <i class="fas fa-times me-1"></i>Clear All
-            <% end %>
-          <% end %>
-          <div class="btn-group" role="group">
-            <%= link_to delivery_assignments_path(date: Date.yesterday), 
-                class: "btn btn-outline-primary btn-sm", 
-                title: "Yesterday" do %>
-              <i class="fas fa-chevron-left"></i>
-            <% end %>
-            <%= link_to delivery_assignments_path, 
-                class: "btn btn-outline-primary btn-sm", 
-                title: "Today" do %>
-              <i class="fas fa-home"></i>
-            <% end %>
-            <%= link_to delivery_assignments_path(date: Date.tomorrow), 
-                class: "btn btn-outline-primary btn-sm", 
-                title: "Tomorrow" do %>
-              <i class="fas fa-chevron-right"></i>
-            <% end %>
-          </div>
-        </div>
+<!-- Enhanced Stats Cards -->
+<div class="row mb-3">
+  <div class="col-md-3 mb-2">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-clipboard-list"></i>
       </div>
-      <div class="col-md-12 text-end mt-3">
-        <div class="d-flex align-items-center justify-content-end gap-2">
-          <span class="badge bg-primary me-2"><%= @delivery_assignments.count %> assignments</span>
-          <div class="btn-group btn-group-sm" role="group">
-            <button type="button" class="btn btn-outline-secondary active" id="tableView">
-              <i class="fas fa-table"></i>
-            </button>
-            <button type="button" class="btn btn-outline-secondary" id="cardView">
-              <i class="fas fa-th"></i>
-            </button>
-          </div>
-        </div>
+      <div class="stats-number"><%= @total_assignments %></div>
+      <div class="stats-label">Total Assignments</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-2">
+    <div class="stats-card stats-card-warning">
+      <div class="stats-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stats-number"><%= @pending_assignments %></div>
+      <div class="stats-label">Pending</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-2">
+    <div class="stats-card stats-card-success">
+      <div class="stats-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stats-number"><%= @completed_assignments %></div>
+      <div class="stats-label">Completed</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-2">
+    <div class="stats-card stats-card-info">
+      <div class="stats-icon">
+        <i class="fas fa-percentage"></i>
+      </div>
+      <div class="stats-number"><%= @completion_rate %>%</div>
+      <div class="stats-label">Completion Rate</div>
+    </div>
+  </div>
+</div>
+
+<!-- Ultra Compact Single Line Filter -->
+<div class="compact-filter-container mb-3">
+  <%= form_with url: delivery_assignments_path, method: :get, local: true, class: "compact-filter-form" do |form| %>
+    <div class="filter-row">
+      <div class="filter-item">
+        <%= form.date_field :date,
+                            value: params[:date].present? ? params[:date] : Date.current,
+                            class: "form-control compact-input",
+                            title: "Select date",
+                            placeholder: "Date" %>
+      </div>
+      <div class="filter-item">
+        <%= form.select :status,
+                        options_for_select([['All Statuses', '']] + @statuses.map { |s| [s.humanize, s] }, params[:status]),
+                        { include_blank: false },
+                        { class: "form-select compact-input" } %>
+      </div>
+      <div class="filter-item">
+        <%= form.select :delivery_person_id,
+                        options_for_select([['All Personnel', '']] + @delivery_people.map { |dp| [dp.name, dp.id] }, params[:delivery_person_id]),
+                        { include_blank: false },
+                        { class: "form-select compact-input" } %>
+      </div>
+      <div class="filter-actions">
+        <% if params[:status].present? || params[:delivery_person_id].present? %>
+          <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary btn-sm clear-btn" do %>
+            <i class="fas fa-times"></i>
+          <% end %>
+        <% end %>
+        <span class="badge compact-badge bg-primary">
+          <i class="fas fa-list me-1"></i><%= @delivery_assignments&.count || 0 %>
+        </span>
       </div>
     </div>
+    <%= form.submit "Filter", class: "d-none" %>
+  <% end %>
+</div>
+
+<!-- Compact Action Bar -->
+<div class="compact-action-bar mb-3">
+  <div class="action-left">
+    <%
+    # Get all today's pending assignments (regardless of filters)
+    all_today_pending = DeliveryAssignment.where(status: 'pending').where('scheduled_date <= ?', Date.current)
+    all_today_count = all_today_pending.count
+
+    # Get current filtered results pending assignments
+    current_filtered_pending_ids = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current).pluck(:id)
+    current_filtered_count = current_filtered_pending_ids.size
+
+    # Check if filters are applied (status, delivery_person, search, or non-today date)
+    filters_applied = params[:status].present? || params[:delivery_person_id].present? || params[:search].present?
+    %>
+
+    <!-- Bulk Actions -->
+    <% if all_today_count > 0 %>
+      <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline-flex" do |form| %>
+        <%= form.hidden_field :complete_type, value: "all_today" %>
+        <%= form.submit "Complete All (#{all_today_count})",
+            class: "btn btn-outline-success btn-sm me-2",
+            title: "Complete all pending assignments for today",
+            data: {
+              confirm: "Are you sure you want to mark all #{all_today_count} pending assignment(s) for today as completed?"
+            } %>
+      <% end %>
+    <% end %>
+
+    <% if current_filtered_count > 0 %>
+      <%= form_with url: bulk_complete_delivery_assignments_path, method: :post, local: true, class: "d-inline-flex" do |form| %>
+        <%= form.hidden_field :delivery_person_id, value: params[:delivery_person_id] %>
+        <%= form.hidden_field :search, value: params[:search] %>
+        <%= form.hidden_field :date, value: params[:date] %>
+        <%= form.hidden_field :complete_type, value: "filtered" %>
+        <% current_filtered_pending_ids.each do |id| %>
+          <%= hidden_field_tag 'assignment_ids[]', id %>
+        <% end %>
+        <%
+          button_text = if filters_applied
+            "Complete (#{current_filtered_count})"
+          else
+            current_page_count = [@delivery_assignments.size, current_filtered_count].min
+            "Complete (#{current_page_count})"
+          end
+        %>
+        <%= form.submit button_text,
+            class: "btn btn-success btn-sm me-2",
+            title: filters_applied ? "Complete filtered pending assignments" : "Complete pending assignments on current page",
+            data: {
+              confirm: "Are you sure you want to mark #{current_filtered_count} pending assignment(s) as completed?"
+            } %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="action-center">
+    <!-- Navigation -->
+    <div class="btn-group btn-group-sm me-3" role="group">
+      <%= link_to delivery_assignments_path(date: Date.yesterday),
+          class: "btn btn-outline-primary",
+          title: "Yesterday" do %>
+        <i class="fas fa-chevron-left"></i>
+      <% end %>
+      <%= link_to delivery_assignments_path,
+          class: "btn btn-outline-primary",
+          title: "Today" do %>
+        <i class="fas fa-home"></i>
+      <% end %>
+      <%= link_to delivery_assignments_path(date: Date.tomorrow),
+          class: "btn btn-outline-primary",
+          title: "Tomorrow" do %>
+        <i class="fas fa-chevron-right"></i>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="action-right">
+    <!-- View Toggle -->
+    <div class="btn-group btn-group-sm me-2" role="group">
+      <button type="button" class="btn btn-outline-secondary active" id="tableView" title="Table View">
+        <i class="fas fa-table"></i>
+      </button>
+      <button type="button" class="btn btn-outline-secondary" id="cardView" title="Card View">
+        <i class="fas fa-th"></i>
+      </button>
+    </div>
+
+    <!-- Clear All Button -->
+    <% if params[:status].present? || params[:delivery_person_id].present? || params[:search].present? || (params[:date].present? && params[:date] != Date.today.to_s) %>
+      <%= link_to delivery_assignments_path, class: "btn btn-outline-secondary btn-sm" do %>
+        <i class="fas fa-times"></i>
+      <% end %>
+    <% end %>
   </div>
 </div>
 
@@ -2088,7 +1937,7 @@ document.addEventListener('DOMContentLoaded', function() {
       autoRefreshFilters();
     });
   }
-  
+
   if (deliveryPersonSelect) {
     deliveryPersonSelect.addEventListener('change', function() {
       // Ensure date is preserved when delivery person changes
@@ -2101,3 +1950,492 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+<style>
+/* Enhanced Stats Cards - Compact Version */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 0 0 0 60px;
+}
+
+.stats-card:hover {
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 40px;
+  height: 40px;
+  background: var(--primary-gradient);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+  z-index: 2;
+}
+
+.stats-card .stats-number {
+  font-size: 2rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card .stats-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card-success::before {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning::before {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info::before {
+  background: var(--dark-gradient);
+}
+
+.stats-card-success .stats-icon {
+  background: var(--success-gradient);
+}
+
+.stats-card-warning .stats-icon {
+  background: var(--warning-gradient);
+}
+
+.stats-card-info .stats-icon {
+  background: var(--dark-gradient);
+}
+
+/* Page Header Styling */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+.page-header .badge {
+  position: relative;
+  z-index: 2;
+}
+
+/* Compact filter section styling */
+.row.g-2 {
+  --bs-gutter-x: 0.5rem;
+  --bs-gutter-y: 0.5rem;
+}
+
+/* Compact form controls */
+.form-select-sm, .form-control-sm {
+  border-radius: 8px !important;
+  border: 1px solid rgba(102, 126, 234, 0.3) !important;
+  font-size: 0.875rem;
+}
+
+.form-select-sm:focus, .form-control-sm:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.15rem rgba(102, 126, 234, 0.2) !important;
+}
+
+/* Ultra Compact Filter Container */
+.compact-filter-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.compact-filter-container:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.12);
+  transform: translateY(-2px);
+}
+
+.compact-filter-form {
+  margin: 0;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  flex: 1;
+  min-width: 150px;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.compact-input {
+  border-radius: 10px !important;
+  border: 2px solid rgba(102, 126, 234, 0.2) !important;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.compact-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.2) !important;
+  transform: translateY(-1px);
+}
+
+.compact-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.compact-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.clear-btn {
+  border-radius: 50% !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid rgba(239, 68, 68, 0.3) !important;
+  color: #ef4444 !important;
+  background: white !important;
+  transition: all 0.3s ease;
+}
+
+.clear-btn:hover {
+  background: #ef4444 !important;
+  color: white !important;
+  border-color: #ef4444 !important;
+  transform: scale(1.1);
+}
+
+/* Compact Action Bar */
+.compact-action-bar {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  transition: all 0.3s ease;
+}
+
+.compact-action-bar:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.12);
+  transform: translateY(-2px);
+}
+
+.action-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.action-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.action-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Enhanced button styling for compact layout */
+.compact-action-bar .btn {
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.compact-action-bar .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.compact-action-bar .btn-outline-success {
+  border: 2px solid #10b981;
+  color: #10b981;
+  background: white;
+}
+
+.compact-action-bar .btn-outline-success:hover {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.compact-action-bar .btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  color: white;
+}
+
+.compact-action-bar .btn-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.compact-action-bar .btn-outline-primary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  background: white;
+}
+
+.compact-action-bar .btn-outline-primary:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.compact-action-bar .btn-outline-secondary {
+  border: 2px solid #6b7280;
+  color: #6b7280;
+  background: white;
+}
+
+.compact-action-bar .btn-outline-secondary:hover {
+  background: #6b7280;
+  color: white;
+  border-color: #6b7280;
+}
+
+.compact-action-bar .btn-outline-secondary.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Compact card styling */
+.card.mb-3 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+/* Badge improvements for compact layout */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+}
+
+/* CSS Variables for consistent theming */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --border-color: #e2e8f0;
+  --bg-light: #f8fafc;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design for Compact Layout */
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-item {
+    min-width: 100%;
+  }
+
+  .filter-actions {
+    justify-content: space-between;
+    margin-top: 0.5rem;
+  }
+
+  .compact-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .action-left,
+  .action-center,
+  .action-right {
+    justify-content: center;
+    flex: none;
+  }
+
+  .action-left {
+    order: 2;
+  }
+
+  .action-center {
+    order: 1;
+  }
+
+  .action-right {
+    order: 3;
+  }
+
+  .compact-input {
+    padding: 0.7rem 1rem !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+
+  .compact-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .clear-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .compact-filter-container,
+  .compact-action-bar {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    border-radius: 12px;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .compact-action-bar .btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+</style>
+
+    </div>
+  </div>
+</div>

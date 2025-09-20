@@ -1,6 +1,8 @@
-<!-- app/views/customers/index.html.erb -->
-<div class="customers-content-wrapper">
-<div class="page-header" style="margin-top: 2rem;">
+<!-- Enhanced Customers Index Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+<div class="page-header">
   <div class="d-flex justify-content-between align-items-center">
     <div>
       <h1 class="h2 mb-2">
@@ -23,8 +25,8 @@
 </div>
 
 <!-- Enhanced Stats Cards -->
-<div class="row mb-4">
-  <div class="col-md-3 mb-3">
+<div class="row mb-3">
+  <div class="col-md-3 mb-2">
     <div class="stats-card">
       <div class="stats-icon">
         <i class="fas fa-users"></i>
@@ -33,93 +35,107 @@
       <div class="stats-label">Total Customers</div>
     </div>
   </div>
-  <div class="col-md-3 mb-3">
+  <div class="col-md-3 mb-2">
     <div class="stats-card stats-card-success">
       <div class="stats-icon">
         <i class="fas fa-user-check"></i>
       </div>
       <div class="stats-number">
-        <%# Optimized: Use single iteration instead of multiple selects %>
+        <%# Use total database counts instead of paginated counts %>
         <%
-          assigned_count = 0
-          unassigned_count = 0
-          geolocated_count = 0
-          @customers.each do |customer|
-            if customer.delivery_person.present?
-              assigned_count += 1
-            else
-              unassigned_count += 1
-            end
-            geolocated_count += 1 if customer.latitude.present? && customer.longitude.present?
-          end
+          # Get total counts from entire database, not just current page
+          # Since delivery_person is a User with class_name: 'User', use proper associations
+          total_assigned = Customer.where.not(delivery_person_id: nil).count
+          total_unassigned = Customer.where(delivery_person_id: nil).count
+          total_geolocated = Customer.where.not(latitude: nil, longitude: nil).count
         %>
-        <%= assigned_count %>
+        <%= total_assigned %>
       </div>
       <div class="stats-label">Assigned</div>
     </div>
   </div>
-  <div class="col-md-3 mb-3">
+  <div class="col-md-3 mb-2">
     <div class="stats-card stats-card-warning">
       <div class="stats-icon">
         <i class="fas fa-user-times"></i>
       </div>
-      <div class="stats-number"><%= unassigned_count %></div>
+      <div class="stats-number"><%= total_unassigned %></div>
       <div class="stats-label">Unassigned</div>
     </div>
   </div>
-  <div class="col-md-3 mb-3">
+  <div class="col-md-3 mb-2">
     <div class="stats-card stats-card-info">
       <div class="stats-icon">
         <i class="fas fa-map-marker-alt"></i>
       </div>
-      <div class="stats-number"><%= geolocated_count %></div>
+      <div class="stats-number"><%= total_geolocated %></div>
       <div class="stats-label">Geo-Located</div>
     </div>
   </div>
 </div>
 
-<!-- Enhanced Filters -->
-<div class="card mb-4" style="height:220px;">
-  <div class="card-body">
-    <div class="row align-items-center">
-      <div class="col-md-8">
-        <%= form_with url: customers_path, method: :get, local: true, class: "d-flex align-items-center" do |form| %>
-          <div class="me-3 position-relative" style="display:flex;align-items:center;gap:8px;">
-            <div class="customer-search-container position-relative">
-              <input type="text" 
-                     class="form-control customer-search-input" 
-                     id="customer-search-input"
-                     placeholder="Search customers by name..."
-                     autocomplete="off"
-                     style="min-width: 350px;">
-              <div class="search-icon">
-                <i class="fas fa-search"></i>
-              </div>
-              <%= form.hidden_field :search, id: 'customer-search-hidden' %>
-              <div class="customer-suggestions" id="customer-suggestions" style="display: none;">
-                <!-- Customer suggestions will be populated here -->
-              </div>
-              <div class="customer-loading" id="customer-loading" style="display: none;">
-                <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
+      <!-- Compact Search & Filter -->
+      <div class="card mb-3">
+        <div class="card-body py-2">
+          <%= form_with url: customers_path, method: :get, local: true, class: "row g-2 align-items-center" do |form| %>
+            <div class="col-md-5">
+              <div class="customer-search-container position-relative">
+                <input type="text"
+                       class="form-control form-control-sm customer-search-input"
+                       id="customer-search-input"
+                       placeholder="Search by name, phone, or address..."
+                       autocomplete="off">
+                <div class="search-icon">
+                  <i class="fas fa-search"></i>
+                </div>
+                <%= form.hidden_field :search, id: 'customer-search-hidden' %>
+                <div class="customer-suggestions" id="customer-suggestions" style="display: none;">
+                  <!-- Customer suggestions will be populated here -->
+                </div>
+                <div class="customer-loading" id="customer-loading" style="display: none;">
+                  <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
+                </div>
               </div>
             </div>
-          </div>
-          <div class="me-3">
-            <label for="delivery_person_filter" class="form-label me-2 mb-0" style="white-space: nowrap;">
-              <i class="fas fa-filter me-1"></i>Delivery Person:
-            </label>
-            <%= form.select :delivery_person_id, 
-                  options_for_select([['All Personnel', 'all']] + 
-                  @delivery_people.map { |dp| [dp.name, dp.id] }, 
-                  @selected_delivery_person_id),
-                  {}, 
-                  { 
-                    class: "form-select",
-                    id: "delivery_person_filter"
-                  } %>
-          </div>
-          <%= form.submit "Search & Filter", class: "btn btn-outline-primary d-none", id: "customer-search-submit" %>
-        <% end %>
+            <div class="col-md-3">
+              <%= form.select :delivery_person_id,
+                    options_for_select([['All Personnel', 'all']] +
+                    @delivery_people.map { |dp| [dp.name, dp.id] },
+                    @selected_delivery_person_id),
+                    {},
+                    {
+                      class: "form-select form-select-sm",
+                      id: "delivery_person_filter"
+                    } %>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex align-items-center justify-content-end gap-2">
+                <% if params[:search].present? || (params[:delivery_person_id].present? && params[:delivery_person_id] != 'all') %>
+                  <%= link_to customers_path, class: "btn btn-outline-secondary btn-sm" do %>
+                    <i class="fas fa-times me-1"></i>Clear
+                  <% end %>
+                <% end %>
+                <span class="badge bg-primary"><%= @customers.count %> customers</span>
+                <% if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all' %>
+                  <span class="badge bg-info text-truncate" style="max-width: 120px;">
+                    <%= @delivery_people.find { |dp| dp.id.to_s == params[:delivery_person_id] }&.name %>
+                  </span>
+                <% end %>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="btn btn-outline-secondary active" id="tableView">
+                    <i class="fas fa-table"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" id="cardView">
+                    <i class="fas fa-th"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <%= form.submit "Search & Filter", class: "btn btn-outline-primary d-none", id: "customer-search-submit" %>
+          <% end %>
+        </div>
+      </div>
+
         <script>
           document.addEventListener('DOMContentLoaded', function() {
             initializeCustomerSearch();
@@ -287,28 +303,6 @@
             });
           }
         </script>
-      </div>
-      <div class="col-md-4 text-end">
-        <div class="d-flex align-items-center justify-content-end">
-          <% if params[:search].present? || (params[:delivery_person_id].present? && params[:delivery_person_id] != 'all') %>
-            <%= link_to customers_path, class: "btn btn-outline-secondary me-2" do %>
-              <i class="fas fa-times me-1"></i>Clear All
-            <% end %>
-          <% end %>
-          <span class="badge bg-primary me-2"><%= @customers.count %> customers</span>
-          <div class="btn-group btn-group-sm" role="group">
-            <button type="button" class="btn btn-outline-secondary active" id="tableView">
-              <i class="fas fa-table"></i>
-            </button>
-            <button type="button" class="btn btn-outline-secondary" id="cardView">
-              <i class="fas fa-th"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Customers Table -->
 <div class="card">
@@ -661,13 +655,13 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Enhanced Stats Cards */
+/* Enhanced Stats Cards - Compact Version */
 .stats-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(102, 126, 234, 0.1);
@@ -701,30 +695,30 @@
 
 .stats-card .stats-icon {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 50px;
-  height: 50px;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 40px;
+  height: 40px;
   background: var(--primary-gradient);
-  border-radius: 15px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 20px;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  font-size: 18px;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
   z-index: 2;
 }
 
 .stats-card .stats-number {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 800;
   background: var(--primary-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   position: relative;
   z-index: 2;
 }
@@ -1790,74 +1784,107 @@ function initializeCustomerImageModal() {
   });
 }
 </script>
-</div> <!-- End customers-content-wrapper -->
+    </div>
+  </div>
+</div>
 
 <style>
-.customers-content-wrapper {
-  margin-left: 0px;
-  margin-right: 0px;
-  padding: 0 15px;
-  max-width: none !important;
-  width: auto !important;
+/* Compact filter section styling */
+.row.g-2 {
+  --bs-gutter-x: 0.5rem;
+  --bs-gutter-y: 0.5rem;
 }
 
-/* Remove scroll functionality and smooth scrolling */
-html {
-  scroll-behavior: auto !important;
+/* Compact search input styling */
+.customer-search-input {
+  border-radius: 8px !important;
+  border: 1px solid rgba(102, 126, 234, 0.3) !important;
+  padding-right: 2.5rem !important;
+  font-size: 0.875rem;
 }
 
-body {
-  overflow-x: hidden;
+.customer-search-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.15rem rgba(102, 126, 234, 0.2) !important;
 }
 
-/* Prevent any smooth scrolling on the page */
-* {
-  scroll-behavior: auto !important;
+/* Compact form controls */
+.form-select-sm {
+  border-radius: 8px !important;
+  border: 1px solid rgba(102, 126, 234, 0.3) !important;
+  font-size: 0.875rem;
 }
 
-/* Remove any table or container scrolling */
+.form-select-sm:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.15rem rgba(102, 126, 234, 0.2) !important;
+}
+
+/* Compact card styling */
+.card.mb-3 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+/* Badge improvements for compact layout */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+}
+
+/* Improved table responsiveness */
 .table-responsive {
-  overflow-x: visible !important;
-  overflow-y: visible !important;
-  -webkit-overflow-scrolling: auto !important;
+  border-radius: 20px;
+  overflow: auto;
 }
 
-.card-body {
-  overflow: visible !important;
-}
-
-/* Ensure table doesn't create scrollbars */
-.table {
-  width: 100% !important;
-  table-layout: auto !important;
-}
-
-/* Remove any container overflow */
-#tableViewContent,
-#cardViewContent {
-  overflow: visible !important;
-}
-
-/* Disable any smooth scrolling animations */
-.scroll-smooth,
-.smooth-scroll {
-  scroll-behavior: auto !important;
-}
-
-/* Make sure content fits properly in the layout */
+/* Better mobile responsiveness */
 @media (max-width: 768px) {
-  .customers-content-wrapper {
-    margin-left: 0px;
-    margin-right: 0px;
-    padding: 0 10px;
+  .row.g-3 .col-md-6 {
+    margin-bottom: 1rem;
+  }
+
+  .row.g-3 .col-md-4 {
+    margin-bottom: 1rem;
+  }
+
+  .card-footer .d-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .btn-group {
+    flex-direction: row;
+    width: fit-content;
+    margin: 0 auto;
   }
 }
 
-@media (max-width: 576px) {
-  .customers-content-wrapper {
-    margin-left: 0px;
-    margin-right: 0px;
-    padding: 0 5px;
-  }
+/* CSS Variables for consistent theming */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --border-color: #e2e8f0;
+  --bg-light: #f8fafc;
+}
+
+/* Remove scroll functionality for better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure proper spacing and layout */
+.container-fluid .row {
+  margin-right: 0;
+}
+
+.col-12 {
+  padding-left: 0;
+  padding-right: 0;
 }
 </style>
