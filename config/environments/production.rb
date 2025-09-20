@@ -90,6 +90,7 @@ Rails.application.configure do
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
     "delivery-app-ieu2.onrender.com", # Allow requests from Render domain
     /.*\.onrender\.com/,           # Allow requests from all Render domains
+    "atmanirbharfarmbangalore.com",
     ENV['APP_HOST']                # Allow requests from environment-specific host
   ].compact
   
