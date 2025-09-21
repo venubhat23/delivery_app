@@ -46,6 +46,10 @@ Rails.application.routes.draw do
 
     # Instagram Analytics API
     get 'instagram/posts/:id', to: 'instagram_analytics#post_details'
+
+    # File Upload API
+    post 'upload/:folder_name', to: 'upload#create'
+    post 'upload', to: 'upload#create'  # Default route without folder
     
     # Settings API routes
     namespace :v1 do
@@ -310,9 +314,10 @@ Rails.application.routes.draw do
       patch :complete
       patch :cancel
     end
-    
+
     collection do
       patch :bulk_update
+      post :complete_till_today
       get :calendar
       get :daily_report
       get :analytics_data
@@ -336,6 +341,9 @@ Rails.application.routes.draw do
       get :get_schedule_invoice_status
       post :generate_procurement_invoice
       get :view_schedule_invoice
+      get :download_procurement_invoice_pdf
+      get :show_procurement_invoice
+      get :show_procurement_assignments
       post :create_procurement_invoices_for_all
       post :mark_assignments_completed
       post :create_schedule

@@ -1212,7 +1212,7 @@ class MilkAnalyticsController < ApplicationController
       @schedule = @invoice.procurement_schedule
       
       respond_to do |format|
-        format.html { render 'purchase_invoice_preview', layout: 'invoice' }
+        format.html { render 'purchase_invoice_preview', layout: 'public' }
         format.json { 
           render json: { 
             success: true, 
@@ -1231,15 +1231,23 @@ class MilkAnalyticsController < ApplicationController
         }
         format.pdf do
           render pdf: "purchase_invoice_#{@invoice.invoice_number}",
-                 template: 'milk_analytics/purchase_invoice_preview.html.erb',
-                 layout: 'invoice'
+                 template: 'milk_analytics/procurement_invoice_show.html.erb',
+                 layout: nil,
+                 page_size: 'A4',
+                 margin: { top: 10, bottom: 10, left: 10, right: 10 },
+                 dpi: 96,
+                 print_media_type: true
         end
       end
       
     rescue ActiveRecord::RecordNotFound
       respond_to do |format|
         format.json { render json: { success: false, error: 'Invoice not found' }, status: 404 }
-        format.html { 
+        format.html {
+          flash[:alert] = 'Invoice not found'
+          redirect_to milk_analytics_path(tab: 'schedules')
+        }
+        format.pdf {
           flash[:alert] = 'Invoice not found'
           redirect_to milk_analytics_path(tab: 'schedules')
         }
@@ -1248,7 +1256,11 @@ class MilkAnalyticsController < ApplicationController
       Rails.logger.error "Error previewing purchase invoice: #{e.message}"
       respond_to do |format|
         format.json { render json: { success: false, error: e.message }, status: 500 }
-        format.html { 
+        format.html {
+          flash[:alert] = "Error previewing invoice: #{e.message}"
+          redirect_to milk_analytics_path(tab: 'schedules')
+        }
+        format.pdf {
           flash[:alert] = "Error previewing invoice: #{e.message}"
           redirect_to milk_analytics_path(tab: 'schedules')
         }
@@ -1260,21 +1272,23 @@ class MilkAnalyticsController < ApplicationController
     begin
       @schedule = current_user.procurement_schedules.find(params[:schedule_id])
       invoice = @schedule.latest_invoice
-      
+
       respond_to do |format|
-        format.json { 
-          render json: { 
+        format.json {
+          render json: {
             success: true,
             has_invoice: @schedule.has_invoice?,
             can_generate: @schedule.can_generate_invoice?,
+            invoice_number: invoice&.invoice_number,
+            invoice_date: invoice&.invoice_date&.strftime('%d %b %Y'),
             invoice: invoice ? {
               id: invoice.id,
               invoice_number: invoice.invoice_number,
               status: invoice.status,
               total_amount: invoice.total_amount,
-              invoice_date: invoice.invoice_date
+              invoice_date: invoice.invoice_date&.strftime('%d %b %Y')
             } : nil
-          } 
+          }
         }
       end
       
@@ -1308,19 +1322,28 @@ class MilkAnalyticsController < ApplicationController
         else
           respond_to do |format|
             format.json { render json: { success: false, error: 'Cannot generate invoice - no completed assignments found' }, status: 400 }
+            format.all { render json: { success: false, error: 'Cannot generate invoice - no completed assignments found' }, status: 400 }
           end
           return
         end
       end
 
       respond_to do |format|
-        format.html { redirect_to preview_purchase_invoice_path(invoice_id: invoice.id) }
+        format.html { redirect_to show_procurement_invoice_milk_analytics_path(id: invoice.id) }
         format.json {
           render json: {
             success: true,
             message: 'Invoice retrieved successfully',
             invoice_id: invoice.id,
-            invoice_url: preview_purchase_invoice_path(invoice_id: invoice.id)
+            invoice_url: show_procurement_invoice_milk_analytics_path(id: invoice.id)
+          }
+        }
+        format.all {
+          render json: {
+            success: true,
+            message: 'Invoice retrieved successfully',
+            invoice_id: invoice.id,
+            invoice_url: show_procurement_invoice_milk_analytics_path(id: invoice.id)
           }
         }
       end
@@ -1328,11 +1351,13 @@ class MilkAnalyticsController < ApplicationController
     rescue ActiveRecord::RecordNotFound
       respond_to do |format|
         format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+        format.all { render json: { success: false, error: 'Schedule not found' }, status: 404 }
       end
     rescue => e
       Rails.logger.error "Error viewing schedule invoice: #{e.message}"
       respond_to do |format|
         format.json { render json: { success: false, error: e.message }, status: 500 }
+        format.all { render json: { success: false, error: e.message }, status: 500 }
       end
     end
   end
@@ -2793,6 +2818,229 @@ class MilkAnalyticsController < ApplicationController
     end
   end
 
+  # Procurement Invoice Actions
+  public
+
+  def generate_procurement_invoice
+    begin
+      schedule_id = params[:schedule_id] || params[:id]
+      schedule = ProcurementSchedule.find(schedule_id)
+
+      # Get all assignments for this schedule
+      assignments = schedule.procurement_assignments
+
+      # Calculate totals from assignments or schedule data
+      total_quantity = 0
+      total_amount = 0
+
+      if assignments.any?
+        total_quantity = assignments.sum { |a| a.actual_quantity || a.planned_quantity || 0 }
+        total_amount = assignments.sum { |a|
+          quantity = a.actual_quantity || a.planned_quantity || 0
+          rate = a.buying_price || 0
+          quantity * rate
+        }
+      else
+        # Fallback to schedule data if no assignments
+        total_quantity = schedule.planned_quantity || 0
+        total_amount = total_quantity * (schedule.buying_price || 0)
+      end
+
+      # Create procurement invoice
+      invoice = ProcurementInvoice.create!(
+        procurement_schedule: schedule,
+        user: current_user
+      )
+
+      # Generate PDF URL
+      pdf_url = download_procurement_invoice_pdf_milk_analytics_url(invoice.id)
+
+      render json: {
+        success: true,
+        message: "Invoice generated successfully",
+        invoice_number: invoice.invoice_number,
+        invoice_date: invoice.invoice_date.strftime('%d %b %Y'),
+        total_amount: invoice.total_amount,
+        pdf_url: pdf_url
+      }
+
+    rescue => e
+      Rails.logger.error "Error generating procurement invoice: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+
+      render json: {
+        success: false,
+        message: "Error generating invoice: #{e.message}"
+      }, status: :unprocessable_entity
+    end
+  end
+
+  def view_procurement_invoice
+    @invoice = ProcurementInvoice.find(params[:id])
+    render partial: 'milk_analytics/invoice_details', locals: { invoice: @invoice }
+  rescue => e
+    render json: { error: e.message }, status: :not_found
+  end
+
+  def show_procurement_assignments
+    begin
+      @schedule = current_user.procurement_schedules.find(params[:id])
+      @assignments = @schedule.procurement_assignments.includes(:product).order(:date)
+
+      respond_to do |format|
+        format.html { render partial: 'simple_procurement_assignments_modal' }
+        format.json {
+          assignments_data = @assignments.map do |assignment|
+            {
+              id: assignment.id,
+              date: assignment.date.strftime('%d %b %Y'),
+              product_name: assignment.product&.name || @schedule.product&.name || 'Milk',
+              planned_quantity: assignment.planned_quantity || 0,
+              actual_quantity: assignment.actual_quantity,
+              buying_price: assignment.buying_price || 0,
+              selling_price: assignment.selling_price || 0,
+              status: assignment.status,
+              notes: assignment.notes,
+              unit: assignment.unit || 'Liters',
+              created_at: assignment.created_at.strftime('%d %b %Y %I:%M %p')
+            }
+          end
+
+          render json: {
+            success: true,
+            schedule: {
+              id: @schedule.id,
+              vendor_name: @schedule.vendor_name,
+              from_date: @schedule.from_date.strftime('%d %b %Y'),
+              to_date: @schedule.to_date.strftime('%d %b %Y'),
+              product_name: @schedule.product&.name || 'Milk'
+            },
+            assignments: assignments_data,
+            total_assignments: @assignments.count
+          }
+        }
+      end
+
+    rescue ActiveRecord::RecordNotFound
+      respond_to do |format|
+        format.html { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+        format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
+      end
+    rescue => e
+      Rails.logger.error "Error fetching procurement assignments: #{e.message}"
+      respond_to do |format|
+        format.html { render json: { success: false, error: e.message }, status: 500 }
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+      end
+    end
+  end
+
+  def mark_assignments_completed
+    begin
+      @schedule = current_user.procurement_schedules.find(params[:id])
+
+      # Get current month's pending assignments for this schedule
+      current_month_start = Date.current.beginning_of_month
+      current_month_end = Date.current.end_of_month
+
+      pending_assignments = @schedule.procurement_assignments
+                                   .where(status: 'pending')
+                                   .where(date: current_month_start..current_month_end)
+
+      if pending_assignments.any?
+        # Update all pending assignments to completed
+        updated_count = pending_assignments.update_all(
+          status: 'completed',
+          updated_at: Time.current
+        )
+
+        Rails.logger.info "Updated #{updated_count} assignments to completed for schedule #{@schedule.id}"
+
+        render json: {
+          success: true,
+          message: "Successfully marked #{updated_count} assignment(s) as completed",
+          updated_count: updated_count,
+          schedule_id: @schedule.id,
+          vendor_name: @schedule.vendor_name
+        }
+      else
+        render json: {
+          success: false,
+          message: "No pending assignments found for current month",
+          updated_count: 0
+        }
+      end
+
+    rescue ActiveRecord::RecordNotFound
+      render json: {
+        success: false,
+        message: "Schedule not found"
+      }, status: 404
+
+    rescue => e
+      Rails.logger.error "Error marking assignments as completed: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+
+      render json: {
+        success: false,
+        message: "Error updating assignments: #{e.message}"
+      }, status: :unprocessable_entity
+    end
+  end
+
+  def show_procurement_invoice
+    begin
+      @invoice = current_user.procurement_invoices.find(params[:id])
+      @schedule = @invoice.procurement_schedule
+
+      respond_to do |format|
+        format.html { render 'procurement_invoice_show', layout: false }
+        format.json {
+          render json: {
+            success: true,
+            invoice: {
+              id: @invoice.id,
+              invoice_number: @invoice.invoice_number,
+              invoice_date: @invoice.invoice_date,
+              status: @invoice.status,
+              vendor_name: @invoice.vendor_name,
+              total_amount: @invoice.total_amount
+            }
+          }
+        }
+      end
+
+    rescue ActiveRecord::RecordNotFound
+      respond_to do |format|
+        format.html { redirect_to milk_analytics_path, alert: 'Invoice not found' }
+        format.json { render json: { success: false, error: 'Invoice not found' }, status: 404 }
+      end
+    rescue => e
+      Rails.logger.error "Error showing procurement invoice: #{e.message}"
+      respond_to do |format|
+        format.html { redirect_to milk_analytics_path, alert: "Error showing invoice: #{e.message}" }
+        format.json { render json: { success: false, error: e.message }, status: 500 }
+      end
+    end
+  end
+
+  def download_procurement_invoice_pdf
+    invoice = ProcurementInvoice.find(params[:id])
+    data = invoice.generate_invoice_data
+
+    respond_to do |format|
+      format.pdf do
+        pdf = generate_procurement_invoice_pdf(data)
+        send_data pdf.render,
+                  filename: "procurement_invoice_#{invoice.invoice_number}.pdf",
+                  type: 'application/pdf',
+                  disposition: 'attachment'
+      end
+    end
+  rescue => e
+    redirect_to milk_analytics_path, alert: "Error downloading PDF: #{e.message}"
+  end
+
   private
 
   def create_schedule_from_item(item_data, current_month_start, current_month_end, created_schedules, skipped_schedules)
@@ -2886,119 +3134,6 @@ class MilkAnalyticsController < ApplicationController
     end
   end
 
-  # Generate procurement invoice for a specific schedule
-  def generate_procurement_invoice
-    begin
-      schedule_id = params[:id]
-      schedule = ProcurementSchedule.find(schedule_id)
-
-      if schedule.nil?
-        render json: { error: "Schedule not found" }, status: :not_found
-        return
-      end
-
-      # Get all procurement assignments for this schedule
-      assignments = ProcurementAssignment.where(procurement_schedule_id: schedule.id)
-
-      if assignments.empty?
-        render json: { error: "No procurement assignments found for this schedule" }, status: :not_found
-        return
-      end
-
-      # Check if invoice already exists for this schedule
-      existing_invoice = ProcurementInvoice.find_by(procurement_schedule: schedule)
-
-      if existing_invoice&.can_be_regenerated?
-        # Update existing invoice
-        invoice = existing_invoice
-        invoice.mark_as_generated!
-      else
-        # Create new procurement invoice record
-        invoice = ProcurementInvoice.create!(
-          procurement_schedule: schedule,
-          user: current_user,
-          status: 'generated'
-        )
-      end
-
-      # Create procurement invoice data
-      invoice_data = {
-        schedule: schedule,
-        vendor_name: schedule.vendor_name,
-        vendor_contact: schedule.vendor_contact,
-        product_name: schedule.product&.name || 'Milk',
-        assignments: assignments,
-        total_quantity: assignments.sum(:actual_quantity_procured) || assignments.sum(:planned_quantity),
-        total_amount: assignments.sum { |a| (a.actual_quantity_procured || a.planned_quantity) * (a.actual_rate_per_unit || a.planned_rate_per_unit) },
-        date_range: "#{schedule.start_date&.strftime('%d %b %Y')} - #{schedule.end_date&.strftime('%d %b %Y')}",
-        generated_date: Date.current.strftime('%d %b %Y'),
-        invoice_number: invoice.invoice_number,
-        invoice_id: invoice.id
-      }
-
-      # Generate PDF using Prawn
-      pdf = generate_procurement_invoice_pdf(invoice_data)
-
-      # Send PDF as response
-      send_data pdf,
-                filename: "procurement_invoice_#{schedule.vendor_name.gsub(/\s+/, '_')}_#{schedule.id}.pdf",
-                type: 'application/pdf',
-                disposition: 'attachment'
-
-    rescue ActiveRecord::RecordNotFound
-      render json: { error: "Schedule not found" }, status: :not_found
-    rescue => e
-      Rails.logger.error "Error generating procurement invoice: #{e.message}"
-      render json: { error: "Failed to generate invoice" }, status: :internal_server_error
-    end
-  end
-
-  # View existing procurement invoice
-  def view_procurement_invoice
-    begin
-      schedule_id = params[:id]
-      schedule = ProcurementSchedule.find(schedule_id)
-      invoice = ProcurementInvoice.find_by(procurement_schedule: schedule)
-
-      if invoice.nil?
-        render json: { error: "Invoice not found" }, status: :not_found
-        return
-      end
-
-      # Get all procurement assignments for this schedule
-      assignments = ProcurementAssignment.where(procurement_schedule_id: schedule.id)
-
-      # Create procurement invoice data
-      invoice_data = {
-        schedule: schedule,
-        vendor_name: schedule.vendor_name,
-        vendor_contact: schedule.vendor_contact,
-        product_name: schedule.product&.name || 'Milk',
-        assignments: assignments,
-        total_quantity: assignments.sum(:actual_quantity_procured) || assignments.sum(:planned_quantity),
-        total_amount: assignments.sum { |a| (a.actual_quantity_procured || a.planned_quantity) * (a.actual_rate_per_unit || a.planned_rate_per_unit) },
-        date_range: "#{schedule.start_date&.strftime('%d %b %Y')} - #{schedule.end_date&.strftime('%d %b %Y')}",
-        generated_date: invoice.invoice_date.strftime('%d %b %Y'),
-        invoice_number: invoice.invoice_number,
-        invoice_id: invoice.id
-      }
-
-      # Generate PDF using Prawn
-      pdf = generate_procurement_invoice_pdf(invoice_data)
-
-      # Send PDF as response for viewing
-      send_data pdf,
-                filename: "procurement_invoice_#{schedule.vendor_name.gsub(/\s+/, '_')}_#{schedule.id}.pdf",
-                type: 'application/pdf',
-                disposition: 'inline'
-
-    rescue ActiveRecord::RecordNotFound
-      render json: { error: "Invoice not found" }, status: :not_found
-    rescue => e
-      Rails.logger.error "Error viewing procurement invoice: #{e.message}"
-      render json: { error: "Failed to view invoice" }, status: :internal_server_error
-    end
-  end
 
   private
 

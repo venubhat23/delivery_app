@@ -13,6 +13,26 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def index
+    # Handle customer patterns redirect with filters
+    if params[:customer_id].present? && params[:month].present? && params[:year].present?
+      @customer = Customer.find(params[:customer_id])
+      @month = params[:month].to_i
+      @year = params[:year].to_i
+
+      start_date = Date.new(@year, @month, 1).beginning_of_month
+      end_date = start_date.end_of_month
+
+      @delivery_assignments = DeliveryAssignment
+        .includes(:customer, :user, :product, :delivery_schedule)
+        .where(customer_id: @customer.id, scheduled_date: start_date..end_date)
+        .order(:scheduled_date)
+
+      @month_name = start_date.strftime("%B %Y")
+
+      # Use a special view for customer-specific assignments
+      render 'customer_assignments' and return
+    end
+
     # Date filtering - default to today, but allow viewing other dates
     # Fix date filter to show exact date matches only
     if params[:date].present? && !params[:date].blank?
@@ -108,16 +128,28 @@ class DeliveryAssignmentsController < ApplicationController
     @customers = Customer.all
     @delivery_people = User.delivery_people.all
     @products = Product.all
+
+    respond_to do |format|
+      format.html
+      format.json { render json: { html: render_to_string(partial: 'edit_modal', layout: false, formats: [:html]) } }
+    end
   end
 
   def update
     if @delivery_assignment.update(delivery_assignment_params)
-      redirect_to @delivery_assignment, notice: 'Delivery assignment was successfully updated.'
+      respond_to do |format|
+        format.html { redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully updated.' }
+        format.json { render json: { success: true, message: 'Assignment updated successfully!' } }
+      end
     else
       @customers = Customer.all
       @delivery_people = User.delivery_people.all
       @products = Product.all
-      render :edit
+
+      respond_to do |format|
+        format.html { render :edit }
+        format.json { render json: { success: false, message: 'Error updating assignment', errors: @delivery_assignment.errors.full_messages } }
+      end
     end
   end
 
@@ -125,12 +157,12 @@ class DeliveryAssignmentsController < ApplicationController
     @delivery_assignment.destroy
     respond_to do |format|
       format.html { redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully deleted.' }
-      format.json { head :no_content }
+      format.json { render json: { success: true, message: 'Assignment deleted successfully!' } }
     end
   rescue => e
     respond_to do |format|
       format.html { redirect_to delivery_assignments_path, alert: 'Failed to delete delivery assignment.' }
-      format.json { render json: { error: e.message }, status: :unprocessable_entity }
+      format.json { render json: { success: false, message: 'Error deleting assignment: ' + e.message }, status: :unprocessable_entity }
     end
   end
 
@@ -142,12 +174,12 @@ class DeliveryAssignmentsController < ApplicationController
       create_invoice_for_delivery
       respond_to do |format|
         format.html { redirect_to delivery_assignments_path, notice: 'Delivery marked as completed successfully!' }
-        format.json { render :show, status: :ok, location: @delivery_assignment }
+        format.json { render json: { success: true, message: 'Assignment completed successfully!' } }
       end
     else
       respond_to do |format|
         format.html { redirect_to delivery_assignments_path, alert: 'Failed to complete delivery.' }
-        format.json { render json: @delivery_assignment.errors, status: :unprocessable_entity }
+        format.json { render json: { success: false, message: 'Error completing assignment', errors: @delivery_assignment.errors.full_messages }, status: :unprocessable_entity }
       end
     end
   end
@@ -402,13 +434,15 @@ class DeliveryAssignmentsController < ApplicationController
     da_params = params.require(:delivery_assignment).permit(
       :customer_id, :product_id, :quantity, :unit,
       :scheduled_date, :start_date, :end_date, :special_instructions, :status, :priority,
-      :delivery_person_id, :discount_amount, :final_amount_after_discount,
+      :delivery_person_id, :user_id, :discount_amount, :final_amount_after_discount,
       additional_products: [:product_id, :quantity, :unit]
     ).dup  # Create a copy to avoid modifying original params
 
     # Handle delivery_person_id to user_id mapping
     if da_params[:delivery_person_id].present?
       da_params[:user_id] = da_params[:delivery_person_id]
+    elsif da_params[:user_id].present?
+      # user_id is already provided, keep it as is
     end
 
     # Set default unit if not provided

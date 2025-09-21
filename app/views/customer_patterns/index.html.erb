@@ -130,25 +130,25 @@
             <table class="table table-hover mb-0">
               <thead class="table-light">
                 <tr>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 180px; width: 15%;">
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">
                     <i class="fas fa-user me-1"></i>CUSTOMER NAME
                   </th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 140px; width: 12%;">
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">
                     <i class="fas fa-truck me-1"></i>DELIVERY PERSON
                   </th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 160px; width: 15%;">
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">
                     <i class="fas fa-tint me-1"></i>LITERS & PRODUCT
                   </th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 140px; width: 12%;">
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">
                     <i class="fas fa-calendar me-1"></i>DAYS/ASSIGNMENTS
                   </th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 120px; width: 10%;">
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">
                     <i class="fas fa-rupee-sign me-1"></i>AMOUNT
                   </th>
-                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white; min-width: 180px; width: 20%;">
+                  <th class="text-nowrap fw-bold" style="background-color: #7b68ee; color: white;">
                     <i class="fas fa-chart-line me-1"></i>PATTERN & SCHEDULE
                   </th>
-                  <th class="text-nowrap fw-bold text-center" style="background-color: #7b68ee; color: white; min-width: 120px; width: 10%;">
+                  <th class="text-nowrap fw-bold text-center" style="background-color: #7b68ee; color: white;">
                     <i class="fas fa-cogs me-1"></i>ACTION
                   </th>
                 </tr>
@@ -157,7 +157,7 @@
                 <% if @customer_patterns.any? %>
                   <% @customer_patterns.each do |data| %>
                     <tr class="customer-pattern-row">
-                      <td class="align-middle" style="min-width: 180px;">
+                      <td class="align-middle">
                         <div class="d-flex align-items-center">
                           <div class="avatar-circle me-3">
                             <%= data[:customer].name.first.upcase %>
@@ -168,16 +168,16 @@
                           </div>
                         </div>
                       </td>
-                      <td class="align-middle text-center" style="min-width: 140px;">
-                        <span class="badge bg-info p-2">
+                      <td class="align-middle text-center">
+                        <span class="badge bg-info">
                           <%= data[:delivery_person_name] %>
                         </span>
                       </td>
-                      <td class="align-middle text-center" style="min-width: 160px;">
-                        <div class="d-flex flex-column align-items-center gap-2">
-                          <span class="fs-5 fw-bold text-primary"><%= data[:total_liters] %> L</span>
+                      <td class="align-middle text-center">
+                        <div class="d-flex flex-column align-items-center gap-1">
+                          <span class="fw-bold text-primary"><%= data[:total_liters] %> L</span>
                           <% if data[:primary_product] %>
-                            <span class="badge bg-secondary p-1" style="font-size: 0.7rem;">
+                            <span class="badge bg-secondary" style="font-size: 0.7rem;">
                               <%= truncate(data[:primary_product].name, length: 12) %>
                             </span>
                           <% else %>
@@ -185,9 +185,9 @@
                           <% end %>
                         </div>
                       </td>
-                      <td class="align-middle text-center" style="min-width: 140px;">
+                      <td class="align-middle text-center">
                         <div class="d-flex flex-column align-items-center gap-1">
-                          <span class="badge bg-primary p-2">
+                          <span class="badge bg-primary">
                             <%= data[:days_delivered] %> DAYS
                           </span>
                           <small class="text-muted" style="font-size: 0.7rem;">
@@ -195,27 +195,27 @@
                           </small>
                         </div>
                       </td>
-                      <td class="align-middle text-center" style="min-width: 120px;">
+                      <td class="align-middle text-center">
                         <span class="fw-bold text-success">
                           ₹<%= number_with_precision(data[:estimated_amount] || 0, precision: 0) %>
                         </span>
                       </td>
-                      <td class="align-middle text-center" style="min-width: 180px; max-width: 180px;">
+                      <td class="align-middle text-center">
                         <div class="d-flex flex-column align-items-center gap-1">
                           <% case data[:pattern] %>
                           <% when 'regular' %>
-                            <span class="badge bg-success p-2">REGULAR</span>
+                            <span class="badge bg-success">REGULAR</span>
                           <% when 'interval' %>
-                            <span class="badge bg-warning text-dark p-2">INTERVAL</span>
+                            <span class="badge bg-warning text-dark">INTERVAL</span>
                           <% when 'irregular' %>
-                            <span class="badge bg-danger p-2">IRREGULAR</span>
+                            <span class="badge bg-danger">IRREGULAR</span>
                           <% end %>
-                          <small class="text-muted text-center" style="font-size: 0.7rem; line-height: 1.2; word-wrap: break-word;">
-                            <%= truncate(data[:pattern_description], length: 25) %>
+                          <small class="text-muted text-center" style="font-size: 0.7rem;">
+                            <%= truncate(data[:pattern_description], length: 20) %>
                           </small>
                         </div>
                       </td>
-                      <td class="align-middle text-center" style="min-width: 120px;">
+                      <td class="align-middle text-center">
                         <div class="d-flex gap-1 justify-content-center flex-wrap">
                           <%= link_to customer_path(data[:customer]),
                               class: "btn btn-sm btn-outline-primary",
@@ -225,13 +225,13 @@
                           <% end %>
 
                           <button type="button"
-                                  class="btn btn-sm btn-outline-success view-deliveries-btn"
+                                  class="btn btn-sm btn-outline-success delivery-modal-btn"
+                                  data-bs-target="#deliveryModal"
                                   data-customer-id="<%= data[:customer].id %>"
                                   data-customer-name="<%= data[:customer].name %>"
                                   data-month="<%= @current_month %>"
                                   data-year="<%= @current_year %>"
-                                  title="View Deliveries"
-                                  data-bs-toggle="tooltip">
+                                  title="View Deliveries">
                             <i class="fas fa-truck"></i>
                           </button>
                         </div>
@@ -441,59 +441,47 @@
   }
 
   .customer-pattern-row {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+    border-bottom: 1px solid #dee2e6;
   }
 
   .customer-pattern-row:hover {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
-    transform: translateX(8px) scale(1.01);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+    background-color: #f8f9fa;
   }
 
   .customer-pattern-row td {
-    padding: 1.5rem 1rem;
+    padding: 0.75rem;
     vertical-align: middle;
-    border-color: rgba(102, 126, 234, 0.05);
+    border-color: #dee2e6;
   }
 
   /* Ensure table width and proper column distribution */
   .table {
-    table-layout: fixed;
     width: 100%;
-    min-width: 1200px;
+  }
+
+  /* Simple modal styles - no conflicts */
+  .modal-open {
+    padding-right: 0 !important;
   }
 
   /* Responsive table adjustments */
-  @media (max-width: 1400px) {
-    .table {
-      min-width: 1000px;
-    }
-  }
-
   @media (max-width: 1200px) {
     .table {
-      min-width: 900px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
 
     .customer-pattern-row td {
-      padding: 1rem 0.75rem;
+      padding: 0.6rem;
     }
   }
 
   @media (max-width: 768px) {
-    .customer-pattern-row:hover {
-      transform: translateX(4px);
-    }
-
     .table {
-      min-width: 800px;
       font-size: 0.8rem;
     }
 
     .customer-pattern-row td {
-      padding: 0.75rem 0.5rem;
+      padding: 0.5rem;
     }
   }
 
@@ -981,20 +969,7 @@
   }
 </style>
 
-<!-- Delivery Assignments Modal -->
-<div class="modal fade" id="deliveryAssignmentsModal" tabindex="-1" aria-labelledby="deliveryAssignmentsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content" id="deliveryAssignmentsModalContent">
-      <!-- Content will be loaded dynamically -->
-      <div class="modal-body text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-3 text-muted">Loading delivery assignments...</p>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Modal removed - using direct page links instead -->
 
 <!-- Simple Attractive Loader Modal -->
 <div class="modal fade show" id="bigLoaderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" style="display: none;">
@@ -1085,604 +1060,717 @@
   </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const modal = new bootstrap.Modal(document.getElementById('deliveryAssignmentsModal'));
-  const modalContent = document.getElementById('deliveryAssignmentsModalContent');
-  const completeAllBtn = document.getElementById('completeAllTillTodayBtn');
-  const pendingCountDisplay = document.getElementById('pending-count-display');
-  let editModal;
-
-  // Load pending count and show/hide complete all button
-  function loadPendingCount() {
-    const month = completeAllBtn.dataset.month;
-    const year = completeAllBtn.dataset.year;
-    const deliveryPersonId = completeAllBtn.dataset.deliveryPersonId;
-
-    const params = new URLSearchParams({ month, year });
-    if (deliveryPersonId) {
-      params.append('delivery_person_id', deliveryPersonId);
-    }
-
-    fetch(`<%= get_pending_count_customer_patterns_path %>?${params}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.pending_count > 0) {
-        pendingCountDisplay.textContent = data.pending_count;
-        completeAllBtn.style.display = 'block';
-      } else {
-        completeAllBtn.style.display = 'none';
-      }
-    })
-    .catch(error => {
-      console.error('Error loading pending count:', error);
-    });
-  }
-
-  // Show attractive success message
-  function showSuccessMessage(message, details) {
-    const alertHtml = `
-      <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 400px;">
-        <div class="d-flex align-items-center">
-          <div class="me-3">
-            <i class="fas fa-check-circle fs-2 text-success"></i>
-          </div>
-          <div>
-            <h6 class="alert-heading mb-1">Bulk Complete Successful!</h6>
-            <p class="mb-1">${message}</p>
-            <small class="text-muted">${details}</small>
-          </div>
+<!-- Simple Custom Modal -->
+<div id="deliveryModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeDeliveryModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-truck me-2"></i>
+        <span id="modalCustomerName">Delivery Assignments</span>
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeDeliveryModal()">×</button>
+    </div>
+    <div class="custom-modal-body" id="modalContent">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <p class="mt-3">Loading assignments...</p>
       </div>
-    `;
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDeliveryModal()">Close</button>
+    </div>
+  </div>
+</div>
 
-    document.body.insertAdjacentHTML('beforeend', alertHtml);
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      const alert = document.querySelector('.alert-success');
-      if (alert) {
-        alert.remove();
-      }
-    }, 5000);
-  }
-
-  // Simple Loader Modal functionality
-  const bigLoaderModal = new bootstrap.Modal(document.getElementById('bigLoaderModal'));
-  const progressBar = document.getElementById('simple-progress-bar');
-  const percentageDisplay = document.querySelector('.percentage-simple');
-  const completedCountDisplay = document.getElementById('completed-count-simple');
-  const totalCountDisplay = document.getElementById('total-count-simple');
-  const statusMessage = document.querySelector('.status-message-simple');
-
-  function updateProgress(completed, total) {
-    const percentage = Math.round((completed / total) * 100);
-
-    progressBar.style.width = `${percentage}%`;
-    percentageDisplay.textContent = `${percentage}%`;
-    completedCountDisplay.textContent = completed;
-    totalCountDisplay.textContent = total;
-  }
-
-  function simulateProgress(totalCount, onComplete) {
-    let completed = 0;
-    const interval = Math.max(50, Math.min(500, 3000 / totalCount)); // Adaptive speed
-
-    const progressInterval = setInterval(() => {
-      completed += Math.random() > 0.7 ? 2 : 1; // Realistic progress simulation
-
-      if (completed >= totalCount) {
-        completed = totalCount;
-        updateProgress(completed, totalCount);
-        statusMessage.textContent = 'Finalizing completion...';
-        clearInterval(progressInterval);
-        setTimeout(onComplete, 800);
-      } else {
-        updateProgress(completed, totalCount);
-
-        // Update status messages based on progress
-        if (completed < totalCount * 0.3) {
-          statusMessage.textContent = 'Starting assignment completion...';
-        } else if (completed < totalCount * 0.7) {
-          statusMessage.textContent = 'Processing assignments...';
-        } else {
-          statusMessage.textContent = 'Nearly finished...';
-        }
-      }
-    }, interval);
-  }
-
-  // Complete all till today functionality
-  completeAllBtn.addEventListener('click', function() {
-    const month = this.dataset.month;
-    const year = this.dataset.year;
-    const deliveryPersonId = this.dataset.deliveryPersonId;
-    const pendingCount = parseInt(pendingCountDisplay.textContent);
-
-    const confirmMessage = deliveryPersonId ?
-      `Are you sure you want to complete all ${pendingCount} pending assignments till today for the selected delivery person?` :
-      `Are you sure you want to complete all ${pendingCount} pending assignments till today for ALL customers and delivery people?`;
-
-    if (confirm(confirmMessage + '\\n\\nThis will mark all pending assignments up to today as completed.')) {
-      // Show big attractive loader
-      bigLoaderModal.show();
-      updateProgress(0, pendingCount);
-
-      console.log('Starting API call to complete assignments...');
-
-      // Make actual API call immediately (not after simulation)
-      const params = { month, year };
-      if (deliveryPersonId) {
-        params.delivery_person_id = deliveryPersonId;
-      }
-
-      // Start progress simulation
-      simulateProgress(pendingCount, () => {
-        console.log('Progress simulation completed');
-      });
-
-      // Make API call in parallel
-      fetch(`<%= complete_all_till_today_customer_patterns_path %>`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify(params)
-      })
-      .then(response => {
-        console.log('API Response received:', response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log('API Data:', data);
-
-        // Wait for progress to finish, then hide loader
-        setTimeout(() => {
-          bigLoaderModal.hide();
-
-          if (data.success) {
-            showSuccessMessage(
-              data.message,
-              `Affected: ${data.customers_affected} customers, ${data.delivery_people_affected} delivery people`
-            );
-
-            // Reload the page to update all counters and patterns
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          } else {
-            alert('❌ ' + data.message);
-          }
-        }, 3000); // Wait 3 seconds for progress to complete
-      })
-      .catch(error => {
-        console.error('API Error:', error);
-        bigLoaderModal.hide();
-        alert('❌ Error completing assignments. Please try again.');
-      });
-    }
-  });
-
-  // Load pending count on page load and when filters change
-  loadPendingCount();
-
-  // Filter loader functionality
-  const filterLoaderModal = new bootstrap.Modal(document.getElementById('filterLoaderModal'));
-  const filterProgressBar = document.getElementById('filter-progress-bar');
-  const filterPercentageDisplay = document.querySelector('.filter-percentage');
-
-  function updateFilterProgress(percentage) {
-    filterProgressBar.style.width = `${percentage}%`;
-    filterPercentageDisplay.textContent = `${percentage}%`;
-  }
-
-  function simulateFilterProgress() {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15 + 5; // Random progress between 5-20%
-
-      if (progress >= 100) {
-        progress = 100;
-        updateFilterProgress(progress);
-        clearInterval(interval);
-        // Hide loader after completion (form will submit naturally)
-        setTimeout(() => {
-          filterLoaderModal.hide();
-        }, 500);
-      } else {
-        updateFilterProgress(Math.floor(progress));
-      }
-    }, 200);
-  }
-
-  // Reload pending count when form is submitted (filters change)
-  document.querySelector('form').addEventListener('submit', function(e) {
-    // Show filter loader modal
-    filterLoaderModal.show();
-    updateFilterProgress(0);
-    simulateFilterProgress();
-
-    setTimeout(loadPendingCount, 500);
-  });
-
-  // Initialize tooltips
-  function initializeTooltips() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-  }
-
-  // Show success/error messages
-  function showMessage(message, type = 'success') {
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-    const messageHtml = `
-      <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<!-- Small Edit Modal -->
+<div id="editModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeEditModal()"></div>
+  <div class="custom-edit-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-edit me-2"></i>
+        <span id="editModalTitle">Edit Assignment</span>
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeEditModal()">×</button>
+    </div>
+    <div class="custom-modal-body" id="editModalContent">
+      <div class="text-center py-3">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading edit form...</p>
       </div>
-    `;
+    </div>
+  </div>
+</div>
 
-    const existingAlert = modalContent.querySelector('.alert');
-    if (existingAlert) {
-      existingAlert.remove();
-    }
+<style>
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
 
-    const modalBody = modalContent.querySelector('.modal-body');
-    if (modalBody) {
-      modalBody.insertAdjacentHTML('afterbegin', messageHtml);
-    }
+.modal-xl {
+  max-width: 1200px;
+}
+
+.stats-card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Modal fixes for blank screen issue */
+.modal {
+  z-index: 1055;
+}
+
+.modal-backdrop {
+  z-index: 1050;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show .modal-dialog {
+  transform: none;
+}
+
+.modal-open {
+  overflow: hidden;
+  padding-right: 0 !important;
+}
+
+.modal-open .modal {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Ensure modal content is visible */
+.modal-content {
+  background-color: #fff;
+  border: 1px solid rgba(0,0,0,.2);
+  border-radius: .3rem;
+  box-shadow: 0 .25rem .5rem rgba(0,0,0,.5);
+  pointer-events: auto;
+  position: relative;
+  width: 100%;
+}
+
+/* Custom Modal Styles */
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0 20px 280px; /* Top padding for nav bar, left padding for sidebar */
+}
+
+.custom-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+
+.custom-modal-content {
+  position: relative;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 1400px;
+  max-height: 85%;
+  overflow: hidden;
+  z-index: 10001;
+  animation: modalFadeIn 0.3s ease-out;
+  margin: 0 20px; /* Add some margin from screen edges */
+}
+
+/* Responsive adjustments for modal positioning */
+@media (max-width: 1200px) {
+  .custom-modal {
+    padding: 60px 0 20px 200px; /* Smaller sidebar on medium screens */
+  }
+}
+
+@media (max-width: 992px) {
+  .custom-modal {
+    padding: 60px 20px 20px 20px; /* No sidebar on smaller screens */
   }
 
-  // Reload modal content
-  function reloadModalContent(customerId, month, year) {
-    fetch(`<%= customer_deliveries_customer_patterns_path %>?customer_id=${customerId}&month=${month}&year=${year}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      modalContent.innerHTML = data.html;
-      initializeTooltips();
-      attachModalEventListeners();
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      showMessage('❌ Error reloading assignments', 'error');
-    });
+  .custom-modal-content {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .custom-modal {
+    padding: 80px 10px 20px 10px; /* Mobile spacing */
   }
 
-
-  // Remove All button click handler (defined outside to avoid duplication)
-  function handleRemoveAllClick() {
-    const customerId = this.dataset.customerId;
-    const customerName = this.dataset.customerName;
-    const month = this.dataset.month;
-    const year = this.dataset.year;
-    const totalCount = this.dataset.totalCount;
-
-    console.log('Remove all button clicked for customer:', customerName);
-
-    if (confirm(`⚠️ DANGER: Are you sure you want to REMOVE ALL ${totalCount} assignments for ${customerName}?\\n\\nThis will PERMANENTLY DELETE all delivery assignments for this customer in the selected month.\\n\\nThis action CANNOT be undone!`)) {
-
-      // Show loader in button
-      const originalText = this.innerHTML;
-      this.disabled = true;
-      this.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        Removing...
-      `;
-
-      fetch(`<%= remove_all_assignments_customer_patterns_path %>`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-          customer_id: customerId,
-          month: month,
-          year: year
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        // Restore button state
-        this.disabled = false;
-        this.innerHTML = originalText;
-
-        if (data.success) {
-          // Show success state in button briefly
-          this.innerHTML = `✅ Removed Successfully!`;
-          this.classList.remove('btn-danger');
-          this.classList.add('btn-success');
-
-          showMessage(data.message, 'success');
-
-          // Close modal and reload page to reflect changes
-          setTimeout(() => {
-            modal.hide();
-            setTimeout(() => {
-              window.location.reload();
-            }, 500);
-          }, 1500);
-        } else {
-          showMessage(data.message, 'error');
-        }
-      })
-      .catch(error => {
-        // Restore button state on error
-        this.disabled = false;
-        this.innerHTML = originalText;
-
-        console.error('Error:', error);
-        showMessage('❌ Error removing assignments', 'error');
-      });
-    }
+  .custom-modal-content {
+    max-width: 98%;
+    margin: 0 10px;
   }
+}
 
-  // Also add event delegation for dynamically loaded content
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.remove-all-assignments-btn')) {
-      const button = e.target.closest('.remove-all-assignments-btn');
-      console.log('Event delegation caught remove all button click');
-      handleRemoveAllClick.call(button);
-    }
-  });
+.custom-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px 10px 0 0;
+}
 
-  // Continue with other modal event listeners
-  function attachModalEventListeners() {
-    // Remove All Assignments button (look in entire modal, not just content)
-    const removeAllBtn = document.querySelector('#deliveryAssignmentsModal .remove-all-assignments-btn');
-    console.log('Looking for remove all button:', removeAllBtn);
-    if (removeAllBtn) {
-      // Remove existing event listener if any
-      removeAllBtn.removeEventListener('click', handleRemoveAllClick);
-      removeAllBtn.addEventListener('click', handleRemoveAllClick);
-    }
-    // Complete Till Today button
-    const completeTillTodayBtn = modalContent.querySelector('.complete-till-today-btn');
-    if (completeTillTodayBtn) {
-      completeTillTodayBtn.addEventListener('click', function() {
-        const customerId = this.dataset.customerId;
-        const customerName = this.dataset.customerName;
-        const month = this.dataset.month;
-        const year = this.dataset.year;
-        const totalCount = this.dataset.totalCount;
+.custom-modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
 
-        if (confirm(`⚠️ DANGER: Are you sure you want to REMOVE ALL ${totalCount} assignments for ${customerName}?\\n\\nThis will PERMANENTLY DELETE all delivery assignments for this customer in the selected month.\\n\\nThis action CANNOT be undone!`)) {
+.custom-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
 
-          // Show loader in button
-          const originalText = this.innerHTML;
-          this.disabled = true;
-          this.innerHTML = `
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Removing...
-          `;
+.custom-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
 
-          fetch(`<%= remove_all_assignments_customer_patterns_path %>`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-              customer_id: customerId,
-              month: month,
-              year: year
-            })
-          })
-          .then(response => response.json())
-          .then(data => {
-            // Restore button state
-            this.disabled = false;
-            this.innerHTML = originalText;
+.custom-modal-body {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
 
-            if (data.success) {
-              // Show success state in button briefly
-              this.innerHTML = `✅ Removed Successfully!`;
-              this.classList.remove('btn-danger');
-              this.classList.add('btn-success');
+.custom-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #f8f9fa;
+  border-radius: 0 0 10px 10px;
+}
 
-              showMessage(data.message, 'success');
-
-              // Close modal and reload page to reflect changes
-              setTimeout(() => {
-                modal.hide();
-                setTimeout(() => {
-                  window.location.reload();
-                }, 500);
-              }, 1500);
-            } else {
-              showMessage(data.message, 'error');
-            }
-          })
-          .catch(error => {
-            // Restore button state on error
-            this.disabled = false;
-            this.innerHTML = originalText;
-
-            console.error('Error:', error);
-            showMessage('❌ Error removing assignments', 'error');
-          });
-        }
-      });
-    }
-
-    // Edit assignment buttons
-    modalContent.querySelectorAll('.edit-assignment-btn').forEach(function(button) {
-      button.addEventListener('click', function() {
-        const assignmentId = this.dataset.assignmentId;
-
-        fetch(`/customer-patterns/${assignmentId}/edit_assignment`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          // Create or show edit modal
-          let editModalEl = document.getElementById('editAssignmentModal');
-          if (!editModalEl) {
-            editModalEl = document.createElement('div');
-            editModalEl.className = 'modal fade';
-            editModalEl.id = 'editAssignmentModal';
-            editModalEl.setAttribute('tabindex', '-1');
-            editModalEl.innerHTML = '<div class="modal-dialog"><div class="modal-content" id="editAssignmentModalContent"></div></div>';
-            document.body.appendChild(editModalEl);
-          }
-
-          document.getElementById('editAssignmentModalContent').innerHTML = data.html;
-          editModal = new bootstrap.Modal(editModalEl);
-          editModal.show();
-
-          // Attach save button listener
-          const saveBtn = editModalEl.querySelector('.save-assignment-btn');
-          if (saveBtn) {
-            saveBtn.addEventListener('click', function() {
-              const form = editModalEl.querySelector('#edit-assignment-form');
-              const formData = new FormData(form);
-
-              fetch(`/customer-patterns/${assignmentId}/update_assignment`, {
-                method: 'PATCH',
-                headers: {
-                  'Accept': 'application/json',
-                  'X-Requested-With': 'XMLHttpRequest',
-                  'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: formData
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  editModal.hide();
-                  showMessage(data.message, 'success');
-                  const customerId = completeTillTodayBtn?.dataset.customerId;
-                  const month = completeTillTodayBtn?.dataset.month;
-                  const year = completeTillTodayBtn?.dataset.year;
-                  if (customerId) {
-                    reloadModalContent(customerId, month, year);
-                  }
-                } else {
-                  // Show error in edit modal
-                  const editModalBody = editModalEl.querySelector('.modal-body');
-                  const existingAlert = editModalBody.querySelector('.alert');
-                  if (existingAlert) {
-                    existingAlert.remove();
-                  }
-                  editModalBody.insertAdjacentHTML('afterbegin', `
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                      ${data.message}
-                      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                  `);
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                showMessage('❌ Error updating assignment', 'error');
-              });
-            });
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showMessage('❌ Error loading edit form', 'error');
-        });
-      });
-    });
-
-    // Delete assignment buttons
-    modalContent.querySelectorAll('.delete-assignment-btn').forEach(function(button) {
-      button.addEventListener('click', function() {
-        const assignmentId = this.dataset.assignmentId;
-        const customerName = this.dataset.customerName;
-        const scheduledDate = this.dataset.scheduledDate;
-
-        if (confirm(`Are you sure you want to delete the assignment for ${customerName} on ${scheduledDate}?\\n\\nThis action cannot be undone.`)) {
-          fetch(`/customer-patterns/${assignmentId}/delete_assignment`, {
-            method: 'DELETE',
-            headers: {
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              showMessage(data.message, 'success');
-              const customerId = completeTillTodayBtn?.dataset.customerId;
-              const month = completeTillTodayBtn?.dataset.month;
-              const year = completeTillTodayBtn?.dataset.year;
-              if (customerId) {
-                reloadModalContent(customerId, month, year);
-              }
-            } else {
-              showMessage(data.message, 'error');
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            showMessage('❌ Error deleting assignment', 'error');
-          });
-        }
-      });
-    });
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
   }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
-  // Main view deliveries button click
-  document.querySelectorAll('.view-deliveries-btn').forEach(function(button) {
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
+/* Ensure normal body behavior when no modal */
+body:not(.modal-open) {
+  overflow: auto !important;
+  position: static !important;
+}
+
+/* Small Edit Modal Styles */
+.custom-edit-modal-content {
+  position: relative;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 600px;
+  max-height: 80%;
+  overflow: hidden;
+  z-index: 10001;
+  animation: modalFadeIn 0.3s ease-out;
+  margin: 0 20px; /* Add some margin from screen edges */
+}
+</style>
+
+<script>
+// Simple modal functions
+function openDeliveryModal(customerId, customerName, month, year) {
+  console.log(`Opening modal for ${customerName}`);
+
+  // Update title
+  document.getElementById('modalCustomerName').textContent = `${customerName} - Deliveries`;
+
+  // Show modal
+  const modal = document.getElementById('deliveryModal');
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+
+  // Load content
+  loadModalContent(customerId, customerName, month, year);
+}
+
+function closeDeliveryModal() {
+  const modal = document.getElementById('deliveryModal');
+  modal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+
+  // Ensure body returns to normal state
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+
+  console.log('Modal closed');
+}
+
+// Add event listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Ensure clean page state on load
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+
+  // Remove any potential style attributes that might interfere
+  document.documentElement.style.overflow = '';
+  document.documentElement.style.position = '';
+
+  // Add click handlers to all delivery buttons
+  const deliveryButtons = document.querySelectorAll('.delivery-modal-btn');
+  deliveryButtons.forEach(button => {
     button.addEventListener('click', function(e) {
       e.preventDefault();
 
-      const customerId = this.dataset.customerId;
-      const customerName = this.dataset.customerName;
-      const month = this.dataset.month;
-      const year = this.dataset.year;
+      const customerId = this.getAttribute('data-customer-id');
+      const customerName = this.getAttribute('data-customer-name');
+      const month = this.getAttribute('data-month');
+      const year = this.getAttribute('data-year');
 
-      // Show loading state
-      modalContent.innerHTML = `
-        <div class="modal-header">
-          <h5 class="modal-title">📋 Loading Delivery Assignments - ${customerName}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p class="mt-3 text-muted">Loading delivery assignments...</p>
-        </div>
-      `;
-
-      // Show modal
-      modal.show();
-
-      // Fetch delivery assignments
-      reloadModalContent(customerId, month, year);
+      openDeliveryModal(customerId, customerName, month, year);
     });
   });
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeDeliveryModal();
+      closeEditModal();
+    }
+  });
 });
+
+// Global modal functions for assignment actions
+window.editAssignment = function(id) {
+  console.log('Editing assignment:', id);
+
+  // Open small edit modal
+  const editModal = document.getElementById('editModal');
+  const editModalContent = document.getElementById('editModalContent');
+  const editModalTitle = document.getElementById('editModalTitle');
+
+  // Update title
+  editModalTitle.textContent = `Edit Assignment #${id}`;
+
+  // Show modal
+  editModal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+
+  // Load edit form
+  loadEditForm(id);
+};
+
+function loadEditForm(id) {
+  const editModalContent = document.getElementById('editModalContent');
+
+  // Show loading spinner
+  editModalContent.innerHTML = `
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading edit form...</p>
+    </div>
+  `;
+
+  fetch(`/assign_deliveries/${id}/edit.json`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      editModalContent.innerHTML = data.html;
+    })
+    .catch(error => {
+      console.error('Error loading edit form:', error);
+      editModalContent.innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Error loading edit form. <button class="btn btn-link p-0" onclick="closeEditModal()">Close</button>
+        </div>
+      `;
+    });
+}
+
+window.closeEditModal = function() {
+  const editModal = document.getElementById('editModal');
+  editModal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+
+  // Ensure body returns to normal state
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+
+  console.log('Edit modal closed');
+};
+
+window.deleteAssignment = function(id) {
+  if (confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    console.log('Deleting assignment:', id);
+
+    fetch(`/assign_deliveries/${id}.json`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      }
+    })
+    .then(response => {
+      console.log('Delete response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Delete response data:', data);
+      if (data.success) {
+        window.showSimpleToast(data.message || 'Assignment deleted successfully!', 'success');
+        window.reloadCurrentModal();
+      } else {
+        window.showSimpleToast(data.message || 'Error deleting assignment', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      window.showSimpleToast('Error deleting assignment: ' + error.message, 'error');
+    })
+    .finally(() => {
+      button.innerHTML = originalContent;
+      button.disabled = false;
+    });
+  }
+};
+
+window.completeAssignment = function(id) {
+  if (confirm('Mark this assignment as completed?')) {
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    console.log('Completing assignment:', id);
+
+    fetch(`/assign_deliveries/${id}/complete.json`, {
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      }
+    })
+    .then(response => {
+      console.log('Complete response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Complete response data:', data);
+      if (data.success) {
+        window.showSimpleToast(data.message || 'Assignment completed successfully!', 'success');
+        window.reloadCurrentModal();
+      } else {
+        window.showSimpleToast(data.message || 'Error completing assignment', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      window.showSimpleToast('Error completing assignment: ' + error.message, 'error');
+    })
+    .finally(() => {
+      button.innerHTML = originalContent;
+      button.disabled = false;
+    });
+  }
+};
+
+window.completeTillToday = function(customerId, month, year) {
+  if (confirm('Mark all pending assignments till today as completed?')) {
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+    button.disabled = true;
+
+    console.log('Sending complete till today request:', { customerId, month, year });
+
+    fetch('/customer-patterns/complete_till_today', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        customer_id: customerId,
+        month: month,
+        year: year
+      })
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Response data:', data);
+      showSimpleToast(data.message || 'Assignments completed successfully!', 'success');
+      reloadCurrentModal();
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showSimpleToast('Error completing assignments: ' + error.message, 'error');
+    })
+    .finally(() => {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    });
+  }
+};
+
+window.reloadCurrentModal = function() {
+  if (window.currentModalData) {
+    const { customerId, customerName, month, year } = window.currentModalData;
+    loadModalContent(customerId, customerName, month, year);
+  }
+};
+
+// Handle edit form submission via event delegation
+document.addEventListener('submit', function(e) {
+  if (e.target.id === 'edit-assignment-form') {
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log('Edit form submission intercepted via delegation');
+    const form = e.target;
+    const submitBtn = document.getElementById('update-assignment-btn');
+    const originalText = submitBtn.textContent;
+
+    console.log('Form action:', form.action);
+    console.log('Submitting to:', form.action + '.json');
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+
+    const formData = new FormData(form);
+
+    fetch(form.action + '.json', {
+      method: 'PATCH',
+      body: formData,
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      }
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Response data:', data);
+      if (data.success) {
+        console.log('Update successful, closing modal and reloading');
+        window.showSimpleToast(data.message || 'Assignment updated successfully!', 'success');
+        // Close edit modal and reload main modal
+        window.closeEditModal();
+        window.reloadCurrentModal();
+      } else {
+        console.log('Update failed:', data);
+        window.showSimpleToast(data.message || 'Error updating assignment', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      window.showSimpleToast('Error updating assignment: ' + error.message, 'error');
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    });
+  }
+});
+
+window.showSimpleToast = function(message, type) {
+  // Remove existing toasts
+  const existingToasts = document.querySelectorAll('.simple-toast');
+  existingToasts.forEach(toast => toast.remove());
+
+  const bgColor = type === 'success' ? '#28a745' : '#dc3545';
+  const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+
+  const toastHtml = `
+    <div class="simple-toast" style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 99999;
+      background: ${bgColor};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideInRight 0.3s ease-out;
+      max-width: 400px;
+      word-wrap: break-word;
+    ">
+      <i class="fas fa-${icon}"></i>
+      <span>${message}</span>
+      <button onclick="this.parentElement.remove()" style="
+        background: none;
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        margin-left: 10px;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+      ">×</button>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    const toast = document.querySelector('.simple-toast');
+    if (toast) {
+      toast.style.animation = 'slideOutRight 0.3s ease-in';
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 5000);
+};
+
+// Add CSS for toast animations
+if (!document.querySelector('#toast-animations')) {
+  const style = document.createElement('style');
+  style.id = 'toast-animations';
+  style.textContent = `
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function loadModalContent(customerId, customerName, month, year) {
+  const modalContent = document.getElementById('modalContent');
+
+  // Store current modal data for reloading
+  window.currentModalData = {
+    customerId: customerId,
+    customerName: customerName,
+    month: month,
+    year: year
+  };
+
+  // Show loading spinner
+  modalContent.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3">Loading assignments...</p>
+    </div>
+  `;
+
+  fetch(`/customer-patterns/customer_deliveries?customer_id=${customerId}&month=${month}&year=${year}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      modalContent.innerHTML = data.html;
+    })
+    .catch(error => {
+      console.error('Error loading modal content:', error);
+      modalContent.innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Error loading data. Please try again.
+        </div>
+      `;
+    });
+}
 </script>

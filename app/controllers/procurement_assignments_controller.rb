@@ -76,7 +76,42 @@ class ProcurementAssignmentsController < ApplicationController
 
   def edit
     unless @assignment.can_be_edited?
-      redirect_to @assignment, alert: 'This assignment cannot be edited.'
+      error_message = if @assignment.date < Date.current
+                       'Cannot edit assignments from past dates.'
+                     elsif !%w[pending completed].include?(@assignment.status)
+                       'Cannot edit assignments with status: ' + @assignment.status
+                     else
+                       'This assignment cannot be edited.'
+                     end
+
+      respond_to do |format|
+        format.html { redirect_to @assignment, alert: error_message }
+        format.json { render json: { error: error_message }, status: :unprocessable_entity }
+      end
+      return
+    end
+
+    respond_to do |format|
+      format.html
+      format.json {
+        render json: {
+          success: true,
+          assignment: {
+            id: @assignment.id,
+            date: @assignment.date.strftime('%Y-%m-%d'),
+            vendor_name: @assignment.vendor_name,
+            planned_quantity: @assignment.planned_quantity,
+            actual_quantity: @assignment.actual_quantity,
+            buying_price: @assignment.buying_price,
+            selling_price: @assignment.selling_price,
+            unit: @assignment.unit,
+            status: @assignment.status,
+            notes: @assignment.notes,
+            product_id: @assignment.product_id,
+            product_name: @assignment.product&.name
+          }
+        }
+      }
     end
   end
 
@@ -84,37 +119,146 @@ class ProcurementAssignmentsController < ApplicationController
     respond_to do |format|
       if @assignment.update(update_procurement_assignment_params)
         format.html { redirect_to calendar_view_milk_analytics_path, notice: 'Procurement assignment was successfully updated.' }
-        format.json { render json: @assignment }
+        format.json { render json: { success: true, assignment: @assignment, message: 'Assignment updated successfully!' } }
       else
         format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @assignment.errors, status: :unprocessable_entity }
+        format.json {
+          Rails.logger.error "Procurement assignment update failed: #{@assignment.errors.full_messages.join(', ')}"
+          render json: @assignment.errors, status: :unprocessable_entity
+        }
       end
     end
   end
 
   def destroy
-    @assignment.destroy
-    
     respond_to do |format|
-      format.html { redirect_to calendar_view_milk_analytics_path, notice: 'Procurement assignment was successfully deleted.' }
-      format.json { head :no_content }
+      begin
+        @assignment.destroy
+        format.html { redirect_to calendar_view_milk_analytics_path, notice: 'Procurement assignment was successfully deleted.' }
+        format.json {
+          render json: {
+            success: true,
+            message: 'Procurement assignment was successfully deleted.',
+            assignment_id: params[:id]
+          }
+        }
+      rescue => e
+        format.html { redirect_to calendar_view_milk_analytics_path, alert: "Error deleting assignment: #{e.message}" }
+        format.json { render json: { success: false, message: "Error deleting assignment: #{e.message}" }, status: :unprocessable_entity }
+      end
     end
   end
 
   def complete
-    actual_quantity = params[:actual_quantity]&.to_f
-    
-    if actual_quantity && actual_quantity >= 0
-      @assignment.mark_as_completed!(actual_quantity)
-      redirect_to @assignment, notice: 'Assignment marked as completed successfully.'
-    else
-      redirect_to @assignment, alert: 'Please provide a valid actual quantity.'
+    actual_quantity = params[:actual_quantity]&.to_f || @assignment.planned_quantity
+
+    respond_to do |format|
+      begin
+        if actual_quantity && actual_quantity >= 0
+          @assignment.update!(
+            status: 'completed',
+            actual_quantity: actual_quantity,
+            updated_at: Time.current
+          )
+
+          format.html { redirect_to @assignment, notice: 'Assignment marked as completed successfully.' }
+          format.json {
+            render json: {
+              success: true,
+              message: 'Assignment marked as completed successfully.',
+              assignment: {
+                id: @assignment.id,
+                status: @assignment.status,
+                actual_quantity: @assignment.actual_quantity
+              }
+            }
+          }
+        else
+          format.html { redirect_to @assignment, alert: 'Please provide a valid actual quantity.' }
+          format.json { render json: { success: false, message: 'Please provide a valid actual quantity.' }, status: :unprocessable_entity }
+        end
+      rescue => e
+        format.html { redirect_to @assignment, alert: "Error completing assignment: #{e.message}" }
+        format.json { render json: { success: false, message: "Error completing assignment: #{e.message}" }, status: :unprocessable_entity }
+      end
     end
   end
 
   def cancel
     @assignment.mark_as_cancelled!
     redirect_to @assignment, notice: 'Assignment cancelled successfully.'
+  end
+
+  def complete_till_today
+    vendor_name = params[:vendor_name]
+
+    if vendor_name.blank?
+      respond_to do |format|
+        format.json { render json: { success: false, message: 'Vendor name is required' }, status: :bad_request }
+      end
+      return
+    end
+
+    # Find all pending assignments for this vendor till today
+    assignments_to_complete = ProcurementAssignment.where(
+      vendor_name: vendor_name,
+      status: 'pending'
+    ).where('date <= ?', Date.current)
+
+    completed_count = 0
+    failed_count = 0
+
+    assignments_to_complete.find_each do |assignment|
+      begin
+        # Use planned quantity as actual quantity if not set
+        actual_quantity = assignment.actual_quantity.presence || assignment.planned_quantity
+
+        if assignment.update(
+          status: 'completed',
+          actual_quantity: actual_quantity,
+          completed_at: Time.current
+        )
+          completed_count += 1
+        else
+          failed_count += 1
+          Rails.logger.error "Failed to complete assignment #{assignment.id}: #{assignment.errors.full_messages.join(', ')}"
+        end
+      rescue => e
+        failed_count += 1
+        Rails.logger.error "Error completing assignment #{assignment.id}: #{e.message}"
+      end
+    end
+
+    respond_to do |format|
+      if completed_count > 0
+        message = "Successfully completed #{completed_count} procurement assignment(s) for #{vendor_name} till today."
+        message += " #{failed_count} failed to update." if failed_count > 0
+
+        format.json {
+          render json: {
+            success: true,
+            message: message,
+            completed_count: completed_count,
+            failed_count: failed_count,
+            vendor_name: vendor_name
+          }
+        }
+      else
+        message = failed_count > 0 ?
+          "Failed to complete any assignments (#{failed_count} errors occurred)." :
+          "No pending assignments found for #{vendor_name} till today."
+
+        format.json {
+          render json: {
+            success: false,
+            message: message,
+            completed_count: 0,
+            failed_count: failed_count,
+            vendor_name: vendor_name
+          }
+        }
+      end
+    end
   end
 
   def bulk_update

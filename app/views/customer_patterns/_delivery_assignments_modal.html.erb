@@ -1,156 +1,156 @@
-<div class="modal-header">
-  <div>
-    <h5 class="modal-title">
-      📋 Delivery Assignments - <%= @customer.name %>
-      <small class="text-muted">(<%= @month_name %>)</small>
-    </h5>
-  </div>
-  <div class="d-flex gap-2">
-    <% pending_till_today = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current) %>
-    <% if pending_till_today.any? %>
-      <button type="button" class="btn btn-success btn-sm complete-till-today-btn"
-              data-customer-id="<%= @customer.id %>"
-              data-month="<%= @month.presence || Date.current.month %>"
-              data-year="<%= @year.presence || Date.current.year %>">
-        ✅ Complete Till Today (<%= pending_till_today.count %>)
-      </button>
-    <% end %>
-    <% if @delivery_assignments.any? %>
-      <button type="button" class="btn btn-danger btn-sm remove-all-assignments-btn"
-              data-customer-id="<%= @customer.id %>"
-              data-customer-name="<%= @customer.name %>"
-              data-month="<%= @month.presence || Date.current.month %>"
-              data-year="<%= @year.presence || Date.current.year %>"
-              data-total-count="<%= @delivery_assignments.count %>">
-        🗑️ Remove All (<%= @delivery_assignments.count %>)
-      </button>
-    <% end %>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-  </div>
-</div>
+<!-- Modal content loads here - no header needed as it's in main modal -->
 
-<div class="modal-body">
-  <% if @delivery_assignments.any? %>
-    <div class="mb-3">
-      <span class="badge bg-primary me-2">Total: <%= @delivery_assignments.count %> assignments</span>
-      <span class="badge bg-success me-2">Completed: <%= @delivery_assignments.completed.count %></span>
-      <span class="badge bg-warning text-dark me-2">Pending: <%= @delivery_assignments.pending.count %></span>
-      <span class="badge bg-info me-2">In Progress: <%= @delivery_assignments.in_progress.count %></span>
-      <span class="badge bg-danger">Cancelled: <%= @delivery_assignments.cancelled.count %></span>
+<% if @delivery_assignments.any? %>
+  <!-- Action Buttons at Top -->
+  <% pending_till_today = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current) %>
+  <% if pending_till_today.any? %>
+    <div class="mb-4">
+      <div class="alert alert-warning d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle me-3 fa-2x text-warning"></i>
+        <div class="flex-grow-1">
+          <strong>⚠️ Pending Assignments Alert</strong><br>
+          <small>There are <strong><%= pending_till_today.count %></strong> pending assignments till today that need completion.</small>
+        </div>
+        <button class="btn btn-dark btn-lg shadow" onclick="completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
+          <i class="fas fa-check-circle me-2"></i>
+          Complete Till Today (<%= pending_till_today.count %>)
+        </button>
+      </div>
     </div>
+  <% end %>
 
-    <div class="table-responsive">
-      <table class="table table-sm table-hover">
-        <thead class="table-light">
-          <tr>
-            <th>Date</th>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Delivery Person</th>
-            <th>Status</th>
-            <th>Amount</th>
-            <th>Discount</th>
-            <th>Final Amount</th>
-            <th width="120">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @delivery_assignments.each do |assignment| %>
+    <!-- Attractive Table -->
+    <div class="card">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">
+          <i class="fas fa-list me-2"></i>
+          Assignment Details (<%= @delivery_assignments.count %> items)
+        </h6>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
             <tr>
-              <td>
-                <div class="fw-semibold"><%= assignment.scheduled_date.strftime("%d %b") %></div>
-                <small class="text-muted"><%= assignment.scheduled_date.strftime("%a") %></small>
-              </td>
-              <td>
-                <div class="fw-semibold"><%= assignment.product.name %></div>
-                <small class="text-muted"><%= assignment.product.unit_type %></small>
-              </td>
-              <td>
-                <span class="fw-semibold"><%= assignment.quantity %></span>
-                <small class="text-muted"><%= assignment.unit %></small>
-              </td>
-              <td>
-                <span class="badge bg-info">
-                  <%= assignment.user.name %>
-                </span>
-              </td>
-              <td>
-                <span class="<%= assignment.status_badge_class %>">
-                  <%= assignment.status.humanize %>
-                </span>
-              </td>
-              <td>
-                ₹<%= number_with_precision(assignment.total_amount, precision: 2) %>
-              </td>
-              <td>
-                <% if assignment.has_discount? %>
-                  <span class="text-danger">
-                    -₹<%= number_with_precision(assignment.discount_amount, precision: 2) %>
-                  </span>
-                  <small class="text-muted d-block">
-                    (<%= assignment.discount_percentage %>%)
-                  </small>
-                <% else %>
-                  <span class="text-muted">-</span>
-                <% end %>
-              </td>
-              <td class="fw-semibold">
-                ₹<%= number_with_precision(assignment.final_amount, precision: 2) %>
-              </td>
-              <td>
-                <div class="btn-group" role="group">
-                  <button type="button" class="btn btn-outline-primary btn-sm edit-assignment-btn"
-                          data-assignment-id="<%= assignment.id %>"
-                          data-bs-toggle="tooltip" title="Edit Assignment">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button type="button" class="btn btn-outline-danger btn-sm delete-assignment-btn"
-                          data-assignment-id="<%= assignment.id %>"
-                          data-customer-name="<%= @customer.name %>"
-                          data-scheduled-date="<%= assignment.scheduled_date.strftime('%d %b %Y') %>"
-                          data-bs-toggle="tooltip" title="Delete Assignment">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              </td>
+              <th><i class="fas fa-calendar me-1"></i>Date</th>
+              <th><i class="fas fa-cube me-1"></i>Product</th>
+              <th><i class="fas fa-weight me-1"></i>Quantity</th>
+              <th><i class="fas fa-user me-1"></i>Person</th>
+              <th><i class="fas fa-info-circle me-1"></i>Status</th>
+              <th><i class="fas fa-rupee-sign me-1"></i>Amount</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
             </tr>
-          <% end %>
-        </tbody>
-        <tfoot class="table-light">
-          <tr>
-            <th colspan="5">Total</th>
-            <th>₹<%= number_with_precision(@delivery_assignments.sum(&:total_amount), precision: 2) %></th>
-            <th>
-              <% total_discount = @delivery_assignments.sum { |a| a.discount_amount.to_f } %>
-              <% if total_discount > 0 %>
-                <span class="text-danger">-₹<%= number_with_precision(total_discount, precision: 2) %></span>
-              <% else %>
-                <span class="text-muted">-</span>
-              <% end %>
-            </th>
-            <th class="fw-bold">
-              ₹<%= number_with_precision(@delivery_assignments.sum(&:final_amount), precision: 2) %>
-            </th>
-            <th></th>
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            <% @delivery_assignments.each_with_index do |assignment, index| %>
+              <tr class="<%= 'table-light' if index.even? %>">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="date-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; font-size: 12px; font-weight: bold;">
+                      <%= assignment.scheduled_date.strftime("%d") %>
+                    </div>
+                    <div>
+                      <div class="fw-semibold"><%= assignment.scheduled_date.strftime("%b %Y") %></div>
+                      <small class="text-muted"><%= assignment.scheduled_date.strftime("%A") %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-cube text-primary me-2"></i>
+                    <div>
+                      <div class="fw-semibold"><%= assignment.product.name %></div>
+                      <small class="text-muted"><%= assignment.product.unit_type %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">
+                    <strong><%= assignment.quantity %></strong> <%= assignment.unit %>
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 12px;">
+                      <%= assignment.user.name.first.upcase %>
+                    </div>
+                    <span class="text-muted small"><%= assignment.user.name %></span>
+                  </div>
+                </td>
+                <td>
+                  <% case assignment.status %>
+                  <% when 'completed' %>
+                    <span class="badge bg-success rounded-pill">
+                      <i class="fas fa-check me-1"></i>Completed
+                    </span>
+                  <% when 'pending' %>
+                    <span class="badge bg-warning rounded-pill">
+                      <i class="fas fa-clock me-1"></i>Pending
+                    </span>
+                  <% when 'in_progress' %>
+                    <span class="badge bg-info rounded-pill">
+                      <i class="fas fa-truck me-1"></i>In Progress
+                    </span>
+                  <% else %>
+                    <span class="badge bg-danger rounded-pill">
+                      <i class="fas fa-times me-1"></i>Cancelled
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="text-success fw-bold">
+                    ₹<%= number_with_precision(assignment.final_amount, precision: 2) %>
+                  </div>
+                  <% if assignment.has_discount? %>
+                    <small class="text-muted">
+                      <del>₹<%= number_with_precision(assignment.total_amount, precision: 2) %></del>
+                    </small>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-primary btn-sm" onclick="window.editAssignment(<%= assignment.id %>)" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="window.completeAssignment(<%= assignment.id %>)" title="Complete" <%= 'disabled' if assignment.status == 'completed' %>>
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="window.deleteAssignment(<%= assignment.id %>)" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="5" class="text-end">Total:</th>
+              <th>
+                <div class="text-success fw-bold">
+                  ₹<%= number_with_precision(@delivery_assignments.sum(&:final_amount), precision: 2) %>
+                </div>
+              </th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
-  <% else %>
-    <div class="text-center py-4">
-      <i class="fas fa-calendar-times fs-1 text-muted mb-3"></i>
-      <h5 class="text-muted">No delivery assignments found</h5>
-      <p class="text-muted">No delivery assignments were found for <%= @customer.name %> in <%= @month_name %>.</p>
-    </div>
-  <% end %>
-</div>
 
-<div class="modal-footer">
-  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-  <% if @delivery_assignments.any? %>
-    <%= link_to delivery_assignments_path(customer_id: @customer.id),
-        class: "btn btn-primary", target: "_blank" do %>
-      <i class="fas fa-external-link-alt me-2"></i>View Full Details
-    <% end %>
-  <% end %>
-</div>
+
+<% else %>
+  <!-- Attractive Empty State -->
+  <div class="text-center py-5">
+    <div class="empty-state-icon mb-4">
+      <i class="fas fa-calendar-times fa-4x text-muted"></i>
+    </div>
+    <h4 class="text-muted mb-3">No Assignments Found</h4>
+    <p class="text-muted mb-4">
+      No delivery assignments were found for <strong><%= @customer.name %></strong> in <strong><%= @month_name %></strong>.
+    </p>
+    <a href="<%= new_delivery_assignment_path(customer_id: @customer.id) %>" class="btn btn-primary" target="_blank">
+      <i class="fas fa-plus me-1"></i>Create New Assignment
+    </a>
+  </div>
+<% end %>
+

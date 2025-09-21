@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Purchase Invoice #<%= @invoice.invoice_number || @invoice.id %></title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 10px;
+        background-color: #f5f5f5;
+        font-size: 11px;
+      }
+
+      .invoice-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 15px;
+        border: 1px solid #ddd;
+      }
+
+      /* Tax label */
+      .tax-label-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .tax-label {
+        font-weight: bold;
+        font-size: 14px;
+        color: #d63384;
+        background-color: #f8d7da;
+        padding: 4px 8px;
+        border-radius: 3px;
+      }
+
+      .original-recipient {
+        font-weight: bold;
+        font-size: 10px;
+        color: #6c757d;
+        background-color: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 3px;
+      }
+
+      /* Header section */
+      .invoice-header-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 8px;
+      }
+
+      .invoice-header-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .logo-cell {
+        width: 150px;
+        padding-right: 12px;
+      }
+
+      .logo {
+        width: 100px;
+        height: auto;
+        border-radius: 50%;
+        border: 3px solid #d63384;
+      }
+
+      .company-info-cell {
+        width: auto;
+      }
+
+      .company-name {
+        font-size: 22px;
+        font-weight: bold;
+        color: #d63384;
+        margin-bottom: 3px;
+      }
+
+      .address {
+        font-size: 10px;
+        line-height: 1.3;
+        margin-bottom: 5px;
+        color: #555;
+      }
+
+      .contact {
+        font-size: 10px;
+        line-height: 1.4;
+      }
+
+      .highlight {
+        font-weight: bold;
+        color: #333;
+      }
+
+      /* Top bar */
+      .top-bar {
+        height: 3px;
+        background-color: #d63384;
+        margin: 8px 0;
+        border-radius: 2px;
+      }
+
+      .invoice-divider {
+        height: 2px;
+        background-color: #d63384;
+        margin: 12px 0;
+        width: 100%;
+        border-radius: 2px;
+      }
+
+      /* Invoice meta */
+      .invoice-meta-table {
+        width: 100%;
+        background-color: #e7e7e7;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .invoice-meta-table td {
+        padding: 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        width: 33.33%;
+        border-right: 1px solid #ddd;
+      }
+
+      .invoice-meta-table td:last-child {
+        border-right: none;
+      }
+
+      .invoice-meta-table span {
+        font-weight: normal;
+        margin-left: 5px;
+      }
+
+      /* Vendor/Schedule section */
+      .vendor-schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0 10px 0;
+      }
+
+      .vendor-schedule-table td {
+        width: 50%;
+        vertical-align: top;
+        padding: 0 8px;
+      }
+
+      .vendor-title,
+      .schedule-title {
+        font-size: 12px;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #d63384;
+      }
+
+      .vendor-name {
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 3px;
+        color: #333;
+      }
+
+      .vendor-details {
+        font-size: 11px;
+        color: #666;
+      }
+
+      /* Items table */
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+
+      .items-table thead {
+        border-top: 3px solid #d63384;
+        border-bottom: 3px solid #d63384;
+        background-color: #f8f9fa;
+      }
+
+      .items-table th {
+        padding: 6px 4px;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: left;
+        color: #333;
+      }
+
+      .items-table th.center-align {
+        text-align: center;
+      }
+
+      .items-table th.right-align {
+        text-align: right;
+      }
+
+      .items-table td {
+        padding: 5px 4px;
+        font-size: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .items-table td.center-align {
+        text-align: center;
+      }
+
+      .items-table td.right-align {
+        text-align: right;
+      }
+
+      .items-table td.amount {
+        font-weight: bold;
+      }
+
+      .items-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+      }
+
+      /* Purchase summary */
+      .purchase-summary {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .summary-table {
+        width: 350px;
+        margin-left: auto;
+        border-collapse: collapse;
+      }
+
+      .summary-table td {
+        padding: 4px 8px;
+        font-size: 11px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .summary-table td:first-child {
+        text-align: left;
+        font-weight: bold;
+        width: 70%;
+      }
+
+      .summary-table td:last-child {
+        text-align: right;
+        width: 30%;
+      }
+
+      .total-row {
+        font-weight: bold;
+        border-top: 2px solid #d63384;
+        padding-top: 6px;
+        margin-top: 6px;
+        background-color: #f0f0f0;
+        padding: 8px;
+        border-radius: 5px;
+      }
+
+      .amount-words {
+        margin-top: 8px;
+        background-color: #f0f0f0;
+        padding: 6px;
+        border-radius: 5px;
+      }
+
+      .amount-words h3 {
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 3px;
+        color: #d63384;
+        text-align: left;
+      }
+
+      .amount-words div {
+        font-size: 10px;
+        font-weight: bold;
+        text-align: left;
+      }
+
+      /* Terms and signature */
+      .terms-signature-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+
+      .terms-signature-table td {
+        vertical-align: top;
+        padding: 0 6px;
+      }
+
+      .terms-cell {
+        width: 65%;
+      }
+
+      .signature-cell {
+        width: 35%;
+        text-align: center;
+      }
+
+      .terms h3 {
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #d63384;
+      }
+
+      .terms ol {
+        font-size: 9px;
+        padding-left: 15px;
+        line-height: 1.3;
+        margin: 0;
+      }
+
+      .signature-box {
+        height: 50px;
+        border: 2px solid #d63384;
+        margin-bottom: 5px;
+        width: 120px;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+      }
+
+      .signature-label {
+        font-weight: bold;
+        font-size: 9px;
+        color: #333;
+      }
+
+      .signature-name {
+        font-size: 10px;
+        margin-top: 2px;
+        color: #d63384;
+        font-weight: bold;
+      }
+
+      /* Print styles */
+      @media print {
+        body {
+          padding: 0;
+          background-color: white;
+          font-size: 10px;
+        }
+
+        .invoice-container {
+          box-shadow: none;
+          border: none;
+          padding: 0;
+        }
+
+        .no-print {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <%
+      # Calculate totals for procurement invoice
+      total_quantity = 0
+      total_amount = 0
+
+      if @invoice.invoice_items.any?
+        @invoice.invoice_items.each do |item|
+          total_quantity += (item['quantity'] || 0)
+          total_amount += (item['amount'] || 0)
+        end
+      else
+        total_quantity = @invoice.invoice_totals['total_quantity'] || 0
+        total_amount = @invoice.total_amount || 0
+      end
+    %>
+
+    <div class="invoice-container">
+      <!-- Tax label and original recipient -->
+      <div class="tax-label-container">
+        <span class="tax-label">PURCHASE INVOICE</span>
+        <span class="original-recipient">ORIGINAL FOR VENDOR</span>
+      </div>
+
+      <!-- Header section using table layout -->
+      <table class="invoice-header-table">
+        <tr>
+          <td class="logo-cell">
+            <img class="logo" src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhar Farm Logo" />
+          </td>
+          <td class="company-info-cell">
+            <div class="company-name">Atma Nirbhar Farm</div>
+            <div class="address">
+              #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi,
+              Bangalore, Karnataka, 560072
+            </div>
+            <div class="contact">
+              <span class="highlight">Mobile:</span> 9972808044 &nbsp;&nbsp;
+              <span class="highlight">GSTIN:</span> 29AOIPT8113K1ZC &nbsp;&nbsp;
+              <span class="highlight">PAN Number:</span> AOIPT8113K<br />
+              <span class="highlight">Email:</span> atmanirbharfarm@gmail.com
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Top bar -->
+      <div class="top-bar"></div>
+
+      <!-- Invoice meta information -->
+      <table class="invoice-meta-table">
+        <tr>
+          <td>Invoice No.: <span><%= @invoice.invoice_number || @invoice.id %></span></td>
+          <td>Invoice Date: <span><%= @invoice.invoice_date&.strftime('%d/%m/%Y') || @invoice.created_at&.strftime('%d/%m/%Y') || Date.current.strftime('%d/%m/%Y') %></span></td>
+          <td>Due Date: <span><%= @invoice.due_date&.strftime('%d/%m/%Y') || 1.month.from_now.strftime('%d/%m/%Y') %></span></td>
+        </tr>
+      </table>
+
+      <!-- Add horizontal line before invoice meta -->
+      <div class="invoice-divider"></div>
+
+      <!-- Vendor and Schedule Information -->
+      <table class="vendor-schedule-table">
+        <tr>
+          <td>
+            <div class="vendor-title">VENDOR DETAILS</div>
+            <div class="vendor-name"><%= @invoice.vendor_name %></div>
+            <div class="vendor-details">Procurement Schedule ID: #<%= @schedule.id %></div>
+            <div class="vendor-details">Product: <%= @schedule.product&.name || 'Milk' %></div>
+            <% if @schedule.respond_to?(:vendor_contact) && @schedule.vendor_contact.present? %>
+              <div class="vendor-details">Contact: <%= @schedule.vendor_contact %></div>
+            <% end %>
+          </td>
+          <td>
+            <div class="schedule-title">PROCUREMENT PERIOD</div>
+            <div class="vendor-details">
+              <strong>From:</strong> <%= @schedule.from_date.strftime('%d/%m/%Y') %><br>
+              <strong>To:</strong> <%= @schedule.to_date.strftime('%d/%m/%Y') %><br>
+              <strong>Duration:</strong> <%= (@schedule.to_date - @schedule.from_date + 1).to_i %> days<br>
+              <strong>Buying Rate:</strong> ₹<%= number_with_precision(@schedule.buying_price || 0, precision: 2) %>/Liter
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Procurement Items table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 8%;">S.No</th>
+            <th style="width: 12%;">Date</th>
+            <th style="width: 20%;">Product Description</th>
+            <th class="center-align" style="width: 12%;">Quantity</th>
+            <th class="center-align" style="width: 8%;">Unit</th>
+            <th class="right-align" style="width: 15%;">Buying Rate (₹)</th>
+            <th class="right-align" style="width: 15%;">Amount (₹)</th>
+            <th style="width: 10%;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if @invoice.invoice_items.any? %>
+            <% @invoice.invoice_items.each_with_index do |item, index| %>
+              <tr>
+                <td class="center-align"><%= index + 1 %></td>
+                <td><%= Date.parse(item['date']).strftime('%d/%m/%Y') %></td>
+                <td><%= item['product_name'] %> - Daily Procurement</td>
+                <td class="center-align"><%= number_with_precision(item['quantity'], precision: 1) %></td>
+                <td class="center-align"><%= item['unit'] %></td>
+                <td class="right-align">₹<%= number_with_precision(item['rate'], precision: 2) %></td>
+                <td class="right-align amount">₹<%= number_with_delimiter(item['amount'].round(2)) %></td>
+                <td class="center-align">Procured</td>
+              </tr>
+            <% end %>
+          <% else %>
+            <% assignments = @schedule.procurement_assignments %>
+            <% if assignments.any? %>
+              <% assignments.each_with_index do |assignment, index| %>
+                <% quantity = assignment.actual_quantity.presence || assignment.planned_quantity || 0 %>
+                <% rate = assignment.buying_price || @schedule.buying_price || 0 %>
+                <% amount = quantity * rate %>
+                <tr>
+                  <td class="center-align"><%= index + 1 %></td>
+                  <td><%= assignment.date.strftime('%d/%m/%Y') %></td>
+                  <td><%= assignment.product&.name || @schedule.product&.name || 'Milk' %> - Assignment #<%= assignment.id %></td>
+                  <td class="center-align"><%= number_with_precision(quantity, precision: 1) %></td>
+                  <td class="center-align"><%= assignment.unit || 'Liters' %></td>
+                  <td class="right-align">₹<%= number_with_precision(rate, precision: 2) %></td>
+                  <td class="right-align amount">₹<%= number_with_delimiter(amount.round(2)) %></td>
+                  <td class="center-align"><%= assignment.status.upcase %></td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td class="center-align">1</td>
+                <td colspan="2">Bulk Procurement - <%= @schedule.product&.name || 'Milk' %></td>
+                <td class="center-align"><%= number_with_precision(@schedule.quantity || 0, precision: 1) %></td>
+                <td class="center-align">Liters</td>
+                <td class="right-align">₹<%= number_with_precision(@schedule.buying_price || 0, precision: 2) %></td>
+                <td class="right-align amount">₹<%= number_with_delimiter(@invoice.total_amount.round(2)) %></td>
+                <td class="center-align">Scheduled</td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+
+      <!-- Purchase Summary -->
+      <div class="purchase-summary">
+        <table class="summary-table">
+          <tr>
+            <td>Sub Total:</td>
+            <td>₹<%= number_with_delimiter(total_amount.round(2)) %></td>
+          </tr>
+          <tr>
+            <td>Total Quantity:</td>
+            <td><%= number_with_precision(total_quantity, precision: 1) %> Liters</td>
+          </tr>
+          <tr>
+            <td>Transportation Charges:</td>
+            <td>₹0.00</td>
+          </tr>
+          <tr>
+            <td>Other Charges:</td>
+            <td>₹0.00</td>
+          </tr>
+          <tr class="total-row">
+            <td>Total Purchase Amount:</td>
+            <td>₹<%= number_with_delimiter(@invoice.total_amount.round(2)) %></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Amount in words -->
+      <div class="amount-words">
+        <h3>Amount Payable to Vendor (in words):</h3>
+        <div>
+          <%
+            # Convert amount to words manually since humanize doesn't work on large numbers
+            amount_in_words = case @invoice.total_amount.to_i
+            when 0 then "Zero"
+            when 1..999 then @invoice.total_amount.to_i.to_s.humanize rescue "#{@invoice.total_amount.to_i}"
+            else
+              # For large numbers, show in a simple format
+              amount = @invoice.total_amount.to_i
+              if amount >= 100000
+                lakhs = amount / 100000
+                remainder = amount % 100000
+                if remainder == 0
+                  "#{lakhs} Lakh#{lakhs > 1 ? 's' : ''}"
+                else
+                  "#{lakhs} Lakh#{lakhs > 1 ? 's' : ''} #{remainder}"
+                end
+              elsif amount >= 1000
+                thousands = amount / 1000
+                remainder = amount % 1000
+                if remainder == 0
+                  "#{thousands} Thousand"
+                else
+                  "#{thousands} Thousand #{remainder}"
+                end
+              else
+                amount.to_s
+              end
+            end
+          %>
+          <%= amount_in_words.titleize %> Rupees Only
+        </div>
+      </div>
+
+      <!-- Terms and Signature -->
+      <table class="terms-signature-table">
+        <tr>
+          <td class="terms-cell">
+            <div class="terms">
+              <h3>Terms & Conditions:</h3>
+              <ol>
+                <li>Payment to be made within 30 days of invoice date.</li>
+                <li>All procurement quantities are based on actual measurements.</li>
+                <li>Quality standards as per agreed specifications must be maintained.</li>
+                <li>Any disputes regarding quantity or quality should be reported within 24 hours.</li>
+                <li>Late payment may result in suspension of procurement services.</li>
+                <li>All prices are inclusive of applicable taxes unless stated otherwise.</li>
+                <li>Vendor is responsible for transportation to delivery point.</li>
+                <li>Payment will be made via bank transfer or cheque.</li>
+              </ol>
+            </div>
+          </td>
+          <td class="signature-cell">
+            <div class="signature-box"></div>
+            <div class="signature-label">Authorized Signatory</div>
+            <div class="signature-name">Atma Nirbhar Farm</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

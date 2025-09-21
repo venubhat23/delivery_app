@@ -1,0 +1,132 @@
+<!-- Edit Assignment Form for Modal -->
+<div class="edit-assignment-form">
+  <div class="row mb-3">
+    <div class="col-12">
+      <h5 class="mb-3">
+        <i class="fas fa-edit me-2"></i>
+        Edit Assignment #<%= @delivery_assignment.id %>
+        <button type="button" class="btn btn-sm btn-outline-secondary float-end" onclick="reloadCurrentModal()">
+          <i class="fas fa-arrow-left me-1"></i>Back
+        </button>
+      </h5>
+    </div>
+  </div>
+
+  <%= form_with model: @delivery_assignment, local: false, class: "row g-3", id: "edit-assignment-form", html: { novalidate: true } do |form| %>
+    <% if @delivery_assignment.errors.any? %>
+      <div class="col-12">
+        <div class="alert alert-danger">
+          <h6>Please fix the following errors:</h6>
+          <ul class="mb-0">
+            <% @delivery_assignment.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Customer -->
+    <div class="col-md-6">
+      <%= form.label :customer_id, "Customer", class: "form-label fw-bold" %>
+      <%= form.select :customer_id,
+          options_from_collection_for_select(@customers, :id, :name, @delivery_assignment.customer_id),
+          { prompt: "Select Customer" },
+          { class: "form-select", required: true } %>
+    </div>
+
+    <!-- Delivery Person -->
+    <div class="col-md-6">
+      <%= form.label :user_id, "Delivery Person", class: "form-label fw-bold" %>
+      <%= form.select :user_id,
+          options_from_collection_for_select(@delivery_people, :id, :name, @delivery_assignment.user_id),
+          { prompt: "Select Delivery Person" },
+          { class: "form-select", required: true } %>
+    </div>
+
+    <!-- Product -->
+    <div class="col-md-6">
+      <%= form.label :product_id, "Product", class: "form-label fw-bold" %>
+      <%= form.select :product_id,
+          options_from_collection_for_select(@products, :id, :name, @delivery_assignment.product_id),
+          { prompt: "Select Product" },
+          { class: "form-select", required: true } %>
+    </div>
+
+    <!-- Quantity -->
+    <div class="col-md-6">
+      <%= form.label :quantity, class: "form-label fw-bold" %>
+      <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
+    </div>
+
+    <!-- Delivery Date -->
+    <div class="col-md-6">
+      <%= form.label :scheduled_date, "Delivery Date", class: "form-label fw-bold" %>
+      <%= form.date_field :scheduled_date, class: "form-control", required: true %>
+    </div>
+
+    <!-- Status -->
+    <div class="col-md-6">
+      <%= form.label :status, class: "form-label fw-bold" %>
+      <%= form.select :status,
+          options_for_select([
+            ['Pending', 'pending'],
+            ['In Progress', 'in_progress'],
+            ['Completed', 'completed'],
+            ['Cancelled', 'cancelled']
+          ], @delivery_assignment.status),
+          {}, { class: "form-select", required: true } %>
+    </div>
+
+    <!-- Special Instructions -->
+    <div class="col-12">
+      <%= form.label :special_instructions, class: "form-label fw-bold" %>
+      <%= form.text_area :special_instructions, class: "form-control", rows: 3,
+          placeholder: "Any special delivery instructions..." %>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="col-12">
+      <div class="d-flex gap-2 justify-content-end">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <%= form.submit "Update Assignment", class: "btn btn-primary", id: "update-assignment-btn" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- JavaScript will be handled by event delegation from main page -->
+
+<style>
+.edit-assignment-form {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid #e9ecef;
+}
+
+.edit-assignment-form .form-label {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.edit-assignment-form .form-control,
+.edit-assignment-form .form-select {
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.edit-assignment-form .form-control:focus,
+.edit-assignment-form .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.edit-assignment-form .btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+}
+</style>

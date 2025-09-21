@@ -29,7 +29,7 @@ class ProcurementInvoice < ApplicationRecord
     invoice_items = assignments.map do |assignment|
       # Use actual data if available, otherwise use planned data
       quantity = assignment.actual_quantity.presence || assignment.planned_quantity || 0
-      rate = assignment.buying_price.presence || assignment.planned_rate_per_unit || procurement_schedule.buying_price || 0
+      rate = assignment.buying_price.presence || procurement_schedule.buying_price || 0
       amount = assignment.actual_cost.presence || (quantity * rate)
 
       {
@@ -162,7 +162,7 @@ class ProcurementInvoice < ApplicationRecord
       if assignments.any?
         self.total_amount = assignments.sum do |assignment|
           quantity = assignment.planned_quantity || 0
-          rate = assignment.planned_rate_per_unit || procurement_schedule.buying_price || 0
+          rate = assignment.buying_price || procurement_schedule.buying_price || 0
           quantity * rate
         end
       else

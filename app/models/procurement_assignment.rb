@@ -73,7 +73,9 @@ class ProcurementAssignment < ApplicationRecord
   end
 
   def can_be_edited?
-    %w[pending completed].include?(status) && date >= Date.current
+    # Allow editing of pending and completed assignments
+    # Remove date restriction to allow editing past assignments
+    %w[pending completed].include?(status)
   end
 
   def mark_as_completed!(actual_qty = nil)

@@ -10,6 +10,7 @@ class User < ApplicationRecord
   # Procurement associations
   has_many :procurement_schedules, dependent: :destroy
   has_many :procurement_assignments, dependent: :destroy
+  has_many :procurement_invoices, dependent: :destroy
   
   # Reports association
   has_many :reports, dependent: :destroy

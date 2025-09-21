@@ -1,0 +1,184 @@
+<!-- Procurement Assignments Modal -->
+<div class="modal-header bg-primary text-white">
+  <h5 class="modal-title">
+    <i class="fas fa-clipboard-list me-2"></i>
+    Procurement Assignments - <%= @schedule.vendor_name %>
+  </h5>
+  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+  <!-- Schedule Information -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-light">
+        <div class="card-body py-3">
+          <div class="row">
+            <div class="col-md-3">
+              <small class="text-muted">Schedule Period</small>
+              <div class="fw-bold">
+                <%= @schedule.from_date.strftime('%d %b %Y') %> - <%= @schedule.to_date.strftime('%d %b %Y') %>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <small class="text-muted">Product</small>
+              <div class="fw-bold"><%= @schedule.product&.name || 'Milk' %></div>
+            </div>
+            <div class="col-md-3">
+              <small class="text-muted">Total Assignments</small>
+              <div class="fw-bold text-primary"><%= @assignments.count %></div>
+            </div>
+            <div class="col-md-3">
+              <small class="text-muted">Buying Price</small>
+              <div class="fw-bold text-success">₹<%= number_with_precision(@schedule.buying_price || 0, precision: 2) %>/L</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assignments Table -->
+  <% if @assignments.any? %>
+    <div class="table-responsive">
+      <table class="table table-hover table-sm">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 8%;">Assignment #</th>
+            <th style="width: 12%;">Date</th>
+            <th style="width: 15%;">Product</th>
+            <th style="width: 12%;">Planned Qty</th>
+            <th style="width: 12%;">Actual Qty</th>
+            <th style="width: 12%;">Buying Price</th>
+            <th style="width: 10%;">Status</th>
+            <th style="width: 12%;">Amount</th>
+            <th style="width: 7%;">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% total_planned = 0 %>
+          <% total_actual = 0 %>
+          <% total_amount = 0 %>
+
+          <% @assignments.each do |assignment| %>
+            <% planned_qty = assignment.planned_quantity || 0 %>
+            <% actual_qty = assignment.actual_quantity %>
+            <% buying_price = assignment.buying_price || @schedule.buying_price || 0 %>
+            <% quantity_for_calc = actual_qty.present? ? actual_qty : planned_qty %>
+            <% amount = quantity_for_calc * buying_price %>
+
+            <% total_planned += planned_qty %>
+            <% total_actual += (actual_qty || 0) %>
+            <% total_amount += amount %>
+
+            <tr>
+              <td class="fw-bold">#<%= assignment.id %></td>
+              <td><%= assignment.date.strftime('%d %b') %></td>
+              <td><%= assignment.product&.name || @schedule.product&.name || 'Milk' %></td>
+              <td class="text-center">
+                <span class="badge bg-info"><%= number_with_precision(planned_qty, precision: 1) %>L</span>
+              </td>
+              <td class="text-center">
+                <% if actual_qty.present? %>
+                  <span class="badge bg-success"><%= number_with_precision(actual_qty, precision: 1) %>L</span>
+                <% else %>
+                  <span class="badge bg-secondary">Pending</span>
+                <% end %>
+              </td>
+              <td class="text-center">₹<%= number_with_precision(buying_price, precision: 2) %></td>
+              <td class="text-center">
+                <span class="badge bg-<%= assignment.status == 'completed' ? 'success' : assignment.status == 'pending' ? 'warning' : 'secondary' %>">
+                  <%= assignment.status.upcase %>
+                </span>
+              </td>
+              <td class="text-end fw-bold">₹<%= number_with_delimiter(amount.round(2)) %></td>
+              <td>
+                <% if assignment.notes.present? %>
+                  <i class="fas fa-sticky-note text-warning"
+                     title="<%= assignment.notes %>"
+                     data-bs-toggle="tooltip"></i>
+                <% else %>
+                  <span class="text-muted">-</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot class="table-primary">
+          <tr class="fw-bold">
+            <td colspan="3">TOTALS</td>
+            <td class="text-center"><%= number_with_precision(total_planned, precision: 1) %>L</td>
+            <td class="text-center"><%= number_with_precision(total_actual, precision: 1) %>L</td>
+            <td>-</td>
+            <td>-</td>
+            <td class="text-end">₹<%= number_with_delimiter(total_amount.round(2)) %></td>
+            <td>-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <div class="card border-primary">
+          <div class="card-body text-center py-2">
+            <h6 class="card-title text-primary mb-1">Planned Quantity</h6>
+            <h4 class="text-primary mb-0"><%= number_with_precision(total_planned, precision: 1) %> Liters</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-success">
+          <div class="card-body text-center py-2">
+            <h6 class="card-title text-success mb-1">Actual Quantity</h6>
+            <h4 class="text-success mb-0"><%= number_with_precision(total_actual, precision: 1) %> Liters</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-warning">
+          <div class="card-body text-center py-2">
+            <h6 class="card-title text-warning mb-1">Total Purchase Cost</h6>
+            <h4 class="text-warning mb-0">₹<%= number_with_delimiter(total_amount.round(2)) %></h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <% else %>
+    <!-- No Assignments Message -->
+    <div class="text-center py-5">
+      <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">No Assignments Found</h5>
+      <p class="text-muted">
+        No procurement assignments have been created for this schedule yet.
+      </p>
+      <small class="text-muted">
+        <i class="fas fa-info-circle me-1"></i>
+        Assignments are typically created when the schedule is processed for daily procurement.
+      </small>
+    </div>
+  <% end %>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+    <i class="fas fa-times me-1"></i>Close
+  </button>
+  <% if @assignments.any? %>
+    <button type="button" class="btn btn-primary" onclick="exportAssignments(<%= @schedule.id %>)">
+      <i class="fas fa-download me-1"></i>Export Data
+    </button>
+  <% end %>
+</div>
+
+<!-- Initialize tooltips -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+});
+</script>
