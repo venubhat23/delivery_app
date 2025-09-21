@@ -367,13 +367,138 @@ Rails.application.routes.draw do
   # API routes
   namespace :api do
     namespace :v1 do
-      post '/login', to: 'authentication#login'
+      # Authentication routes
       post '/signup', to: 'authentication#signup'
-      post '/customer_signup', to: 'authentication#customer_signup'
+      post '/login', to: 'authentication#login'
       post '/customer_login', to: 'authentication#customer_login'
+      post '/customer_signup', to: 'authentication#customer_signup'
       post '/regenerate_token', to: 'authentication#regenerate_token'
+      post '/refresh_token', to: 'authentication#refresh_token'
+
+      # Categories routes
+      resources :categories, only: [:index, :show, :create, :update, :destroy]
+
+      # Customers routes
+      resources :customers, only: [:index, :show, :create] do
+        member do
+          post :update_location
+          put :settings, action: :update_settings
+        end
+      end
+
+      # Customer Address routes
+      post '/customer_address', to: 'customer_addresses#create'
+      get '/customer_address/:id', to: 'customer_addresses#show'
+      put '/customer_address/:id', to: 'customer_addresses#update'
+      patch '/customer_address/:id', to: 'customer_addresses#update'
+      delete '/customer_address/:id', to: 'customer_addresses#destroy'
+      get '/customer_addresses', to: 'customer_addresses#index'
+
+      # Products routes
+      resources :products do
+        collection do
+          get :low_stock
+        end
+      end
+
+      # Orders routes (single-day orders)
+      post '/place_order', to: 'orders#place_order'
+      get '/orders', to: 'orders#index'
+
+      # Advertisements routes
+      resources :advertisements, only: [:index]
+
+      # Invoices routes
+      resources :invoices, only: [:index]
+
+      # Subscriptions routes (multi-day subscriptions)
+      resources :subscriptions, only: [:index, :create, :update, :destroy]
+
+      # Delivery assignments routes
+      resources :delivery_assignments, only: [:index, :show] do
+        collection do
+          get :today
+          post :start_nearest
+        end
+
+        member do
+          post :complete
+          post :add_items
+        end
+
+        # Nested delivery items
+        resources :delivery_items, only: [:index, :create], shallow: true
+      end
+
+      # Delivery schedules routes (for admin/delivery person management)
+      resources :delivery_schedules, only: [:index, :show, :create, :update, :destroy]
+
+      # Delivery items routes (for individual item operations)
+      resources :delivery_items, only: [:show, :update, :destroy]
+
+      # Bank details route
+      get '/bank_details', to: 'bank_details#show'
+
+      # Settings routes (updated to include more endpoints)
+      resources :settings, only: [:index] do
+        collection do
+          # FAQ endpoints
+          get :faq
+          post 'faq/ask', to: 'settings#ask_question'
+
+          # CMS endpoints
+          get 'cms/terms-of-service', to: 'settings#terms'
+          get 'cms/privacy-policy', to: 'settings#privacy'
+
+          # Contact/Support endpoints
+          post :contact
+
+          # Preferences endpoints
+          get :referral
+          get 'delivery-preferences', to: 'settings#delivery_preferences'
+          put 'preferences', to: 'settings#update_preferences'
+          put 'language', to: 'settings#update_language'
+
+          # Address endpoints
+          get :addresses
+          post :addresses, to: 'settings#create_address'
+          put 'addresses/:id', to: 'settings#update_address'
+          delete 'addresses/:id', to: 'settings#delete_address'
+          post 'addresses/:id/set_default', to: 'settings#set_default_address'
+        end
+      end
+
+      # Vacation routes
+      resources :vacations, only: [:index, :show, :create, :destroy] do
+        member do
+          patch :pause
+          patch :unpause
+        end
+        collection do
+          post :dry_run, to: 'vacations#dry_run'
+          post :complete_ended, to: 'vacations#complete_ended'
+        end
+      end
+
+      # Legacy delivery routes (keeping for backward compatibility)
+      scope :deliveries do
+        post '/start', to: 'deliveries#start'
+        post '/:id/complete', to: 'deliveries#complete'
+        get '/customers', to: 'deliveries#customers'
+        get '/today_summary', to: 'deliveries#today_summary'
+
+        # Catch-all for partial delivery URLs
+        match '/:id/*path', to: 'deliveries#api_not_found', via: :all
+        match '*path', to: 'deliveries#api_not_found', via: :all
+      end
     end
+
+    # Catch-all route for unmatched API v1 paths
+    match 'v1/*path', to: 'application#api_not_found', via: :all
   end
+
+  # Catch-all route for unmatched API paths
+  match 'api/*path', to: 'application#api_not_found', via: :all
   
   # Delivery Review
   get '/delivery-review', to: 'delivery_review#index'

@@ -1,6 +1,6 @@
 module Api
   module V1
-    class SettingsController < ApplicationController
+    class SettingsController < BaseController
       before_action :authenticate_request
 
       # GET /api/v1/settings

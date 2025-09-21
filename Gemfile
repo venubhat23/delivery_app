@@ -36,6 +36,12 @@ gem 'wkhtmltopdf-binary'
 # QR Code generation
 gem 'rqrcode'
 
+# CORS support for API
+gem 'rack-cors'
+
+# Geocoding support
+gem 'geocoder'
+
 # Icons
 gem 'font-awesome-rails'
 

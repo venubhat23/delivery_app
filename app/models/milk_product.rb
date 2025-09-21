@@ -1,0 +1,2 @@
+class MilkProduct < ApplicationRecord
+end
