@@ -8,7 +8,6 @@ class RefreshToken < ApplicationRecord
   validates :token_hash, presence: true, uniqueness: true
   validates :expires_at, presence: true
   validates :user_agent, length: { maximum: 500 }
-  validates :created_by_ip, format: { with: /\A(?:[0-9]{1,3}\.){3}[0-9]{1,3}\z|\A(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\z/, message: "must be a valid IP address" }, allow_blank: true
 
   scope :active, -> { where(revoked_at: nil).where('expires_at > ?', Time.current) }
   scope :expired, -> { where('expires_at < ?', Time.current) }
