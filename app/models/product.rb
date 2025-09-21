@@ -22,6 +22,9 @@ class Product < ApplicationRecord
   has_many :procurement_assignments, dependent: :destroy
 
   # Scopes
+  scope :active, -> { where(is_active: true) }
+  scope :available, -> { where('available_quantity > ?', 0) }
+  scope :subscription_eligible, -> { where(is_subscription_eligible: true) }
   scope :low_stock, -> { where('available_quantity < ?', 10) }
   scope :in_stock, -> { where('available_quantity > ?', 0) }
   scope :by_unit_type, ->(unit) { where(unit_type: unit) }

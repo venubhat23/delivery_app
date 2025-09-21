@@ -30,8 +30,8 @@ module Api
             end
           rescue ActiveRecord::RecordNotFound => e
             render json: { errors: e.message }, status: :unauthorized
-          rescue JWT::DecodeError => e
-            render json: { errors: e.message }, status: :unauthorized
+          rescue ExceptionHandler::InvalidToken, JWT::DecodeError, StandardError => e
+            render json: { errors: "Invalid or malformed token" }, status: :unauthorized
           end
         else
           # Fallback to existing customer authorization service
