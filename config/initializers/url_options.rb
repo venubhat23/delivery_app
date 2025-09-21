@@ -5,7 +5,7 @@ Rails.application.configure do
   # Set default URL options based on environment
   default_options = case Rails.env
                    when 'production'
-                     { host: 'atmanirbharfarm.work.gd', protocol: 'https' }
+                     { host: 'atmanirbharfarmbangalore.com', protocol: 'https' }
                    when 'development'
                      # Use ngrok host for development without port
                      dev_host = ENV.fetch('APP_HOST', 'atmanirbharfarmbangalore.com')

@@ -59,7 +59,7 @@ Rails.application.configure do
 
   # Set host to be used by links generated in mailer templates.
   # Use environment variable if available, otherwise default to the main domain
-  default_host = ENV.fetch('APP_HOST', 'atmanirbharfarm.work.gd')
+  default_host = ENV.fetch('APP_HOST', 'atmanirbharfarmbangalore.com')
   config.action_mailer.default_url_options = { host: default_host }
 
   # Set default URL options for the main application routes
