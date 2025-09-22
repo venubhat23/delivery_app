@@ -368,17 +368,20 @@
   <body>
     <%
       # Calculate totals for procurement invoice
-      total_quantity = 0
-      total_amount = 0
+      # First try to get the data from the invoice_data, otherwise generate it fresh
+      invoice_data = @invoice.parsed_invoice_data
 
-      if @invoice.invoice_items.any?
-        @invoice.invoice_items.each do |item|
-          total_quantity += (item['quantity'] || 0)
-          total_amount += (item['amount'] || 0)
-        end
+      if invoice_data.present? && invoice_data[:invoice_items].present?
+        # Use the stored invoice data
+        invoice_items = invoice_data[:invoice_items]
+        total_quantity = invoice_data.dig(:totals, :total_quantity) || invoice_items.sum { |item| item['quantity'].to_f || 0 }
+        total_amount = invoice_data.dig(:totals, :total_amount) || invoice_items.sum { |item| item['amount'].to_f || 0 }
       else
-        total_quantity = @invoice.invoice_totals['total_quantity'] || 0
-        total_amount = @invoice.total_amount || 0
+        # Generate fresh data if no stored data exists
+        fresh_data = @invoice.generate_invoice_data
+        invoice_items = fresh_data[:invoice_items]
+        total_quantity = fresh_data.dig(:totals, :total_quantity) || 0
+        total_amount = fresh_data.dig(:totals, :total_amount) || 0
       end
     %>
 
@@ -465,16 +468,16 @@
           </tr>
         </thead>
         <tbody>
-          <% if @invoice.invoice_items.any? %>
-            <% @invoice.invoice_items.each_with_index do |item, index| %>
+          <% if invoice_items.present? && invoice_items.any? %>
+            <% invoice_items.each_with_index do |item, index| %>
               <tr>
                 <td class="center-align"><%= index + 1 %></td>
-                <td><%= Date.parse(item['date']).strftime('%d/%m/%Y') %></td>
-                <td><%= item['product_name'] %> - Daily Procurement</td>
-                <td class="center-align"><%= number_with_precision(item['quantity'], precision: 1) %></td>
-                <td class="center-align"><%= item['unit'] %></td>
-                <td class="right-align">₹<%= number_with_precision(item['rate'], precision: 2) %></td>
-                <td class="right-align amount">₹<%= number_with_delimiter(item['amount'].round(2)) %></td>
+                <td><%= Date.parse(item[:date] || item['date']).strftime('%d/%m/%Y') rescue Date.current.strftime('%d/%m/%Y') %></td>
+                <td><%= item[:product_name] || item['product_name'] || 'Milk' %> - Daily Procurement</td>
+                <td class="center-align"><%= number_with_precision(item[:quantity] || item['quantity'] || 0, precision: 1) %></td>
+                <td class="center-align"><%= item[:unit] || item['unit'] || 'Liters' %></td>
+                <td class="right-align">₹<%= number_with_precision(item[:rate] || item['rate'] || 0, precision: 2) %></td>
+                <td class="right-align amount">₹<%= number_with_delimiter((item[:amount] || item['amount'] || 0).round(2)) %></td>
                 <td class="center-align">Procured</td>
               </tr>
             <% end %>
@@ -532,7 +535,7 @@
           </tr>
           <tr class="total-row">
             <td>Total Purchase Amount:</td>
-            <td>₹<%= number_with_delimiter(@invoice.total_amount.round(2)) %></td>
+            <td>₹<%= number_with_delimiter(total_amount.round(2)) %></td>
           </tr>
         </table>
       </div>
@@ -543,12 +546,12 @@
         <div>
           <%
             # Convert amount to words manually since humanize doesn't work on large numbers
-            amount_in_words = case @invoice.total_amount.to_i
+            amount_in_words = case total_amount.to_i
             when 0 then "Zero"
-            when 1..999 then @invoice.total_amount.to_i.to_s.humanize rescue "#{@invoice.total_amount.to_i}"
+            when 1..999 then total_amount.to_i.to_s.humanize rescue "#{total_amount.to_i}"
             else
               # For large numbers, show in a simple format
-              amount = @invoice.total_amount.to_i
+              amount = total_amount.to_i
               if amount >= 100000
                 lakhs = amount / 100000
                 remainder = amount % 100000

@@ -283,6 +283,6 @@ class CustomerPatternsController < ApplicationController
   private
 
   def assignment_params
-    params.require(:delivery_assignment).permit(:quantity, :discount_amount, :status, :scheduled_date)
+    params.require(:delivery_assignment).permit(:quantity, :unit, :discount_amount, :status, :scheduled_date)
   end
 end

@@ -30,15 +30,15 @@ class ProcurementInvoice < ApplicationRecord
       # Use actual data if available, otherwise use planned data
       quantity = assignment.actual_quantity.presence || assignment.planned_quantity || 0
       rate = assignment.buying_price.presence || procurement_schedule.buying_price || 0
-      amount = assignment.actual_cost.presence || (quantity * rate)
+      amount = quantity.to_f * rate.to_f
 
       {
-        date: assignment.procurement_date&.strftime('%Y-%m-%d') || assignment.date&.strftime('%Y-%m-%d') || Date.current.strftime('%Y-%m-%d'),
+        date: assignment.date&.strftime('%Y-%m-%d') || Date.current.strftime('%Y-%m-%d'),
         product_name: assignment.product&.name || procurement_schedule.product&.name || 'Milk',
-        quantity: quantity,
+        quantity: quantity.to_f,
         unit: assignment.unit || 'liters',
-        rate: rate,
-        amount: amount
+        rate: rate.to_f,
+        amount: amount.round(2)
       }
     end
 
@@ -62,8 +62,8 @@ class ProcurementInvoice < ApplicationRecord
       end
     end
 
-    total_quantity = invoice_items.sum { |item| item[:quantity] }
-    total_amount = invoice_items.sum { |item| item[:amount] }
+    total_quantity = invoice_items.sum { |item| item[:quantity].to_f }
+    total_amount = invoice_items.sum { |item| item[:amount].to_f }
 
     {
       schedule_details: {
@@ -152,25 +152,19 @@ class ProcurementInvoice < ApplicationRecord
   def calculate_total_amount
     return unless procurement_schedule
 
-    # Try completed assignments first, then fall back to planned data
-    completed_assignments = procurement_schedule.procurement_assignments.completed
-    if completed_assignments.any?
-      self.total_amount = completed_assignments.sum(&:actual_cost)
-    else
-      # Calculate from planned data or schedule data
-      assignments = procurement_schedule.procurement_assignments
-      if assignments.any?
-        self.total_amount = assignments.sum do |assignment|
-          quantity = assignment.planned_quantity || 0
-          rate = assignment.buying_price || procurement_schedule.buying_price || 0
-          quantity * rate
-        end
-      else
-        # Calculate from schedule data
-        schedule_quantity = procurement_schedule.quantity || 0
-        schedule_rate = procurement_schedule.buying_price || 0
-        self.total_amount = schedule_quantity * schedule_rate
+    # Calculate from assignments data
+    assignments = procurement_schedule.procurement_assignments
+    if assignments.any?
+      self.total_amount = assignments.sum do |assignment|
+        quantity = (assignment.actual_quantity.presence || assignment.planned_quantity || 0).to_f
+        rate = (assignment.buying_price.presence || procurement_schedule.buying_price || 0).to_f
+        quantity * rate
       end
+    else
+      # Calculate from schedule data
+      schedule_quantity = (procurement_schedule.quantity || 0).to_f
+      schedule_rate = (procurement_schedule.buying_price || 0).to_f
+      self.total_amount = schedule_quantity * schedule_rate
     end
   end
   

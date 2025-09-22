@@ -32,16 +32,28 @@
     </div>
 
     <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-4">
         <div class="mb-3">
           <%= form.label :quantity, "Quantity", class: "form-label" %>
-          <div class="input-group">
-            <%= form.number_field :quantity, class: "form-control", step: 0.1, min: 0 %>
-            <span class="input-group-text"><%= assignment.unit %></span>
-          </div>
+          <%= form.number_field :quantity, class: "form-control", step: 0.1, min: 0 %>
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
+        <div class="mb-3">
+          <%= form.label :unit, "Unit", class: "form-label" %>
+          <%= form.select :unit,
+              options_for_select([
+                ['Liters', 'liters'],
+                ['Gallons', 'gallons'],
+                ['Kilograms', 'kg'],
+                ['Pounds', 'pounds'],
+                ['Pieces', 'pieces']
+              ], assignment.unit),
+              {},
+              { class: "form-select" } %>
+        </div>
+      </div>
+      <div class="col-md-4">
         <div class="mb-3">
           <%= form.label :discount_amount, "Discount Amount", class: "form-label" %>
           <div class="input-group">

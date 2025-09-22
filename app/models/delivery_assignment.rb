@@ -10,6 +10,7 @@ class DeliveryAssignment < ApplicationRecord
   validates :customer_id, :user_id, :product_id, :scheduled_date, :unit, presence: true
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending in_progress completed cancelled] }
+  validates :unit, inclusion: { in: %w[liters gallons kg pounds pieces] }
   validates :discount_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :final_amount_after_discount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :booked_by, presence: true, inclusion: { in: [0, 1, 2] }

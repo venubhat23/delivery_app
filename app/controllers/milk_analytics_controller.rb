@@ -2993,6 +2993,11 @@ class MilkAnalyticsController < ApplicationController
       @invoice = current_user.procurement_invoices.find(params[:id])
       @schedule = @invoice.procurement_schedule
 
+      # Ensure invoice data is generated if it doesn't exist
+      if @invoice.invoice_data.blank?
+        @invoice.mark_as_generated!
+      end
+
       respond_to do |format|
         format.html { render 'procurement_invoice_show', layout: false }
         format.json {
