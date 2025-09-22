@@ -86,7 +86,7 @@ Rails.application.configure do
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   config.hosts = [
-    "atmanirbharfarm.work.gd",     # Allow requests from main domain
+    "atmanirbharfarmbangalore.com", # Allow requests from main domain
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
     "delivery-app-ieu2.onrender.com", # Allow requests from Render domain
     /.*\.onrender\.com/,           # Allow requests from all Render domains

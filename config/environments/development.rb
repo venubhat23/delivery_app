@@ -5,10 +5,10 @@ Rails.application.configure do
 
 
   config.hosts = [
-    "atmanirbharfarm.work.gd",     # Allow requests from main domain
+    "atmanirbharfarmbangalore.com", # Allow requests from main domain
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
     ENV['APP_HOST'],                 # Allow requests from environment-specific host
-    "atmanirbharfarm.work.gd",
+    "atmanirbharfarmbangalore.com",
     "13.232.153.224",                # Allow requests from the production server IP
     "atmanirbharfarmbangalore.com",
     "delivery-app-ieu2.onrender.com"
