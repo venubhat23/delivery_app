@@ -363,16 +363,14 @@
         <div class="card-body p-3">
           <%= form_with url: customer_patterns_path, method: :get, local: true, class: "row g-4", id: "patterns-filter-form" do |form| %>
             <div class="col-md-2">
-              <label class="form-label fw-bold text-dark mb-3">Customer Name</label>
-              <div class="position-relative">
-                <%= form.select :customer_id,
-                    options_from_collection_for_select(@customers || [], :id, :name, @customer_id),
-                    { prompt: "👥 Select Customer" },
-                    { class: "form-select form-control-modern",
-                      id: "customerDropdown",
-                      onchange: "this.form.submit();" } %>
-                <%= render 'shared/super_attractive_loader', loader_id: 'superCustomerPatternsLoader', loading_text: 'Analyzing Customer Patterns' %>
-              </div>
+              <label class="form-label fw-semibold">👤 Customer Name</label>
+              <%= form.select :customer_id,
+                  options_for_select([["All Customers", ""]] + @customers.map { |c| [c.name, c.id, { 'data-phone' => c.phone_number, 'data-member' => c.member_id }] }, @customer_id),
+                  {},
+                  {
+                    class: "form-select form-select-enhanced",
+                    onchange: "this.form.submit();"
+                  } %>
             </div>
 
             <div class="col-md-2">
@@ -550,9 +548,9 @@
                             <i class="fas fa-truck me-1"></i>Deliveries
                           </button>
 
-                          <% if data[:pattern] == 'regular' %>
+                          <% if data[:can_bulk_edit] %>
                             <button type="button"
-                                    class="btn edit-pattern-btn"
+                                    class="btn bulk-edit-btn"
                                     style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none; color: white; border-radius: 25px; padding: 8px 12px; font-size: 12px; transition: all 0.3s ease;"
                                     data-customer-id="<%= data[:customer].id %>"
                                     data-customer-name="<%= data[:customer].name %>"
@@ -560,8 +558,8 @@
                                     data-scheduled-product="<%= data[:scheduled_product] %>"
                                     data-month="<%= @current_month %>"
                                     data-year="<%= @current_year %>"
-                                    title="Edit Pattern"
-                                    data-action="edit-pattern"
+                                    title="Edit All Assignments for this Month"
+                                    data-action="bulk-edit"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(240, 147, 251, 0.4)';"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(240, 147, 251, 0.3)';">
                               <i class="fas fa-edit me-1"></i>Edit
@@ -585,6 +583,76 @@
               </tbody>
             </table>
           </div>
+    </div>
+  </div>
+
+  <!-- Bulk Edit Assignments Modal -->
+  <div id="bulkEditModal" class="custom-modal" style="display: none;">
+    <div class="custom-modal-backdrop" onclick="closeBulkEditModal()"></div>
+    <div class="custom-edit-modal-content">
+      <div class="custom-modal-header">
+        <h5 class="custom-modal-title">
+          <i class="fas fa-edit me-2"></i>
+          <span id="bulkEditModalTitle">Edit All Assignments</span>
+        </h5>
+        <button type="button" class="custom-close-btn" onclick="closeBulkEditModal()">×</button>
+      </div>
+      <div class="custom-modal-body">
+        <div class="alert alert-info mb-4">
+          <i class="fas fa-info-circle me-2"></i>
+          This will update <strong>ALL assignments</strong> for the selected customer and month with the same quantity and unit.
+        </div>
+        <form id="bulkEditForm">
+          <div class="row mb-3">
+            <div class="col-12">
+              <label class="form-label fw-bold">Customer</label>
+              <input type="text" id="bulkEditCustomerName" class="form-control" readonly style="background-color: #f8f9fa;">
+              <input type="hidden" id="bulkEditCustomerId">
+              <input type="hidden" id="bulkEditMonth">
+              <input type="hidden" id="bulkEditYear">
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-8">
+              <label class="form-label fw-bold">New Quantity</label>
+              <input type="number"
+                     id="bulkEditQuantity"
+                     class="form-control"
+                     step="0.1"
+                     min="0.1"
+                     required
+                     placeholder="Enter new quantity">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Unit</label>
+              <select id="bulkEditUnit" class="form-control" required>
+                <option value="liters">Liters</option>
+                <option value="kg">KG</option>
+                <option value="pieces">Pieces</option>
+                <option value="bottles">Bottles</option>
+              </select>
+            </div>
+          </div>
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="p-3 bg-light rounded">
+                <h6 class="mb-2">Current Information:</h6>
+                <p class="mb-1"><strong>Month:</strong> <span id="bulkEditMonthDisplay"></span></p>
+                <p class="mb-1"><strong>Current Quantity:</strong> <span id="bulkEditCurrentQuantity"></span></p>
+                <p class="mb-0"><strong>Product:</strong> <span id="bulkEditCurrentProduct"></span></p>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-3 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary" onclick="closeBulkEditModal()" style="border-radius: 25px; padding: 12px 25px; font-weight: bold;">
+              <i class="fas fa-times me-2"></i>Cancel
+            </button>
+            <button type="submit" class="btn btn-success" id="updateAllAssignmentsBtn" style="border-radius: 25px; padding: 12px 30px; font-weight: bold; background: linear-gradient(135deg, #10b981, #059669);">
+              <i class="fas fa-sync-alt me-2"></i>Update All Assignments
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -849,34 +917,100 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Customer Search Dropdown Styles */
-.search-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 1000;
-  margin-top: 2px;
+/* Enhanced Dropdown Styles - Same as Delivery Review */
+.form-select-enhanced {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25rem;
 }
 
-.search-dropdown-item {
-  padding: 10px 12px;
-  cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
-  transition: all 0.2s ease;
-  font-size: 0.8rem;
+.form-select-enhanced:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(99, 102, 241, 0.15);
+  background-color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.form-select-enhanced:hover:not(:focus) {
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.form-label.fw-semibold {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
   display: flex;
   align-items: center;
+  gap: 0.25rem;
 }
 
-.search-dropdown-item:last-child {
-  border-bottom: none;
+/* Animation for dropdown */
+.form-select-enhanced {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .form-select-enhanced {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Select2 custom theme - Same as Delivery Review */
+.select2-container--bootstrap-5 .select2-dropdown {
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  animation: slideInDown 0.2s ease-out;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  min-height: 44px;
+  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .search-dropdown-item:hover,
@@ -2319,6 +2453,221 @@ body:not(.modal-open) {
 <%= render 'shared/super_attractive_loader_js' %>
 
 <script>
+// Assignment action functions - Defined at very top for immediate global access
+console.log('🔧 Loading assignment functions at page level...');
+
+// Complete Till Today function
+window.completeTillToday = function(customerId, month, year) {
+  console.log('🎯 completeTillToday called:', customerId, month, year);
+  if (!confirm('Mark all pending assignments till today as completed?')) return;
+
+  const button = event.target.closest('button');
+  const originalHTML = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+  button.disabled = true;
+
+  fetch('/customer-patterns/complete_till_today', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    },
+    body: JSON.stringify({ customer_id: customerId, month: month, year: year })
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message || 'Assignments completed successfully!');
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error completing assignments');
+  })
+  .finally(() => {
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+  });
+};
+
+// Complete Assignment function
+window.completeAssignment = function(id) {
+  console.log('✅ completeAssignment called:', id);
+  if (!confirm('Mark this assignment as completed?')) return;
+
+  const button = event.target.closest('button');
+  const originalHTML = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  button.disabled = true;
+
+  fetch(`/customer-patterns/${id}/update_assignment.json`, {
+    method: 'PATCH',
+    body: JSON.stringify({ delivery_assignment: { status: 'completed' } }),
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message || 'Assignment completed successfully!');
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error completing assignment');
+  })
+  .finally(() => {
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+  });
+};
+
+// Delete Assignment function
+window.deleteAssignment = function(id) {
+  console.log('🗑️ deleteAssignment called:', id);
+  if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+  const button = event.target.closest('button');
+  const originalHTML = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  button.disabled = true;
+
+  fetch(`/customer-patterns/${id}/delete_assignment.json`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message || 'Assignment deleted successfully!');
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error deleting assignment');
+  })
+  .finally(() => {
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+  });
+};
+
+// Edit Assignment function
+window.editAssignment = function(id) {
+  console.log('✏️ editAssignment called:', id);
+  if (!id) {
+    alert('Error: No assignment ID provided');
+    return;
+  }
+
+  // Get or create edit modal
+  let editModal = document.getElementById('editModal');
+  if (!editModal) {
+    const modalHTML = `
+      <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content" id="editModalContent">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary"></div>
+              <p class="mt-2">Loading edit form...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    editModal = document.getElementById('editModal');
+  }
+
+  // Show modal
+  if (typeof bootstrap !== 'undefined') {
+    new bootstrap.Modal(editModal).show();
+  } else {
+    editModal.style.display = 'block';
+    editModal.classList.add('show');
+    document.body.classList.add('modal-open');
+  }
+
+  // Load edit form
+  fetch(`/customer-patterns/${id}/edit_assignment.json`)
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('editModalContent').innerHTML = data.html;
+      setupEditForm();
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      document.getElementById('editModalContent').innerHTML = `
+        <div class="modal-header">
+          <h5 class="modal-title">Error</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger">Error loading edit form</div>
+        </div>
+      `;
+    });
+};
+
+// Setup edit form after loading
+function setupEditForm() {
+  const form = document.getElementById('edit-assignment-form');
+  const submitBtn = document.getElementById('update-assignment-btn');
+
+  if (submitBtn && form) {
+    submitBtn.onclick = function(e) {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+      submitBtn.disabled = true;
+
+      const formData = new FormData(form);
+      fetch(form.action, {
+        method: 'PATCH',
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message || 'Assignment updated successfully!');
+          document.getElementById('editModal').style.display = 'none';
+          location.reload();
+        } else {
+          alert(data.message || 'Error updating assignment');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating assignment');
+      })
+      .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      });
+    };
+  }
+}
+
+console.log('✅ Assignment functions loaded at page level:', {
+  completeTillToday: typeof window.completeTillToday,
+  completeAssignment: typeof window.completeAssignment,
+  deleteAssignment: typeof window.deleteAssignment,
+  editAssignment: typeof window.editAssignment
+});
+
 // Edit Pattern Modal Function - Defined at top for global access
 window.openEditPatternModal = function(customerId, customerName, scheduledQuantity, scheduledProduct, month, year) {
   console.log('Opening modal for:', customerName, 'Quantity:', scheduledQuantity);
@@ -2365,6 +2714,12 @@ window.closeEditPatternModal = function() {
 
 // Event delegation for edit pattern buttons
 document.addEventListener('click', function(e) {
+  // Debug: Log all clicks on buttons to see what's happening
+  if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+    const clickedButton = e.target.tagName === 'BUTTON' ? e.target : e.target.closest('button');
+    console.log('🖱️ Button clicked:', clickedButton.textContent?.trim(), 'Action:', clickedButton.getAttribute('data-action'));
+  }
+
   const button = e.target.closest('[data-action="edit-pattern"]');
   if (button) {
     e.preventDefault();
@@ -2382,6 +2737,32 @@ document.addEventListener('click', function(e) {
 
     // Call the function directly
     window.openEditPatternModal(customerId, customerName, scheduledQuantity, scheduledProduct, month, year);
+  }
+
+  // Event delegation for bulk edit buttons
+  const bulkEditButton = e.target.closest('[data-action="bulk-edit"]');
+  if (bulkEditButton) {
+    e.preventDefault();
+    console.log('🎯 BULK EDIT BUTTON CLICKED!');
+
+    const customerId = bulkEditButton.getAttribute('data-customer-id');
+    const customerName = bulkEditButton.getAttribute('data-customer-name');
+    const scheduledQuantity = bulkEditButton.getAttribute('data-scheduled-quantity');
+    const scheduledProduct = bulkEditButton.getAttribute('data-scheduled-product');
+    const month = bulkEditButton.getAttribute('data-month');
+    const year = bulkEditButton.getAttribute('data-year');
+
+    console.log('Bulk Edit button clicked for:', {
+      customerId, customerName, scheduledQuantity, scheduledProduct, month, year
+    });
+
+    // Call the bulk edit modal function
+    try {
+      window.openBulkEditModal(customerId, customerName, scheduledQuantity, scheduledProduct, month, year);
+    } catch (error) {
+      console.error('Error calling openBulkEditModal:', error);
+      alert('Error opening bulk edit modal: ' + error.message);
+    }
   }
 });
 
@@ -2418,6 +2799,61 @@ function closeDeliveryModal() {
 
   console.log('Modal closed');
 }
+
+// Bulk Edit Modal Functions
+window.openBulkEditModal = function(customerId, customerName, scheduledQuantity, scheduledProduct, month, year) {
+  console.log('Opening bulk edit modal for:', customerName);
+
+  const modal = document.getElementById('bulkEditModal');
+  if (!modal) {
+    console.error('Bulk edit modal not found!');
+    alert('Error: Modal not found');
+    return;
+  }
+
+  // Update modal title and customer info
+  document.getElementById('bulkEditModalTitle').textContent = `Edit All Assignments - ${customerName}`;
+  document.getElementById('bulkEditCustomerName').value = customerName;
+  document.getElementById('bulkEditCustomerId').value = customerId;
+  document.getElementById('bulkEditMonth').value = month;
+  document.getElementById('bulkEditYear').value = year;
+
+  // Update current info display
+  const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+  document.getElementById('bulkEditMonthDisplay').textContent = `${monthNames[month]} ${year}`;
+  document.getElementById('bulkEditCurrentQuantity').textContent = scheduledQuantity || 'N/A';
+  document.getElementById('bulkEditCurrentProduct').textContent = scheduledProduct || 'N/A';
+
+  // Pre-fill quantity with current scheduled quantity
+  if (scheduledQuantity && scheduledQuantity > 0) {
+    document.getElementById('bulkEditQuantity').value = scheduledQuantity;
+  }
+
+  // Show modal
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+
+  console.log('Bulk edit modal opened successfully');
+};
+
+window.closeBulkEditModal = function() {
+  const modal = document.getElementById('bulkEditModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+
+    // Reset form
+    document.getElementById('bulkEditForm').reset();
+
+    // Ensure body returns to normal state
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+
+    console.log('Bulk edit modal closed');
+  }
+};
 
 // Note: Functions will be made globally available after loadModalContent is defined
 
@@ -2512,6 +2948,72 @@ document.addEventListener('DOMContentLoaded', function() {
     filterForm.addEventListener('submit', function(e) {
       // Let the form submit naturally but show appropriate loader
       handleFormSubmission(this);
+    });
+  }
+
+  // Bulk Edit Form submission handler
+  const bulkEditForm = document.getElementById('bulkEditForm');
+  if (bulkEditForm) {
+    bulkEditForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('updateAllAssignmentsBtn');
+      const originalHTML = submitBtn.innerHTML;
+
+      // Get form data
+      const customerId = document.getElementById('bulkEditCustomerId').value;
+      const quantity = parseFloat(document.getElementById('bulkEditQuantity').value);
+      const unit = document.getElementById('bulkEditUnit').value;
+      const month = parseInt(document.getElementById('bulkEditMonth').value);
+      const year = parseInt(document.getElementById('bulkEditYear').value);
+
+      // Validate inputs
+      if (!quantity || quantity <= 0) {
+        alert('Please enter a valid quantity greater than 0');
+        return;
+      }
+
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating All Assignments...';
+
+      console.log('Submitting bulk edit for:', { customerId, quantity, unit, month, year });
+
+      // Make API request
+      fetch('/customer-patterns/bulk_edit_assignments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          customer_id: customerId,
+          quantity: quantity,
+          unit: unit,
+          month: month,
+          year: year
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message || 'All assignments updated successfully!');
+          window.closeBulkEditModal();
+          // Reload the page to show updated data
+          location.reload();
+        } else {
+          alert(data.message || 'Error updating assignments');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating assignments. Please try again.');
+      })
+      .finally(() => {
+        // Restore button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+      });
     });
   }
 
@@ -2640,7 +3142,7 @@ window.loadEditForm = function(id) {
     </div>
   `;
 
-  fetch(`/assign_deliveries/${id}/edit.json`, {
+  fetch(`/customer-patterns/${id}/edit_assignment.json`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -2703,12 +3205,33 @@ window.deleteAssignment = function(id) {
     }
 
     const originalContent = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    // Create attractive progress loader with percentage
+    let progress = 0;
+    const updateProgress = (percent) => {
+      button.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center" style="min-width: 80px;">
+          <div class="spinner-border spinner-border-sm me-1 text-danger" role="status" style="width: 0.8rem; height: 0.8rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="fw-bold text-danger" style="font-size: 0.7rem;">${percent}%</span>
+        </div>
+      `;
+    };
+
     button.disabled = true;
+    updateProgress(0);
 
     console.log('Deleting assignment:', id);
 
-    fetch(`/assign_deliveries/${id}.json`, {
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 20;
+      if (progress > 90) progress = 90;
+      updateProgress(Math.floor(progress));
+    }, 120);
+
+    fetch(`/customer-patterns/${id}/delete_assignment.json`, {
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',
@@ -2725,14 +3248,19 @@ window.deleteAssignment = function(id) {
     })
     .then(data => {
       console.log('✅ Delete response data:', data);
-      if (data.success) {
-        console.log('✅ Assignment deleted successfully, showing toast and reloading modal');
-        window.showSimpleToast(data.message || 'Assignment deleted successfully!', 'success');
+      clearInterval(progressInterval);
+      updateProgress(100);
 
+      if (data.success) {
+        // Show deletion animation
         setTimeout(() => {
-          console.log('🔄 Reloading modal after deletion');
-          window.reloadCurrentModal();
-        }, 500); // Small delay to let toast show
+          button.innerHTML = '<i class="fas fa-trash-alt text-danger"></i>';
+          setTimeout(() => {
+            console.log('✅ Assignment deleted successfully, showing toast and reloading modal');
+            window.showSimpleToast(data.message || 'Assignment deleted successfully!', 'success');
+            window.reloadCurrentModal();
+          }, 600);
+        }, 200);
       } else {
         console.error('❌ Delete failed:', data);
         window.showSimpleToast(data.message || 'Error deleting assignment', 'error');
@@ -2740,11 +3268,14 @@ window.deleteAssignment = function(id) {
     })
     .catch(error => {
       console.error('Error:', error);
+      clearInterval(progressInterval);
       window.showSimpleToast('Error deleting assignment: ' + error.message, 'error');
     })
     .finally(() => {
-      button.innerHTML = originalContent;
-      button.disabled = false;
+      setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+      }, 1200);
     });
   }
 };
@@ -2773,13 +3304,35 @@ window.completeAssignment = function(id) {
     }
 
     const originalContent = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    // Create attractive progress loader with percentage
+    let progress = 0;
+    const updateProgress = (percent) => {
+      button.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center" style="min-width: 80px;">
+          <div class="spinner-border spinner-border-sm me-1" role="status" style="width: 0.8rem; height: 0.8rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="fw-bold" style="font-size: 0.7rem;">${percent}%</span>
+        </div>
+      `;
+    };
+
     button.disabled = true;
+    updateProgress(0);
 
     console.log('Completing assignment:', id);
 
-    fetch(`/assign_deliveries/${id}/complete.json`, {
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 25;
+      if (progress > 90) progress = 90;
+      updateProgress(Math.floor(progress));
+    }, 100);
+
+    fetch(`/customer-patterns/${id}/update_assignment.json`, {
       method: 'PATCH',
+      body: JSON.stringify({ delivery_assignment: { status: 'completed' } }),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -2795,14 +3348,19 @@ window.completeAssignment = function(id) {
     })
     .then(data => {
       console.log('✅ Complete response data:', data);
-      if (data.success) {
-        console.log('✅ Assignment completed successfully, showing toast and reloading modal');
-        window.showSimpleToast(data.message || 'Assignment completed successfully!', 'success');
+      clearInterval(progressInterval);
+      updateProgress(100);
 
+      if (data.success) {
+        // Show completion animation
         setTimeout(() => {
-          console.log('🔄 Reloading modal after completion');
-          window.reloadCurrentModal();
-        }, 500); // Small delay to let toast show
+          button.innerHTML = '<i class="fas fa-check text-success"></i>';
+          setTimeout(() => {
+            console.log('✅ Assignment completed successfully, showing toast and reloading modal');
+            window.showSimpleToast(data.message || 'Assignment completed successfully!', 'success');
+            window.reloadCurrentModal();
+          }, 600);
+        }, 200);
       } else {
         console.error('❌ Complete failed:', data);
         window.showSimpleToast(data.message || 'Error completing assignment', 'error');
@@ -2810,11 +3368,14 @@ window.completeAssignment = function(id) {
     })
     .catch(error => {
       console.error('Error:', error);
+      clearInterval(progressInterval);
       window.showSimpleToast('Error completing assignment: ' + error.message, 'error');
     })
     .finally(() => {
-      button.innerHTML = originalContent;
-      button.disabled = false;
+      setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+      }, 1200);
     });
   }
 };
@@ -2823,10 +3384,34 @@ window.completeTillToday = function(customerId, month, year) {
   if (confirm('Mark all pending assignments till today as completed?')) {
     const button = event.target.closest('button');
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+
+    // Create attractive progress loader with percentage
+    let progress = 0;
+    const updateProgress = (percent) => {
+      button.innerHTML = `
+        <div class="d-flex align-items-center">
+          <div class="spinner-border spinner-border-sm me-2" role="status" style="width: 1.2rem; height: 1.2rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="progress-container" style="flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; position: relative; overflow: hidden;">
+            <div class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: ${percent}%; transition: width 0.3s ease; border-radius: 4px;"></div>
+          </div>
+          <span class="ms-2 fw-bold" style="min-width: 35px; font-size: 0.8rem;">${percent}%</span>
+        </div>
+      `;
+    };
+
     button.disabled = true;
+    updateProgress(0);
 
     console.log('Sending complete till today request:', { customerId, month, year });
+
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 20;
+      if (progress > 90) progress = 90;
+      updateProgress(Math.floor(progress));
+    }, 150);
 
     fetch('/customer-patterns/complete_till_today', {
       method: 'POST',
@@ -2849,16 +3434,28 @@ window.completeTillToday = function(customerId, month, year) {
     })
     .then(data => {
       console.log('Response data:', data);
-      showSimpleToast(data.message || 'Assignments completed successfully!', 'success');
-      reloadCurrentModal();
+      clearInterval(progressInterval);
+      updateProgress(100);
+
+      // Show completion animation
+      setTimeout(() => {
+        button.innerHTML = '<i class="fas fa-check text-success me-1"></i>Completed!';
+        setTimeout(() => {
+          window.showSimpleToast(data.message || 'Assignments completed successfully!', 'success');
+          window.reloadCurrentModal();
+        }, 800);
+      }, 300);
     })
     .catch(error => {
       console.error('Error:', error);
-      showSimpleToast('Error completing assignments: ' + error.message, 'error');
+      clearInterval(progressInterval);
+      window.showSimpleToast('Error completing assignments: ' + error.message, 'error');
     })
     .finally(() => {
-      button.innerHTML = originalText;
-      button.disabled = false;
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+      }, 1500);
     });
   }
 };
@@ -3509,221 +4106,54 @@ function highlightText(text, query) {
   return text.replace(regex, '<mark style="background: yellow;">$1</mark>');
 }
 
-// Global function for selecting customers
-window.selectCustomer = function(id, name) {
-  console.log('👆 Selected customer:', name);
+// Initialize Enhanced Selects with Select2 (same as Delivery Review)
+function initializeEnhancedSelects() {
+  // Try Select2 first, fallback to custom styling
+  if (window.jQuery && jQuery.fn.select2) {
+    jQuery('.form-select-enhanced').select2({
+      theme: 'bootstrap-5',
+      width: '100%',
+      dropdownAutoWidth: true,
+      placeholder: function() {
+        return jQuery(this).data('placeholder') || jQuery(this).find('option:first').text();
+      },
+      templateResult: function(state) {
+        if (!state.id) return state.text;
 
-  const input = document.getElementById('customerSearchInput');
-  const hiddenInput = document.getElementById('selectedCustomerId');
-  const dropdown = document.getElementById('customerSearchResults');
+        var $state = jQuery('<span></span>');
+        $state.text(state.text);
 
-  if (input) input.value = name;
-  if (hiddenInput) hiddenInput.value = id;
-  if (dropdown) dropdown.style.display = 'none';
+        // Add phone and member info for customer dropdown
+        if (state.element && state.element.dataset) {
+          if (state.element.dataset.phone && state.element.dataset.member) {
+            var $info = jQuery('<small class="text-muted d-block"></small>');
+            $info.text('📞 ' + state.element.dataset.phone + ' | ID: ' + state.element.dataset.member);
+            $state.append($info);
+          }
+        }
 
-  // Auto-submit form
-  const form = document.getElementById('patterns-filter-form');
-  if (form) {
-    setTimeout(() => form.submit(), 100);
-  }
-};
-
-function setupCustomerSearch() {
-  console.log('🚀 Setting up customer search functionality...');
-
-  customerSearchInput.addEventListener('input', function() {
-    const query = this.value.trim();
-    console.log('🔤 Input changed, query:', query);
-
-    clearTimeout(customerSearchTimeout);
-    customerSearchTimeout = setTimeout(() => {
-      if (query.length === 0) {
-        hideCustomerSearch();
-        selectedCustomerIdInput.value = '';
-        return;
+        return $state;
       }
-
-      if (query.length < 1) {
-        return;
-      }
-
-      console.log('🔍 Searching for customers with query:', query);
-      searchCustomers(query);
-    }, 300);
-  });
-
-  customerSearchInput.addEventListener('keydown', function(e) {
-    const items = customerSearchResultsDiv.querySelectorAll('.search-dropdown-item');
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      currentHighlightIndex = Math.min(currentHighlightIndex + 1, items.length - 1);
-      highlightItem();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      currentHighlightIndex = Math.max(currentHighlightIndex - 1, -1);
-      highlightItem();
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (currentHighlightIndex >= 0 && items[currentHighlightIndex]) {
-        selectCustomer(
-          items[currentHighlightIndex].dataset.id,
-        items[currentHighlightIndex].dataset.name
-      );
-    }
-  } else if (e.key === 'Escape') {
-    hideCustomerSearch();
-  }
-});
-
-customerSearchInput.addEventListener('focus', function() {
-  console.log('🎯 Customer search input focused');
-  const query = this.value.trim();
-  if (query.length >= 1) {
-    console.log('🔄 Re-searching on focus for:', query);
-    searchCustomers(query);
+    });
   } else {
-    // Show a hint when focused but empty
-    customerSearchResultsDiv.innerHTML = `
-      <div class="search-dropdown-no-results" style="padding: 15px; text-align: center; color: #666;">
-        <i class="fas fa-info-circle me-2"></i>Start typing to search for customers...
-        <br><small style="color: #999; margin-top: 5px;">Try typing "p", "a", "m", etc.</small>
-      </div>
-    `;
-    customerSearchResultsDiv.style.display = 'block';
-    console.log('💡 Showing hint dropdown');
+    // Fallback: Add custom styling classes
+    document.querySelectorAll('.form-select-enhanced').forEach(function(select) {
+      select.classList.add('enhanced-dropdown');
+    });
   }
-});
+}
 
-// Hide dropdown when clicking outside
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.position-relative')) {
-    hideCustomerSearch();
-  }
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+  initializeEnhancedSelects();
 });
-
-} // End setupCustomerSearch function
 
 // Create super attractive loader instance
 const superCustomerPatternsLoader = createSuperAttractiveLoader('superCustomerPatternsLoader');
 
-function searchCustomers(query) {
-  console.log('🔍 Starting search for:', query);
+// Legacy search functions removed - using Stimulus controller instead
 
-  // Show attractive loading indicator
-  customerSearchResultsDiv.innerHTML = `
-    <div class="search-dropdown-item" style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); justify-content: center;">
-      <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <span style="color: #4f46e5; font-weight: 500;">Searching customers...</span>
-    </div>
-  `;
-  customerSearchResultsDiv.style.display = 'block';
-
-  // Make API call to search customers
-  fetch(`/customer-patterns/search_customers?query=${encodeURIComponent(query)}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    }
-  })
-  .then(response => {
-    console.log('📡 API Response status:', response.status);
-    return response.json();
-  })
-  .then(data => {
-    console.log('📊 API Data received:', data);
-    if (data.success && data.customers && data.customers.length > 0) {
-      customerSearchResults = data.customers.slice(0, 8); // Limit to 8 results
-      console.log('✅ Found customers:', customerSearchResults.length);
-      displayCustomerResults();
-    } else {
-      console.log('❌ No customers found');
-      customerSearchResultsDiv.innerHTML = `
-        <div class="search-dropdown-no-results">
-          <i class="fas fa-search text-muted mb-2" style="font-size: 24px;"></i>
-          <div>No customers found for "<strong>${query}</strong>"</div>
-          <small class="text-muted mt-1">Try searching with a different name</small>
-        </div>
-      `;
-      customerSearchResultsDiv.style.display = 'block';
-    }
-  })
-  .catch(error => {
-    console.error('❌ Error searching customers:', error);
-    customerSearchResultsDiv.innerHTML = '<div class="search-dropdown-no-results text-danger">Error searching customers. Please try again.</div>';
-    customerSearchResultsDiv.style.display = 'block';
-  });
-}
-
-function displayCustomerResults() {
-  console.log('🎨 Displaying', customerSearchResults.length, 'customers');
-
-  if (customerSearchResults.length === 0) {
-    customerSearchResultsDiv.innerHTML = '<div class="search-dropdown-no-results">No customers found</div>';
-    customerSearchResultsDiv.style.display = 'block';
-    return;
-  }
-
-  const html = customerSearchResults.map((customer, index) => `
-    <div class="search-dropdown-item ${index === currentHighlightIndex ? 'highlighted' : ''}"
-         data-id="${customer.id}"
-         data-name="${customer.name}"
-         onclick="selectCustomer('${customer.id}', '${customer.name}')"
-         style="cursor: pointer;">
-      <div class="customer-avatar" style="background: #4f46e5;">${customer.name.charAt(0).toUpperCase()}</div>
-      <div class="flex-grow-1">
-        <div class="fw-bold">${highlightMatch(customer.name, customerSearchInput.value)}</div>
-        ${customer.phone ? `<small class="text-muted"><i class="fas fa-phone fa-xs me-1"></i>${customer.phone}</small>` : ''}
-        ${customer.member_id ? `<small class="text-muted ms-2"><i class="fas fa-id-card fa-xs me-1"></i>ID: ${customer.member_id}</small>` : ''}
-      </div>
-    </div>
-  `).join('');
-
-  customerSearchResultsDiv.innerHTML = html;
-  customerSearchResultsDiv.style.display = 'block';
-  currentHighlightIndex = -1;
-
-  console.log('✅ Dropdown displayed with', customerSearchResults.length, 'items');
-}
-
-function highlightMatch(text, query) {
-  if (!query) return text;
-  const regex = new RegExp(`(${query})`, 'gi');
-  return text.replace(regex, '<mark style="background: yellow; padding: 0;">$1</mark>');
-}
-
-function highlightItem() {
-  const items = customerSearchResultsDiv.querySelectorAll('.search-dropdown-item');
-  items.forEach((item, index) => {
-    if (index === currentHighlightIndex) {
-      item.classList.add('highlighted');
-    } else {
-      item.classList.remove('highlighted');
-    }
-  });
-}
-
-window.selectCustomer = function(id, name) {
-  customerSearchInput.value = name;
-  selectedCustomerIdInput.value = id;
-  hideCustomerSearch();
-
-  // Auto-submit form after selection
-  const form = document.getElementById('patterns-filter-form') || customerSearchInput.closest('form');
-  if (form) {
-    setTimeout(() => form.submit(), 200);
-  }
-};
-
-function hideCustomerSearch() {
-  if (customerSearchResultsDiv) {
-    customerSearchResultsDiv.style.display = 'none';
-  }
-  currentHighlightIndex = -1;
-}
+// Legacy functions removed - using Stimulus controller instead
 
 // Edit Pattern Modal Functions - COMMENTED OUT (another duplicate)
 /* window.openEditPatternModal = function(customerId, customerName, scheduledQuantity, scheduledProduct, month, year) {
@@ -3834,6 +4264,24 @@ function loadProductsForEdit() {
       select.innerHTML = '<option value="">Error loading products</option>';
     });
 } */
+
+// Ensure functions are globally available immediately
+console.log('🔧 Ensuring assignment functions are globally available');
+if (typeof window.completeTillToday === 'function') {
+  console.log('✅ completeTillToday is ready');
+} else {
+  console.error('❌ completeTillToday is not ready');
+}
+if (typeof window.completeAssignment === 'function') {
+  console.log('✅ completeAssignment is ready');
+} else {
+  console.error('❌ completeAssignment is not ready');
+}
+if (typeof window.deleteAssignment === 'function') {
+  console.log('✅ deleteAssignment is ready');
+} else {
+  console.error('❌ deleteAssignment is not ready');
+}
 
 }
 </script>
@@ -4388,20 +4836,32 @@ document.addEventListener('click', function(e) {
 
     // Try to get the assignment ID from various sources
     const button = e.target.closest('button') || e.target;
-    const assignmentId = button.dataset.assignmentId ||
-                        button.dataset.id ||
-                        button.getAttribute('data-assignment-id') ||
-                        button.getAttribute('data-id');
+    let assignmentId = button.dataset.assignmentId ||
+                      button.dataset.id ||
+                      button.getAttribute('data-assignment-id') ||
+                      button.getAttribute('data-id');
+
+    // If not found in data attributes, try to extract from onclick attribute
+    if (!assignmentId) {
+      const onclick = button.getAttribute('onclick');
+      if (onclick) {
+        const match = onclick.match(/editAssignment\((\d+)\)/);
+        if (match) {
+          assignmentId = match[1];
+        }
+      }
+    }
 
     console.log('Assignment ID found:', assignmentId);
 
     if (assignmentId && window.editAssignment) {
       console.log('✅ Calling editAssignment with ID:', assignmentId);
-      window.editAssignment(assignmentId);
+      window.editAssignment(parseInt(assignmentId));
     } else {
       console.error('❌ Could not find assignment ID or editAssignment function');
       console.log('Button element:', button);
       console.log('Available data attributes:', button.dataset);
+      console.log('onclick attribute:', button.getAttribute('onclick'));
     }
 
     return false;
@@ -5118,8 +5578,8 @@ window.loadEditForm = function(assignmentId) {
     </div>
   `;
 
-  // Try the main endpoint
-  const endpoint = `/assign_deliveries/${assignmentId}/edit.json`;
+  // Try the customer patterns endpoint
+  const endpoint = `/customer-patterns/${assignmentId}/edit_assignment.json`;
   console.log('📡 Fetching from:', endpoint);
 
   fetch(endpoint, {
@@ -5263,17 +5723,289 @@ console.log('Functions available:', {
   reloadCurrentModal: typeof window.reloadCurrentModal
 });
 
-// Final verification that our critical functions are available
+// Ensure critical functions are available globally
 if (typeof window.completeAssignment !== 'function') {
-  console.error('❌ CRITICAL: completeAssignment function not available!');
+  console.log('🔧 Adding missing completeAssignment function...');
+  window.completeAssignment = function(id) {
+    if (confirm('Mark this assignment as completed?')) {
+      const button = event.target.closest('button');
+      if (!button) {
+        console.error('Could not find button');
+        return;
+      }
+
+      const originalContent = button.innerHTML;
+      let progress = 0;
+      const updateProgress = (percent) => {
+        button.innerHTML = `
+          <div class="d-flex align-items-center justify-content-center" style="min-width: 80px;">
+            <div class="spinner-border spinner-border-sm me-1" role="status" style="width: 0.8rem; height: 0.8rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="fw-bold" style="font-size: 0.7rem;">${percent}%</span>
+          </div>
+        `;
+      };
+
+      button.disabled = true;
+      updateProgress(0);
+
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 25;
+        if (progress > 90) progress = 90;
+        updateProgress(Math.floor(progress));
+      }, 100);
+
+      fetch(`/customer-patterns/${id}/update_assignment`, {
+        method: 'PATCH',
+        body: JSON.stringify({ delivery_assignment: { status: 'completed' } }),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        clearInterval(progressInterval);
+        updateProgress(100);
+
+        if (data.success) {
+          setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-check text-success"></i>';
+            setTimeout(() => {
+              window.showSimpleToast ? window.showSimpleToast(data.message || 'Assignment completed!', 'success') : alert(data.message);
+              if (window.reloadCurrentModal) {
+                window.reloadCurrentModal();
+              } else {
+                // Store modal state before reload
+                if (window.currentModalData) {
+                  sessionStorage.setItem('reopenModal', JSON.stringify(window.currentModalData));
+                }
+                location.reload();
+              }
+            }, 600);
+          }, 200);
+        } else {
+          throw new Error(data.message || 'Update failed');
+        }
+      })
+      .catch(error => {
+        clearInterval(progressInterval);
+        window.showSimpleToast ? window.showSimpleToast('Error: ' + error.message, 'error') : alert('Error: ' + error.message);
+      })
+      .finally(() => {
+        setTimeout(() => {
+          button.innerHTML = originalContent;
+          button.disabled = false;
+        }, 1200);
+      });
+    }
+  };
 }
 
 if (typeof window.deleteAssignment !== 'function') {
-  console.error('❌ CRITICAL: deleteAssignment function not available!');
+  console.log('🔧 Adding missing deleteAssignment function...');
+  window.deleteAssignment = function(id) {
+    if (confirm('Are you sure you want to delete this assignment? This cannot be undone.')) {
+      const button = event.target.closest('button');
+      if (!button) {
+        console.error('Could not find button');
+        return;
+      }
+
+      const originalContent = button.innerHTML;
+      let progress = 0;
+      const updateProgress = (percent) => {
+        button.innerHTML = `
+          <div class="d-flex align-items-center justify-content-center" style="min-width: 80px;">
+            <div class="spinner-border spinner-border-sm me-1 text-danger" role="status" style="width: 0.8rem; height: 0.8rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="fw-bold text-danger" style="font-size: 0.7rem;">${percent}%</span>
+          </div>
+        `;
+      };
+
+      button.disabled = true;
+      updateProgress(0);
+
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress > 90) progress = 90;
+        updateProgress(Math.floor(progress));
+      }, 120);
+
+      fetch(`/customer-patterns/${id}/delete_assignment`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        clearInterval(progressInterval);
+        updateProgress(100);
+
+        if (data.success) {
+          setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-trash-alt text-danger"></i>';
+            setTimeout(() => {
+              window.showSimpleToast ? window.showSimpleToast(data.message || 'Assignment deleted!', 'success') : alert(data.message);
+              if (window.reloadCurrentModal) {
+                window.reloadCurrentModal();
+              } else {
+                // Store modal state before reload
+                if (window.currentModalData) {
+                  sessionStorage.setItem('reopenModal', JSON.stringify(window.currentModalData));
+                }
+                location.reload();
+              }
+            }, 600);
+          }, 200);
+        } else {
+          throw new Error(data.message || 'Delete failed');
+        }
+      })
+      .catch(error => {
+        clearInterval(progressInterval);
+        window.showSimpleToast ? window.showSimpleToast('Error: ' + error.message, 'error') : alert('Error: ' + error.message);
+      })
+      .finally(() => {
+        setTimeout(() => {
+          button.innerHTML = originalContent;
+          button.disabled = false;
+        }, 1200);
+      });
+    }
+  };
+}
+
+if (typeof window.completeTillToday !== 'function') {
+  console.log('🔧 Adding missing completeTillToday function...');
+  window.completeTillToday = function(customerId, month, year) {
+    if (confirm('Mark all pending assignments till today as completed?')) {
+      const button = event.target.closest('button');
+      if (!button) {
+        console.error('Could not find button');
+        return;
+      }
+
+      const originalText = button.innerHTML;
+      let progress = 0;
+      const updateProgress = (percent) => {
+        button.innerHTML = `
+          <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" role="status" style="width: 1.2rem; height: 1.2rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="progress-container" style="flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; position: relative; overflow: hidden;">
+              <div class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: ${percent}%; transition: width 0.3s ease; border-radius: 4px;"></div>
+            </div>
+            <span class="ms-2 fw-bold" style="min-width: 35px; font-size: 0.8rem;">${percent}%</span>
+          </div>
+        `;
+      };
+
+      button.disabled = true;
+      updateProgress(0);
+
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress > 90) progress = 90;
+        updateProgress(Math.floor(progress));
+      }, 150);
+
+      fetch('/customer-patterns/complete_till_today', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          customer_id: customerId,
+          month: month,
+          year: year
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        clearInterval(progressInterval);
+        updateProgress(100);
+
+        setTimeout(() => {
+          button.innerHTML = '<i class="fas fa-check text-success me-1"></i>Completed!';
+          setTimeout(() => {
+            window.showSimpleToast ? window.showSimpleToast(data.message || 'Assignments completed!', 'success') : alert(data.message);
+            if (window.reloadCurrentModal) {
+              window.reloadCurrentModal();
+            } else {
+              // Store modal state before reload
+              if (window.currentModalData) {
+                sessionStorage.setItem('reopenModal', JSON.stringify(window.currentModalData));
+              }
+              location.reload();
+            }
+          }, 800);
+        }, 300);
+      })
+      .catch(error => {
+        clearInterval(progressInterval);
+        window.showSimpleToast ? window.showSimpleToast('Error: ' + error.message, 'error') : alert('Error: ' + error.message);
+      })
+      .finally(() => {
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.disabled = false;
+        }, 1500);
+      });
+    }
+  };
+}
+
+// Final verification that our critical functions are available
+if (typeof window.completeAssignment !== 'function') {
+  console.error('❌ CRITICAL: completeAssignment function STILL not available!');
+}
+
+if (typeof window.deleteAssignment !== 'function') {
+  console.error('❌ CRITICAL: deleteAssignment function STILL not available!');
 }
 
 if (typeof window.reloadCurrentModal !== 'function') {
   console.error('❌ CRITICAL: reloadCurrentModal function not available!');
 }
+
+// Auto-reopen modal after page reload if it was open before
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🔍 Checking for modal to reopen after reload...');
+
+  const reopenModalData = sessionStorage.getItem('reopenModal');
+  if (reopenModalData) {
+    try {
+      const modalData = JSON.parse(reopenModalData);
+      console.log('🔄 Found modal to reopen:', modalData);
+
+      // Clear the storage immediately to prevent multiple reopenings
+      sessionStorage.removeItem('reopenModal');
+
+      // Wait a bit for the page to fully load, then reopen the modal
+      setTimeout(() => {
+        if (window.openDeliveryModal && modalData.customerId) {
+          console.log('🎯 Reopening modal for customer:', modalData.customerName);
+          window.openDeliveryModal(modalData.customerId, modalData.customerName, modalData.month, modalData.year);
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('❌ Error reopening modal:', error);
+      sessionStorage.removeItem('reopenModal');
+    }
+  } else {
+    console.log('✅ No modal to reopen');
+  }
+});
 
 </script>

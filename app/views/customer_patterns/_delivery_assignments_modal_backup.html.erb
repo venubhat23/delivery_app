@@ -1,0 +1,485 @@
+<!-- Modal content loads here - no header needed as it's in main modal -->
+
+<script>
+// Simple and reliable assignment functions for modal
+(function() {
+  'use strict';
+
+  // Debug logging
+  console.log('🔧 Loading modal assignment functions...');
+
+  // Helper function to show messages
+  const showMessage = (message, type = 'info') => {
+    if (typeof window.showSimpleToast === 'function') {
+      window.showSimpleToast(message, type);
+    } else {
+      alert(message);
+    }
+  };
+
+  // Helper function to reload modal
+  const reloadModal = () => {
+    setTimeout(() => {
+      if (typeof window.reloadCurrentModal === 'function') {
+        window.reloadCurrentModal();
+      } else {
+        location.reload();
+      }
+    }, 500);
+  };
+
+  // Complete Till Today function
+if (typeof window.completeTillToday !== 'function') {
+  window.completeTillToday = function(customerId, month, year) {
+    if (confirm('Mark all pending assignments till today as completed?')) {
+      const button = event.target.closest('button');
+      const originalText = button.innerHTML;
+
+      // Create attractive progress loader with percentage
+      let progress = 0;
+      const updateProgress = (percent) => {
+        button.innerHTML = `
+          <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" role="status" style="width: 1.2rem; height: 1.2rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="progress-container" style="flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; position: relative; overflow: hidden;">
+              <div class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: ${percent}%; transition: width 0.3s ease; border-radius: 4px;"></div>
+            </div>
+            <span class="ms-2 fw-bold" style="min-width: 35px; font-size: 0.8rem;">${percent}%</span>
+          </div>
+        `;
+      };
+
+      button.disabled = true;
+      updateProgress(0);
+
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress > 90) progress = 90;
+        updateProgress(Math.floor(progress));
+      }, 150);
+
+      fetch('/customer-patterns/complete_till_today', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          customer_id: customerId,
+          month: month,
+          year: year
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        clearInterval(progressInterval);
+        updateProgress(100);
+
+        // Show completion animation
+        setTimeout(() => {
+          button.innerHTML = '<i class="fas fa-check text-success me-1"></i>Completed!';
+          setTimeout(() => {
+            if (typeof window.showSimpleToast === 'function') {
+              window.showSimpleToast(data.message || 'Assignments completed successfully!', 'success');
+            } else {
+              alert(data.message || 'Assignments completed successfully!');
+            }
+            if (typeof window.reloadCurrentModal === 'function') {
+              window.reloadCurrentModal();
+            } else {
+              location.reload();
+            }
+          }, 800);
+        }, 300);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        clearInterval(progressInterval);
+        if (typeof window.showSimpleToast === 'function') {
+          window.showSimpleToast('Error completing assignments: ' + error.message, 'error');
+        } else {
+          alert('Error completing assignments: ' + error.message);
+        }
+      })
+      .finally(() => {
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.disabled = false;
+        }, 1500);
+      });
+    }
+  };
+}
+
+if (typeof window.completeAssignment !== 'function') {
+  window.completeAssignment = function(id) {
+    if (confirm('Mark this assignment as completed?')) {
+      let button = null;
+      if (typeof event !== 'undefined' && event.target) {
+        button = event.target.closest('button');
+      } else {
+        const buttons = document.querySelectorAll('button[onclick*="completeAssignment(' + id + ')"]');
+        if (buttons.length > 0) {
+          button = buttons[0];
+        }
+      }
+
+      if (!button) {
+        console.error('Could not find the complete button');
+        return;
+      }
+
+      const originalContent = button.innerHTML;
+      let progress = 0;
+      const updateProgress = (percent) => {
+        button.innerHTML = `
+          <div class="d-flex align-items-center justify-content-center" style="min-width: 80px;">
+            <div class="spinner-border spinner-border-sm me-1" role="status" style="width: 0.8rem; height: 0.8rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="fw-bold" style="font-size: 0.7rem;">${percent}%</span>
+          </div>
+        `;
+      };
+
+      button.disabled = true;
+      updateProgress(0);
+
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 25;
+        if (progress > 90) progress = 90;
+        updateProgress(Math.floor(progress));
+      }, 100);
+
+      fetch(`/customer-patterns/${id}/update_assignment.json`, {
+        method: 'PATCH',
+        body: JSON.stringify({ delivery_assignment: { status: 'completed' } }),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        clearInterval(progressInterval);
+        updateProgress(100);
+
+        if (data.success) {
+          setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-check text-success"></i>';
+            setTimeout(() => {
+              if (typeof window.showSimpleToast === 'function') {
+                window.showSimpleToast(data.message || 'Assignment completed successfully!', 'success');
+              } else {
+                alert(data.message || 'Assignment completed successfully!');
+              }
+              if (typeof window.reloadCurrentModal === 'function') {
+                window.reloadCurrentModal();
+              } else {
+                location.reload();
+              }
+            }, 600);
+          }, 200);
+        } else {
+          if (typeof window.showSimpleToast === 'function') {
+            window.showSimpleToast(data.message || 'Error completing assignment', 'error');
+          } else {
+            alert(data.message || 'Error completing assignment');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        clearInterval(progressInterval);
+        if (typeof window.showSimpleToast === 'function') {
+          window.showSimpleToast('Error completing assignment: ' + error.message, 'error');
+        } else {
+          alert('Error completing assignment: ' + error.message);
+        }
+      })
+      .finally(() => {
+        setTimeout(() => {
+          button.innerHTML = originalContent;
+          button.disabled = false;
+        }, 1200);
+      });
+    }
+  };
+}
+
+if (typeof window.deleteAssignment !== 'function') {
+  window.deleteAssignment = function(id) {
+    if (confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
+      let button = null;
+      if (typeof event !== 'undefined' && event.target) {
+        button = event.target.closest('button');
+      } else {
+        const buttons = document.querySelectorAll('button[onclick*="deleteAssignment(' + id + ')"]');
+        if (buttons.length > 0) {
+          button = buttons[0];
+        }
+      }
+
+      if (!button) {
+        console.error('Could not find the delete button');
+        return;
+      }
+
+      const originalContent = button.innerHTML;
+      let progress = 0;
+      const updateProgress = (percent) => {
+        button.innerHTML = `
+          <div class="d-flex align-items-center justify-content-center" style="min-width: 80px;">
+            <div class="spinner-border spinner-border-sm me-1 text-danger" role="status" style="width: 0.8rem; height: 0.8rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="fw-bold text-danger" style="font-size: 0.7rem;">${percent}%</span>
+          </div>
+        `;
+      };
+
+      button.disabled = true;
+      updateProgress(0);
+
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress > 90) progress = 90;
+        updateProgress(Math.floor(progress));
+      }, 120);
+
+      fetch(`/customer-patterns/${id}/delete_assignment.json`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        clearInterval(progressInterval);
+        updateProgress(100);
+
+        if (data.success) {
+          setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-trash-alt text-danger"></i>';
+            setTimeout(() => {
+              if (typeof window.showSimpleToast === 'function') {
+                window.showSimpleToast(data.message || 'Assignment deleted successfully!', 'success');
+              } else {
+                alert(data.message || 'Assignment deleted successfully!');
+              }
+              if (typeof window.reloadCurrentModal === 'function') {
+                window.reloadCurrentModal();
+              } else {
+                location.reload();
+              }
+            }, 600);
+          }, 200);
+        } else {
+          if (typeof window.showSimpleToast === 'function') {
+            window.showSimpleToast(data.message || 'Error deleting assignment', 'error');
+          } else {
+            alert(data.message || 'Error deleting assignment');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        clearInterval(progressInterval);
+        if (typeof window.showSimpleToast === 'function') {
+          window.showSimpleToast('Error deleting assignment: ' + error.message, 'error');
+        } else {
+          alert('Error deleting assignment: ' + error.message);
+        }
+      })
+      .finally(() => {
+        setTimeout(() => {
+          button.innerHTML = originalContent;
+          button.disabled = false;
+        }, 1200);
+      });
+    }
+  };
+}
+
+console.log('✅ Modal assignment functions loaded:', {
+  completeTillToday: typeof window.completeTillToday,
+  completeAssignment: typeof window.completeAssignment,
+  deleteAssignment: typeof window.deleteAssignment
+});
+</script>
+
+<% if @delivery_assignments.any? %>
+  <!-- Action Buttons at Top -->
+  <% pending_till_today = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current) %>
+  <% if pending_till_today.any? %>
+    <div class="mb-4">
+      <div class="alert alert-warning d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle me-3 fa-2x text-warning"></i>
+        <div class="flex-grow-1">
+          <strong>⚠️ Pending Assignments Alert</strong><br>
+          <small>There are <strong><%= pending_till_today.count %></strong> pending assignments till today that need completion.</small>
+        </div>
+        <button class="btn btn-dark btn-lg shadow" onclick="window.completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
+          <i class="fas fa-check-circle me-2"></i>
+          Complete Till Today (<%= pending_till_today.count %>)
+        </button>
+      </div>
+    </div>
+  <% end %>
+
+    <!-- Attractive Table -->
+    <div class="card">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">
+          <i class="fas fa-list me-2"></i>
+          Assignment Details (<%= @delivery_assignments.count %> items)
+        </h6>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th><i class="fas fa-calendar me-1"></i>Date</th>
+              <th><i class="fas fa-cube me-1"></i>Product</th>
+              <th><i class="fas fa-weight me-1"></i>Quantity</th>
+              <th><i class="fas fa-user me-1"></i>Person</th>
+              <th><i class="fas fa-info-circle me-1"></i>Status</th>
+              <th><i class="fas fa-rupee-sign me-1"></i>Amount</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @delivery_assignments.each_with_index do |assignment, index| %>
+              <tr class="<%= 'table-light' if index.even? %>">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="date-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; font-size: 12px; font-weight: bold;">
+                      <%= assignment.scheduled_date.strftime("%d") %>
+                    </div>
+                    <div>
+                      <div class="fw-semibold"><%= assignment.scheduled_date.strftime("%b %Y") %></div>
+                      <small class="text-muted"><%= assignment.scheduled_date.strftime("%A") %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-cube text-primary me-2"></i>
+                    <div>
+                      <div class="fw-semibold"><%= assignment.product.name %></div>
+                      <small class="text-muted"><%= assignment.product.unit_type %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">
+                    <strong><%= assignment.quantity %></strong> <%= assignment.unit %>
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 12px;">
+                      <%= assignment.user.name.first.upcase %>
+                    </div>
+                    <span class="text-muted small"><%= assignment.user.name %></span>
+                  </div>
+                </td>
+                <td>
+                  <% case assignment.status %>
+                  <% when 'completed' %>
+                    <span class="badge bg-success rounded-pill">
+                      <i class="fas fa-check me-1"></i>Completed
+                    </span>
+                  <% when 'pending' %>
+                    <span class="badge bg-warning rounded-pill">
+                      <i class="fas fa-clock me-1"></i>Pending
+                    </span>
+                  <% when 'in_progress' %>
+                    <span class="badge bg-info rounded-pill">
+                      <i class="fas fa-truck me-1"></i>In Progress
+                    </span>
+                  <% else %>
+                    <span class="badge bg-danger rounded-pill">
+                      <i class="fas fa-times me-1"></i>Cancelled
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="text-success fw-bold">
+                    ₹<%= number_with_precision(assignment.final_amount, precision: 2) %>
+                  </div>
+                  <% if assignment.has_discount? %>
+                    <small class="text-muted">
+                      <del>₹<%= number_with_precision(assignment.total_amount, precision: 2) %></del>
+                    </small>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-primary btn-sm" onclick="window.editAssignment(<%= assignment.id %>)" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="window.completeAssignment(<%= assignment.id %>)" title="Complete" <%= 'disabled' if assignment.status == 'completed' %>>
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="window.deleteAssignment(<%= assignment.id %>)" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="5" class="text-end">Total:</th>
+              <th>
+                <div class="text-success fw-bold">
+                  ₹<%= number_with_precision(@delivery_assignments.sum(&:final_amount), precision: 2) %>
+                </div>
+              </th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+
+<% else %>
+  <!-- Attractive Empty State -->
+  <div class="text-center py-5">
+    <div class="empty-state-icon mb-4">
+      <i class="fas fa-calendar-times fa-4x text-muted"></i>
+    </div>
+    <h4 class="text-muted mb-3">No Assignments Found</h4>
+    <p class="text-muted mb-4">
+      No delivery assignments were found for <strong><%= @customer.name %></strong> in <strong><%= @month_name %></strong>.
+    </p>
+    <a href="<%= new_delivery_assignment_path(customer_id: @customer.id) %>" class="btn btn-primary" target="_blank">
+      <i class="fas fa-plus me-1"></i>Create New Assignment
+    </a>
+  </div>
+<% end %>
+

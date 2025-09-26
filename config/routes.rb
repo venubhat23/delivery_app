@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       get :get_delivery_people
       get :get_assignment_summary
       get :search_customers
+      post :bulk_edit_assignments
     end
 
     member do

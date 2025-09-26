@@ -39,7 +39,7 @@ class CustomerPatternsController < ApplicationController
 
     # Get all customers for the dropdown (cached separately)
     @customers = Rails.cache.fetch("customers_list", expires_in: 1.hour) do
-      Customer.where(is_active: true).select(:id, :name).order(:name)
+      Customer.where(is_active: true).select(:id, :name, :phone_number, :member_id).order(:name)
     end
 
     start_date = Date.new(@current_year, @current_month, 1).beginning_of_month
@@ -151,15 +151,34 @@ class CustomerPatternsController < ApplicationController
   end
 
   def update_assignment
+    Rails.logger.info "🎯 UPDATE ASSIGNMENT called with params: #{params.inspect}"
+
     @assignment = DeliveryAssignment.find(params[:id])
+    Rails.logger.info "📋 Found assignment: #{@assignment.id}, current quantity: #{@assignment.quantity}, unit: #{@assignment.unit}"
+    Rails.logger.info "🔄 New params: #{assignment_params.inspect}"
 
     if @assignment.update(assignment_params)
+      # Recalculate final amount if quantity or discount changed
+      if @assignment.product.present?
+        base_amount = @assignment.product.price * @assignment.quantity
+        discount_amount = @assignment.discount_amount || 0
+        final_amount = [base_amount - discount_amount, 0].max
+        @assignment.update_column(:final_amount_after_discount, final_amount)
+      end
+
       clear_customer_patterns_cache
       respond_to do |format|
         format.json {
           render json: {
             success: true,
-            message: "✅ Assignment updated successfully"
+            message: "✅ Assignment updated successfully",
+            assignment: {
+              id: @assignment.id,
+              quantity: @assignment.quantity,
+              unit: @assignment.unit,
+              discount_amount: @assignment.discount_amount,
+              final_amount_after_discount: @assignment.final_amount_after_discount
+            }
           }
         }
       end
@@ -390,28 +409,46 @@ class CustomerPatternsController < ApplicationController
   end
 
   def search_customers
-    query = params[:query]&.strip
+    # Support both 'q' (Select2 format) and 'query' (legacy format) parameters
+    query = (params[:q] || params[:query])&.strip
+    load_all = params[:load_all] == 'true'
 
-    if query.present? && query.length >= 1
-      customers = Rails.cache.fetch("customer_search_#{query.downcase}", expires_in: 5.minutes) do
-        Customer.where(is_active: true)
-               .where("name ILIKE ?", "#{query}%")
-               .select(:id, :name)
-               .order(:name)
-               .limit(10)
-               .to_a
+    if load_all || (query.present? && query.length >= 0)
+      cache_key = load_all ? "all_customers_list" : "customer_search_#{query.downcase}"
+
+      customers = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+        if load_all
+          # Load all active customers for initial display
+          Customer.where(is_active: true)
+                 .select(:id, :name)
+                 .order(:name)
+                 .to_a
+        else
+          # Search with query
+          Customer.where(is_active: true)
+                 .where("name ILIKE ?", "#{query}%")
+                 .select(:id, :name)
+                 .order(:name)
+                 .limit(50)
+                 .to_a
+        end
       end
 
+      # Format for our custom dropdown
+      results = customers.map { |c| { id: c.id, text: c.name } }
+
       render json: {
-        success: true,
-        customers: customers.map { |c| { id: c.id, name: c.name } }
+        results: results,
+        pagination: { more: false },
+        query: query,
+        total: customers.length
       }
     else
-      render json: { success: true, customers: [] }
+      render json: { results: [], pagination: { more: false } }
     end
   rescue => e
     Rails.logger.error "Error in search_customers: #{e.message}"
-    render json: { success: false, customers: [] }, status: 500
+    render json: { results: [], pagination: { more: false } }, status: 500
   end
 
   def get_assignment_summary
@@ -455,6 +492,101 @@ class CustomerPatternsController < ApplicationController
           date_range: "Error loading"
         }
       }, status: 500
+    end
+  end
+
+  def bulk_edit_assignments
+    @customer = Customer.find(params[:customer_id])
+    month = params[:month]&.to_i || Date.current.month
+    year = params[:year]&.to_i || Date.current.year
+    new_quantity = params[:quantity]&.to_f
+    new_unit = params[:unit].presence || 'liters'
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    # Verify eligibility before proceeding
+    unless check_bulk_edit_eligibility(@customer.id, start_date, end_date)
+      respond_to do |format|
+        format.json {
+          render json: {
+            success: false,
+            message: "❌ Bulk edit not allowed. Customer must have assignments for all days with same quantity."
+          }
+        }
+      end
+      return
+    end
+
+    # Find all pending assignments for this customer in the selected month
+    assignments_to_update = DeliveryAssignment
+      .where(customer_id: @customer.id)
+      .where(status: 'pending')
+      .where(scheduled_date: start_date..end_date)
+
+    updated_count = 0
+    total_assignments = assignments_to_update.count
+    errors = []
+
+    DeliveryAssignment.transaction do
+      assignments_to_update.find_each do |assignment|
+        begin
+          update_attrs = {
+            quantity: new_quantity,
+            unit: new_unit
+          }
+
+          if assignment.update(update_attrs)
+            # Always recalculate final amount after updating quantity/unit
+            if assignment.product.present?
+              # Calculate the new final amount based on product price and new quantity
+              base_amount = assignment.product.price * new_quantity
+              discount_amount = assignment.discount_amount || 0
+              assignment.update_column(:final_amount_after_discount, base_amount - discount_amount)
+            end
+            updated_count += 1
+          else
+            errors << "Assignment #{assignment.id}: #{assignment.errors.full_messages.join(', ')}"
+          end
+        rescue => e
+          errors << "Assignment #{assignment.id}: #{e.message}"
+        end
+      end
+
+      # Rollback if too many errors
+      if errors.size > total_assignments * 0.1 # Allow up to 10% failures
+        raise "Too many assignment update failures: #{errors.size}/#{total_assignments}"
+      end
+    end
+
+    clear_customer_patterns_cache if updated_count > 0
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: true,
+          message: "✅ Successfully updated #{updated_count} assignments for #{@customer.name} in #{Date::MONTHNAMES[month]} #{year}",
+          updated_count: updated_count,
+          total_assignments: total_assignments,
+          customer_name: @customer.name,
+          month_name: Date::MONTHNAMES[month],
+          year: year,
+          errors: errors.first(5) # Return first 5 errors if any
+        }
+      }
+    end
+  rescue => e
+    Rails.logger.error "Error in bulk_edit_assignments: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: false,
+          message: "❌ Error updating assignments: #{e.message}",
+          errors: errors
+        }, status: 500
+      }
     end
   end
 
@@ -545,6 +677,44 @@ class CustomerPatternsController < ApplicationController
 
   def assignment_params
     params.require(:delivery_assignment).permit(:quantity, :unit, :discount_amount, :status, :scheduled_date)
+  end
+
+  # Check if customer is eligible for bulk edit
+  # Requirements: All days in month have assignments with same quantity
+  def check_bulk_edit_eligibility(customer_id, start_date, end_date)
+    days_in_month = end_date.day
+
+    # Check ALL assignments to determine if the customer has a consistent pattern
+    all_assignments = DeliveryAssignment.where(
+      customer_id: customer_id,
+      scheduled_date: start_date..end_date
+    ).pluck(:scheduled_date, :quantity)
+
+    # Must have assignments for every day of the month
+    return false unless all_assignments.length == days_in_month
+
+    # All assignments must have the same quantity
+    quantities = all_assignments.map(&:last).uniq
+    return false unless quantities.length == 1
+
+    # Must have a valid quantity greater than 0
+    return false unless quantities.first > 0
+
+    # Additionally check if there are any pending assignments to edit
+    # (We need at least some pending assignments to make editing worthwhile)
+    pending_assignments_count = DeliveryAssignment.where(
+      customer_id: customer_id,
+      scheduled_date: start_date..end_date,
+      status: 'pending'
+    ).count
+
+    # Allow editing if there are pending assignments (even if not all days are pending)
+    return false unless pending_assignments_count > 0
+
+    true
+  rescue => e
+    Rails.logger.error "Error checking bulk edit eligibility for customer #{customer_id}: #{e.message}"
+    false
   end
 
   def clear_customer_patterns_cache
@@ -676,7 +846,8 @@ class CustomerPatternsController < ApplicationController
           pattern_description: pattern_description,
           total_assignments: row[4].to_i,
           scheduled_quantity: row[8]&.to_f&.round(2),
-          scheduled_product: row[9]
+          scheduled_product: row[9],
+          can_bulk_edit: check_bulk_edit_eligibility(row[0], start_date, end_date)
         }
       end
 

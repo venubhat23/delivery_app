@@ -1,46 +1,36 @@
-<div class="modal-header">
-  <h5 class="modal-title">
-    ✏️ Edit Assignment - <%= assignment.customer.name %>
-    <small class="text-muted">(<%= assignment.scheduled_date.strftime("%d %b %Y") %>)</small>
+<div class="modal-header bg-primary text-white">
+  <h5 class="modal-title d-flex align-items-center">
+    <i class="fas fa-edit me-2"></i>
+    Edit Assignment
   </h5>
-  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 
 <div class="modal-body">
+  <!-- Customer and Date Info -->
+  <div class="alert alert-info d-flex align-items-center mb-4">
+    <i class="fas fa-user me-3 fa-2x"></i>
+    <div>
+      <h6 class="mb-1 fw-bold"><%= assignment.customer.name %></h6>
+      <small class="text-muted">
+        <i class="fas fa-calendar me-1"></i>
+        <%= assignment.scheduled_date.strftime("%d %B %Y") %>
+        (<%= assignment.scheduled_date.strftime("%A") %>)
+      </small>
+    </div>
+  </div>
+
   <%= form_with model: assignment, url: update_assignment_customer_pattern_path(assignment), local: false, id: "edit-assignment-form", data: { assignment_id: assignment.id } do |form| %>
     <div class="row">
       <div class="col-md-6">
         <div class="mb-3">
-          <%= form.label :scheduled_date, "Delivery Date", class: "form-label" %>
-          <%= form.date_field :scheduled_date, class: "form-control" %>
+          <%= form.label :quantity, "Quantity", class: "form-label fw-bold" %>
+          <%= form.number_field :quantity, class: "form-control form-control-lg", step: 0.1, min: 0, placeholder: "Enter quantity" %>
         </div>
       </div>
       <div class="col-md-6">
         <div class="mb-3">
-          <%= form.label :status, "Status", class: "form-label" %>
-          <%= form.select :status,
-              options_for_select([
-                ['Pending', 'pending'],
-                ['In Progress', 'in_progress'],
-                ['Completed', 'completed'],
-                ['Cancelled', 'cancelled']
-              ], assignment.status),
-              {},
-              { class: "form-select" } %>
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-4">
-        <div class="mb-3">
-          <%= form.label :quantity, "Quantity", class: "form-label" %>
-          <%= form.number_field :quantity, class: "form-control", step: 0.1, min: 0 %>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="mb-3">
-          <%= form.label :unit, "Unit", class: "form-label" %>
+          <%= form.label :unit, "Unit", class: "form-label fw-bold" %>
           <%= form.select :unit,
               options_for_select([
                 ['Liters', 'liters'],
@@ -50,88 +40,273 @@
                 ['Pieces', 'pieces']
               ], assignment.unit),
               {},
-              { class: "form-select" } %>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="mb-3">
-          <%= form.label :discount_amount, "Discount Amount", class: "form-label" %>
-          <div class="input-group">
-            <span class="input-group-text">₹</span>
-            <%= form.number_field :discount_amount, class: "form-control", step: 0.01, min: 0 %>
-          </div>
+              { class: "form-select form-select-lg" } %>
         </div>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-12">
-        <div class="card bg-light">
-          <div class="card-body">
-            <h6 class="card-title">Assignment Details</h6>
-            <div class="row">
-              <div class="col-md-4">
-                <strong>Product:</strong><br>
-                <span class="badge bg-secondary"><%= assignment.product.name %></span>
-              </div>
-              <div class="col-md-4">
-                <strong>Unit Price:</strong><br>
-                ₹<%= number_with_precision(assignment.product.price, precision: 2) %>
-              </div>
-              <div class="col-md-4">
-                <strong>Delivery Person:</strong><br>
-                <span class="badge bg-info"><%= assignment.user.name %></span>
-              </div>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-md-4">
-                <strong>Total Amount:</strong><br>
-                <span id="calculated-total">₹<%= number_with_precision(assignment.total_amount, precision: 2) %></span>
-              </div>
-              <div class="col-md-4">
-                <strong>After Discount:</strong><br>
-                <span id="calculated-final" class="fw-bold">₹<%= number_with_precision(assignment.final_amount, precision: 2) %></span>
-              </div>
-              <div class="col-md-4">
-                <strong>Discount %:</strong><br>
-                <span id="calculated-discount-percent"><%= assignment.discount_percentage %>%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Hidden fields for unchanged values -->
+    <%= form.hidden_field :scheduled_date %>
+    <%= form.hidden_field :status %>
+    <%= form.hidden_field :discount_amount %>
   <% end %>
 </div>
 
 <div class="modal-footer">
-  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-  <button type="submit" class="btn btn-primary" id="update-assignment-btn" data-assignment-id="<%= assignment.id %>">
-    💾 Save Changes
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+    <i class="fas fa-times me-1"></i>Cancel
+  </button>
+  <button type="submit" class="btn btn-primary btn-lg" id="update-assignment-btn" data-assignment-id="<%= assignment.id %>">
+    <i class="fas fa-save me-2"></i>Save Changes
   </button>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Execute immediately since this is loaded via AJAX
+(function() {
+  console.log('🔧 Edit assignment modal script loaded');
+
   const form = document.getElementById('edit-assignment-form');
-  const quantityInput = form.querySelector('#delivery_assignment_quantity');
-  const discountInput = form.querySelector('#delivery_assignment_discount_amount');
-  const unitPrice = <%= assignment.product.price %>;
+  const submitBtn = document.getElementById('update-assignment-btn');
 
-  function updateCalculations() {
-    const quantity = parseFloat(quantityInput.value) || 0;
-    const discount = parseFloat(discountInput.value) || 0;
-    const total = quantity * unitPrice;
-    const finalAmount = Math.max(total - discount, 0);
-    const discountPercent = total > 0 ? ((discount / total) * 100).toFixed(2) : 0;
+  console.log('🔍 Form found:', !!form);
+  console.log('🔍 Submit button found:', !!submitBtn);
 
-    document.getElementById('calculated-total').textContent = `₹${total.toFixed(2)}`;
-    document.getElementById('calculated-final').textContent = `₹${finalAmount.toFixed(2)}`;
-    document.getElementById('calculated-discount-percent').textContent = `${discountPercent}%`;
+  // Enhanced form submission with attractive loading and progress
+  if (submitBtn) {
+    console.log('✅ Adding click event listener to Save Changes button');
+    console.log('Submit button details:', {
+      id: submitBtn.id,
+      dataset: submitBtn.dataset,
+      innerHTML: submitBtn.innerHTML
+    });
+
+    submitBtn.addEventListener('click', function(e) {
+      console.log('🎯 Save Changes button clicked!');
+      e.preventDefault();
+      e.stopPropagation();
+      submitEditAssignmentForm();
+    });
+
+    // Also add a test click to verify the event is working
+    console.log('🧪 Testing button click event...');
+    submitBtn.onclick = function(e) {
+      console.log('🎯 onclick handler triggered!');
+      e.preventDefault();
+      e.stopPropagation();
+      submitEditAssignmentForm();
+      return false;
+    };
+  } else {
+    console.error('❌ Submit button not found!');
+    console.log('Available elements:', document.querySelectorAll('button'));
   }
 
-  if (quantityInput) quantityInput.addEventListener('input', updateCalculations);
-  if (discountInput) discountInput.addEventListener('input', updateCalculations);
+  function submitEditAssignmentForm() {
+    console.log('🚀 Starting form submission...');
+
+    if (!form) {
+      console.error('❌ Form not found!');
+      return;
+    }
+
+    if (!form.checkValidity()) {
+      console.log('⚠️ Form validation failed');
+      form.reportValidity();
+      return;
+    }
+
+    const assignmentId = submitBtn.dataset.assignmentId;
+    const originalText = submitBtn.innerHTML;
+    const csrfToken = document.querySelector('[name="csrf-token"]')?.getAttribute('content');
+
+    console.log('📋 Form submission details:', {
+      assignmentId: assignmentId,
+      formAction: form.action,
+      formMethod: form.method,
+      csrfToken: csrfToken ? '✅ Found' : '❌ Missing',
+      quantity: form.querySelector('[name="delivery_assignment[quantity]"]')?.value,
+      unit: form.querySelector('[name="delivery_assignment[unit]"]')?.value,
+      scheduledDate: form.querySelector('[name="delivery_assignment[scheduled_date]"]')?.value,
+      status: form.querySelector('[name="delivery_assignment[status]"]')?.value,
+      discountAmount: form.querySelector('[name="delivery_assignment[discount_amount]"]')?.value
+    });
+
+    if (!assignmentId) {
+      console.error('❌ Assignment ID missing!');
+      alert('Error: Assignment ID not found');
+      return;
+    }
+
+    if (!csrfToken) {
+      console.error('❌ CSRF token missing!');
+      alert('Error: CSRF token not found');
+      return;
+    }
+
+    // Disable form inputs
+    const inputs = form.querySelectorAll('input, select, textarea, button');
+    inputs.forEach(input => input.disabled = true);
+
+    // Create attractive progress loader with percentage
+    let progress = 0;
+    const updateProgress = (percent) => {
+      submitBtn.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center" style="min-width: 120px;">
+          <div class="spinner-border spinner-border-sm me-2" role="status" style="width: 1rem; height: 1rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="progress-container me-2" style="width: 60px; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; position: relative; overflow: hidden;">
+            <div class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: ${percent}%; transition: width 0.3s ease; border-radius: 3px;"></div>
+          </div>
+          <span class="fw-bold" style="font-size: 0.8rem;">${percent}%</span>
+        </div>
+      `;
+    };
+
+    updateProgress(0);
+
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 15 + 5; // Progress between 5-20% each interval
+      if (progress > 85) progress = 85; // Cap at 85% until actual completion
+      updateProgress(Math.floor(progress));
+    }, 150);
+
+    const formData = new FormData(form);
+
+    console.log('📤 Making API request:', {
+      url: form.action,
+      method: 'PATCH',
+      formData: Object.fromEntries(formData.entries())
+    });
+
+    fetch(form.action, {
+      method: 'PATCH',
+      body: formData,
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-Token': csrfToken
+      }
+    })
+    .then(response => {
+      console.log('📥 API Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: response.headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      clearInterval(progressInterval);
+      updateProgress(100);
+
+      if (data.success) {
+        // Show completion animation
+        setTimeout(() => {
+          submitBtn.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center">
+              <i class="fas fa-check-circle text-white me-2"></i>
+              <span>Updated Successfully!</span>
+            </div>
+          `;
+
+          // Show success toast
+          if (window.showSimpleToast) {
+            window.showSimpleToast(data.message || 'Assignment updated successfully! ✅', 'success');
+          }
+
+          // Wait a bit then close modal and reload
+          setTimeout(() => {
+            // Close the edit modal using Bootstrap modal method
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+            if (editModal) {
+              editModal.hide();
+            } else {
+              // Fallback method if Bootstrap modal instance not found
+              const editModalEl = document.getElementById('editModal');
+              if (editModalEl) {
+                editModalEl.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+              }
+            }
+
+            // Reload the main delivery assignments modal
+            if (window.reloadCurrentModal) {
+              window.reloadCurrentModal();
+            }
+          }, 1500);
+
+        }, 300);
+      } else {
+        throw new Error(data.message || 'Update failed');
+      }
+    })
+    .catch(error => {
+      console.error('❌ Error updating assignment:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      clearInterval(progressInterval);
+
+      // Show error state
+      submitBtn.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center">
+          <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+          <span>Update Failed</span>
+        </div>
+      `;
+
+      if (window.showSimpleToast) {
+        window.showSimpleToast('Error updating assignment: ' + error.message, 'error');
+      }
+
+      // Re-enable form after showing error
+      setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        inputs.forEach(input => input.disabled = false);
+      }, 2000);
+    });
+  }
+
+  // Also make submitEditAssignmentForm available globally as backup
+  window.submitEditAssignmentFormBackup = function(assignmentId) {
+    console.log('🔄 Backup form submission called with ID:', assignmentId);
+
+    const form = document.getElementById('edit-assignment-form');
+    const submitBtn = document.getElementById('update-assignment-btn');
+
+    if (!form || !submitBtn) {
+      console.error('❌ Form or submit button not found in backup method');
+      alert('Error: Form elements not found');
+      return;
+    }
+
+    submitEditAssignmentForm();
+  };
+
+})(); // End of IIFE
+
+// Add a global click handler as final fallback
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'update-assignment-btn') {
+    console.log('🎯 Global click handler caught Save Changes button!');
+    e.preventDefault();
+    e.stopPropagation();
+
+    const assignmentId = e.target.dataset.assignmentId;
+    if (window.submitEditAssignmentFormBackup) {
+      window.submitEditAssignmentFormBackup(assignmentId);
+    }
+    return false;
+  }
 });
 </script>

@@ -1,5 +1,44 @@
 <!-- Modal content loads here - no header needed as it's in main modal -->
 
+<script>
+// Functions are now defined at page level - just verify they exist
+console.log('🔧 Verifying assignment functions in modal context...');
+
+// Verify functions are available (they're defined at page level now)
+if (typeof window.completeTillToday === 'function') {
+  console.log('✅ completeTillToday available');
+} else {
+  console.error('❌ completeTillToday not available');
+}
+
+if (typeof window.completeAssignment === 'function') {
+  console.log('✅ completeAssignment available');
+} else {
+  console.error('❌ completeAssignment not available');
+}
+
+if (typeof window.deleteAssignment === 'function') {
+  console.log('✅ deleteAssignment available');
+} else {
+  console.error('❌ deleteAssignment not available');
+}
+
+if (typeof window.editAssignment === 'function') {
+  console.log('✅ editAssignment available');
+} else {
+  console.error('❌ editAssignment not available');
+}
+
+// editAssignment function is now defined at page level - no need to redefine here
+
+console.log('✅ Assignment functions loaded:', {
+  completeTillToday: typeof window.completeTillToday,
+  completeAssignment: typeof window.completeAssignment,
+  deleteAssignment: typeof window.deleteAssignment,
+  editAssignment: typeof window.editAssignment
+});
+</script>
+
 <% if @delivery_assignments.any? %>
   <!-- Action Buttons at Top -->
   <% pending_till_today = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current) %>
@@ -11,7 +50,7 @@
           <strong>⚠️ Pending Assignments Alert</strong><br>
           <small>There are <strong><%= pending_till_today.count %></strong> pending assignments till today that need completion.</small>
         </div>
-        <button class="btn btn-dark btn-lg shadow" onclick="completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
+        <button class="btn btn-dark btn-lg shadow" onclick="window.completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
           <i class="fas fa-check-circle me-2"></i>
           Complete Till Today (<%= pending_till_today.count %>)
         </button>
@@ -153,4 +192,3 @@
     </a>
   </div>
 <% end %>
-
