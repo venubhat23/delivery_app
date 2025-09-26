@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     collection do
       get :customer_deliveries
       post :complete_till_today
+      post :complete_all
       get :get_pending_count
       post :complete_all_till_today
       post :remove_all_assignments

@@ -548,7 +548,7 @@
                             <i class="fas fa-truck me-1"></i>Deliveries
                           </button>
 
-                          <% if data[:can_bulk_edit] %>
+                          <% if data[:pattern] == 'regular' %>
                             <button type="button"
                                     class="btn bulk-edit-btn"
                                     style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none; color: white; border-radius: 25px; padding: 8px 12px; font-size: 12px; transition: all 0.3s ease;"
@@ -560,6 +560,7 @@
                                     data-year="<%= @current_year %>"
                                     title="Edit All Assignments for this Month"
                                     data-action="bulk-edit"
+                                    onclick="openBulkEditModal('<%= data[:customer].id %>', '<%= data[:customer].name %>', '<%= data[:scheduled_quantity] || 0 %>', '<%= data[:scheduled_product] %>', '<%= @current_month %>', '<%= @current_year %>')"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(240, 147, 251, 0.4)';"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(240, 147, 251, 0.3)';">
                               <i class="fas fa-edit me-1"></i>Edit
@@ -2456,6 +2457,73 @@ body:not(.modal-open) {
 // Assignment action functions - Defined at very top for immediate global access
 console.log('🔧 Loading assignment functions at page level...');
 
+// Define critical functions immediately to prevent undefined errors
+window.openBulkEditModal = function(customerId, customerName, scheduledQuantity, scheduledProduct, month, year) {
+  console.log('🎯 Opening bulk edit modal for:', customerName);
+
+  const modal = document.getElementById('bulkEditModal');
+  if (!modal) {
+    console.error('❌ Bulk edit modal not found!');
+    alert('Error: Modal not found');
+    return;
+  }
+
+  // Update modal title and customer info
+  document.getElementById('bulkEditModalTitle').textContent = `Edit All Assignments - ${customerName}`;
+  document.getElementById('bulkEditCustomerName').value = customerName;
+  document.getElementById('bulkEditCustomerId').value = customerId;
+  document.getElementById('bulkEditMonth').value = month;
+  document.getElementById('bulkEditYear').value = year;
+
+  // Update current info display
+  const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+  document.getElementById('bulkEditMonthDisplay').textContent = `${monthNames[month]} ${year}`;
+  document.getElementById('bulkEditCurrentQuantity').textContent = scheduledQuantity || 'N/A';
+  document.getElementById('bulkEditCurrentProduct').textContent = scheduledProduct || 'N/A';
+
+  // Pre-fill quantity with current scheduled quantity
+  if (scheduledQuantity && scheduledQuantity > 0) {
+    document.getElementById('bulkEditQuantity').value = scheduledQuantity;
+  }
+
+  // Store current modal data for reload functionality
+  window.currentModalData = { customerId, customerName, month, year };
+  console.log('💾 Stored modal data:', window.currentModalData);
+
+  // Show modal
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+
+  console.log('✅ Bulk edit modal opened successfully');
+};
+
+window.reloadCurrentModal = function() {
+  console.log('🔄 reloadCurrentModal called');
+
+  if (window.currentModalData) {
+    console.log('✅ Found currentModalData:', window.currentModalData);
+    const { customerId, customerName, month, year } = window.currentModalData;
+    console.log('🔄 Reloading modal content for:', { customerId, customerName, month, year });
+    loadModalContent(customerId, customerName, month, year);
+
+    // Ensure handlers are initialized after reload
+    setTimeout(() => {
+      initializeModalButtonHandlers();
+    }, 200);
+  } else {
+    console.error('❌ No currentModalData found - cannot reload modal');
+    if (typeof window.showSimpleToast === 'function') {
+      window.showSimpleToast('Error: Cannot reload modal - no current data', 'error');
+    }
+  }
+};
+
+console.log('✅ Critical functions defined immediately:', {
+  openBulkEditModal: typeof window.openBulkEditModal,
+  reloadCurrentModal: typeof window.reloadCurrentModal
+});
+
 // Complete Till Today function
 window.completeTillToday = function(customerId, month, year) {
   console.log('🎯 completeTillToday called:', customerId, month, year);
@@ -2482,6 +2550,39 @@ window.completeTillToday = function(customerId, month, year) {
   .catch(error => {
     console.error('Error:', error);
     alert('Error completing assignments');
+  })
+  .finally(() => {
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+  });
+};
+
+// Complete All function
+window.completeAll = function(customerId, month, year) {
+  console.log('🎯 completeAll called:', customerId, month, year);
+  if (!confirm('Mark ALL pending assignments for this customer as completed?')) return;
+
+  const button = event.target.closest('button');
+  const originalHTML = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+  button.disabled = true;
+
+  fetch('/customer-patterns/complete_all', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    },
+    body: JSON.stringify({ customer_id: customerId, month: month, year: year })
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message || 'All assignments completed successfully!');
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error completing all assignments');
   })
   .finally(() => {
     button.innerHTML = originalHTML;
@@ -2800,42 +2901,7 @@ function closeDeliveryModal() {
   console.log('Modal closed');
 }
 
-// Bulk Edit Modal Functions
-window.openBulkEditModal = function(customerId, customerName, scheduledQuantity, scheduledProduct, month, year) {
-  console.log('Opening bulk edit modal for:', customerName);
-
-  const modal = document.getElementById('bulkEditModal');
-  if (!modal) {
-    console.error('Bulk edit modal not found!');
-    alert('Error: Modal not found');
-    return;
-  }
-
-  // Update modal title and customer info
-  document.getElementById('bulkEditModalTitle').textContent = `Edit All Assignments - ${customerName}`;
-  document.getElementById('bulkEditCustomerName').value = customerName;
-  document.getElementById('bulkEditCustomerId').value = customerId;
-  document.getElementById('bulkEditMonth').value = month;
-  document.getElementById('bulkEditYear').value = year;
-
-  // Update current info display
-  const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
-                     'July', 'August', 'September', 'October', 'November', 'December'];
-  document.getElementById('bulkEditMonthDisplay').textContent = `${monthNames[month]} ${year}`;
-  document.getElementById('bulkEditCurrentQuantity').textContent = scheduledQuantity || 'N/A';
-  document.getElementById('bulkEditCurrentProduct').textContent = scheduledProduct || 'N/A';
-
-  // Pre-fill quantity with current scheduled quantity
-  if (scheduledQuantity && scheduledQuantity > 0) {
-    document.getElementById('bulkEditQuantity').value = scheduledQuantity;
-  }
-
-  // Show modal
-  modal.style.display = 'flex';
-  document.body.classList.add('modal-open');
-
-  console.log('Bulk edit modal opened successfully');
-};
+// Bulk Edit Modal Functions - REMOVED DUPLICATE (defined above)
 
 window.closeBulkEditModal = function() {
   const modal = document.getElementById('bulkEditModal');
@@ -2997,7 +3063,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert(data.message || 'All assignments updated successfully!');
+          // No success message - just close modal and reload
           window.closeBulkEditModal();
           // Reload the page to show updated data
           location.reload();
@@ -3380,104 +3446,9 @@ window.completeAssignment = function(id) {
   }
 };
 
-window.completeTillToday = function(customerId, month, year) {
-  if (confirm('Mark all pending assignments till today as completed?')) {
-    const button = event.target.closest('button');
-    const originalText = button.innerHTML;
+// REMOVED: Duplicate window.completeTillToday function definition (defined above at line 2461)
 
-    // Create attractive progress loader with percentage
-    let progress = 0;
-    const updateProgress = (percent) => {
-      button.innerHTML = `
-        <div class="d-flex align-items-center">
-          <div class="spinner-border spinner-border-sm me-2" role="status" style="width: 1.2rem; height: 1.2rem;">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <div class="progress-container" style="flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; position: relative; overflow: hidden;">
-            <div class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: ${percent}%; transition: width 0.3s ease; border-radius: 4px;"></div>
-          </div>
-          <span class="ms-2 fw-bold" style="min-width: 35px; font-size: 0.8rem;">${percent}%</span>
-        </div>
-      `;
-    };
-
-    button.disabled = true;
-    updateProgress(0);
-
-    console.log('Sending complete till today request:', { customerId, month, year });
-
-    // Simulate progress for better UX
-    const progressInterval = setInterval(() => {
-      progress += Math.random() * 20;
-      if (progress > 90) progress = 90;
-      updateProgress(Math.floor(progress));
-    }, 150);
-
-    fetch('/customer-patterns/complete_till_today', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-      },
-      body: JSON.stringify({
-        customer_id: customerId,
-        month: month,
-        year: year
-      })
-    })
-    .then(response => {
-      console.log('Response status:', response.status);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Response data:', data);
-      clearInterval(progressInterval);
-      updateProgress(100);
-
-      // Show completion animation
-      setTimeout(() => {
-        button.innerHTML = '<i class="fas fa-check text-success me-1"></i>Completed!';
-        setTimeout(() => {
-          window.showSimpleToast(data.message || 'Assignments completed successfully!', 'success');
-          window.reloadCurrentModal();
-        }, 800);
-      }, 300);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      clearInterval(progressInterval);
-      window.showSimpleToast('Error completing assignments: ' + error.message, 'error');
-    })
-    .finally(() => {
-      setTimeout(() => {
-        button.innerHTML = originalText;
-        button.disabled = false;
-      }, 1500);
-    });
-  }
-};
-
-window.reloadCurrentModal = function() {
-  console.log('🔄 reloadCurrentModal called');
-
-  if (window.currentModalData) {
-    console.log('✅ Found currentModalData:', window.currentModalData);
-    const { customerId, customerName, month, year } = window.currentModalData;
-    console.log('🔄 Reloading modal content for:', { customerId, customerName, month, year });
-    loadModalContent(customerId, customerName, month, year);
-
-    // Ensure handlers are initialized after reload
-    setTimeout(() => {
-      initializeModalButtonHandlers();
-    }, 200);
-  } else {
-    console.error('❌ No currentModalData found - cannot reload modal');
-    window.showSimpleToast('Error: Cannot reload modal - no current data', 'error');
-  }
-};
+// REMOVED: Duplicate window.reloadCurrentModal function definition (defined above)
 
 // Handle edit form submission via event delegation
 document.addEventListener('submit', function(e) {
@@ -5883,87 +5854,7 @@ if (typeof window.deleteAssignment !== 'function') {
   };
 }
 
-if (typeof window.completeTillToday !== 'function') {
-  console.log('🔧 Adding missing completeTillToday function...');
-  window.completeTillToday = function(customerId, month, year) {
-    if (confirm('Mark all pending assignments till today as completed?')) {
-      const button = event.target.closest('button');
-      if (!button) {
-        console.error('Could not find button');
-        return;
-      }
-
-      const originalText = button.innerHTML;
-      let progress = 0;
-      const updateProgress = (percent) => {
-        button.innerHTML = `
-          <div class="d-flex align-items-center">
-            <div class="spinner-border spinner-border-sm me-2" role="status" style="width: 1.2rem; height: 1.2rem;">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <div class="progress-container" style="flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; position: relative; overflow: hidden;">
-              <div class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: ${percent}%; transition: width 0.3s ease; border-radius: 4px;"></div>
-            </div>
-            <span class="ms-2 fw-bold" style="min-width: 35px; font-size: 0.8rem;">${percent}%</span>
-          </div>
-        `;
-      };
-
-      button.disabled = true;
-      updateProgress(0);
-
-      const progressInterval = setInterval(() => {
-        progress += Math.random() * 20;
-        if (progress > 90) progress = 90;
-        updateProgress(Math.floor(progress));
-      }, 150);
-
-      fetch('/customer-patterns/complete_till_today', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-          customer_id: customerId,
-          month: month,
-          year: year
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        clearInterval(progressInterval);
-        updateProgress(100);
-
-        setTimeout(() => {
-          button.innerHTML = '<i class="fas fa-check text-success me-1"></i>Completed!';
-          setTimeout(() => {
-            window.showSimpleToast ? window.showSimpleToast(data.message || 'Assignments completed!', 'success') : alert(data.message);
-            if (window.reloadCurrentModal) {
-              window.reloadCurrentModal();
-            } else {
-              // Store modal state before reload
-              if (window.currentModalData) {
-                sessionStorage.setItem('reopenModal', JSON.stringify(window.currentModalData));
-              }
-              location.reload();
-            }
-          }, 800);
-        }, 300);
-      })
-      .catch(error => {
-        clearInterval(progressInterval);
-        window.showSimpleToast ? window.showSimpleToast('Error: ' + error.message, 'error') : alert('Error: ' + error.message);
-      })
-      .finally(() => {
-        setTimeout(() => {
-          button.innerHTML = originalText;
-          button.disabled = false;
-        }, 1500);
-      });
-    }
-  };
-}
+// REMOVED: Duplicate window.completeTillToday function definition (already defined above at line 2461)
 
 // Final verification that our critical functions are available
 if (typeof window.completeAssignment !== 'function') {
@@ -6007,5 +5898,315 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ No modal to reopen');
   }
 });
+
+// =============================================
+// EDIT ASSIGNMENT FUNCTIONALITY
+// =============================================
+
+// Global event delegation for Save Changes button in edit modal
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'update-assignment-btn') {
+    console.log('🎯 Save Changes button clicked via event delegation!');
+    e.preventDefault();
+    e.stopPropagation();
+
+    handleEditAssignmentSubmission(e.target);
+    return false;
+  }
+});
+
+// Handle edit assignment form submission
+function handleEditAssignmentSubmission(submitBtn) {
+  console.log('🚀 Starting edit assignment form submission...');
+
+  const form = document.getElementById('edit-assignment-form');
+  if (!form) {
+    console.error('❌ Form not found!');
+    alert('Error: Form not found');
+    return;
+  }
+
+  if (!form.checkValidity()) {
+    console.log('⚠️ Form validation failed');
+    form.reportValidity();
+    return;
+  }
+
+  const assignmentId = submitBtn.dataset.assignmentId;
+  const originalText = submitBtn.innerHTML;
+  const csrfToken = document.querySelector('[name="csrf-token"]')?.getAttribute('content');
+
+  console.log('📋 Form submission details:', {
+    assignmentId: assignmentId,
+    formAction: form.action,
+    formMethod: form.method,
+    csrfToken: csrfToken ? '✅ Found' : '❌ Missing',
+    quantity: form.querySelector('[name="delivery_assignment[quantity]"]')?.value,
+    unit: form.querySelector('[name="delivery_assignment[unit]"]')?.value,
+    scheduledDate: form.querySelector('[name="delivery_assignment[scheduled_date]"]')?.value,
+    status: form.querySelector('[name="delivery_assignment[status]"]')?.value,
+    discountAmount: form.querySelector('[name="delivery_assignment[discount_amount]"]')?.value
+  });
+
+  if (!assignmentId) {
+    console.error('❌ Assignment ID missing!');
+    alert('Error: Assignment ID not found');
+    return;
+  }
+
+  if (!csrfToken) {
+    console.error('❌ CSRF token missing!');
+    alert('Error: CSRF token not found');
+    return;
+  }
+
+  // Disable form inputs
+  const inputs = form.querySelectorAll('input, select, textarea, button');
+  inputs.forEach(input => input.disabled = true);
+
+  // Create attractive progress loader with percentage
+  let progress = 0;
+  const updateProgress = (percent) => {
+    submitBtn.innerHTML = `
+      <div class="d-flex align-items-center justify-content-center" style="min-width: 120px;">
+        <div class="spinner-border spinner-border-sm me-2" role="status" style="width: 1rem; height: 1rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="progress-container me-2" style="width: 60px; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; position: relative; overflow: hidden;">
+          <div class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: ${percent}%; transition: width 0.3s ease; border-radius: 3px;"></div>
+        </div>
+        <span class="fw-bold" style="font-size: 0.8rem;">${percent}%</span>
+      </div>
+    `;
+  };
+
+  updateProgress(0);
+
+  // Simulate progress for better UX
+  const progressInterval = setInterval(() => {
+    progress += Math.random() * 15 + 5; // Progress between 5-20% each interval
+    if (progress > 85) progress = 85; // Cap at 85% until actual completion
+    updateProgress(Math.floor(progress));
+  }, 150);
+
+  let formData = new FormData(form);
+
+  // Ensure Rails method spoofing for PATCH request
+  if (!formData.has('_method')) {
+    formData.append('_method', 'patch');
+  }
+
+  // Ensure authenticity token is included
+  if (!formData.has('authenticity_token')) {
+    formData.append('authenticity_token', csrfToken);
+  }
+
+  // Debug the form data in detail
+  console.log('📤 Raw Form data entries:');
+  const formDataEntries = {};
+  for (let [key, value] of formData.entries()) {
+    console.log(`  ${key}: ${value}`);
+    formDataEntries[key] = value;
+  }
+
+  // Check if we have delivery_assignment parameters
+  const hasDeliveryAssignmentParams = Object.keys(formDataEntries).some(key => key.startsWith('delivery_assignment['));
+  console.log('📋 Has delivery_assignment params:', hasDeliveryAssignmentParams);
+
+  // If we don't have delivery_assignment params, let's manually create them
+  if (!hasDeliveryAssignmentParams) {
+    console.log('⚠️ Missing delivery_assignment params, reconstructing...');
+
+    // Clear the form data and rebuild with correct structure
+    const newFormData = new FormData();
+
+    // Add delivery_assignment parameters
+    const quantity = form.querySelector('[name*="quantity"]')?.value || form.querySelector('#delivery_assignment_quantity')?.value;
+    const unit = form.querySelector('[name*="unit"]')?.value || form.querySelector('#delivery_assignment_unit')?.value;
+    const scheduledDate = form.querySelector('[name*="scheduled_date"]')?.value || form.querySelector('#delivery_assignment_scheduled_date')?.value;
+    const status = form.querySelector('[name*="status"]')?.value || form.querySelector('#delivery_assignment_status')?.value;
+    const discountAmount = form.querySelector('[name*="discount_amount"]')?.value || form.querySelector('#delivery_assignment_discount_amount')?.value;
+
+    console.log('📋 Form field values:', {
+      quantity, unit, scheduledDate, status, discountAmount
+    });
+
+    if (quantity) newFormData.append('delivery_assignment[quantity]', quantity);
+    if (unit) newFormData.append('delivery_assignment[unit]', unit);
+    if (scheduledDate) newFormData.append('delivery_assignment[scheduled_date]', scheduledDate);
+    if (status) newFormData.append('delivery_assignment[status]', status);
+    if (discountAmount) newFormData.append('delivery_assignment[discount_amount]', discountAmount);
+
+    // Add Rails-specific parameters
+    newFormData.append('_method', 'patch');
+    newFormData.append('authenticity_token', csrfToken);
+
+    // Replace the original formData
+    formData = newFormData;
+
+    console.log('✅ Rebuilt FormData with delivery_assignment params');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
+  }
+
+  console.log('📤 Making API request:', {
+    url: form.action,
+    method: 'PATCH',
+    formData: Object.fromEntries(formData.entries())
+  });
+
+  fetch(form.action, {
+    method: 'PATCH',
+    body: formData,
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': csrfToken
+    }
+  })
+  .then(response => {
+    console.log('📥 API Response received:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('✅ Success response:', data);
+    clearInterval(progressInterval);
+    updateProgress(100);
+
+    if (data.success) {
+      // Show completion animation
+      setTimeout(() => {
+        submitBtn.innerHTML = `
+          <div class="d-flex align-items-center justify-content-center">
+            <i class="fas fa-check-circle text-white me-2"></i>
+            <span>Updated Successfully!</span>
+          </div>
+        `;
+
+        // Show success toast
+        if (window.showSimpleToast) {
+          window.showSimpleToast(data.message || 'Assignment updated successfully! ✅', 'success');
+        }
+
+        // Close the edit modal immediately and refresh main modal
+        setTimeout(() => {
+          // Close the edit modal using Bootstrap modal method
+          const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+          if (editModal) {
+            editModal.hide();
+          } else {
+            // Fallback method if Bootstrap modal instance not found
+            const editModalEl = document.getElementById('editModal');
+            if (editModalEl) {
+              editModalEl.style.display = 'none';
+              document.body.classList.remove('modal-open');
+              const backdrop = document.querySelector('.modal-backdrop');
+              if (backdrop) backdrop.remove();
+            }
+          }
+
+          // Immediately reload the main delivery assignments modal with updated data
+          console.log('🔄 Refreshing main modal with updated assignment data...');
+          console.log('🔍 Checking reloadCurrentModal availability:', typeof window.reloadCurrentModal);
+          console.log('🔍 Current modal data:', window.currentModalData);
+
+          if (window.reloadCurrentModal) {
+            console.log('✅ Calling reloadCurrentModal...');
+            window.reloadCurrentModal();
+
+            // Also ensure the main modal is visible
+            setTimeout(() => {
+              const mainModal = document.getElementById('assignmentModal');
+              if (mainModal && !mainModal.classList.contains('show')) {
+                console.log('🔄 Main modal not visible, ensuring it shows...');
+                const modalInstance = bootstrap.Modal.getInstance(mainModal);
+                if (modalInstance) {
+                  modalInstance.show();
+                } else {
+                  const newModalInstance = new bootstrap.Modal(mainModal);
+                  newModalInstance.show();
+                }
+              }
+            }, 100);
+          } else {
+            console.error('❌ reloadCurrentModal function not found!');
+            // Fallback: manually reload the modal using direct API call
+            console.log('🔄 Attempting manual modal reload...');
+            if (window.currentModalData) {
+              const { customerId, customerName, month, year } = window.currentModalData;
+              console.log('🔄 Reloading with data:', { customerId, customerName, month, year });
+
+              // Direct API call to reload modal content
+              fetch(`/customer-patterns/customer_deliveries?customer_id=${customerId}&month=${month}&year=${year}`, {
+                method: 'GET',
+                headers: {
+                  'Accept': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.getAttribute('content')
+                }
+              })
+              .then(response => response.json())
+              .then(data => {
+                console.log('✅ Modal content reloaded successfully');
+                const modalContent = document.getElementById('modalContent');
+                if (modalContent) {
+                  modalContent.innerHTML = data.html;
+                  console.log('✅ Modal HTML updated with fresh data');
+
+                  // Ensure modal is visible
+                  const mainModal = document.getElementById('assignmentModal');
+                  if (mainModal && !mainModal.classList.contains('show')) {
+                    console.log('🔄 Showing main modal...');
+                    const modalInstance = bootstrap.Modal.getInstance(mainModal) || new bootstrap.Modal(mainModal);
+                    modalInstance.show();
+                  }
+                } else {
+                  console.error('❌ Modal content container not found');
+                }
+              })
+              .catch(error => {
+                console.error('❌ Error reloading modal:', error);
+                window.showSimpleToast('Error reloading modal data', 'error');
+              });
+            }
+          }
+        }, 800); // Reduced from 1500ms to 800ms for faster UX
+
+      }, 300);
+    } else {
+      throw new Error(data.message || 'Update failed');
+    }
+  })
+  .catch(error => {
+    console.error('❌ Error updating assignment:', error);
+    clearInterval(progressInterval);
+
+    // Show error state
+    submitBtn.innerHTML = `
+      <div class="d-flex align-items-center justify-content-center">
+        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+        <span>Update Failed</span>
+      </div>
+    `;
+
+    if (window.showSimpleToast) {
+      window.showSimpleToast('Error updating assignment: ' + error.message, 'error');
+    }
+
+    // Re-enable form after showing error
+    setTimeout(() => {
+      submitBtn.innerHTML = originalText;
+      inputs.forEach(input => input.disabled = false);
+    }, 2000);
+  });
+}
 
 </script>

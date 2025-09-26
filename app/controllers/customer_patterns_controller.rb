@@ -138,6 +138,48 @@ class CustomerPatternsController < ApplicationController
     end
   end
 
+  def complete_all
+    @customer = Customer.find(params[:customer_id])
+    month = params[:month]&.to_i || Date.current.month
+    year = params[:year]&.to_i || Date.current.year
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    # Find ALL pending assignments for this customer in the selected month
+    assignments_to_complete = DeliveryAssignment
+      .where(customer_id: @customer.id)
+      .where(status: 'pending')
+      .where(scheduled_date: start_date..end_date)
+
+    completed_count = 0
+    assignments_to_complete.each do |assignment|
+      if assignment.update(status: 'completed', completed_at: Time.current)
+        completed_count += 1
+      end
+    end
+
+    clear_customer_patterns_cache if completed_count > 0
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: true,
+          message: "✅ All #{completed_count} pending assignments marked as completed",
+          completed_count: completed_count
+        }
+      }
+    end
+  rescue => e
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: false,
+          message: "❌ Error completing all assignments: #{e.message}"
+        }
+      }
+    end
+  end
+
   def edit_assignment
     @assignment = DeliveryAssignment.find(params[:id])
 
@@ -152,12 +194,22 @@ class CustomerPatternsController < ApplicationController
 
   def update_assignment
     Rails.logger.info "🎯 UPDATE ASSIGNMENT called with params: #{params.inspect}"
+    Rails.logger.info "🔍 Raw request params: #{request.parameters.inspect}"
+    Rails.logger.info "🔍 Delivery assignment params: #{params[:delivery_assignment].inspect}"
 
     @assignment = DeliveryAssignment.find(params[:id])
     Rails.logger.info "📋 Found assignment: #{@assignment.id}, current quantity: #{@assignment.quantity}, unit: #{@assignment.unit}"
-    Rails.logger.info "🔄 New params: #{assignment_params.inspect}"
 
-    if @assignment.update(assignment_params)
+    begin
+      parsed_params = assignment_params
+      Rails.logger.info "🔄 Parsed assignment params: #{parsed_params.inspect}"
+    rescue => e
+      Rails.logger.error "❌ Error parsing assignment params: #{e.message}"
+      Rails.logger.error "Available params keys: #{params.keys.inspect}"
+      raise e
+    end
+
+    if @assignment.update(parsed_params)
       # Recalculate final amount if quantity or discount changed
       if @assignment.product.present?
         base_amount = @assignment.product.price * @assignment.quantity
@@ -690,17 +742,19 @@ class CustomerPatternsController < ApplicationController
       scheduled_date: start_date..end_date
     ).pluck(:scheduled_date, :quantity)
 
-    # Must have assignments for every day of the month
-    return false unless all_assignments.length == days_in_month
+    # For regular customers: Must have assignments for at least 20 days of month (more permissive)
+    min_required_days = [20, (days_in_month * 0.7).to_i].max
+    return false unless all_assignments.length >= min_required_days
 
-    # All assignments must have the same quantity
-    quantities = all_assignments.map(&:last).uniq
-    return false unless quantities.length == 1
+    # All assignments must have the same quantity (if they exist)
+    if all_assignments.any?
+      quantities = all_assignments.map(&:last).uniq
+      return false unless quantities.length == 1
+      # Must have a valid quantity greater than 0
+      return false unless quantities.first > 0
+    end
 
-    # Must have a valid quantity greater than 0
-    return false unless quantities.first > 0
-
-    # Additionally check if there are any pending assignments to edit
+    # Check if there are any pending assignments to edit
     # (We need at least some pending assignments to make editing worthwhile)
     pending_assignments_count = DeliveryAssignment.where(
       customer_id: customer_id,
@@ -708,7 +762,7 @@ class CustomerPatternsController < ApplicationController
       status: 'pending'
     ).count
 
-    # Allow editing if there are pending assignments (even if not all days are pending)
+    # Allow editing if there are pending assignments (more permissive - just need 1+)
     return false unless pending_assignments_count > 0
 
     true

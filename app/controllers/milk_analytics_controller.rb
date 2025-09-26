@@ -1878,6 +1878,16 @@ class MilkAnalyticsController < ApplicationController
     @vendor_summary = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
       calculate_vendor_summary_uncached
     end
+
+    # Calculate delivery summary for the same date range and filters
+    delivery_query = current_user.delivery_assignments.for_date_range(@start_date, @end_date)
+
+    # Apply product filter if specified
+    if @product_id.present?
+      delivery_query = delivery_query.where(product_id: @product_id)
+    end
+
+    calculate_delivery_summary(delivery_query)
   end
 
   def calculate_vendor_summary_uncached

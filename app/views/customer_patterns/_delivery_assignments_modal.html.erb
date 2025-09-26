@@ -42,18 +42,29 @@ console.log('✅ Assignment functions loaded:', {
 <% if @delivery_assignments.any? %>
   <!-- Action Buttons at Top -->
   <% pending_till_today = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current) %>
-  <% if pending_till_today.any? %>
+  <% all_pending = @delivery_assignments.where(status: 'pending') %>
+  <% if pending_till_today.any? || all_pending.any? %>
     <div class="mb-4">
       <div class="alert alert-warning d-flex align-items-center">
         <i class="fas fa-exclamation-triangle me-3 fa-2x text-warning"></i>
         <div class="flex-grow-1">
           <strong>⚠️ Pending Assignments Alert</strong><br>
-          <small>There are <strong><%= pending_till_today.count %></strong> pending assignments till today that need completion.</small>
+          <small>There are <strong><%= pending_till_today.count %></strong> pending assignments till today and <strong><%= all_pending.count %></strong> total pending assignments.</small>
         </div>
-        <button class="btn btn-dark btn-lg shadow" onclick="window.completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
-          <i class="fas fa-check-circle me-2"></i>
-          Complete Till Today (<%= pending_till_today.count %>)
-        </button>
+        <div class="btn-group">
+          <% if pending_till_today.any? %>
+            <button class="btn btn-dark btn-lg shadow" onclick="window.completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
+              <i class="fas fa-check-circle me-2"></i>
+              Complete Till Today (<%= pending_till_today.count %>)
+            </button>
+          <% end %>
+          <% if all_pending.any? %>
+            <button class="btn btn-success btn-lg shadow" onclick="window.completeAll(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
+              <i class="fas fa-check-double me-2"></i>
+              Complete All (<%= all_pending.count %>)
+            </button>
+          <% end %>
+        </div>
       </div>
     </div>
   <% end %>
