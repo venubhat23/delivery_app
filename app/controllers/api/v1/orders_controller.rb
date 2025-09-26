@@ -60,6 +60,11 @@ module Api
             assignments_created += 1
           end
           
+          # Send notifications to owner if booked via mobile (booked_by == 1)
+          if booked_by == 1
+            send_owner_notifications_for_order(@customer, delivery_schedule, items, assignments_created)
+          end
+
           render json: {
             message: "Order placed successfully",
             delivery_schedule_id: delivery_schedule.id,
@@ -129,6 +134,36 @@ module Api
         # Simple logic to assign delivery person
         # In a real system, this would be more sophisticated (based on location, workload, etc.)
         customer.delivery_person_id || User.where(role: 'delivery_person').first&.id || current_user.id
+      end
+
+      def send_owner_notifications_for_order(customer, delivery_schedule, items, assignments_created)
+        # Send SMS notification
+        sms_service = SmsService.new
+        sms_service.send_owner_notification(:order, customer.name, assignments_created)
+
+        # Send Email notification
+        delivery_person = User.find_by(id: delivery_schedule.user_id)
+        order_details = {
+          order_date: delivery_schedule.start_date,
+          items_count: assignments_created,
+          delivery_person: delivery_person&.name,
+          customer_address: params[:customer_address],
+          delivery_slot: params[:delivery_slot],
+          items: items.map do |item|
+            product = Product.find_by(id: item[:product_id])
+            {
+              product_name: product&.name,
+              quantity: item[:quantity],
+              unit: item[:unit]
+            }
+          end
+        }
+
+        begin
+          OwnerNotificationMailer.new_mobile_order(customer.name, order_details).deliver_now
+        rescue => e
+          Rails.logger.error "Failed to send owner email notification for order: #{e.message}"
+        end
       end
     end
   end

@@ -207,7 +207,7 @@ class DeliveryPeopleController < ApplicationController
 
   def update
     if @delivery_person.update(delivery_person_params)
-      redirect_to delivery_person_path(@delivery_person), notice: 'Delivery person was successfully updated.'
+      redirect_to delivery_people_path, notice: 'Delivery person was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
     end

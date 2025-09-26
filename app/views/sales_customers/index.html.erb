@@ -15,9 +15,10 @@
       <div class="card mb-4">
         <div class="card-body">
           <%= form_with url: sales_customers_path, method: :get, local: true, class: 'd-flex gap-3 align-items-end' do |form| %>
-            <div class="flex-grow-1">
-              <%= form.text_field :search, placeholder: 'Search by customer name...', 
-                                  class: 'form-control', value: params[:search] %>
+            <div class="flex-grow-1 position-relative">
+              <%= form.text_field :search, placeholder: 'Search by customer name...',
+                                  class: 'form-control', value: params[:search], id: 'sales-customer-search' %>
+              <%= render 'shared/attractive_loader', loader_id: 'salesCustomerLoader', loading_text: 'Searching customers' %>
             </div>
             <div>
               <%= form.submit 'Search', class: 'btn btn-outline-primary' %>
@@ -140,3 +141,22 @@
     </div>
   </div>
 </div>
+
+<%= render 'shared/attractive_loader_styles' %>
+<%= render 'shared/attractive_loader_js' %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const salesCustomerLoader = createAttractiveLoader('salesCustomerLoader');
+  const searchForm = document.querySelector('form');
+
+  if (searchForm) {
+    searchForm.addEventListener('submit', function() {
+      const searchInput = document.getElementById('sales-customer-search');
+      if (searchInput && searchInput.value.trim()) {
+        salesCustomerLoader.show(0); // Show immediately on form submit
+      }
+    });
+  }
+});
+</script>

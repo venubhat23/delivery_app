@@ -1,0 +1,429 @@
+<style>
+/* Super Attractive Loader Styles - Premium Design */
+.super-attractive-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.loader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 50%, rgba(79, 172, 254, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+.loader-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  padding: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  animation: containerFloat 3s ease-in-out infinite alternate;
+}
+
+/* Circular Progress Ring */
+.circular-progress {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 2rem;
+}
+
+.progress-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+.progress-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 8;
+}
+
+.progress-ring-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 502.65;
+  stroke-dashoffset: 502.65;
+  transition: stroke-dashoffset 0.3s ease;
+  animation: progressGlow 2s ease-in-out infinite alternate;
+}
+
+/* Percentage Display */
+.percentage-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  font-family: 'Arial', sans-serif;
+}
+
+.percentage-number {
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  animation: numberGlow 1.5s ease-in-out infinite alternate;
+}
+
+.percentage-symbol {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-left: 0.2rem;
+  opacity: 0.8;
+}
+
+/* Floating Particles */
+.floating-particles {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: particleFloat 3s ease-in-out infinite;
+}
+
+.particle-1 {
+  top: 10%;
+  left: 20%;
+  animation-delay: 0s;
+  animation-duration: 2.5s;
+}
+
+.particle-2 {
+  top: 20%;
+  right: 15%;
+  animation-delay: 0.5s;
+  animation-duration: 3s;
+}
+
+.particle-3 {
+  bottom: 30%;
+  left: 10%;
+  animation-delay: 1s;
+  animation-duration: 2.8s;
+}
+
+.particle-4 {
+  bottom: 20%;
+  right: 25%;
+  animation-delay: 1.5s;
+  animation-duration: 2.2s;
+}
+
+.particle-5 {
+  top: 40%;
+  left: 5%;
+  animation-delay: 2s;
+  animation-duration: 3.2s;
+}
+
+.particle-6 {
+  top: 60%;
+  right: 10%;
+  animation-delay: 2.5s;
+  animation-duration: 2.7s;
+}
+
+/* Loading Text Container */
+.loading-text-container {
+  text-align: center;
+  color: white;
+  margin-top: 1rem;
+}
+
+.loading-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  animation: titlePulse 2s ease-in-out infinite;
+}
+
+.loading-subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 1.5rem;
+}
+
+.loading-dots::after {
+  content: '';
+  display: inline-block;
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+/* Progress Bar */
+.loading-progress-bar {
+  width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 1rem auto;
+}
+
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #fff, #4facfe, #667eea);
+  border-radius: 2px;
+  animation: progressBarFill 3s ease-in-out infinite;
+}
+
+/* Rotating Icons */
+.rotating-icons {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: iconsRotate 10s linear infinite;
+}
+
+.icon-orbit {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.icon-orbit i {
+  position: absolute;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: iconPulse 2s ease-in-out infinite alternate;
+}
+
+.icon-1 {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 0s;
+}
+
+.icon-2 {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  animation-delay: 0.5s;
+}
+
+.icon-3 {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 1s;
+}
+
+.icon-4 {
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  animation-delay: 1.5s;
+}
+
+/* Animations */
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes containerFloat {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes ringPulse {
+  0% {
+    transform: rotate(-90deg) scale(1);
+  }
+  100% {
+    transform: rotate(-90deg) scale(1.05);
+  }
+}
+
+@keyframes progressGlow {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(102, 126, 234, 0.8));
+  }
+  100% {
+    filter: drop-shadow(0 0 15px rgba(79, 172, 254, 0.9));
+  }
+}
+
+@keyframes numberGlow {
+  0% {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    transform: scale(1);
+  }
+  100% {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(102, 126, 234, 0.6);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes titlePulse {
+  0% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+    text-shadow: 0 2px 20px rgba(255, 255, 255, 0.4);
+  }
+}
+
+@keyframes dots {
+  0%, 20% {
+    content: '';
+  }
+  40% {
+    content: '.';
+  }
+  60% {
+    content: '..';
+  }
+  80%, 100% {
+    content: '...';
+  }
+}
+
+@keyframes progressBarFill {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes iconsRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes iconPulse {
+  0% {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1);
+  }
+  100% {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .loader-container {
+    padding: 2rem;
+    margin: 1rem;
+  }
+
+  .circular-progress {
+    width: 150px;
+    height: 150px;
+  }
+
+  .percentage-number {
+    font-size: 2.5rem;
+  }
+
+  .loading-title {
+    font-size: 1.5rem;
+  }
+
+  .floating-particles {
+    width: 200px;
+    height: 200px;
+  }
+
+  .rotating-icons {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* Theme Variants */
+.super-attractive-loader.theme-success .loader-overlay {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 50%, rgba(4, 120, 87, 0.95) 100%);
+}
+
+.super-attractive-loader.theme-warning .loader-overlay {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 50%, rgba(180, 83, 9, 0.95) 100%);
+}
+
+.super-attractive-loader.theme-danger .loader-overlay {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 50%, rgba(185, 28, 28, 0.95) 100%);
+}
+</style>

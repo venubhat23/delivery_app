@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  # Handle Chrome DevTools requests with a simple 404 response
+  get "/.well-known/appspecific/com.chrome.devtools.json", to: proc { [404, {}, ['']] }
   # Customer Patterns Analysis
   resources :customer_patterns, path: 'customer-patterns', only: [:index] do
     collection do
@@ -7,6 +9,11 @@ Rails.application.routes.draw do
       get :get_pending_count
       post :complete_all_till_today
       post :remove_all_assignments
+      post :update_pattern
+      get :get_products
+      get :get_delivery_people
+      get :get_assignment_summary
+      get :search_customers
     end
 
     member do

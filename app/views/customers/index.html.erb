@@ -93,8 +93,18 @@
                   <!-- Customer suggestions will be populated here -->
                 </div>
                 <div class="customer-loading" id="customer-loading" style="display: none;">
-                  <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
+                  <div class="loader-content">
+                    <div class="attractive-spinner">
+                      <div class="spinner-ring"></div>
+                      <div class="spinner-ring"></div>
+                      <div class="spinner-ring"></div>
+                    </div>
+                    <div class="loading-text">
+                      <span class="loading-dots">Searching customers</span>
+                    </div>
+                  </div>
                 </div>
+                <%= render 'shared/super_attractive_loader', loader_id: 'superCustomerLoader', loading_text: 'Searching Customers' %>
               </div>
             </div>
             <div class="col-md-3">
@@ -115,7 +125,7 @@
                     <i class="fas fa-times me-1"></i>Clear
                   <% end %>
                 <% end %>
-                <span class="badge bg-primary"><%= @customers.count %> customers</span>
+                <span class="badge bg-primary"><%= @customers.total_count %> customers</span>
                 <% if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all' %>
                   <span class="badge bg-info text-truncate" style="max-width: 120px;">
                     <%= @delivery_people.find { |dp| dp.id.to_s == params[:delivery_person_id] }&.name %>
@@ -152,9 +162,11 @@
             const customerSuggestions = document.getElementById('customer-suggestions');
             const customerLoading = document.getElementById('customer-loading');
             const customerSearchHidden = document.getElementById('customer-search-hidden');
-            
+
             let customerSearchTimeout;
+            let loadingTimeout;
             let currentCustomerSearchTerm = '';
+            let isSearching = false;
             
             if (customerSearchInput) {
               // Set initial value from URL params
@@ -183,8 +195,7 @@
                 
                 // Add debouncing - wait 300ms after user stops typing
                 customerSearchTimeout = setTimeout(() => {
-                  showCustomerLoading();
-                  fetchCustomerSuggestions(query);
+                  startSearchWithDelay(query);
                 }, 300);
               });
               
@@ -192,8 +203,7 @@
               customerSearchInput.addEventListener('focus', function() {
                 const query = this.value.trim();
                 if (query.length > 0) {
-                  showCustomerLoading();
-                  fetchCustomerSuggestions(query);
+                  startSearchWithDelay(query);
                 }
               });
               
@@ -213,17 +223,52 @@
                 }
               });
             }
-            
+
+            // Create super attractive loader instance
+            const superCustomerLoader = createSuperAttractiveLoader('superCustomerLoader');
+
+            function startSearchWithDelay(query) {
+              // Clear any existing timeouts
+              clearTimeout(loadingTimeout);
+              hideCustomerSuggestions();
+
+              if (isSearching) {
+                return; // Prevent multiple simultaneous searches
+              }
+
+              isSearching = true;
+
+              // Start the search immediately
+              const searchPromise = fetchCustomerSuggestions(query);
+
+              // Show super attractive loader with 1-second delay
+              superCustomerLoader.show(1000, 2500); // 2.5 second estimated duration
+              superCustomerLoader.simulateRealisticLoading([
+                { percentage: 20, delay: 300 },
+                { percentage: 45, delay: 500 },
+                { percentage: 70, delay: 400 },
+                { percentage: 90, delay: 300 }
+              ]);
+
+              // Handle the search completion
+              searchPromise.finally(() => {
+                clearTimeout(loadingTimeout);
+                superCustomerLoader.hide();
+                isSearching = false;
+              });
+            }
+
             function fetchCustomerSuggestions(query) {
-              fetch(`/customers/search_suggestions?q=${encodeURIComponent(query)}`)
+              return fetch(`/customers/search_suggestions?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
-                  hideCustomerLoading();
                   displayCustomerSuggestions(data.customers || []);
+                  return data;
                 })
                 .catch(error => {
                   console.error('Customer search error:', error);
-                  hideCustomerLoading();
+                  displayCustomerSuggestions([]);
+                  throw error;
                 });
             }
             
@@ -303,6 +348,9 @@
             });
           }
         </script>
+
+<%= render 'shared/super_attractive_loader_styles' %>
+<%= render 'shared/super_attractive_loader_js' %>
 
 <!-- Customers Table -->
 <div class="card">
@@ -1413,11 +1461,84 @@
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  padding: 1rem 1.5rem;
+  padding: 1.5rem 2rem;
   margin-top: 0.5rem;
   text-align: center;
-  color: #718096;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.attractive-spinner {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.spinner-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.spinner-ring:nth-child(1) {
+  border-top-color: #667eea;
+  animation-delay: -0.45s;
+}
+
+.spinner-ring:nth-child(2) {
+  border-top-color: #764ba2;
+  animation-delay: -0.3s;
+}
+
+.spinner-ring:nth-child(3) {
+  border-top-color: #4facfe;
+  animation-delay: -0.15s;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  color: #667eea;
   font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.loading-dots::after {
+  content: '';
+  display: inline-block;
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% {
+    content: '';
+  }
+  40% {
+    content: '.';
+  }
+  60% {
+    content: '..';
+  }
+  80%, 100% {
+    content: '...';
+  }
 }
 
 .search-highlight {

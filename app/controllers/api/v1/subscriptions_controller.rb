@@ -66,6 +66,11 @@ module Api
             current_date += 1.day
           end
           
+          # Send notifications to owner if booked via mobile (booked_by == 1)
+          if booked_by == 1
+            send_owner_notifications_for_subscription(@customer, delivery_schedule, product, quantity, unit, assignments_created, start_date, end_date)
+          end
+
           render json: {
             message: "Subscription created successfully",
             delivery_schedule_id: delivery_schedule.id,
@@ -200,11 +205,43 @@ module Api
         future_assignments = subscription.delivery_assignments
                                         .where('scheduled_date > ?', Date.today)
                                         .where(status: 'pending')
-        
+
         future_assignments.update_all(
           quantity: subscription.default_quantity,
           unit: subscription.default_unit
         )
+      end
+
+      def send_owner_notifications_for_subscription(customer, delivery_schedule, product, quantity, unit, assignments_created, start_date, end_date)
+        # Send SMS notification
+        sms_service = SmsService.new
+        subscription_period = "#{start_date.strftime('%d/%m/%Y')} - #{end_date.strftime('%d/%m/%Y')}"
+        sms_service.send_owner_notification(:subscription, customer.name, nil, subscription_period)
+
+        # Send Email notification
+        delivery_person = User.find_by(id: delivery_schedule.user_id)
+        subscription_details = {
+          subscription_period: subscription_period,
+          total_days: (end_date - start_date).to_i + 1,
+          delivery_days: assignments_created,
+          delivery_person: delivery_person&.name,
+          product: {
+            name: product.name,
+            unit_type: product.unit_type,
+            price: product.price
+          },
+          quantity: quantity,
+          unit: unit,
+          estimated_total_amount: assignments_created * quantity * product.price,
+          cod: delivery_schedule.cod,
+          skip_sundays: params[:skip_sundays] == 'true'
+        }
+
+        begin
+          OwnerNotificationMailer.new_mobile_subscription(customer.name, subscription_details).deliver_now
+        rescue => e
+          Rails.logger.error "Failed to send owner email notification for subscription: #{e.message}"
+        end
       end
     end
   end

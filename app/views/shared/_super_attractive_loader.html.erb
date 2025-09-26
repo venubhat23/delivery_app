@@ -1,0 +1,67 @@
+<!-- Super Attractive Loader Component with Percentage -->
+<div class="super-attractive-loader" id="<%= loader_id %>" style="display: none;">
+  <div class="loader-overlay">
+    <div class="loader-container">
+      <!-- Main Circular Progress -->
+      <div class="circular-progress">
+        <svg class="progress-ring" viewBox="0 0 200 200">
+          <defs>
+            <linearGradient id="gradient-<%= loader_id %>" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#4facfe;stop-opacity:1" />
+            </linearGradient>
+            <filter id="glow-<%= loader_id %>">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <circle class="progress-ring-track" cx="100" cy="100" r="80" />
+          <circle class="progress-ring-fill" cx="100" cy="100" r="80"
+                  stroke="url(#gradient-<%= loader_id %>)"
+                  filter="url(#glow-<%= loader_id %>)" />
+        </svg>
+
+        <!-- Percentage Display -->
+        <div class="percentage-display">
+          <span class="percentage-number">0</span>
+          <span class="percentage-symbol">%</span>
+        </div>
+      </div>
+
+      <!-- Floating Particles -->
+      <div class="floating-particles">
+        <div class="particle particle-1"></div>
+        <div class="particle particle-2"></div>
+        <div class="particle particle-3"></div>
+        <div class="particle particle-4"></div>
+        <div class="particle particle-5"></div>
+        <div class="particle particle-6"></div>
+      </div>
+
+      <!-- Loading Text with Animation -->
+      <div class="loading-text-container">
+        <h4 class="loading-title"><%= loading_text || "Loading" %></h4>
+        <div class="loading-subtitle">
+          <span class="loading-dots">Please wait</span>
+        </div>
+        <div class="loading-progress-bar">
+          <div class="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Rotating Icons -->
+      <div class="rotating-icons">
+        <div class="icon-orbit">
+          <i class="fas fa-search icon-1"></i>
+          <i class="fas fa-database icon-2"></i>
+          <i class="fas fa-sync-alt icon-3"></i>
+          <i class="fas fa-check-circle icon-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

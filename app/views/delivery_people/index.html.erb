@@ -66,11 +66,14 @@
         <div class="row g-3">
           <div class="col-md-6">
             <%= form_with url: delivery_people_path, method: :get, local: true, class: "d-flex" do |form| %>
-              <%= form.text_field :search, 
-                    placeholder: "Search by name, email, or phone...", 
-                    value: params[:search], 
-                    class: "form-control" %>
-              <%= form.submit "Search", class: "btn btn-outline-primary ms-2" %>
+              <div class="flex-grow-1 position-relative me-2">
+                <%= form.text_field :search,
+                      placeholder: "Search by name, email, or phone...",
+                      value: params[:search],
+                      class: "form-control", id: "delivery-people-search" %>
+                <%= render 'shared/attractive_loader', loader_id: 'deliveryPeopleLoader', loading_text: 'Searching delivery people' %>
+              </div>
+              <%= form.submit "Search", class: "btn btn-outline-primary" %>
             <% end %>
           </div>
           <div class="col-md-6">
@@ -956,7 +959,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Add delivery people search loader functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const deliveryPeopleLoader = createAttractiveLoader('deliveryPeopleLoader');
+  const searchForm = document.querySelector('form[action="/delivery_people"]');
+
+  if (searchForm) {
+    searchForm.addEventListener('submit', function() {
+      const searchInput = document.getElementById('delivery-people-search');
+      if (searchInput && searchInput.value.trim()) {
+        deliveryPeopleLoader.show(0); // Show immediately on form submit
+      }
+    });
+  }
+});
 </script>
+
+<%= render 'shared/attractive_loader_styles' %>
+<%= render 'shared/attractive_loader_js' %>
 
     </div>
   </div>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .alert {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+      .details {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        text-align: center;
+        color: #666;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h2>📱 New Mobile Order Alert</h2>
+      <p><strong>Business:</strong> <%= @admin_settings.business_name %></p>
+    </div>
+
+    <div class="alert">
+      <h3>Order Details</h3>
+      <p><strong>Customer:</strong> <%= @customer_name %></p>
+      <p><strong>Order Source:</strong> Mobile App</p>
+      <p><strong>Order Date:</strong> <%= @order_details[:order_date] %></p>
+      <p><strong>Total Items:</strong> <%= @order_details[:items_count] %></p>
+      <% if @order_details[:delivery_person] %>
+        <p><strong>Assigned to:</strong> <%= @order_details[:delivery_person] %></p>
+      <% end %>
+    </div>
+
+    <div class="details">
+      <h4>Items Ordered:</h4>
+      <% if @order_details[:items].present? %>
+        <ul>
+          <% @order_details[:items].each do |item| %>
+            <li><%= item[:product_name] %> - <%= item[:quantity] %> <%= item[:unit] %></li>
+          <% end %>
+        </ul>
+      <% end %>
+
+      <% if @order_details[:customer_address] %>
+        <p><strong>Delivery Address:</strong> <%= @order_details[:customer_address] %></p>
+      <% end %>
+
+      <% if @order_details[:delivery_slot] %>
+        <p><strong>Delivery Slot:</strong> <%= @order_details[:delivery_slot] %></p>
+      <% end %>
+    </div>
+
+    <div class="footer">
+      <p>This is an automated notification from your delivery management system.</p>
+      <p>Please check your dashboard for more details and to manage this order.</p>
+    </div>
+  </body>
+</html>

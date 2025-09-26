@@ -121,9 +121,9 @@
   </div>
 </div>
 
-<!-- Optional: Add some JavaScript for form validation -->
+<!-- Optional: Add some JavaScript for form validation and loading -->
 <script>
-  // Bootstrap form validation
+  // Bootstrap form validation and loading state
   (function() {
     'use strict';
     window.addEventListener('load', function() {
@@ -133,6 +133,13 @@
           if (form.checkValidity() === false) {
             event.preventDefault();
             event.stopPropagation();
+          } else {
+            // Show loading overlay
+            var loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50';
+            loadingOverlay.style.zIndex = '9999';
+            loadingOverlay.innerHTML = '<div class="text-white text-center"><i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>Updating delivery person...</div>';
+            document.body.appendChild(loadingOverlay);
           }
           form.classList.add('was-validated');
         }, false);

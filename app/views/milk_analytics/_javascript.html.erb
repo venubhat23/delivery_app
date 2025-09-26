@@ -272,7 +272,7 @@ function updateProcurementScheduleTable(schedules) {
           </div>
         </td>
         <td>
-          <strong>${schedule.product_name}</strong>
+          <strong>${schedule.product_name || 'Generic Product'}</strong>
           <br>
           <small class="text-muted">${schedule.product_unit || 'unit'}</small>
         </td>
@@ -2054,5 +2054,95 @@ window.closeProcurementAssignmentsOverlay = closeProcurementAssignmentsOverlay;
 window.handleEscapeKey = handleEscapeKey;
 window.updateProcurementAssignment = updateProcurementAssignment;
 window.closeProcurementEditModal = closeProcurementEditModal;
+
+// Global loader functionality for slow API calls
+let loadingTimer;
+let isLoading = false;
+
+function showLoader() {
+  if (isLoading) return;
+  isLoading = true;
+
+  const loader = document.getElementById('global-loader');
+  if (loader) {
+    loader.classList.add('show');
+  }
+}
+
+function hideLoader() {
+  isLoading = false;
+  const loader = document.getElementById('global-loader');
+  if (loader) {
+    loader.classList.remove('show');
+  }
+  if (loadingTimer) {
+    clearTimeout(loadingTimer);
+  }
+}
+
+function startLoadingTimer() {
+  loadingTimer = setTimeout(() => {
+    if (!isLoading) {
+      showLoader();
+    }
+  }, 1000); // Show loader after 1 second
+}
+
+// Intercept all forms and AJAX requests to show loader
+document.addEventListener('DOMContentLoaded', function() {
+  // Intercept form submissions
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      startLoadingTimer();
+    });
+  });
+
+  // Intercept jQuery AJAX requests if jQuery is available
+  if (typeof $ !== 'undefined') {
+    $(document).ajaxStart(function() {
+      startLoadingTimer();
+    });
+
+    $(document).ajaxComplete(function() {
+      hideLoader();
+    });
+
+    $(document).ajaxError(function() {
+      hideLoader();
+    });
+  }
+
+  // Intercept fetch requests
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    startLoadingTimer();
+    return originalFetch.apply(this, args)
+      .then(response => {
+        hideLoader();
+        return response;
+      })
+      .catch(error => {
+        hideLoader();
+        throw error;
+      });
+  };
+
+  // Intercept navigation and link clicks
+  const links = document.querySelectorAll('a[href*="milk_analytics"]');
+  links.forEach(link => {
+    link.addEventListener('click', function(e) {
+      // Only show loader for same-page navigation
+      if (this.getAttribute('href').includes('milk_analytics')) {
+        startLoadingTimer();
+      }
+    });
+  });
+});
+
+// Make functions globally available
+window.showLoader = showLoader;
+window.hideLoader = hideLoader;
+window.startLoadingTimer = startLoadingTimer;
 
 </script>

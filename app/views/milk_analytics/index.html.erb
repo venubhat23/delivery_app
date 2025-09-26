@@ -74,20 +74,6 @@
       </div>
     </div>
 
-    <!-- Calendar Tab -->
-    <div class="tab-pane fade <%= 'show active' if active_tab == 'calendar' %>" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
-      <div class="card border-0 shadow-lg">
-        <div class="card-body p-0" id="calendarContent">
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <h4 class="mt-3">Loading Procurement Calendar...</h4>
-            <p class="text-muted">Please wait while we load your calendar</p>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Procurement Schedule Tab -->
     <div class="tab-pane fade <%= 'show active' if active_tab == 'procurement_schedule' %>" id="procurement-schedule" role="tabpanel" aria-labelledby="procurement-schedule-tab">
@@ -305,6 +291,141 @@
 
 <%= render 'javascript' %>
 <%= render 'styles' %>
+
+<!-- Global Loading Overlay -->
+<div id="global-loader" class="global-loader">
+  <div class="loader-content">
+    <div class="milk-drop-loader">
+      <div class="milk-drop"></div>
+      <div class="milk-drop"></div>
+      <div class="milk-drop"></div>
+    </div>
+    <h4 class="loader-text">Processing Milk Analytics...</h4>
+    <p class="loader-subtext">Please wait while we analyze your data</p>
+  </div>
+</div>
+
+<style>
+/* Global Loader Styles */
+.global-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.global-loader.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loader-content {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Milk Drop Loader Animation */
+.milk-drop-loader {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 60px;
+  margin-bottom: 1.5rem;
+}
+
+.milk-drop {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #e3f2fd, #2196f3);
+  border-radius: 50%;
+  margin: 0 4px;
+  animation: milkBounce 1.4s infinite ease-in-out;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.milk-drop:nth-child(1) {
+  animation-delay: -0.32s;
+  background: linear-gradient(135deg, #f3e5f5, #9c27b0);
+  box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3);
+}
+
+.milk-drop:nth-child(2) {
+  animation-delay: -0.16s;
+  background: linear-gradient(135deg, #e8f5e8, #4caf50);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.milk-drop:nth-child(3) {
+  background: linear-gradient(135deg, #fff3e0, #ff9800);
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+@keyframes milkBounce {
+  0%, 80%, 100% {
+    transform: scale(0.8) translateY(0);
+    opacity: 0.7;
+  }
+  40% {
+    transform: scale(1.2) translateY(-30px);
+    opacity: 1;
+  }
+}
+
+.loader-text {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.loader-subtext {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .loader-content {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .loader-text {
+    font-size: 1.1rem;
+  }
+
+  .loader-subtext {
+    font-size: 0.85rem;
+  }
+}
+</style>
 
     </div>
   </div>

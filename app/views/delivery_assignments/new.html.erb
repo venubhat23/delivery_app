@@ -37,6 +37,7 @@
               <div class="customer-loading" id="customer-loading" style="display: none;">
                 <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
               </div>
+              <%= render 'shared/super_attractive_loader', loader_id: 'superCustomerSearchLoader', loading_text: 'Finding Perfect Customers' %>
               <div class="selected-customer" id="selected-customer" style="display: none;">
                 <div class="selected-customer-info">
                   <div class="selected-customer-name"></div>
@@ -353,6 +354,9 @@
 
 <!-- jQuery and Select2 are included in the layout -->
 
+<%= render 'shared/attractive_loader_js' %>
+<%= render 'shared/super_attractive_loader_js' %>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   initializeCustomerSearch();
@@ -369,7 +373,10 @@ function initializeCustomerSearch() {
   const customerLoading = document.getElementById('customer-loading');
   const selectedCustomer = document.getElementById('selected-customer');
   const customerSelect = document.getElementById('customer-select');
-  
+
+  // Create super attractive loader instance
+  const superCustomerSearchLoader = createSuperAttractiveLoader('superCustomerSearchLoader');
+
   let customerSearchTimeout;
   let currentCustomerSearchTerm = '';
   let currentPage = 1;
@@ -390,7 +397,8 @@ function initializeCustomerSearch() {
       if (query.length === 0) {
         // Show all customers when input is empty
         customerSearchTimeout = setTimeout(() => {
-          showCustomerLoading();
+          superCustomerSearchLoader.show(1000, 2500);
+        superCustomerSearchLoader.simulateRealisticLoading();
           fetchCustomerSuggestions('', true);
         }, 100);
         return;
@@ -398,7 +406,8 @@ function initializeCustomerSearch() {
       
       // Add debouncing - wait 300ms after user stops typing
       customerSearchTimeout = setTimeout(() => {
-        showCustomerLoading();
+        superCustomerSearchLoader.show(1000, 2500);
+        superCustomerSearchLoader.simulateRealisticLoading();
         fetchCustomerSuggestions(query, true);
       }, 300);
     });
@@ -409,7 +418,8 @@ function initializeCustomerSearch() {
         const query = this.value.trim();
         currentPage = 1;
         hasMoreData = true;
-        showCustomerLoading();
+        superCustomerSearchLoader.show(1000, 2500);
+        superCustomerSearchLoader.simulateRealisticLoading();
         fetchCustomerSuggestions(query, true);
       }
     });
@@ -438,7 +448,7 @@ function initializeCustomerSearch() {
     fetch(`/assign_deliveries/search_suggestions?q=${encodeURIComponent(query)}&page=${currentPage}`)
       .then(response => response.json())
       .then(data => {
-        hideCustomerLoading();
+        superCustomerSearchLoader.hide();
         // Filter only customer suggestions
         const customerSuggestionsList = data.suggestions.filter(s => s.type === 'customer');
         hasMoreData = data.has_more;
@@ -453,7 +463,7 @@ function initializeCustomerSearch() {
       })
       .catch(error => {
         console.error('Customer search error:', error);
-        hideCustomerLoading();
+        superCustomerSearchLoader.hide();
         isLoadingMore = false;
       });
   }
@@ -1421,6 +1431,9 @@ function initializeFormSubmissionLoader() {
   });
 }
 </script>
+
+<%= render 'shared/attractive_loader_styles' %>
+<%= render 'shared/super_attractive_loader_styles' %>
 
 <style>
 /* Form Styles */

@@ -119,6 +119,7 @@
               <div class="search-loading" id="search-loading" style="display: none;">
                 <i class="fas fa-spinner fa-spin me-2"></i>Searching...
               </div>
+              <%= render 'shared/super_attractive_loader', loader_id: 'superInvoiceSearchLoader', loading_text: 'Analyzing Invoice Data' %>
             </div>
           </div>
           <div class="col-md-1">
@@ -1234,13 +1235,21 @@
 }
 </style>
 
+<%= render 'shared/attractive_loader_styles' %>
+<%= render 'shared/super_attractive_loader_styles' %>
+<%= render 'shared/attractive_loader_js' %>
+<%= render 'shared/super_attractive_loader_js' %>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const tableView = document.getElementById('tableView');
   const cardView = document.getElementById('cardView');
   const tableContent = document.getElementById('tableViewContent');
   const cardContent = document.getElementById('cardViewContent');
-  
+
+  // Create super attractive loader instance
+  const superInvoiceSearchLoader = createSuperAttractiveLoader('superInvoiceSearchLoader');
+
   // Live Search Functionality
   const searchInput = document.getElementById('live-search-input');
   const searchSuggestions = document.getElementById('search-suggestions');
@@ -1260,7 +1269,13 @@ document.addEventListener('DOMContentLoaded', function() {
           clearLiveSearch();
           return;
         }
-        showLoading();
+        superInvoiceSearchLoader.show(1000, 2800);
+        superInvoiceSearchLoader.simulateRealisticLoading([
+          { percentage: 25, delay: 300 },
+          { percentage: 55, delay: 500 },
+          { percentage: 80, delay: 400 },
+          { percentage: 95, delay: 200 }
+        ]);
         fetchSuggestions(query);
         performLiveSearch(query);
         // Submit the filter form so server-side results update and URL reflects search
@@ -1280,7 +1295,13 @@ document.addEventListener('DOMContentLoaded', function() {
           clearLiveSearch();
           return;
         }
-        showLoading();
+        superInvoiceSearchLoader.show(1000, 2800);
+        superInvoiceSearchLoader.simulateRealisticLoading([
+          { percentage: 25, delay: 300 },
+          { percentage: 55, delay: 500 },
+          { percentage: 80, delay: 400 },
+          { percentage: 95, delay: 200 }
+        ]);
         fetchSuggestions(query);
         performLiveSearch(query);
         // Submit the filter form so server-side results update and URL reflects search
@@ -1292,7 +1313,13 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.addEventListener('focus', function() {
       const query = this.value.trim();
       if (query.length >= 1) {
-        showLoading();
+        superInvoiceSearchLoader.show(1000, 2800);
+        superInvoiceSearchLoader.simulateRealisticLoading([
+          { percentage: 25, delay: 300 },
+          { percentage: 55, delay: 500 },
+          { percentage: 80, delay: 400 },
+          { percentage: 95, delay: 200 }
+        ]);
         fetchSuggestions(query);
       }
     });
@@ -1354,12 +1381,12 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch(`/invoices/search_suggestions?q=${encodeURIComponent(query)}`)
       .then(response => response.json())
       .then(data => {
-        hideLoading();
+        superInvoiceSearchLoader.hide();
         displaySuggestions(data.suggestions);
       })
       .catch(error => {
         console.error('Search error:', error);
-        hideLoading();
+        superInvoiceSearchLoader.hide();
       });
   }
   

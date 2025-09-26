@@ -47,6 +47,21 @@ class Customer < ApplicationRecord
   validate :coordinates_presence
 
   # Optimized Scopes with proper includes to prevent N+1 queries
+
+  # Fast index scope - optimized for customer list
+  scope :fast_index, -> {
+    select(:id, :name, :address, :phone_number, :email, :member_id,
+           :delivery_person_id, :user_id, :is_active, :created_at, :updated_at,
+           :image_url, :latitude, :longitude)
+    .where(is_active: true)
+  }
+
+  # Cache delivery people count to avoid repeated queries
+  scope :with_delivery_person_cache, -> {
+    includes(:delivery_person)
+    .select('customers.*, users.name as delivery_person_name')
+    .joins('LEFT JOIN users ON users.id = customers.delivery_person_id')
+  }
   scope :assigned, -> { where.not(delivery_person_id: nil) }
   scope :unassigned, -> { where(delivery_person_id: nil) }
   scope :with_coordinates, -> { where.not(latitude: nil, longitude: nil) }
@@ -76,13 +91,13 @@ class Customer < ApplicationRecord
   # Performance optimized scopes
   scope :with_delivery_counts, -> {
     left_joins(:delivery_assignments)
-    .select('customers.*, COUNT(delivery_assignments.id) as delivery_assignments_count')
+    .select('customers.*, COUNT(delivery_assignments.id) AS delivery_assignments_count')
     .group('customers.id')
   }
 
   scope :with_invoice_totals, -> {
     left_joins(:invoices)
-    .select('customers.*, COALESCE(SUM(invoices.total_amount), 0) as total_invoice_amount')
+    .select('customers.*, COALESCE(SUM(invoices.total_amount), 0) AS total_invoice_amount')
     .group('customers.id')
   }
 
@@ -90,8 +105,8 @@ class Customer < ApplicationRecord
   scope :with_stats, -> {
     left_joins(:delivery_assignments, :invoices)
     .select('customers.*',
-            'COUNT(DISTINCT delivery_assignments.id) as delivery_assignments_count',
-            'COALESCE(SUM(invoices.total_amount), 0) as total_invoice_amount')
+            'COUNT(DISTINCT delivery_assignments.id) AS delivery_assignments_count',
+            'COALESCE(SUM(invoices.total_amount), 0) AS total_invoice_amount')
     .group('customers.id')
   }
 
@@ -100,14 +115,17 @@ class Customer < ApplicationRecord
     includes(:user, :delivery_person)
   }
 
+  # Optimized scope for paginated index (simple version to avoid SQL conflicts)
+  scope :for_paginated_index, -> {
+    includes(:user, :delivery_person)
+  }
+
   # Customer type scopes (Legacy - based on customer_type field)
   scope :regular_customers_legacy, -> { where(customer_type: 0) }
-  scope :interval_customers_legacy, -> { where(customer_type: 1) }
   scope :irregular_customers_legacy, -> { where.not(customer_type: [0, 1]) }
 
   # New customer categorization based on interval_days
   scope :regular_customers, -> { where(interval_days: "7") }
-  scope :interval_customers, -> { where("interval_days::integer < 3").where.not(interval_days: nil) }
   scope :all_customers_with_intervals, -> { where.not(interval_days: nil) }
 
 
@@ -469,8 +487,6 @@ class Customer < ApplicationRecord
     case customer_type
     when 0
       'Regular'
-    when 1
-      'Interval'
     else
       'Irregular'
     end
@@ -480,12 +496,8 @@ class Customer < ApplicationRecord
     customer_type == 0
   end
 
-  def interval_customer?
-    customer_type == 1
-  end
-
   def irregular_customer?
-    !regular_customer? && !interval_customer?
+    !regular_customer?
   end
 
   # Get delivery days for this customer
@@ -525,8 +537,12 @@ class Customer < ApplicationRecord
   end
 
   def delivery_assignments_count
-    # Use counter cache column
-    read_attribute(:delivery_assignments_count) || delivery_assignments.count
+    # Use counter cache column if available, otherwise calculate
+    if has_attribute?(:delivery_assignments_count) && read_attribute(:delivery_assignments_count)
+      read_attribute(:delivery_assignments_count)
+    else
+      delivery_assignments.count
+    end
   end
 
   def active_schedules
@@ -611,53 +627,45 @@ class Customer < ApplicationRecord
     unassigned.includes(:user)
   end
 
-  # Monthly customer pattern analysis - OPTIMIZED with delivery person filtering
-  def self.analyze_monthly_patterns(month = Date.current.month, year = Date.current.year, delivery_person_id = nil)
+  # Monthly customer pattern analysis - OPTIMIZED with pagination support
+  def self.analyze_monthly_patterns_paginated(month = Date.current.month, year = Date.current.year, delivery_person_id = nil, page = 1, per_page = 25)
     start_date = Date.new(year, month, 1).beginning_of_month
     end_date = start_date.end_of_month
     days_in_month = end_date.day
 
     # Filter customers by delivery person if specified
-    customer_scope = delivery_person_id.present? ?
-      Customer.where(delivery_person_id: delivery_person_id) :
-      Customer.all
-
-    # Get ALL delivery assignments (not just completed) for the month
-    delivery_query = DeliveryAssignment
-      .joins(:customer, :product, :user)
-      .left_joins(customer: :delivery_person)
-      .where(scheduled_date: start_date..end_date) # Remove status filter to include ALL
-
-    # Apply delivery person filter if specified
+    customer_scope = Customer.includes(:delivery_person, :user).where(is_active: true)
     if delivery_person_id.present?
-      delivery_query = delivery_query.where(customers: { delivery_person_id: delivery_person_id })
+      customer_scope = customer_scope.where(delivery_person_id: delivery_person_id)
     end
 
-    delivery_data = delivery_query.select(
-      'delivery_assignments.*',
-      'customers.id as customer_id',
-      'customers.name as customer_name',
-      'customers.phone_number as customer_phone',
-      'products.name as product_name',
-      'products.unit_type as product_unit_type',
-      'users.name as delivery_person_name'
-    )
+    # Get total count for pagination
+    total_customers = customer_scope.count
+
+    # Apply pagination to customer scope
+    offset = (page - 1) * per_page
+    paginated_customers = customer_scope.limit(per_page).offset(offset).order(:name)
+    customer_ids = paginated_customers.pluck(:id)
+
+    # Get delivery assignments only for paginated customers
+    delivery_data = DeliveryAssignment
+      .joins(:product)
+      .where(customer_id: customer_ids, scheduled_date: start_date..end_date)
+      .select(
+        'delivery_assignments.*',
+        'products.name as product_name',
+        'products.unit_type as product_unit_type'
+      )
 
     # Group data by customer to avoid N+1
     customer_deliveries = delivery_data.group_by(&:customer_id)
 
-    # Get all customers that have deliveries this month
-    customer_ids = customer_deliveries.keys
-    customers_map = Customer.where(id: customer_ids)
-      .includes(:delivery_person, :user)
-      .index_by(&:id)
-
-    # Get all products for the deliveries in one query
+    # Get all products in one query
     product_ids = delivery_data.map(&:product_id).uniq
     products_map = Product.where(id: product_ids).index_by(&:id)
 
-    # Process ALL customers in the scope (whether they have deliveries or not)
-    results = customer_scope.includes(:delivery_person, :user).map do |customer|
+    # Process only the paginated customers
+    results = paginated_customers.map do |customer|
       deliveries = customer_deliveries[customer.id] || []
 
       # Calculate metrics from the deliveries
@@ -688,7 +696,7 @@ class Customer < ApplicationRecord
 
       {
         customer: customer,
-        delivery_person_name: customer.delivery_person_name,
+        delivery_person_name: customer.delivery_person&.name || "Not Assigned",
         total_liters: total_liters.round(2),
         primary_product: primary_product,
         delivery_days: delivery_days,
@@ -701,7 +709,19 @@ class Customer < ApplicationRecord
       }
     end
 
-    results
+    {
+      results: results,
+      total_customers: total_customers,
+      total_pages: (total_customers.to_f / per_page).ceil,
+      current_page: page,
+      per_page: per_page
+    }
+  end
+
+  # Keep the original method for backward compatibility (but optimize it)
+  def self.analyze_monthly_patterns(month = Date.current.month, year = Date.current.year, delivery_person_id = nil)
+    result = analyze_monthly_patterns_paginated(month, year, delivery_person_id, 1, 1000) # Large page to get all
+    result[:results]
   end
 
   def self.determine_customer_pattern(delivery_days, days_in_month, total_liters)
@@ -710,9 +730,6 @@ class Customer < ApplicationRecord
     # Regular: delivered every day and at least 0.5 liters total
     if delivery_days.length >= (days_in_month * 0.9) && total_liters >= 0.5
       'regular'
-    # Interval: missed only 1-2 days
-    elsif delivery_days.length >= (days_in_month - 2) && total_liters >= 0.5
-      'interval'
     else
       'irregular'
     end
@@ -723,9 +740,6 @@ class Customer < ApplicationRecord
 
     if delivery_days.length >= (days_in_month * 0.9)
       'Every day'
-    elsif delivery_days.length >= (days_in_month - 2)
-      missed_days = (1..days_in_month).to_a - delivery_days
-      "Missed: #{missed_days.join(', ')}"
     else
       "Days: #{delivery_days.join(', ')}"
     end

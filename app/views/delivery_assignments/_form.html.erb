@@ -35,6 +35,7 @@
               <div class="customer-loading" id="customer-loading" style="display: none;">
                 <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
               </div>
+              <%= render 'shared/attractive_loader', loader_id: 'customerSearchLoader', loading_text: 'Searching customers' %>
               <div class="selected-customer" id="selected-customer" style="display: none;">
                 <div class="selected-customer-info">
                   <div class="selected-customer-name"></div>
@@ -69,6 +70,7 @@
               <div class="delivery-person-loading" id="delivery-person-loading" style="display: none;">
                 <i class="fas fa-spinner fa-spin me-2"></i>Searching delivery people...
               </div>
+              <%= render 'shared/attractive_loader', loader_id: 'deliveryPersonSearchLoader', loading_text: 'Searching delivery people' %>
               <div class="selected-delivery-person" id="selected-delivery-person" style="display: none;">
                 <div class="selected-delivery-person-info">
                   <div class="selected-delivery-person-name"></div>

@@ -12,7 +12,8 @@
     </div>
   </div>
 
-  <%= form_with model: @delivery_assignment, local: false, class: "row g-3", id: "edit-assignment-form", html: { novalidate: true } do |form| %>
+  <!-- NO FORM - Pure div-based approach -->
+  <div class="row g-3" id="edit-assignment-container">
     <% if @delivery_assignment.errors.any? %>
       <div class="col-12">
         <div class="alert alert-danger">
@@ -26,91 +27,457 @@
       </div>
     <% end %>
 
+    <!-- Hidden assignment ID -->
+    <input type="hidden" id="assignment-id" value="<%= @delivery_assignment.id %>">
+
     <!-- Customer -->
     <div class="col-md-6">
-      <%= form.label :customer_id, "Customer", class: "form-label fw-bold" %>
-      <%= form.select :customer_id,
-          options_from_collection_for_select(@customers, :id, :name, @delivery_assignment.customer_id),
-          { prompt: "Select Customer" },
-          { class: "form-select", required: true } %>
+      <label class="form-label fw-bold">Customer</label>
+      <select id="customer_id" class="form-select" required>
+        <option value="">Select Customer</option>
+        <% @customers.each do |customer| %>
+          <option value="<%= customer.id %>" <%= 'selected' if customer.id == @delivery_assignment.customer_id %>>
+            <%= customer.name %>
+          </option>
+        <% end %>
+      </select>
     </div>
 
     <!-- Delivery Person -->
     <div class="col-md-6">
-      <%= form.label :user_id, "Delivery Person", class: "form-label fw-bold" %>
-      <%= form.select :user_id,
-          options_from_collection_for_select(@delivery_people, :id, :name, @delivery_assignment.user_id),
-          { prompt: "Select Delivery Person" },
-          { class: "form-select", required: true } %>
+      <label class="form-label fw-bold">Delivery Person</label>
+      <select id="user_id" class="form-select" required>
+        <option value="">Select Delivery Person</option>
+        <% @delivery_people.each do |person| %>
+          <option value="<%= person.id %>" <%= 'selected' if person.id == @delivery_assignment.user_id %>>
+            <%= person.name %>
+          </option>
+        <% end %>
+      </select>
     </div>
 
     <!-- Product -->
     <div class="col-md-6">
-      <%= form.label :product_id, "Product", class: "form-label fw-bold" %>
-      <%= form.select :product_id,
-          options_from_collection_for_select(@products, :id, :name, @delivery_assignment.product_id),
-          { prompt: "Select Product" },
-          { class: "form-select", required: true } %>
+      <label class="form-label fw-bold">Product</label>
+      <select id="product_id" class="form-select" required>
+        <option value="">Select Product</option>
+        <% @products.each do |product| %>
+          <option value="<%= product.id %>" <%= 'selected' if product.id == @delivery_assignment.product_id %>>
+            <%= product.name %>
+          </option>
+        <% end %>
+      </select>
     </div>
 
     <!-- Quantity -->
     <div class="col-md-4">
-      <%= form.label :quantity, class: "form-label fw-bold" %>
-      <%= form.number_field :quantity, class: "form-control", required: true, step: "0.01" %>
+      <label class="form-label fw-bold">Quantity</label>
+      <input type="number" id="quantity" class="form-control" required step="0.01"
+             value="<%= @delivery_assignment.quantity %>">
     </div>
 
     <!-- Unit -->
     <div class="col-md-2">
-      <%= form.label :unit, class: "form-label fw-bold" %>
-      <%= form.select :unit,
-          options_for_select([
-            ['Liters', 'liters'],
-            ['Gallons', 'gallons'],
-            ['Kilograms', 'kg'],
-            ['Pounds', 'pounds'],
-            ['Pieces', 'pieces']
-          ], @delivery_assignment.unit),
-          {},
-          { class: "form-select", required: true } %>
+      <label class="form-label fw-bold">Unit</label>
+      <select id="unit" class="form-select" required>
+        <option value="liters" <%= 'selected' if @delivery_assignment.unit == 'liters' %>>Liters</option>
+        <option value="gallons" <%= 'selected' if @delivery_assignment.unit == 'gallons' %>>Gallons</option>
+        <option value="kg" <%= 'selected' if @delivery_assignment.unit == 'kg' %>>Kilograms</option>
+        <option value="pounds" <%= 'selected' if @delivery_assignment.unit == 'pounds' %>>Pounds</option>
+        <option value="pieces" <%= 'selected' if @delivery_assignment.unit == 'pieces' %>>Pieces</option>
+      </select>
     </div>
 
     <!-- Delivery Date -->
     <div class="col-md-6">
-      <%= form.label :scheduled_date, "Delivery Date", class: "form-label fw-bold" %>
-      <%= form.date_field :scheduled_date, class: "form-control", required: true %>
+      <label class="form-label fw-bold">Delivery Date</label>
+      <input type="date" id="scheduled_date" class="form-control" required
+             value="<%= @delivery_assignment.scheduled_date.strftime('%Y-%m-%d') if @delivery_assignment.scheduled_date %>">
     </div>
 
     <!-- Status -->
     <div class="col-md-6">
-      <%= form.label :status, class: "form-label fw-bold" %>
-      <%= form.select :status,
-          options_for_select([
-            ['Pending', 'pending'],
-            ['In Progress', 'in_progress'],
-            ['Completed', 'completed'],
-            ['Cancelled', 'cancelled']
-          ], @delivery_assignment.status),
-          {}, { class: "form-select", required: true } %>
+      <label class="form-label fw-bold">Status</label>
+      <select id="status" class="form-select" required>
+        <option value="pending" <%= 'selected' if @delivery_assignment.status == 'pending' %>>Pending</option>
+        <option value="in_progress" <%= 'selected' if @delivery_assignment.status == 'in_progress' %>>In Progress</option>
+        <option value="completed" <%= 'selected' if @delivery_assignment.status == 'completed' %>>Completed</option>
+        <option value="cancelled" <%= 'selected' if @delivery_assignment.status == 'cancelled' %>>Cancelled</option>
+      </select>
     </div>
 
     <!-- Special Instructions -->
     <div class="col-12">
-      <%= form.label :special_instructions, class: "form-label fw-bold" %>
-      <%= form.text_area :special_instructions, class: "form-control", rows: 3,
-          placeholder: "Any special delivery instructions..." %>
+      <label class="form-label fw-bold">Special Instructions</label>
+      <textarea id="special_instructions" class="form-control" rows="3"
+                placeholder="Any special delivery instructions..."><%= @delivery_assignment.special_instructions %></textarea>
     </div>
 
     <!-- Action Buttons -->
     <div class="col-12">
       <div class="d-flex gap-2 justify-content-end">
         <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-        <%= form.submit "Update Assignment", class: "btn btn-primary", id: "update-assignment-btn" %>
+        <button type="button" class="btn btn-primary" id="update-assignment-btn">
+          Update Assignment
+        </button>
       </div>
     </div>
-  <% end %>
+  </div>
 </div>
 
-<!-- JavaScript will be handled by event delegation from main page -->
+<!-- Pure AJAX JavaScript - NO FORM INVOLVED -->
+<script>
+// Immediate execution for button handler
+(function() {
+  console.log('🔧 Pure AJAX modal script loading...');
+
+  // Multiple initialization attempts
+  initializeModal();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeModal);
+  }
+  setTimeout(initializeModal, 100);
+  setTimeout(initializeModal, 500);
+
+  function initializeModal() {
+    const updateBtn = document.getElementById('update-assignment-btn');
+    console.log('🔍 Looking for update button...', { updateBtn: !!updateBtn });
+
+    if (updateBtn) {
+      console.log('✅ Found button, setting up pure AJAX handler');
+
+      // Remove any existing handlers by cloning
+      const newBtn = updateBtn.cloneNode(true);
+      updateBtn.parentNode.replaceChild(newBtn, updateBtn);
+
+      // Get fresh reference
+      const finalBtn = document.getElementById('update-assignment-btn');
+
+      // Set up button handler
+      finalBtn.onclick = function(e) {
+        console.log('🎯 Update Assignment clicked - starting pure AJAX');
+        e.preventDefault();
+        e.stopPropagation();
+        handleUpdateAssignment();
+        return false;
+      };
+
+      console.log('✅ Pure AJAX modal initialized successfully');
+    } else {
+      console.log('⏳ Button not found yet, will retry...');
+    }
+  }
+})();
+
+function handleUpdateAssignment() {
+  console.log('🚀 Starting pure AJAX assignment update process');
+
+  // Create and show attractive percentage loader
+  showPercentageLoader();
+
+  // Collect data from individual input elements
+  const assignmentId = document.getElementById('assignment-id').value;
+  const customerId = document.getElementById('customer_id').value;
+  const userId = document.getElementById('user_id').value;
+  const productId = document.getElementById('product_id').value;
+  const quantity = document.getElementById('quantity').value;
+  const unit = document.getElementById('unit').value;
+  const scheduledDate = document.getElementById('scheduled_date').value;
+  const status = document.getElementById('status').value;
+  const specialInstructions = document.getElementById('special_instructions').value;
+
+  console.log('📊 Collected data:', {
+    assignmentId, customerId, userId, productId, quantity, unit, scheduledDate, status
+  });
+
+  // Build the request data
+  const requestData = {
+    'delivery_assignment[customer_id]': customerId,
+    'delivery_assignment[user_id]': userId,
+    'delivery_assignment[product_id]': productId,
+    'delivery_assignment[quantity]': quantity,
+    'delivery_assignment[unit]': unit,
+    'delivery_assignment[scheduled_date]': scheduledDate,
+    'delivery_assignment[status]': status,
+    'delivery_assignment[special_instructions]': specialInstructions
+  };
+
+  // Build action URL
+  const actionUrl = `/assign_deliveries/${assignmentId}.json`;
+
+  // Simulate progress steps
+  updateProgress(0, 'Validating assignment data...');
+
+  setTimeout(() => {
+    updateProgress(25, 'Preparing update request...');
+
+    setTimeout(() => {
+      updateProgress(50, 'Sending to backend...');
+
+      // Make the actual API call with FormData
+      const formData = new FormData();
+      Object.keys(requestData).forEach(key => {
+        formData.append(key, requestData[key]);
+      });
+
+      fetch(actionUrl, {
+        method: 'PATCH',
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.content
+        }
+      })
+      .then(response => {
+        updateProgress(75, 'Processing backend response...');
+        console.log('📥 Response status:', response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        updateProgress(90, 'Finalizing update...');
+        console.log('✅ Backend response:', data);
+
+        if (data.success) {
+          updateProgress(100, 'Assignment updated successfully!');
+
+          // Show success and close modal
+          setTimeout(() => {
+            hidePercentageLoader();
+            showSuccessToast(data.message || 'Assignment updated successfully!');
+
+            // Close edit modal (2nd level) and refresh main modal (1st level)
+            setTimeout(() => {
+              console.log('🔄 Closing edit modal and refreshing main modal...');
+
+              if (window.closeEditModal) {
+                window.closeEditModal();
+              }
+
+              // Refresh the main deliveries modal
+              setTimeout(() => {
+                if (window.reloadCurrentModal) {
+                  window.reloadCurrentModal();
+                } else if (window.currentModalData) {
+                  const { customerId, customerName, month, year } = window.currentModalData;
+                  if (window.loadModalContent && customerId) {
+                    console.log('🔄 Reloading modal content...');
+                    window.loadModalContent(customerId, customerName, month, year);
+                  }
+                }
+              }, 500);
+            }, 1500);
+          }, 1000);
+
+        } else {
+          throw new Error(data.message || 'Backend update failed');
+        }
+      })
+      .catch(error => {
+        console.error('❌ Update failed:', error);
+        updateProgress(100, 'Update failed!');
+        setTimeout(() => {
+          hidePercentageLoader();
+          showErrorToast('Error: ' + error.message);
+        }, 1000);
+      });
+    }, 500);
+  }, 300);
+}
+
+function showPercentageLoader() {
+  // Remove any existing loader
+  const existingLoader = document.getElementById('percentage-loader-overlay');
+  if (existingLoader) {
+    existingLoader.remove();
+  }
+
+  const loaderHTML = `
+    <div id="percentage-loader-overlay" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(5px);
+    ">
+      <div style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        color: white;
+        min-width: 300px;
+        animation: slideIn 0.5s ease;
+      ">
+        <!-- Animated Icon -->
+        <div style="
+          width: 60px;
+          height: 60px;
+          margin: 0 auto 20px;
+          border: 4px solid rgba(255,255,255,0.3);
+          border-top: 4px solid #fff;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "></div>
+
+        <!-- Progress Circle -->
+        <div style="
+          position: relative;
+          width: 120px;
+          height: 120px;
+          margin: 0 auto 20px;
+        ">
+          <svg style="
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+          ">
+            <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,0.2)" stroke-width="8" fill="transparent"/>
+            <circle id="progress-circle" cx="60" cy="60" r="50"
+              stroke="#4ade80"
+              stroke-width="8"
+              fill="transparent"
+              stroke-dasharray="314"
+              stroke-dashoffset="314"
+              style="transition: stroke-dashoffset 0.5s ease;"/>
+          </svg>
+          <div id="percentage-text" style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ade80;
+          ">0%</div>
+        </div>
+
+        <!-- Status Text -->
+        <div id="status-text" style="
+          font-size: 16px;
+          margin-bottom: 10px;
+          opacity: 0.9;
+        ">Initializing...</div>
+
+        <!-- Animated Dots -->
+        <div style="
+          display: flex;
+          justify-content: center;
+          gap: 4px;
+        ">
+          <div style="
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+          "></div>
+          <div style="
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+            animation-delay: -0.32s;
+          "></div>
+          <div style="
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+            animation-delay: -0.16s;
+          "></div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: scale(0.8) translateY(-50px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      @keyframes bounce {
+        0%, 80%, 100% {
+          transform: scale(0);
+        } 40% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', loaderHTML);
+}
+
+function updateProgress(percentage, statusText) {
+  const progressCircle = document.getElementById('progress-circle');
+  const percentageText = document.getElementById('percentage-text');
+  const statusTextEl = document.getElementById('status-text');
+
+  if (progressCircle && percentageText && statusTextEl) {
+    const circumference = 2 * Math.PI * 50;
+    const offset = circumference - (percentage / 100) * circumference;
+
+    progressCircle.style.strokeDashoffset = offset;
+    percentageText.textContent = percentage + '%';
+    statusTextEl.textContent = statusText;
+
+    console.log(`📊 Progress: ${percentage}% - ${statusText}`);
+  }
+}
+
+function hidePercentageLoader() {
+  const loader = document.getElementById('percentage-loader-overlay');
+  if (loader) {
+    loader.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => loader.remove(), 300);
+  }
+}
+
+function showSuccessToast(message) {
+  // Try different toast functions
+  if (window.showSimpleToast) {
+    window.showSimpleToast(message, 'success');
+  } else if (window.showToast) {
+    window.showToast(message, 'success');
+  } else {
+    alert('✅ ' + message);
+  }
+}
+
+function showErrorToast(message) {
+  if (window.showSimpleToast) {
+    window.showSimpleToast(message, 'error');
+  } else if (window.showToast) {
+    window.showToast(message, 'error');
+  } else {
+    alert('❌ ' + message);
+  }
+}
+</script>
 
 <style>
 .edit-assignment-form {

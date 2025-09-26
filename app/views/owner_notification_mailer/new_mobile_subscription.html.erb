@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .alert {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+      .details {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        text-align: center;
+        color: #666;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h2>📱 New Mobile Subscription Alert</h2>
+      <p><strong>Business:</strong> <%= @admin_settings.business_name %></p>
+    </div>
+
+    <div class="alert">
+      <h3>Subscription Details</h3>
+      <p><strong>Customer:</strong> <%= @customer_name %></p>
+      <p><strong>Order Source:</strong> Mobile App</p>
+      <p><strong>Subscription Period:</strong> <%= @subscription_details[:subscription_period] %></p>
+      <p><strong>Total Days:</strong> <%= @subscription_details[:total_days] %></p>
+      <p><strong>Delivery Days:</strong> <%= @subscription_details[:delivery_days] %></p>
+      <% if @subscription_details[:delivery_person] %>
+        <p><strong>Assigned to:</strong> <%= @subscription_details[:delivery_person] %></p>
+      <% end %>
+    </div>
+
+    <div class="details">
+      <h4>Subscription Information:</h4>
+      <% if @subscription_details[:product] %>
+        <p><strong>Product:</strong> <%= @subscription_details[:product][:name] %></p>
+        <p><strong>Daily Quantity:</strong> <%= @subscription_details[:quantity] %> <%= @subscription_details[:unit] %></p>
+      <% end %>
+
+      <p><strong>Frequency:</strong> Daily</p>
+      <p><strong>Estimated Total Amount:</strong> ₹<%= @subscription_details[:estimated_total_amount] %></p>
+
+      <% if @subscription_details[:cod] %>
+        <p><strong>Payment:</strong> Cash on Delivery</p>
+      <% end %>
+
+      <% if @subscription_details[:skip_sundays] %>
+        <p><strong>Note:</strong> Sundays will be skipped</p>
+      <% end %>
+    </div>
+
+    <div class="footer">
+      <p>This is an automated notification from your delivery management system.</p>
+      <p>Please check your dashboard for more details and to manage this subscription.</p>
+    </div>
+  </body>
+</html>

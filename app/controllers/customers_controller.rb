@@ -4,8 +4,8 @@ class CustomersController < ApplicationController
   before_action :set_customer, only: [:show, :edit, :update, :destroy]
   
   def index
-    # Use optimized scope to prevent N+1 queries with counts and aggregations
-    @customers = Customer.for_index.active
+    # Start with optimized scope - only essential columns
+    @customers = Customer.fast_index
 
     # Filter by delivery person if selected
     if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all'
@@ -18,8 +18,8 @@ class CustomersController < ApplicationController
     # Search by term across multiple fields
     if params[:search].present?
       term = params[:search].strip
-      # Optimized exact match with single query
-      exact_customer = Customer.with_basic_associations
+      # Quick exact match check first
+      exact_customer = Customer.fast_index
                               .where(
                                 "member_id = :term OR phone_number = :term OR alt_phone_number = :term OR email = :term",
                                 term: term
@@ -27,19 +27,30 @@ class CustomersController < ApplicationController
       if exact_customer
         redirect_to exact_customer and return
       end
-      @customers = @customers.search(term)
+
+      # Full text search
+      @customers = @customers.where(
+        "name ILIKE :q OR address ILIKE :q OR phone_number ILIKE :q OR alt_phone_number ILIKE :q OR email ILIKE :q OR member_id ILIKE :q",
+        q: "%#{term}%"
+      )
     end
 
+    # Order by name for consistent results
     @customers = @customers.order(:name)
 
-    # Get count before pagination to avoid multiple queries
-    @total_customers = @customers.except(:select, :group).count
+    # Get total count before pagination - use distinct count to avoid SELECT conflicts
+    @total_customers = @customers.except(:select).count
 
-    # Add pagination - 50 customers per page
-    @customers = @customers.page(params[:page]).per(50)
+    # Apply Kaminari pagination - 25 customers per page
+    @customers = @customers.page(params[:page]).per(25)
 
-    # Optimized delivery people query - only load what's needed
-    @delivery_people = User.delivery_people.select(:id, :name).order(:name)
+    # Eager load associations only for the paginated results
+    @customers = @customers.includes(:delivery_person)
+
+    # Cache delivery people query - only load what's needed for dropdown
+    @delivery_people = Rails.cache.fetch('delivery_people_dropdown', expires_in: 1.hour) do
+      User.delivery_people.select(:id, :name).order(:name).to_a
+    end
   end
 
   def search_suggestions

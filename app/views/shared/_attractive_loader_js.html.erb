@@ -1,0 +1,111 @@
+<script>
+// Reusable Attractive Loader JavaScript
+class AttractiveLoader {
+  constructor(loaderId) {
+    this.loaderId = loaderId;
+    this.loader = document.getElementById(loaderId);
+    this.timeout = null;
+    this.isActive = false;
+  }
+
+  // Show loader with optional delay (default 1 second)
+  show(delay = 1000) {
+    if (this.isActive) return;
+
+    this.isActive = true;
+
+    if (delay > 0) {
+      this.timeout = setTimeout(() => {
+        if (this.isActive && this.loader) {
+          this.loader.style.display = 'block';
+        }
+      }, delay);
+    } else {
+      if (this.loader) {
+        this.loader.style.display = 'block';
+      }
+    }
+  }
+
+  // Hide loader immediately
+  hide() {
+    this.isActive = false;
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+    if (this.loader) {
+      this.loader.style.display = 'none';
+    }
+  }
+
+  // Check if loader is currently active
+  isLoading() {
+    return this.isActive;
+  }
+}
+
+// Helper function to create and manage loaders
+function createAttractiveLoader(loaderId) {
+  return new AttractiveLoader(loaderId);
+}
+
+// Helper function for search with loader
+function searchWithAttractiveLoader(searchFunction, loaderId, delay = 1000) {
+  const loader = createAttractiveLoader(loaderId);
+
+  loader.show(delay);
+
+  return Promise.resolve(searchFunction())
+    .finally(() => {
+      loader.hide();
+    });
+}
+
+// Helper function to enhance any search input with attractive loader
+function enhanceSearchWithLoader(searchInputId, loaderId, searchFunction, delay = 1000) {
+  const searchInput = document.getElementById(searchInputId);
+  const loader = createAttractiveLoader(loaderId);
+  let searchTimeout;
+
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    loader.hide();
+
+    const query = this.value.trim();
+    if (query.length === 0) return;
+
+    // Debounce search
+    searchTimeout = setTimeout(() => {
+      loader.show(delay);
+
+      Promise.resolve(searchFunction(query))
+        .finally(() => {
+          loader.hide();
+        });
+    }, 300);
+  });
+
+  // Also handle focus events
+  searchInput.addEventListener('focus', function() {
+    const query = this.value.trim();
+    if (query.length > 0) {
+      loader.show(delay);
+
+      Promise.resolve(searchFunction(query))
+        .finally(() => {
+          loader.hide();
+        });
+    }
+  });
+
+  // Hide loader on blur
+  searchInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      loader.hide();
+    }, 200);
+  });
+}
+</script>
