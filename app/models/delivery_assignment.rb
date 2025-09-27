@@ -19,6 +19,7 @@ class DeliveryAssignment < ApplicationRecord
   validate :discount_not_exceeding_total_amount
 
   # Callbacks
+  after_initialize :set_default_booked_by
   before_save :calculate_and_set_final_amount
   before_save :set_completed_at_if_completed
 
@@ -243,6 +244,14 @@ class DeliveryAssignment < ApplicationRecord
   end
 
   private
+
+  def set_default_booked_by
+    # Only set default if booked_by attribute exists and is nil
+    # This prevents errors when using select queries that don't include all columns
+    if has_attribute?(:booked_by) && booked_by.nil?
+      self.booked_by = 0
+    end
+  end
 
   def delivery_date_not_in_past
     return unless scheduled_date.present? && scheduled_date < Date.current

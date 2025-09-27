@@ -116,9 +116,13 @@ class MilkAnalyticsController < ApplicationController
         # Final fallback - use a more descriptive name
         product_name = product_name.presence || 'Milk/Dairy Product'
 
-        # Calculate total amount accurately
-        duration = (schedule.to_date - schedule.from_date).to_i + 1
-        total_amount = (schedule.quantity || 0) * (schedule.buying_price || 0) * duration
+        # Always calculate total amount from actual assignments to match the modal
+        # This ensures schedule total matches the assignment purchase cost exactly
+        total_amount = schedule.procurement_assignments.sum do |assignment|
+          quantity = assignment.actual_quantity.presence || assignment.planned_quantity || 0
+          rate = assignment.buying_price || schedule.buying_price || 0
+          quantity * rate
+        end
 
         {
           id: schedule.id,

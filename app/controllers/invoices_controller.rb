@@ -1,6 +1,6 @@
 # app/controllers/invoices_controller.rb
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :convert_to_completed, :share_whatsapp]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :convert_to_completed, :share_whatsapp, :download_pdf]
   before_action :set_customers, only: [:index, :new, :create, :generate]
   skip_before_action :require_login, only: [:public_view, :public_download_pdf]
   
@@ -147,13 +147,13 @@ end
         end
       end
       
-      # Send WhatsApp notifications in bulk using WANotifier
+      # Send WhatsApp notifications in bulk using Twilio
       whatsapp_results = { success_count: 0, failure_count: 0 }
-      
+
       if successful_invoices.any?
         begin
-          wanotifier_service = WanotifierService.new
-          whatsapp_results = wanotifier_service.send_bulk_invoice_notifications(successful_invoices)
+          twilio_service = TwilioWhatsappService.new
+          whatsapp_results = twilio_service.send_bulk_invoice_notifications(successful_invoices)
         rescue => e
           Rails.logger.error "Bulk WhatsApp sending failed: #{e.message}"
           whatsapp_results[:failure_count] = successful_invoices.count
@@ -527,7 +527,29 @@ end
       end
     end
   end
-  
+
+  def download_pdf
+    @invoice = Invoice.find(params[:id])
+    @invoice_items = @invoice.invoice_items.includes(:product)
+    @customer = @invoice.customer
+
+    respond_to do |format|
+      format.pdf do
+        generate_pdf_response
+      end
+
+      # Handle default format (when no format is specified in URL)
+      format.html do
+        generate_pdf_response
+      end
+
+      # Handle any other format by defaulting to PDF
+      format.any do
+        generate_pdf_response
+      end
+    end
+  end
+
   private
 
   def set_invoice
@@ -564,11 +586,11 @@ end
     return false unless invoice&.customer&.phone_number.present?
     
     begin
-      # Initialize WANotifier service
-      wanotifier_service = WanotifierService.new
-      
-      # Send invoice notification via WANotifier
-      success = wanotifier_service.send_invoice_notification(invoice)
+      # Initialize Twilio WhatsApp service
+      twilio_service = TwilioWhatsappService.new
+
+      # Send invoice notification via Twilio WhatsApp
+      success = twilio_service.send_invoice_notification(invoice)
       
       if success
         Rails.logger.info "Invoice #{invoice.formatted_number} sent successfully via WANotifier to #{invoice.customer.name}"
@@ -658,6 +680,94 @@ end
       For any queries, please contact us.
       - Atma Nirbhar Farm
     MESSAGE
+  end
+
+  # Generate and send invoice via WhatsApp
+  def generate_and_send_whatsapp
+    customer_id = params[:customer_id]
+    month = params[:month].to_i
+    year = params[:year].to_i
+    phone_number = params[:phone_number]
+
+    if customer_id.blank? || month <= 0 || year <= 0 || phone_number.blank?
+      render json: { success: false, error: 'Missing required parameters' }, status: 400
+      return
+    end
+
+    # Validate phone number
+    sanitized_phone = phone_number.gsub(/\D/, '')
+    unless sanitized_phone.match?(/^\d{10,15}$/)
+      render json: { success: false, error: 'Invalid phone number format' }, status: 400
+      return
+    end
+
+    begin
+      # Find or create invoice for the customer and month
+      customer = Customer.find(customer_id)
+      start_date = Date.new(year, month, 1)
+      end_date = start_date.end_of_month
+
+      # Check if invoice already exists
+      existing_invoice = Invoice.where(
+        customer: customer,
+        invoice_date: start_date..end_date
+      ).first
+
+      if existing_invoice
+        invoice = existing_invoice
+      else
+        # Generate new invoice
+        result = Invoice.generate_monthly_invoice_for_customer(customer_id, month, year)
+
+        if result[:success]
+          invoice = result[:invoice]
+        else
+          render json: { success: false, error: result[:message] }, status: 422
+          return
+        end
+      end
+
+      # Ensure share token exists
+      invoice.generate_share_token if invoice.share_token.blank?
+      invoice.save! if invoice.changed?
+
+      # Generate public URL
+      host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+      public_url = invoice.public_url(host: host).gsub(':3000', '')
+
+      # Build WhatsApp message
+      message = build_enhanced_invoice_message(invoice, public_url)
+
+      # Add country code if needed
+      unless sanitized_phone.start_with?('91')
+        sanitized_phone = "91#{sanitized_phone.sub(/^0/, '')}"
+      end
+
+      # Create WhatsApp URL
+      whatsapp_url = "https://web.whatsapp.com/send?phone=#{sanitized_phone}&text=#{CGI.escape(message)}"
+
+      # Mark invoice as shared
+      invoice.mark_as_shared! if invoice.respond_to?(:mark_as_shared!)
+
+      # Send via Twilio WhatsApp if available
+      begin
+        send_whatsapp_invoice(invoice) if respond_to?(:send_whatsapp_invoice, true)
+      rescue => e
+        Rails.logger.error "Twilio WhatsApp sending failed: #{e.message}"
+      end
+
+      render json: {
+        success: true,
+        whatsapp_url: whatsapp_url,
+        invoice_id: invoice.id,
+        invoice_number: invoice.formatted_number,
+        message: 'Invoice generated and WhatsApp link created successfully'
+      }
+
+    rescue => e
+      Rails.logger.error "Error generating invoice and WhatsApp: #{e.message}"
+      render json: { success: false, error: 'An error occurred while processing your request' }, status: 500
+    end
   end
 
   def generate_pdf_response

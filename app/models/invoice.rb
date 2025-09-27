@@ -18,7 +18,7 @@ class Invoice < ApplicationRecord
   def send_via_whatsapp(message = nil)
     return { success: false, error: 'Customer phone number not found' } if customer.phone.blank?
     
-    wanotifier = WanotifierService.new
+    twilio_service = TwilioWhatsappService.new
     
     # Default message if none provided
     default_message = build_default_whatsapp_message

@@ -271,6 +271,7 @@ Rails.application.routes.draw do
       patch :mark_as_paid
       patch :convert_to_completed
       post :share_whatsapp
+      get :download_pdf
     end
     
     collection do
@@ -282,6 +283,7 @@ Rails.application.routes.draw do
       post :generate_monthly_for_all
       get :search_suggestions
       get :export_for_whatsapp
+      post :generate_and_send_whatsapp
     end
   end
   

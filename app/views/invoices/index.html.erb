@@ -14,7 +14,7 @@
       <%= link_to generate_invoices_path, class: 'btn btn-success' do %>
         <i class="fas fa-plus me-2"></i>Generate Invoice
       <% end %>
-      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateMonthlyModal">
+      <button type="button" class="btn btn-primary" onclick="openGenerateMonthlyModal()">
         <i class="fas fa-calendar me-2"></i>Generate Monthly for All
       </button>
     </div>
@@ -129,9 +129,12 @@
       </div>
       <div class="col-md-4 text-end">
         <div class="d-flex align-items-center justify-content-end">
-          <button type="button" class="btn btn-success btn-sm me-2" id="bulkWhatsAppBtn" style="display: none;" 
+          <button type="button" class="btn btn-success btn-sm me-2" id="bulkWhatsAppBtn" style="display: none;"
                   title="Automatically open separate WhatsApp Web tabs for all selected customers. Allow popups when prompted.">
             <i class="fab fa-whatsapp me-2"></i>Send Bulk WhatsApp (<span id="selectedCount">0</span>)
+          </button>
+          <button type="button" class="btn btn-primary btn-sm me-2" onclick="openWhatsAppInvoiceModal()">
+            <i class="fab fa-whatsapp me-2"></i>Generate & Send Invoice
           </button>
           <span class="badge bg-primary me-2"><%= @invoices.count %> invoices</span>
           <div class="btn-group btn-group-sm" role="group">
@@ -405,7 +408,7 @@
           <%= link_to generate_invoices_path, class: 'btn btn-success me-2' do %>
             <i class="fas fa-plus me-2"></i>Generate Invoice
           <% end %>
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateMonthlyModal">
+          <button type="button" class="btn btn-primary" onclick="openGenerateMonthlyModal()">
             <i class="fas fa-calendar me-2"></i>Generate Monthly for All
           </button>
         </div>
@@ -1912,100 +1915,517 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Note: All tabs now open automatically on bulk WhatsApp button click
   // No individual confirmations needed - tabs open with 200ms delays
+
+  // Generate & Send WhatsApp Invoice Modal Functionality
+  const whatsappCustomerSelect = document.getElementById('whatsappCustomerSelect');
+  const whatsappMonthSelect = document.getElementById('whatsappMonthSelect');
+  const whatsappYearSelect = document.getElementById('whatsappYearSelect');
+  const whatsappPhoneNumber = document.getElementById('whatsappPhoneNumber');
+  const previewInvoiceBtn = document.getElementById('previewInvoiceBtn');
+  const generateAndSendBtn = document.getElementById('generateAndSendBtn');
+  const invoicePreviewSection = document.getElementById('invoicePreviewSection');
+  const invoicePreviewContent = document.getElementById('invoicePreviewContent');
+
+  // Update phone number when customer is selected
+  if (whatsappCustomerSelect) {
+    whatsappCustomerSelect.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const phone = selectedOption.dataset.phone || selectedOption.dataset.altPhone;
+
+      if (phone && phone !== 'null' && phone !== '') {
+        whatsappPhoneNumber.value = phone.startsWith('+') ? phone : '+91' + phone;
+      } else {
+        whatsappPhoneNumber.value = '';
+      }
+
+      updateWhatsAppButtons();
+    });
+  }
+
+  // Update buttons when any field changes
+  [whatsappCustomerSelect, whatsappMonthSelect, whatsappYearSelect, whatsappPhoneNumber].forEach(element => {
+    if (element) {
+      element.addEventListener('change', updateWhatsAppButtons);
+      element.addEventListener('input', updateWhatsAppButtons);
+    }
+  });
+
+  function updateWhatsAppButtons() {
+    const customer = whatsappCustomerSelect?.value;
+    const month = whatsappMonthSelect?.value;
+    const year = whatsappYearSelect?.value;
+    const phone = whatsappPhoneNumber?.value?.trim();
+
+    const isValid = customer && month && year && phone && phone.length >= 10;
+
+    if (previewInvoiceBtn) previewInvoiceBtn.disabled = !isValid;
+    if (generateAndSendBtn) generateAndSendBtn.disabled = !isValid;
+  }
+
+  // Preview Invoice functionality
+  if (previewInvoiceBtn) {
+    previewInvoiceBtn.addEventListener('click', function() {
+      const customer = whatsappCustomerSelect.value;
+      const month = whatsappMonthSelect.value;
+      const year = whatsappYearSelect.value;
+
+      if (!customer || !month || !year) {
+        alert('Please select customer, month, and year');
+        return;
+      }
+
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading Preview...';
+
+      // Make AJAX call to get invoice preview
+      fetch(`/invoices/monthly_preview?customer_id=${customer}&month=${month}&year=${year}`)
+        .then(response => response.text())
+        .then(html => {
+          invoicePreviewContent.innerHTML = html;
+          invoicePreviewSection.style.display = 'block';
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to load preview');
+        })
+        .finally(() => {
+          this.disabled = false;
+          this.innerHTML = '<i class="fas fa-eye me-2"></i>Preview Invoice';
+        });
+    });
+  }
+
+  // Generate and Send functionality
+  if (generateAndSendBtn) {
+    generateAndSendBtn.addEventListener('click', function() {
+      const customer = whatsappCustomerSelect.value;
+      const month = whatsappMonthSelect.value;
+      const year = whatsappYearSelect.value;
+      const phone = whatsappPhoneNumber.value.trim();
+
+      if (!customer || !month || !year || !phone) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating & Sending...';
+
+      // Make AJAX call to generate invoice and send via WhatsApp
+      fetch('/invoices/generate_and_send_whatsapp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+          customer_id: customer,
+          month: month,
+          year: year,
+          phone_number: phone
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Close modal
+          closeWhatsAppInvoiceModal();
+
+          // Open WhatsApp
+          window.open(data.whatsapp_url, '_blank');
+
+          // Show success message
+          showNotification('Invoice generated and WhatsApp link created successfully!', 'success');
+
+          // Refresh page to show new invoice
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          alert('Error: ' + (data.error || 'Failed to generate invoice and send WhatsApp'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Network error. Please try again.');
+      })
+      .finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Generate & Send via WhatsApp';
+      });
+    });
+  }
+
+  // Custom modal functions for Generate Monthly Modal
+  window.openGenerateMonthlyModal = function() {
+    console.log('🔓 Opening Generate Monthly modal');
+    const modal = document.getElementById('generateMonthlyModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+
+      // Focus on the first interactive element
+      setTimeout(() => {
+        const firstInput = modal.querySelector('select, input, button');
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 100);
+    } else {
+      console.error('❌ Generate Monthly modal element not found');
+    }
+  };
+
+  window.closeGenerateMonthlyModal = function() {
+    console.log('🔒 Closing Generate Monthly modal');
+    const modal = document.getElementById('generateMonthlyModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
+  };
+
+  // WhatsApp Modal functions
+  window.openWhatsAppInvoiceModal = function() {
+    console.log('🔓 Opening WhatsApp Invoice modal');
+    const modal = document.getElementById('generateWhatsAppInvoiceModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+
+      // Focus on the first interactive element
+      setTimeout(() => {
+        const firstInput = modal.querySelector('select, input, button');
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 100);
+    } else {
+      console.error('❌ WhatsApp Invoice modal element not found');
+    }
+  };
+
+  window.closeWhatsAppInvoiceModal = function() {
+    console.log('🔒 Closing WhatsApp Invoice modal');
+    const modal = document.getElementById('generateWhatsAppInvoiceModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
+  };
 });
 </script>
 
-<!-- Generate Monthly for All Modal -->
-<div class="modal fade" id="generateMonthlyModal" tabindex="-1" aria-labelledby="generateMonthlyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="generateMonthlyModalLabel">
-          <i class="fas fa-calendar me-2"></i>Generate Monthly Invoices
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <%= form_with url: generate_monthly_for_all_invoices_path, method: :post, local: true, id: 'generate-monthly-form' do |form| %>
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <%= form.label :month, 'Month', class: 'form-label' %>
-              <%= form.select :month,
-                    options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, Date.current.month),
-                    {},
-                    { class: 'form-select', required: true, id: 'modal-month-select' } %>
-            </div>
-            
-            <div class="col-md-6">
-              <%= form.label :year, 'Year', class: 'form-label' %>
-              <%= form.select :year,
-                    options_for_select((2020..Date.current.year + 1).to_a.reverse.map { |y| [y, y] }, Date.current.year),
-                    {},
-                    { class: 'form-select', required: true, id: 'modal-year-select' } %>
+<!-- Generate & Send WhatsApp Invoice Modal -->
+<div id="generateWhatsAppInvoiceModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeWhatsAppInvoiceModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fab fa-whatsapp me-2"></i>Generate & Send Invoice via WhatsApp
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeWhatsAppInvoiceModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="whatsappCustomerSelect" class="form-label">
+              <i class="fas fa-user me-1"></i>Select Customer
+            </label>
+            <select class="form-select" id="whatsappCustomerSelect" required>
+              <option value="">Choose a customer...</option>
+              <% @customers.each do |customer| %>
+                <option value="<%= customer.id %>" data-phone="<%= customer.phone_number %>" data-alt-phone="<%= customer.alt_phone_number %>">
+                  <%= customer.name %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="whatsappMonthSelect" class="form-label">
+              <i class="fas fa-calendar me-1"></i>Select Month
+            </label>
+            <select class="form-select" id="whatsappMonthSelect" required>
+              <% (1..12).each do |month| %>
+                <option value="<%= month %>" <%= 'selected' if month == Date.current.month %>>
+                  <%= Date::MONTHNAMES[month] %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="whatsappYearSelect" class="form-label">
+              <i class="fas fa-calendar-alt me-1"></i>Select Year
+            </label>
+            <select class="form-select" id="whatsappYearSelect" required>
+              <% (2020..Date.current.year + 1).to_a.reverse.each do |year| %>
+                <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>>
+                  <%= year %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="whatsappPhoneNumber" class="form-label">
+              <i class="fas fa-phone me-1"></i>Phone Number
+            </label>
+            <input type="text"
+                   class="form-control"
+                   id="whatsappPhoneNumber"
+                   placeholder="Enter phone number (e.g., +919876543210)"
+                   maxlength="15">
+            <div class="form-text">Phone number with country code (automatically filled from customer data)</div>
+          </div>
+
+          <div class="col-12">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>How it works:</strong> We'll generate an invoice for the selected customer and month, then create a WhatsApp message with the invoice link. The invoice will be automatically generated if it doesn't exist.
             </div>
           </div>
-          
-          <div class="row g-3 mt-2">
-            <div class="col-md-6">
-              <%= form.label :delivery_person_id, 'Delivery Person', class: 'form-label' %>
-              <div class="position-relative">
-                <%= form.select :delivery_person_id,
-                      options_for_select([['All Delivery Persons', 'all']] + User.delivery_people.map { |dp| [dp.name, dp.id] }),
-                      {},
-                      { 
-                        class: 'form-select delivery-person-select', 
-                        id: 'modal-delivery-person-select',
-                        data: { 
-                          search: 'true',
-                          placeholder: 'Search delivery persons...'
-                        }
-                      } %>
+
+          <!-- Preview section (initially hidden) -->
+          <div class="col-12" id="invoicePreviewSection" style="display: none;">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Invoice Preview</h6>
+              </div>
+              <div class="card-body">
+                <div id="invoicePreviewContent">
+                  <!-- Preview content will be loaded here -->
+                </div>
               </div>
             </div>
-            
-            <div class="col-md-6">
-              <%= form.label :customer_ids, 'Customers', class: 'form-label' %>
-              <div class="position-relative">
-                <select name="customer_ids[]" multiple class="form-select customer-select" id="modal-customer-select" 
-                        data-search="true" data-placeholder="Search customers..." style="height: 120px;">
-                  <option value="all" selected>All Customers</option>
-                  <% Customer.includes(:delivery_person).order(:name).each do |customer| %>
-                    <option value="<%= customer.id %>" data-delivery-person="<%= customer.delivery_person_id %>">
-                      <%= customer.name %> (<%= customer.delivery_person&.name || 'No Delivery Person' %>)
-                    </option>
-                  <% end %>
-                </select>
-              </div>
-              <small class="text-muted">Hold Ctrl/Cmd to select multiple customers</small>
-            </div>
-          </div>
-          
-          <div class="alert alert-info mt-3">
-            <i class="fas fa-info-circle me-2"></i>
-            This will generate invoices for the selected customers with completed deliveries for the selected month and year, and send WhatsApp notifications.
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <%= form.submit 'Generate Invoices', 
-                class: 'btn btn-primary', 
-                id: 'modal-generate-btn',
-                data: { 
-                  confirm: 'Are you sure you want to generate invoices for the selected criteria?',
-                  disable_with: 'Generating...'
-                } %>
-        </div>
-      <% end %>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeWhatsAppInvoiceModal()">Cancel</button>
+      <button type="button" class="btn btn-info me-2" id="previewInvoiceBtn" disabled>
+        <i class="fas fa-eye me-2"></i>Preview Invoice
+      </button>
+      <button type="button" class="btn btn-success" id="generateAndSendBtn" disabled>
+        <i class="fab fa-whatsapp me-2"></i>Generate & Send via WhatsApp
+      </button>
     </div>
   </div>
 </div>
 
+<!-- Generate Monthly for All Custom Modal -->
+<div id="generateMonthlyModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeGenerateMonthlyModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-calendar me-2"></i>Generate Monthly Invoices
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeGenerateMonthlyModal()">×</button>
+    </div>
+    <%= form_with url: generate_monthly_for_all_invoices_path, method: :post, local: true, id: 'generate-monthly-form' do |form| %>
+      <div class="custom-modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <%= form.label :month, 'Month', class: 'form-label' %>
+            <%= form.select :month,
+                  options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, Date.current.month),
+                  {},
+                  { class: 'form-select', required: true, id: 'modal-month-select' } %>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :year, 'Year', class: 'form-label' %>
+            <%= form.select :year,
+                  options_for_select((2020..Date.current.year + 1).to_a.reverse.map { |y| [y, y] }, Date.current.year),
+                  {},
+                  { class: 'form-select', required: true, id: 'modal-year-select' } %>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            <%= form.label :delivery_person_id, 'Delivery Person', class: 'form-label' %>
+            <div class="position-relative">
+              <%= form.select :delivery_person_id,
+                    options_for_select([['All Delivery Persons', 'all']] + User.delivery_people.map { |dp| [dp.name, dp.id] }),
+                    {},
+                    {
+                      class: 'form-select delivery-person-select',
+                      id: 'modal-delivery-person-select',
+                      data: {
+                        search: 'true',
+                        placeholder: 'Search delivery persons...'
+                      }
+                    } %>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <%= form.label :customer_ids, 'Customers', class: 'form-label' %>
+            <div class="position-relative">
+              <select name="customer_ids[]" multiple class="form-select customer-select" id="modal-customer-select"
+                      data-search="true" data-placeholder="Search customers..." style="height: 120px;">
+                <option value="all" selected>All Customers</option>
+                <% Customer.includes(:delivery_person).order(:name).each do |customer| %>
+                  <option value="<%= customer.id %>" data-delivery-person="<%= customer.delivery_person_id %>">
+                    <%= customer.name %> (<%= customer.delivery_person&.name || 'No Delivery Person' %>)
+                  </option>
+                <% end %>
+              </select>
+            </div>
+            <small class="text-muted">Hold Ctrl/Cmd to select multiple customers</small>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+          <i class="fas fa-info-circle me-2"></i>
+          This will generate invoices for the selected customers with completed deliveries for the selected month and year, and send WhatsApp notifications.
+        </div>
+      </div>
+      <div class="custom-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeGenerateMonthlyModal()">Cancel</button>
+        <%= form.submit 'Generate Invoices',
+              class: 'btn btn-primary',
+              id: 'modal-generate-btn',
+              data: {
+                confirm: 'Are you sure you want to generate invoices for the selected criteria?',
+                disable_with: 'Generating...'
+              } %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
 <style>
-  /* Enhanced styling for the monthly invoice generation modal */
-  #generateMonthlyModal .modal-dialog {
-    max-width: 800px;
+  /* Custom Modal Styles for Generate Monthly Modal */
+  #generateMonthlyModal.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0 20px 280px; /* Top padding for nav bar, left padding for sidebar */
   }
-  
+
+  #generateMonthlyModal .custom-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+  }
+
+  #generateMonthlyModal .custom-modal-content {
+    position: relative;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 800px;
+    max-height: 85%;
+    overflow: hidden;
+    z-index: 10001;
+    animation: modalFadeIn 0.3s ease-out;
+    margin: 0 20px;
+  }
+
+  #generateMonthlyModal .custom-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 10px 10px 0 0;
+  }
+
+  #generateMonthlyModal .custom-modal-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  #generateMonthlyModal .custom-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  #generateMonthlyModal .custom-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  #generateMonthlyModal .custom-modal-body {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  #generateMonthlyModal .custom-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0 0 10px 10px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1200px) {
+    #generateMonthlyModal.custom-modal {
+      padding: 60px 0 20px 200px;
+    }
+  }
+
+  @media (max-width: 992px) {
+    #generateMonthlyModal.custom-modal {
+      padding: 60px 20px 20px 20px;
+    }
+
+    #generateMonthlyModal .custom-modal-content {
+      max-width: 95%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #generateMonthlyModal.custom-modal {
+      padding: 80px 10px 20px 10px;
+    }
+
+    #generateMonthlyModal .custom-modal-content {
+      max-width: 98%;
+      margin: 0 10px;
+    }
+  }
+
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .customer-select {
     min-height: 120px;
     max-height: 200px;
@@ -2062,6 +2482,185 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: #e7f3ff;
     border-color: #b8daff;
     color: #004085;
+  }
+
+  /* Custom Modal Styles for WhatsApp Invoice Modal */
+  #generateWhatsAppInvoiceModal.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0 20px 280px; /* Top padding for nav bar, left padding for sidebar */
+  }
+
+  #generateWhatsAppInvoiceModal .custom-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+  }
+
+  #generateWhatsAppInvoiceModal .custom-modal-content {
+    position: relative;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(37, 211, 102, 0.15);
+    width: 100%;
+    max-width: 800px;
+    max-height: 85%;
+    overflow: hidden;
+    z-index: 10001;
+    animation: modalFadeIn 0.3s ease-out;
+    margin: 0 20px;
+  }
+
+  #generateWhatsAppInvoiceModal .custom-modal-header {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 20px 20px 0 0;
+  }
+
+  #generateWhatsAppInvoiceModal .custom-modal-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+
+  #generateWhatsAppInvoiceModal .custom-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+  }
+
+  #generateWhatsAppInvoiceModal .custom-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  #generateWhatsAppInvoiceModal .custom-modal-body {
+    padding: 2rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  #generateWhatsAppInvoiceModal .custom-modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(37, 211, 102, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: #f8f9fa;
+    border-radius: 0 0 20px 20px;
+  }
+
+  #generateWhatsAppInvoiceModal .form-select,
+  #generateWhatsAppInvoiceModal .form-control {
+    border-radius: 12px;
+    border: 2px solid rgba(37, 211, 102, 0.2);
+    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+  }
+
+  #generateWhatsAppInvoiceModal .form-select:focus,
+  #generateWhatsAppInvoiceModal .form-control:focus {
+    border-color: #25D366;
+    box-shadow: 0 0 0 0.2rem rgba(37, 211, 102, 0.25);
+    outline: none;
+  }
+
+  #generateWhatsAppInvoiceModal .alert-info {
+    background: linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(18, 140, 126, 0.1) 100%);
+    border: 1px solid rgba(37, 211, 102, 0.2);
+    color: #128C7E;
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  #generateWhatsAppInvoiceModal .btn-success {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: white;
+  }
+
+  #generateWhatsAppInvoiceModal .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
+  }
+
+  #generateWhatsAppInvoiceModal .btn-info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: white;
+  }
+
+  #generateWhatsAppInvoiceModal .btn-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3);
+  }
+
+  #generateWhatsAppInvoiceModal .btn-secondary {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  /* Responsive adjustments for WhatsApp modal */
+  @media (max-width: 768px) {
+    #generateWhatsAppInvoiceModal.custom-modal {
+      padding: 20px;
+    }
+
+    #generateWhatsAppInvoiceModal .custom-modal-content {
+      margin: 0;
+      max-width: 100%;
+      border-radius: 15px;
+    }
+
+    #generateWhatsAppInvoiceModal .custom-modal-header {
+      padding: 1rem 1.5rem;
+      border-radius: 15px 15px 0 0;
+    }
+
+    #generateWhatsAppInvoiceModal .custom-modal-body {
+      padding: 1.5rem;
+    }
+
+    #generateWhatsAppInvoiceModal .custom-modal-footer {
+      padding: 1rem 1.5rem;
+      border-radius: 0 0 15px 15px;
+    }
   }
 </style>
 
