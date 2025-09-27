@@ -1,4 +1,13 @@
 Rails.application.routes.draw do
+  resources :ai_insights, path: 'ai-insights', only: [:index] do
+    collection do
+      get :reorder_suggestions
+      get :churn_predictions
+      post :send_reorder_notification
+      post :send_churn_prevention
+    end
+  end
+  resources :customer_points, path: 'customer-points', only: [:index, :show]
   # Handle Chrome DevTools requests with a simple 404 response
   get "/.well-known/appspecific/com.chrome.devtools.json", to: proc { [404, {}, ['']] }
   # Customer Patterns Analysis

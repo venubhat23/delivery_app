@@ -1,0 +1,206 @@
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="h3 mb-0">
+            <i class="fas fa-star text-warning me-2"></i>
+            <%= @customer.name %>'s Points History
+          </h2>
+          <p class="text-muted mb-0">Customer ID: <%= @customer.formatted_id %></p>
+        </div>
+        <div class="text-end">
+          <%= link_to customer_points_path, class: 'btn btn-outline-secondary me-2' do %>
+            <i class="fas fa-arrow-left me-1"></i>Back to Points
+          <% end %>
+          <%= link_to customer_path(@customer), class: 'btn btn-outline-primary' do %>
+            <i class="fas fa-user me-1"></i>View Customer
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Points Summary -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card text-center border-warning">
+            <div class="card-body">
+              <h5 class="card-title text-warning">
+                <i class="fas fa-star me-2"></i>Total Points
+              </h5>
+              <h2 class="text-warning"><%= @total_points %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-success">
+            <div class="card-body">
+              <h5 class="card-title text-success">
+                <i class="fas fa-rupee-sign me-2"></i>Total Purchased
+              </h5>
+              <h2 class="text-success">₹<%= number_with_delimiter(@total_amount_purchased.round(2)) %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-primary">
+                <i class="fas fa-history me-2"></i>Total Deliveries
+              </h5>
+              <h3 class="text-primary"><%= @customer_points.count %></h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-info">
+                <i class="fas fa-calendar-alt me-2"></i>Member Since
+              </h5>
+              <h3 class="text-info"><%= @customer.customer_since %></h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Info -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-user text-primary me-2"></i>
+            Customer Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Name:</strong> <%= @customer.name %><br>
+              <strong>Phone:</strong>
+              <% if @customer.phone_number.present? %>
+                <a href="tel:<%= @customer.phone_number %>"><%= @customer.phone_number %></a>
+              <% else %>
+                -
+              <% end %><br>
+              <strong>Email:</strong>
+              <% if @customer.email.present? %>
+                <a href="mailto:<%= @customer.email %>"><%= @customer.email %></a>
+              <% else %>
+                -
+              <% end %>
+            </div>
+            <div class="col-md-6">
+              <strong>Address:</strong> <%= @customer.address %><br>
+              <strong>Status:</strong>
+              <% if @customer.is_active %>
+                <span class="badge bg-success">Active</span>
+              <% else %>
+                <span class="badge bg-secondary">Inactive</span>
+              <% end %><br>
+              <strong>Delivery Person:</strong> <%= @customer.delivery_person_name %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Points History -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-history text-info me-2"></i>
+            Points History
+            <span class="badge bg-info ms-2"><%= @customer_points.count %></span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @customer_points.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Action Type</th>
+                    <th>Points Earned</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @customer_points.each do |point| %>
+                    <tr>
+                      <td>
+                        <div class="fw-semibold">
+                          <%= point.created_at.strftime("%d %b %Y") %>
+                        </div>
+                        <small class="text-muted">
+                          <%= point.created_at.strftime("%I:%M %p") %>
+                        </small>
+                      </td>
+                      <td>
+                        <% case point.action_type %>
+                        <% when 'delivery' %>
+                          <span class="badge bg-success">
+                            <i class="fas fa-truck me-1"></i>Delivery
+                          </span>
+                        <% when 'referral' %>
+                          <span class="badge bg-primary">
+                            <i class="fas fa-user-plus me-1"></i>Referral
+                          </span>
+                        <% when 'assignment' %>
+                          <span class="badge bg-info">
+                            <i class="fas fa-tasks me-1"></i>Assignment
+                          </span>
+                        <% when 'schedule' %>
+                          <span class="badge bg-warning text-dark">
+                            <i class="fas fa-calendar me-1"></i>Schedule
+                          </span>
+                        <% else %>
+                          <span class="badge bg-secondary">
+                            <i class="fas fa-star me-1"></i><%= point.action_type.capitalize %>
+                          </span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <span class="badge bg-warning text-dark fs-6">
+                          <i class="fas fa-star me-1"></i>
+                          +<%= point.points %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if point.description.present? %>
+                          <%= point.description %>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if point.reference_type.present? && point.reference_id.present? %>
+                          <small class="text-muted">
+                            <%= point.reference_type %> #<%= point.reference_id %>
+                          </small>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-5">
+              <i class="fas fa-star fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No points history</h5>
+              <p class="text-muted mb-4">
+                This customer hasn't earned any points yet.
+              </p>
+              <p class="text-muted">
+                Points are automatically awarded for deliveries, referrals, and other activities.
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

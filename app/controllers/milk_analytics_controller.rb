@@ -124,6 +124,13 @@ class MilkAnalyticsController < ApplicationController
           quantity * rate
         end
 
+        # Calculate duration in days
+        duration = if schedule.from_date && schedule.to_date
+          (schedule.to_date - schedule.from_date).to_i + 1
+        else
+          0
+        end
+
         {
           id: schedule.id,
           from_date: schedule.from_date,

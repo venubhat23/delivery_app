@@ -27,6 +27,9 @@ class ReferralCode < ApplicationRecord
   def add_referral!(credits = 10)
     increment!(:total_referrals)
     increment!(:total_credits, credits)
+
+    # Award points to the referring customer
+    award_referral_points(credits)
   end
 
   def use_credits!(amount)
@@ -75,5 +78,20 @@ class ReferralCode < ApplicationRecord
 
   def generate_share_url_slug
     self.share_url_slug = SecureRandom.urlsafe_base64(12)
+  end
+
+  def award_referral_points(credits)
+    return unless customer
+
+    # Award points equal to credits earned (1 credit = 1 point)
+    points = credits
+    customer.award_points(
+      points,
+      'referral',
+      self,
+      "Referral bonus: #{credits} credits earned"
+    )
+  rescue => e
+    Rails.logger.error "Error awarding referral points for customer #{customer.id}: #{e.message}"
   end
 end

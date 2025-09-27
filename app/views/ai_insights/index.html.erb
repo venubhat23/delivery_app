@@ -1,0 +1,303 @@
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-brain text-primary me-2"></i>
+          🤖 AI-Insights Dashboard
+        </h2>
+        <div class="text-end">
+          <small class="text-muted">
+            <i class="fas fa-sync-alt me-1"></i>
+            Updated: <%= Time.current.strftime("%d %b %Y, %I:%M %p") %>
+          </small>
+        </div>
+      </div>
+
+      <!-- Dashboard Stats -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card text-center border-info">
+            <div class="card-body">
+              <h5 class="card-title text-info">
+                <i class="fas fa-users me-2"></i>Total Customers
+              </h5>
+              <h2 class="text-info"><%= @dashboard_stats[:total_customers] %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-warning">
+            <div class="card-body">
+              <h5 class="card-title text-warning">
+                <i class="fas fa-shopping-cart me-2"></i>Reorder Opportunities
+              </h5>
+              <h2 class="text-warning"><%= @dashboard_stats[:reorder_opportunities] %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-danger">
+            <div class="card-body">
+              <h5 class="card-title text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>Churn Risks
+              </h5>
+              <h2 class="text-danger"><%= @dashboard_stats[:churn_risks] %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-success">
+            <div class="card-body">
+              <h5 class="card-title text-success">
+                <i class="fas fa-rupee-sign me-2"></i>Potential Revenue
+              </h5>
+              <h3 class="text-success">₹<%= number_with_delimiter(@dashboard_stats[:potential_revenue][:total]) %></h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Breakdown -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body text-center">
+              <h6 class="text-warning">Reorder Potential</h6>
+              <h4 class="text-warning">₹<%= number_with_delimiter(@dashboard_stats[:potential_revenue][:reorder_potential]) %></h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body text-center">
+              <h6 class="text-danger">Churn Prevention</h6>
+              <h4 class="text-danger">₹<%= number_with_delimiter(@dashboard_stats[:potential_revenue][:churn_prevention]) %></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Smart Order Predictions -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-shopping-cart text-warning me-2"></i>
+            Smart Order Predictions
+            <span class="badge bg-warning text-dark ms-2"><%= @reorder_suggestions.count %></span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @reorder_suggestions.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Customer</th>
+                    <th>Urgency Score</th>
+                    <th>Days Since Last Order</th>
+                    <th>Avg Interval</th>
+                    <th>Suggested Reorder</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @reorder_suggestions.each do |suggestion| %>
+                    <tr>
+                      <td>
+                        <div class="fw-semibold"><%= suggestion[:customer].name %></div>
+                        <small class="text-muted">
+                          <i class="fas fa-phone me-1"></i><%= suggestion[:customer].phone_number %>
+                        </small>
+                      </td>
+                      <td>
+                        <% urgency_class = case suggestion[:urgency_score]
+                                           when 80..100 then 'bg-danger'
+                                           when 60..79 then 'bg-warning text-dark'
+                                           else 'bg-info'
+                                           end %>
+                        <span class="badge <%= urgency_class %> fs-6">
+                          <%= suggestion[:urgency_score] %>%
+                        </span>
+                      </td>
+                      <td>
+                        <span class="text-muted"><%= suggestion[:days_since_last] %> days</span>
+                      </td>
+                      <td>
+                        <span class="text-muted"><%= suggestion[:avg_interval] %> days</span>
+                      </td>
+                      <td>
+                        <div class="fw-semibold">
+                          <%= suggestion[:suggested_quantity] %>L <%= suggestion[:suggested_product]&.name %>
+                        </div>
+                        <small class="text-success">
+                          ₹<%= (suggestion[:suggested_quantity] * (suggestion[:suggested_product]&.price || 0)).round(2) %>
+                        </small>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <button class="btn btn-warning btn-sm"
+                                  onclick="sendReorderNotification(<%= suggestion[:customer].id %>)"
+                                  title="Send Reorder Reminder">
+                            <i class="fas fa-bell"></i>
+                          </button>
+                          <%= link_to customer_path(suggestion[:customer]),
+                                      class: 'btn btn-outline-primary btn-sm',
+                                      title: 'View Customer' do %>
+                            <i class="fas fa-user"></i>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No reorder opportunities found</h5>
+              <p class="text-muted">All customers are up to date with their orders!</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Customer Churn Predictions -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+            Customer Churn Predictions
+            <span class="badge bg-danger ms-2"><%= @churn_predictions.count %></span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @churn_predictions.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Customer</th>
+                    <th>Risk Level</th>
+                    <th>Risk Score</th>
+                    <th>Days Since Last Order</th>
+                    <th>Frequency Decline</th>
+                    <th>Total Orders</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @churn_predictions.each do |prediction| %>
+                    <tr>
+                      <td>
+                        <div class="fw-semibold"><%= prediction[:customer].name %></div>
+                        <small class="text-muted">
+                          <i class="fas fa-phone me-1"></i><%= prediction[:customer].phone_number %>
+                        </small>
+                      </td>
+                      <td>
+                        <% risk_class = case prediction[:risk_level]
+                                        when 'High' then 'bg-danger'
+                                        when 'Medium' then 'bg-warning text-dark'
+                                        else 'bg-info'
+                                        end %>
+                        <span class="badge <%= risk_class %>">
+                          <%= prediction[:risk_level] %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="fw-bold text-danger"><%= prediction[:risk_score] %>%</span>
+                      </td>
+                      <td>
+                        <span class="text-muted"><%= prediction[:days_since_last] %> days</span>
+                      </td>
+                      <td>
+                        <span class="text-warning">-<%= prediction[:frequency_decline] %>%</span>
+                      </td>
+                      <td>
+                        <span class="text-muted"><%= prediction[:total_orders] %></span>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <button class="btn btn-danger btn-sm"
+                                  onclick="sendChurnPrevention(<%= prediction[:customer].id %>)"
+                                  title="Send Retention Offer">
+                            <i class="fas fa-gift"></i>
+                          </button>
+                          <%= link_to customer_path(prediction[:customer]),
+                                      class: 'btn btn-outline-primary btn-sm',
+                                      title: 'View Customer' do %>
+                            <i class="fas fa-user"></i>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-heart fa-3x text-success mb-3"></i>
+              <h5 class="text-success">No churn risks detected!</h5>
+              <p class="text-muted">All customers are actively engaged.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function sendReorderNotification(customerId) {
+  if (confirm('Send reorder reminder to this customer?')) {
+    fetch(`/ai-insights/send_reorder_notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({ customer_id: customerId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Reorder notification sent successfully!');
+      } else {
+        alert('Error sending notification');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error sending notification');
+    });
+  }
+}
+
+function sendChurnPrevention(customerId) {
+  if (confirm('Send retention offer to this customer?')) {
+    fetch(`/ai-insights/send_churn_prevention`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({ customer_id: customerId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Retention offer sent successfully!');
+      } else {
+        alert('Error sending offer');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error sending offer');
+    });
+  }
+}
+</script>

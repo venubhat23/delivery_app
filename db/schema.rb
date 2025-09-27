@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_065817) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_27_110403) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -89,6 +89,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_065817) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["customer_id"], name: "index_customer_addresses_on_customer_id"
+  end
+
+  create_table "customer_points", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.decimal "points", precision: 10, scale: 2, default: "0.0"
+    t.string "action_type", null: false
+    t.integer "reference_id"
+    t.string "reference_type"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "action_type"], name: "index_customer_points_on_customer_id_and_action_type"
+    t.index ["customer_id"], name: "index_customer_points_on_customer_id"
+    t.index ["reference_type", "reference_id"], name: "index_customer_points_on_reference_type_and_reference_id"
   end
 
   create_table "customer_preferences", force: :cascade do |t|

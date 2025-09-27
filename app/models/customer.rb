@@ -20,6 +20,7 @@ class Customer < ApplicationRecord
   has_one :customer_preference, dependent: :destroy
   has_one :referral_code, dependent: :destroy
   has_many :refresh_tokens, dependent: :destroy
+  has_many :customer_points, dependent: :destroy
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
@@ -768,6 +769,20 @@ class Customer < ApplicationRecord
 
   def referral
     referral_code || create_referral_code
+  end
+
+  def total_points
+    CustomerPoint.total_points_for_customer(id)
+  end
+
+  def award_points(points, action_type, reference = nil, description = nil)
+    CustomerPoint.award_points(
+      customer: self,
+      points: points,
+      action_type: action_type,
+      reference: reference,
+      description: description
+    )
   end
 
   private

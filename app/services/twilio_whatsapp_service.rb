@@ -5,7 +5,7 @@ require 'json'
 class TwilioWhatsappService
   def initialize
     @account_sid = 'AC1c16e45dd041d5fb75f4c0b16e4b1e1e'
-    @auth_token = 'd6ee8ee6b369e5e0c84b76fb632be01e'
+    @auth_token = '4f9a9be6caccd2e5bea55c892ed96e60'
     @content_sid = 'HX76519f55cd2df98449cb2a99852d796a'
     @from_number = 'whatsapp:+917338500872'
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
@@ -17,6 +17,7 @@ class TwilioWhatsappService
 
     invoices.each do |invoice|
       begin
+        debugger
         if send_invoice_notification(invoice)
           success_count += 1
         else
@@ -32,6 +33,7 @@ class TwilioWhatsappService
   end
 
   def send_invoice_notification(invoice)
+    debugger
     return false unless invoice.customer&.phone_number.present?
 
     # Format phone number for WhatsApp

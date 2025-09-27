@@ -1,0 +1,2 @@
+module CustomerPointsHelper
+end

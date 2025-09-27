@@ -22,6 +22,7 @@ class DeliveryAssignment < ApplicationRecord
   after_initialize :set_default_booked_by
   before_save :calculate_and_set_final_amount
   before_save :set_completed_at_if_completed
+  after_update :award_points_for_completion, if: :status_changed_to_completed?
 
   # OPTIMIZED SCOPES with N+1 prevention
   scope :pending, -> { where(status: 'pending') }
@@ -192,6 +193,7 @@ class DeliveryAssignment < ApplicationRecord
   def self.monthly_summary_for_customer(customer_id, month, year)
     start_date = Date.new(year, month, 1).beginning_of_month
     end_date = start_date.end_of_month
+    debugger
     assignments = where(
       customer_id: customer_id,
       status: 'completed',
@@ -291,5 +293,28 @@ class DeliveryAssignment < ApplicationRecord
       ist_time = Time.current.in_time_zone("Asia/Kolkata")
       self.completed_at = scheduled_date.present? ? scheduled_date.in_time_zone("Asia/Kolkata") : ist_time
     end
+  end
+
+  def status_changed_to_completed?
+    status_changed? && status == 'completed' && status_was != 'completed'
+  end
+
+  def award_points_for_completion
+    return unless customer && final_amount_after_discount.present?
+
+    # Award 10 points for every ₹1000 spent
+    amount = final_amount_after_discount.to_f
+    points_to_award = (amount / 1000.0 * 10).floor
+
+    if points_to_award > 0
+      customer.award_points(
+        points_to_award,
+        'delivery',
+        self,
+        "Delivery completed for ₹#{amount.round(2)} - #{product_name}"
+      )
+    end
+  rescue => e
+    Rails.logger.error "Error awarding points for delivery assignment #{id}: #{e.message}"
   end
 end

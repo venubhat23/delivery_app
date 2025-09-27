@@ -1,0 +1,224 @@
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+          <i class="fas fa-star text-warning me-2"></i>
+          Customer Points
+        </h2>
+      </div>
+
+      <!-- Points Summary Cards -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-primary">
+                <i class="fas fa-users me-2"></i>Customers with Points
+              </h5>
+              <h3 class="text-primary"><%= @customers_with_points.count %></h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-warning">
+                <i class="fas fa-star me-2"></i>Total Points Awarded
+              </h5>
+              <h3 class="text-warning"><%= @customers_with_points.sum(&:total_points).to_f %></h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-muted">
+                <i class="fas fa-user-slash me-2"></i>Customers without Points
+              </h5>
+              <h3 class="text-muted"><%= @customers_without_points.count %></h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customers with Points -->
+      <% if @customers_with_points.any? %>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-trophy text-warning me-2"></i>
+              Top Customers by Points
+              <span class="badge bg-warning text-dark ms-2"><%= @customers_with_points.count %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Rank</th>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Total Points</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @customers_with_points.each_with_index do |customer, index| %>
+                    <tr>
+                      <td>
+                        <% if index == 0 %>
+                          <span class="badge bg-warning text-dark">
+                            <i class="fas fa-crown me-1"></i>#1
+                          </span>
+                        <% elsif index == 1 %>
+                          <span class="badge bg-secondary">
+                            <i class="fas fa-medal me-1"></i>#2
+                          </span>
+                        <% elsif index == 2 %>
+                          <span class="badge bg-light text-dark">
+                            <i class="fas fa-medal me-1"></i>#3
+                          </span>
+                        <% else %>
+                          <span class="badge bg-light text-muted">#<%= index + 1 %></span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <div class="fw-semibold"><%= customer.name %></div>
+                        <small class="text-muted">ID: <%= customer.formatted_id %></small>
+                      </td>
+                      <td>
+                        <% if customer.phone_number.present? %>
+                          <a href="tel:<%= customer.phone_number %>" class="text-decoration-none">
+                            <i class="fas fa-phone text-success me-1"></i>
+                            <%= customer.phone_number %>
+                          </a>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if customer.email.present? %>
+                          <a href="mailto:<%= customer.email %>" class="text-decoration-none">
+                            <i class="fas fa-envelope text-primary me-1"></i>
+                            <%= customer.email %>
+                          </a>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <span class="badge bg-warning text-dark fs-6">
+                          <i class="fas fa-star me-1"></i>
+                          <%= customer.total_points.to_f %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <%= link_to customer_point_path(customer), class: 'btn btn-outline-primary', title: 'View Points History' do %>
+                            <i class="fas fa-history"></i>
+                          <% end %>
+                          <%= link_to customer, class: 'btn btn-outline-secondary', title: 'View Customer' do %>
+                            <i class="fas fa-user"></i>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Customers without Points -->
+      <% if @customers_without_points.any? %>
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-user-clock text-muted me-2"></i>
+              Customers without Points
+              <span class="badge bg-secondary ms-2"><%= @customers_without_points.count %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @customers_without_points.each do |customer| %>
+                    <tr>
+                      <td>
+                        <div class="fw-semibold"><%= customer.name %></div>
+                        <small class="text-muted">ID: <%= customer.formatted_id %></small>
+                      </td>
+                      <td>
+                        <% if customer.phone_number.present? %>
+                          <a href="tel:<%= customer.phone_number %>" class="text-decoration-none">
+                            <i class="fas fa-phone text-success me-1"></i>
+                            <%= customer.phone_number %>
+                          </a>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if customer.email.present? %>
+                          <a href="mailto:<%= customer.email %>" class="text-decoration-none">
+                            <i class="fas fa-envelope text-primary me-1"></i>
+                            <%= customer.email %>
+                          </a>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <span class="badge bg-light text-muted">
+                          <i class="fas fa-star-half-alt me-1"></i>0 Points
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <%= link_to customer, class: 'btn btn-outline-secondary', title: 'View Customer' do %>
+                            <i class="fas fa-user"></i>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Empty State -->
+      <% if @customers_with_points.empty? && @customers_without_points.empty? %>
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-star fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No customers found</h5>
+            <p class="text-muted mb-4">
+              Start creating customers to see their points here.
+            </p>
+            <%= link_to customers_path, class: 'btn btn-primary' do %>
+              <i class="fas fa-users me-2"></i>View All Customers
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

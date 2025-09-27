@@ -1433,6 +1433,26 @@
               </li>
 
               <li class="nav-item" role="none">
+                <%= link_to customer_points_path,
+                    class: "nav-link #{'active' if current_page?(customer_points_path) || controller_name == 'customer_points'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(customer_points_path) || controller_name == 'customer_points') ? "page" : nil do %>
+                  <i class="fas fa-star nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Customer Points</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
+                <%= link_to ai_insights_path,
+                    class: "nav-link #{'active' if current_page?(ai_insights_path) || controller_name == 'ai_insights'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(ai_insights_path) || controller_name == 'ai_insights') ? "page" : nil do %>
+                  <i class="fas fa-brain nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">🤖 AI-Insights</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
                 <%= link_to customer_details_path,
                     class: "nav-link #{'active' if current_page?(customer_details_path) || controller_name == 'customer_details'}",
                     role: "menuitem",

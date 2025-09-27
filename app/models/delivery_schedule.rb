@@ -12,7 +12,9 @@ class DeliverySchedule < ApplicationRecord
   validates :end_date, presence: true
   validates :status, presence: true, inclusion: { in: %w[active inactive completed cancelled] }
   validates :default_discount_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  
+
+  # Callbacks
+  after_create :award_schedule_creation_points
 
   scope :active, -> { where(status: 'active') }
   scope :completed, -> { where(status: 'completed') }
@@ -135,9 +137,26 @@ class DeliverySchedule < ApplicationRecord
   def start_date_not_in_past
     return unless start_date
     return if skip_past_date_validation
-    
+
     if start_date < Date.current
       errors.add(:start_date, 'cannot be in the past')
     end
+  end
+
+  def award_schedule_creation_points
+    return unless customer && product
+
+    # Award 5 points for creating a delivery schedule
+    points = 5
+    description = "Schedule created: #{frequency_display} delivery of #{product_name}"
+
+    customer.award_points(
+      points,
+      'schedule',
+      self,
+      description
+    )
+  rescue => e
+    Rails.logger.error "Error awarding schedule points for customer #{customer.id}: #{e.message}"
   end
 end

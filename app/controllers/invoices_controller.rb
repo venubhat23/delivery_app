@@ -115,41 +115,90 @@ end
     year = params[:year]&.to_i || Date.current.year
     delivery_person_id = params[:delivery_person_id]
     customer_ids = params[:customer_ids]
-    
+
     begin
-      # Determine which customers to process
+      # Get date range for the month
+      start_date = Date.new(year, month, 1)
+      end_date = start_date.end_of_month
+
+      # Find existing invoices for the month/year
+      existing_invoices_query = Invoice.includes(:customer, :delivery_assignments)
+                                      .where(invoice_date: start_date..end_date)
+                                      .where(invoice_type: 'monthly')
+
+      # Apply customer/delivery person filters to existing invoices
       if customer_ids.present? && !customer_ids.include?('all')
-        # Specific customers selected
         selected_customer_ids = customer_ids.reject { |id| id == 'all' }
-        results = Invoice.generate_monthly_invoices_for_selected_customers(selected_customer_ids, month, year)
+        existing_invoices_query = existing_invoices_query.where(customer_id: selected_customer_ids)
       elsif delivery_person_id.present? && delivery_person_id != 'all'
-        # Specific delivery person selected
-        results = Invoice.generate_monthly_invoices_for_delivery_person(delivery_person_id, month, year)
-      else
-        # All customers (default behavior)
-        results = Invoice.generate_monthly_invoices_for_all_customers(month, year)
+        existing_invoices_query = existing_invoices_query.joins(:customer)
+                                                         .where(customers: { delivery_person_id: delivery_person_id })
       end
-      
+
+      existing_invoices = existing_invoices_query.to_a
+
+      # Check which invoices have all delivery assignments with invoice_generated = true
+      invoices_ready_for_whatsapp = existing_invoices.select do |invoice|
+        invoice.delivery_assignments.any? &&
+        invoice.delivery_assignments.all? { |assignment| assignment.invoice_generated == true }
+      end
+
+      # Get customers that need new invoice generation
+      customers_needing_generation = []
+
+      if invoices_ready_for_whatsapp.any?
+        # If we have existing invoices ready for WhatsApp, collect customers who don't have them
+        existing_customer_ids = invoices_ready_for_whatsapp.map(&:customer_id)
+
+        if customer_ids.present? && !customer_ids.include?('all')
+          selected_customer_ids = customer_ids.reject { |id| id == 'all' }
+          customers_needing_generation = selected_customer_ids - existing_customer_ids
+        elsif delivery_person_id.present? && delivery_person_id != 'all'
+          delivery_person_customer_ids = Customer.where(delivery_person_id: delivery_person_id).pluck(:id)
+          customers_needing_generation = delivery_person_customer_ids - existing_customer_ids
+        else
+          # For "all customers", we still need to generate for those without invoices
+          all_customer_ids = Customer.pluck(:id)
+          customers_needing_generation = all_customer_ids - existing_customer_ids
+        end
+      else
+        # No existing invoices ready, generate for all requested customers
+        if customer_ids.present? && !customer_ids.include?('all')
+          customers_needing_generation = customer_ids.reject { |id| id == 'all' }
+        elsif delivery_person_id.present? && delivery_person_id != 'all'
+          customers_needing_generation = Customer.where(delivery_person_id: delivery_person_id).pluck(:id)
+        else
+          customers_needing_generation = Customer.pluck(:id)
+        end
+      end
+
       success_count = 0
       failure_count = 0
       errors = []
-      
-      # Process results and collect successful invoices for bulk WhatsApp sending
-      successful_invoices = []
-      
-      results.each do |result|
-        if result[:result][:success]
-          success_count += 1
-          successful_invoices << result[:result][:invoice]
-        else
-          failure_count += 1
-          errors << "#{result[:customer].name}: #{result[:result][:message]}"
+      successful_invoices = invoices_ready_for_whatsapp.dup
+
+      # Generate new invoices only for customers that need them
+      if customers_needing_generation.any?
+        results = Invoice.generate_monthly_invoices_for_selected_customers(customers_needing_generation, month, year)
+
+        results.each do |result|
+          if result[:result][:success]
+            success_count += 1
+            successful_invoices << result[:result][:invoice]
+          else
+            failure_count += 1
+            errors << "#{result[:customer].name}: #{result[:result][:message]}"
+          end
         end
       end
+
+      # Add count of existing invoices to success count
+      existing_invoice_count = invoices_ready_for_whatsapp.length
+      total_success_count = success_count + existing_invoice_count
       
       # Send WhatsApp notifications in bulk using Twilio
       whatsapp_results = { success_count: 0, failure_count: 0 }
-
+      debugger
       if successful_invoices.any?
         begin
           twilio_service = TwilioWhatsappService.new
@@ -165,28 +214,35 @@ end
       
       # Build comprehensive status message
       message_parts = []
-      
+
+      if existing_invoice_count > 0
+        message_parts << "📋 Found #{existing_invoice_count} existing invoices"
+      end
+
       if success_count > 0
-        message_parts << "✅ Generated #{success_count} invoices successfully"
+        message_parts << "✅ Generated #{success_count} new invoices"
+      end
+
+      if total_success_count > 0
         message_parts << "📱 WhatsApp sent: #{whatsapp_success_count} successful"
-        
+
         if whatsapp_failure_count > 0
           message_parts << "⚠️ WhatsApp failed: #{whatsapp_failure_count} (customers may not have valid WhatsApp numbers)"
         end
       end
-      
+
       if failure_count > 0
         message_parts << "❌ #{failure_count} invoices could not be generated: #{errors.join(', ')}"
       end
-      
-      if success_count == 0 && failure_count == 0
+
+      if total_success_count == 0 && failure_count == 0
         message_parts << "ℹ️ No customers with completed deliveries found for #{Date::MONTHNAMES[month]} #{year}"
       end
       
       # Display appropriate flash message
-      if success_count > 0 && failure_count == 0 && whatsapp_failure_count == 0
+      if total_success_count > 0 && failure_count == 0 && whatsapp_failure_count == 0
         flash[:notice] = message_parts.join(" | ")
-      elsif success_count > 0
+      elsif total_success_count > 0
         flash[:warning] = message_parts.join(" | ")
       else
         flash[:alert] = message_parts.join(" | ")
@@ -550,6 +606,114 @@ end
     end
   end
 
+  # Generate and send invoice via WhatsApp
+  def generate_and_send_whatsapp
+    customer_id = params[:customer_id]
+    month = params[:month].to_i
+    year = params[:year].to_i
+    phone_number = params[:phone_number]
+
+    if customer_id.blank? || month <= 0 || year <= 0 || phone_number.blank?
+      render json: { success: false, error: 'Missing required parameters' }, status: 400
+      return
+    end
+
+    # Validate phone number
+    sanitized_phone = phone_number.gsub(/\D/, '')
+    unless sanitized_phone.match?(/^\d{10,15}$/)
+      render json: { success: false, error: 'Invalid phone number format' }, status: 400
+      return
+    end
+
+    begin
+      # Find or create invoice for the customer and month
+      customer = Customer.find(customer_id)
+      start_date = Date.new(year, month, 1)
+      end_date = start_date.end_of_month
+
+      # Check if invoice already exists
+      existing_invoice = Invoice.where(
+        customer: customer,
+        invoice_date: start_date..end_date
+      ).first
+
+      if existing_invoice
+        invoice = existing_invoice
+      else
+        # Generate new invoice using the selected customers method for single customer
+        results = Invoice.generate_monthly_invoices_for_selected_customers([customer_id], month, year)
+
+        if results.any? && results.first[:result][:success]
+          invoice = results.first[:result][:invoice]
+        else
+          error_message = results.any? ? results.first[:result][:message] : "Failed to generate invoice"
+          render json: { success: false, error: error_message }, status: 422
+          return
+        end
+      end
+
+      # Ensure share token exists
+      invoice.generate_share_token if invoice.share_token.blank?
+      invoice.save! if invoice.changed?
+
+      # Generate public URL
+      host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+      public_url = invoice.public_url(host: host).gsub(':3000', '')
+
+      # Build WhatsApp message
+      message = build_enhanced_invoice_message(invoice, public_url)
+
+      # Add country code if needed
+      unless sanitized_phone.start_with?('91')
+        sanitized_phone = "91#{sanitized_phone.sub(/^0/, '')}"
+      end
+
+      # Create WhatsApp URL
+      whatsapp_url = "https://web.whatsapp.com/send?phone=#{sanitized_phone}&text=#{CGI.escape(message)}"
+
+      # Mark invoice as shared
+      invoice.mark_as_shared! if invoice.respond_to?(:mark_as_shared!)
+
+      # Update customer phone number if provided
+      if phone_number.present? && customer.phone_number != phone_number
+        customer.update(phone_number: phone_number)
+      end
+
+      # Send via Twilio WhatsApp service
+      twilio_success = false
+      twilio_error = nil
+
+      begin
+        twilio_service = TwilioWhatsappService.new
+        twilio_success = twilio_service.send_invoice_notification(invoice)
+      rescue => e
+        Rails.logger.error "Twilio WhatsApp sending failed: #{e.message}"
+        twilio_error = e.message
+      end
+
+      response_data = {
+        success: true,
+        invoice_id: invoice.id,
+        invoice_number: invoice.formatted_number,
+        twilio_sent: twilio_success
+      }
+
+      if twilio_success
+        response_data[:message] = 'Invoice generated and sent via WhatsApp successfully'
+      else
+        response_data[:message] = 'Invoice generated but WhatsApp sending failed'
+        response_data[:whatsapp_url] = whatsapp_url
+        response_data[:twilio_error] = twilio_error if twilio_error
+      end
+
+      render json: response_data
+
+    rescue => e
+      Rails.logger.error "Error generating invoice and WhatsApp: #{e.message}"
+      render json: { success: false, error: 'An error occurred while processing your request' }, status: 500
+    end
+  end
+
   private
 
   def set_invoice
@@ -680,94 +844,6 @@ end
       For any queries, please contact us.
       - Atma Nirbhar Farm
     MESSAGE
-  end
-
-  # Generate and send invoice via WhatsApp
-  def generate_and_send_whatsapp
-    customer_id = params[:customer_id]
-    month = params[:month].to_i
-    year = params[:year].to_i
-    phone_number = params[:phone_number]
-
-    if customer_id.blank? || month <= 0 || year <= 0 || phone_number.blank?
-      render json: { success: false, error: 'Missing required parameters' }, status: 400
-      return
-    end
-
-    # Validate phone number
-    sanitized_phone = phone_number.gsub(/\D/, '')
-    unless sanitized_phone.match?(/^\d{10,15}$/)
-      render json: { success: false, error: 'Invalid phone number format' }, status: 400
-      return
-    end
-
-    begin
-      # Find or create invoice for the customer and month
-      customer = Customer.find(customer_id)
-      start_date = Date.new(year, month, 1)
-      end_date = start_date.end_of_month
-
-      # Check if invoice already exists
-      existing_invoice = Invoice.where(
-        customer: customer,
-        invoice_date: start_date..end_date
-      ).first
-
-      if existing_invoice
-        invoice = existing_invoice
-      else
-        # Generate new invoice
-        result = Invoice.generate_monthly_invoice_for_customer(customer_id, month, year)
-
-        if result[:success]
-          invoice = result[:invoice]
-        else
-          render json: { success: false, error: result[:message] }, status: 422
-          return
-        end
-      end
-
-      # Ensure share token exists
-      invoice.generate_share_token if invoice.share_token.blank?
-      invoice.save! if invoice.changed?
-
-      # Generate public URL
-      host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
-      public_url = invoice.public_url(host: host).gsub(':3000', '')
-
-      # Build WhatsApp message
-      message = build_enhanced_invoice_message(invoice, public_url)
-
-      # Add country code if needed
-      unless sanitized_phone.start_with?('91')
-        sanitized_phone = "91#{sanitized_phone.sub(/^0/, '')}"
-      end
-
-      # Create WhatsApp URL
-      whatsapp_url = "https://web.whatsapp.com/send?phone=#{sanitized_phone}&text=#{CGI.escape(message)}"
-
-      # Mark invoice as shared
-      invoice.mark_as_shared! if invoice.respond_to?(:mark_as_shared!)
-
-      # Send via Twilio WhatsApp if available
-      begin
-        send_whatsapp_invoice(invoice) if respond_to?(:send_whatsapp_invoice, true)
-      rescue => e
-        Rails.logger.error "Twilio WhatsApp sending failed: #{e.message}"
-      end
-
-      render json: {
-        success: true,
-        whatsapp_url: whatsapp_url,
-        invoice_id: invoice.id,
-        invoice_number: invoice.formatted_number,
-        message: 'Invoice generated and WhatsApp link created successfully'
-      }
-
-    rescue => e
-      Rails.logger.error "Error generating invoice and WhatsApp: #{e.message}"
-      render json: { success: false, error: 'An error occurred while processing your request' }, status: 500
-    end
   end
 
   def generate_pdf_response
