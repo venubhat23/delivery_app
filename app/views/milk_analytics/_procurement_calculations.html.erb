@@ -26,9 +26,15 @@
                 <td><strong>Total Cost:</strong></td>
                 <td class="text-end">₹<%= number_with_delimiter(@procurement_summary&.dig(:total_amount) || @total_cost || 0, precision: 2) %></td>
               </tr>
+              <%
+                # Calculate average price inline to ensure correctness
+                total_quantity = @procurement_summary&.dig(:total_quantity) || @total_liters || 0
+                total_amount = @procurement_summary&.dig(:total_amount) || @total_cost || 0
+                average_price = total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
+              %>
               <tr>
                 <td><strong>Average Price:</strong></td>
-                <td class="text-end">₹<%= (@procurement_summary&.dig(:average_price) || 0).round(2) %> per L</td>
+                <td class="text-end">₹<%= average_price %> per L</td>
               </tr>
             </table>
           </div>

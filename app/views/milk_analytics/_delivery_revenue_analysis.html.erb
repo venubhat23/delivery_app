@@ -63,7 +63,7 @@
     </div>
 
     <!-- Delivery Summary by Product (if available) -->
-    <% if @delivery_summary.present? && @delivery_summary.any? %>
+    <% if @product_wise_delivery_summary.present? && @product_wise_delivery_summary.any? %>
       <div class="mt-3">
         <h6 class="text-secondary mb-2">
           <i class="fas fa-box me-2"></i>Product-wise Delivery Breakdown
@@ -80,8 +80,8 @@
               </tr>
             </thead>
             <tbody>
-              <% total_revenue = @delivery_summary.sum { |d| d[:total_revenue] || 0 } %>
-              <% @delivery_summary.each do |delivery| %>
+              <% total_revenue = @product_wise_delivery_summary.sum { |d| d[:total_revenue] || 0 } %>
+              <% @product_wise_delivery_summary.each do |delivery| %>
                 <tr>
                   <td><%= delivery[:product_name] || 'N/A' %></td>
                   <td class="text-end"><%= number_with_delimiter(delivery[:total_delivered] || 0) %></td>

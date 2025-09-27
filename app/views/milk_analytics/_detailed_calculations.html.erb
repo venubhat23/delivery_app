@@ -9,9 +9,167 @@
         <p class="mb-0 small opacity-90">Complete breakdown of procurement costs, delivery revenue, and profit calculations with formulas</p>
       </div>
       <div class="card-body">
-        <%= render 'procurement_calculations' %>
-        <%= render 'delivery_revenue_analysis' %>
-        <%= render 'profit_loss_analysis' %>
+        <div class="row">
+          <!-- Left Column: Summary -->
+          <div class="col-md-6">
+            <h6 class="text-primary border-bottom pb-2 mb-3">
+              <i class="fas fa-list-ul me-2"></i>Summary Overview
+            </h6>
+            <%= render 'procurement_calculations' %>
+            <%= render 'delivery_revenue_analysis' %>
+            <%= render 'profit_loss_analysis' %>
+          </div>
+
+          <!-- Right Column: Detailed Paperwork -->
+          <div class="col-md-6">
+            <h6 class="text-success border-bottom pb-2 mb-3">
+              <i class="fas fa-file-invoice me-2"></i>Detailed Paperwork & Calculations
+            </h6>
+
+            <!-- Procurement Calculation Steps -->
+            <div class="card border-success mb-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-shopping-cart me-2"></i>Procurement Cost Calculation
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="calculation-steps">
+                  <h6 class="text-primary">Step-by-Step Calculation:</h6>
+
+                  <div class="step mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span><strong>1. Total Quantity:</strong></span>
+                      <span class="text-success fw-bold"><%= number_with_delimiter(@procurement_summary&.dig(:total_quantity) || @total_liters || 0) %> L</span>
+                    </div>
+                    <small class="text-muted">Sum of all milk quantities procured from vendors</small>
+                  </div>
+
+                  <div class="step mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span><strong>2. Total Cost:</strong></span>
+                      <span class="text-success fw-bold">₹<%= number_with_delimiter(@procurement_summary&.dig(:total_amount) || @total_cost || 0, precision: 2) %></span>
+                    </div>
+                    <small class="text-muted">Σ (Quantity × Buying Price) for each procurement</small>
+                  </div>
+
+                  <%
+                    # Calculate average price inline to ensure correctness
+                    total_quantity = @procurement_summary&.dig(:total_quantity) || @total_liters || 0
+                    total_amount = @procurement_summary&.dig(:total_amount) || @total_cost || 0
+                    average_price = total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
+                  %>
+
+                  <div class="step mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span><strong>3. Average Price/L:</strong></span>
+                      <span class="text-primary fw-bold">₹<%= average_price %></span>
+                    </div>
+                    <small class="text-muted">Total Cost ÷ Total Quantity = ₹<%= number_with_delimiter(total_amount, precision: 2) %> ÷ <%= number_with_delimiter(total_quantity) %> L</small>
+                  </div>
+
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Formula:</strong> Average Price = Total Cost ÷ Total Quantity<br>
+                    <strong>Calculation:</strong> ₹<%= number_with_delimiter(total_amount, precision: 2) %> ÷ <%= number_with_delimiter(total_quantity) %> L = ₹<%= average_price %> per Liter
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery Revenue Calculation -->
+            <div class="card border-info mb-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-truck me-2"></i>Delivery Revenue Calculation
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="calculation-steps">
+                  <h6 class="text-primary">Revenue Breakdown:</h6>
+
+                  <div class="step mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span><strong>1. Total Delivered:</strong></span>
+                      <span class="text-success fw-bold"><%= number_with_delimiter(@dashboard_stats&.dig(:liters_delivered) || @total_delivered || 0) %> L</span>
+                    </div>
+                    <small class="text-muted">Sum of all completed deliveries</small>
+                  </div>
+
+                  <div class="step mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span><strong>2. Total Revenue:</strong></span>
+                      <span class="text-success fw-bold">₹<%= number_with_delimiter(@dashboard_stats&.dig(:total_amount_collected) || @total_revenue || 0, precision: 2) %></span>
+                    </div>
+                    <small class="text-muted">Sum of all delivery amounts collected</small>
+                  </div>
+
+                  <div class="step mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span><strong>3. Avg Revenue/L:</strong></span>
+                      <span class="text-primary fw-bold">₹<%= (@dashboard_stats&.dig(:liters_delivered) && @dashboard_stats[:liters_delivered] > 0) ? number_with_delimiter((@dashboard_stats[:total_amount_collected] / @dashboard_stats[:liters_delivered]).round(2)) : '0.00' %></span>
+                    </div>
+                    <small class="text-muted">Total Revenue ÷ Total Delivered</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profit/Loss Calculation -->
+            <div class="card border-warning mb-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-chart-line me-2"></i>Profit/Loss Analysis
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="calculation-steps">
+                  <h6 class="text-primary">Final Calculation:</h6>
+
+                  <%
+                    total_cost = @procurement_summary&.dig(:total_amount) || @total_cost || 0
+                    total_revenue = @dashboard_stats&.dig(:total_amount_collected) || @total_revenue || 0
+                    profit_loss = total_revenue - total_cost
+                  %>
+
+                  <div class="step mb-2">
+                    <div class="d-flex justify-content-between">
+                      <span>Total Revenue:</span>
+                      <span class="text-success">+ ₹<%= number_with_delimiter(total_revenue, precision: 2) %></span>
+                    </div>
+                  </div>
+
+                  <div class="step mb-2">
+                    <div class="d-flex justify-content-between">
+                      <span>Total Cost:</span>
+                      <span class="text-danger">- ₹<%= number_with_delimiter(total_cost, precision: 2) %></span>
+                    </div>
+                  </div>
+
+                  <hr>
+
+                  <div class="step">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="fw-bold">Net <%= profit_loss >= 0 ? 'Profit' : 'Loss' %>:</span>
+                      <span class="fw-bold fs-5 <%= profit_loss >= 0 ? 'text-success' : 'text-danger' %>">
+                        ₹<%= number_with_delimiter(profit_loss.abs, precision: 2) %>
+                      </span>
+                    </div>
+                    <small class="text-muted">
+                      <%= profit_loss >= 0 ? '✅ Profitable Operation' : '❌ Loss-making Operation' %>
+                    </small>
+                  </div>
+
+                  <div class="alert alert-<%= profit_loss >= 0 ? 'success' : 'danger' %> mt-3">
+                    <i class="fas fa-calculator me-2"></i>
+                    <strong>Formula:</strong> Net Result = Total Revenue - Total Cost<br>
+                    <strong>Calculation:</strong> ₹<%= number_with_delimiter(total_revenue, precision: 2) %> - ₹<%= number_with_delimiter(total_cost, precision: 2) %> = ₹<%= number_with_delimiter(profit_loss, precision: 2) %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

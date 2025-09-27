@@ -1,67 +1,331 @@
 <!-- Modal content loads here - no header needed as it's in main modal -->
 
 <script>
-// Functions are now defined at page level - just verify they exist
-console.log('🔧 Verifying assignment functions in modal context...');
+// FORCE DEFINE ALL CRITICAL FUNCTIONS IN MODAL CONTEXT
+console.log('🔧 Force defining assignment functions in modal context...');
 
-// Verify functions are available (they're defined at page level now)
-if (typeof window.completeTillToday === 'function') {
-  console.log('✅ completeTillToday available');
-} else {
-  console.error('❌ completeTillToday not available');
+// ALWAYS define completeTillToday function (overwrite any existing)
+console.log('🔧 Defining completeTillToday function...');
+
+  window.completeTillToday = function(customerId, month, year) {
+    console.log('🎯 completeTillToday called from modal:', customerId, month, year);
+    if (!confirm('Mark all pending assignments till today as completed?')) return;
+
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+    button.disabled = true;
+
+    fetch('/customer-patterns/complete_all_till_today', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        customer_id: customerId,
+        month: month,
+        year: year
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ Assignments completed successfully!');
+        location.reload();
+      } else {
+        alert('❌ Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error completing assignments');
+    })
+    .finally(() => {
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+    });
+  };
 }
 
 if (typeof window.completeAssignment === 'function') {
   console.log('✅ completeAssignment available');
 } else {
-  console.error('❌ completeAssignment not available');
+  console.error('❌ completeAssignment not available - defining it now');
+
+  window.completeAssignment = function(id) {
+    console.log('✅ completeAssignment called from modal:', id);
+    if (!confirm('Mark this assignment as completed?')) return;
+
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    fetch(`/customer-patterns/${id}/update_assignment.json`, {
+      method: 'PATCH',
+      body: JSON.stringify({ delivery_assignment: { status: 'completed' } }),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ Assignment completed successfully!');
+        location.reload();
+      } else {
+        alert('❌ Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error completing assignment');
+    })
+    .finally(() => {
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+    });
+  };
 }
 
 if (typeof window.deleteAssignment === 'function') {
   console.log('✅ deleteAssignment available');
 } else {
-  console.error('❌ deleteAssignment not available');
+  console.error('❌ deleteAssignment not available - defining it now');
+
+  window.deleteAssignment = function(id) {
+    console.log('🗑️ deleteAssignment called from modal:', id);
+    if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    fetch(`/customer-patterns/${id}/delete_assignment.json`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ Assignment deleted successfully!');
+        location.reload();
+      } else {
+        alert('❌ Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error deleting assignment');
+    })
+    .finally(() => {
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+    });
+  };
 }
 
 if (typeof window.editAssignment === 'function') {
   console.log('✅ editAssignment available');
 } else {
-  console.error('❌ editAssignment not available');
+  console.error('❌ editAssignment not available - defining it now');
+
+  window.editAssignment = function(id) {
+    console.log('✏️ editAssignment called from modal:', id);
+
+    fetch(`/customer-patterns/${id}/edit_assignment.json`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Update the edit modal content
+        const editModalContent = document.getElementById('editModalContent');
+        if (editModalContent) {
+          editModalContent.innerHTML = data.html;
+        }
+
+        // Show the edit modal
+        const editModal = document.getElementById('editModal');
+        if (editModal) {
+          const modalInstance = new bootstrap.Modal(editModal);
+          modalInstance.show();
+        }
+      } else {
+        alert('❌ Error loading edit form: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error loading edit form');
+    });
+  };
 }
 
-// editAssignment function is now defined at page level - no need to redefine here
+// ALWAYS define completeAll function (overwrite any existing)
+console.log('🔧 Defining completeAll function...');
+  window.completeAll = function(customerId, month, year) {
+    console.log('🎯 completeAll called from modal context:', customerId, month, year);
+    if (!confirm('Mark ALL pending assignments for this customer as completed?')) return;
+
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+    button.disabled = true;
+
+    fetch('/customer-patterns/complete_all', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        customer_id: customerId,
+        month: month,
+        year: year
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ All assignments completed successfully!');
+        // Close all modals and reopen
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      } else {
+        alert('❌ Error completing assignments: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error completing assignments');
+    })
+    .finally(() => {
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+    });
+  };
+}
+
+if (typeof window.reloadCurrentModal === 'function') {
+  console.log('✅ reloadCurrentModal available');
+} else {
+  console.error('❌ reloadCurrentModal not available - defining simple version');
+
+  // Define simple reloadCurrentModal function
+  window.reloadCurrentModal = function() {
+    console.log('🔄 Simple reloadCurrentModal called - reloading page');
+    location.reload();
+  };
+}
 
 console.log('✅ Assignment functions loaded:', {
   completeTillToday: typeof window.completeTillToday,
   completeAssignment: typeof window.completeAssignment,
   deleteAssignment: typeof window.deleteAssignment,
-  editAssignment: typeof window.editAssignment
+  editAssignment: typeof window.editAssignment,
+  completeAll: typeof window.completeAll,
+  reloadCurrentModal: typeof window.reloadCurrentModal
 });
 </script>
 
 <% if @delivery_assignments.any? %>
   <!-- Action Buttons at Top -->
-  <% pending_till_today = @delivery_assignments.where(status: 'pending').where('scheduled_date <= ?', Date.current) %>
-  <% all_pending = @delivery_assignments.where(status: 'pending') %>
-  <% if pending_till_today.any? || all_pending.any? %>
+  <% if @pending_till_today_count > 0 || @pending_till_month_end_count > 0 %>
     <div class="mb-4">
       <div class="alert alert-warning d-flex align-items-center">
         <i class="fas fa-exclamation-triangle me-3 fa-2x text-warning"></i>
         <div class="flex-grow-1">
           <strong>⚠️ Pending Assignments Alert</strong><br>
-          <small>There are <strong><%= pending_till_today.count %></strong> pending assignments till today and <strong><%= all_pending.count %></strong> total pending assignments.</small>
+          <small>There are <strong><%= @pending_till_today_count %></strong> pending assignments till today and <strong><%= @pending_till_month_end_count %></strong> total pending assignments this month.</small>
         </div>
         <div class="btn-group">
-          <% if pending_till_today.any? %>
-            <button class="btn btn-dark btn-lg shadow" onclick="window.completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
+          <% if @pending_till_today_count > 0 %>
+            <button class="btn btn-dark btn-lg shadow" onclick="
+              if (!confirm('Mark all pending assignments till today as completed?')) return;
+              const button = this;
+              const originalHTML = button.innerHTML;
+              button.innerHTML = '<i class=&quot;fas fa-spinner fa-spin me-1&quot;></i>Processing...';
+              button.disabled = true;
+              fetch('/customer-patterns/complete_all_till_today', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-Token': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
+                },
+                body: JSON.stringify({ customer_id: <%= @customer.id %>, month: <%= @month %>, year: <%= @year %> })
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  alert('✅ Assignments till today completed successfully!');
+                  setTimeout(() => location.reload(), 1000);
+                } else {
+                  alert('❌ Error: ' + (data.message || 'Unknown error'));
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error completing assignments till today');
+              })
+              .finally(() => {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+              });
+            ">
               <i class="fas fa-check-circle me-2"></i>
-              Complete Till Today (<%= pending_till_today.count %>)
+              Complete Till Today (<%= @pending_till_today_count %>)
             </button>
           <% end %>
-          <% if all_pending.any? %>
-            <button class="btn btn-success btn-lg shadow" onclick="window.completeAll(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
+          <% if @pending_till_month_end_count > 0 %>
+            <button class="btn btn-success btn-lg shadow" onclick="
+              if (!confirm('Mark ALL pending assignments for this customer as completed?')) return;
+              const button = this;
+              const originalHTML = button.innerHTML;
+              button.innerHTML = '<i class=&quot;fas fa-spinner fa-spin me-1&quot;></i>Processing...';
+              button.disabled = true;
+              fetch('/customer-patterns/complete_all', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-Token': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
+                },
+                body: JSON.stringify({ customer_id: <%= @customer.id %>, month: <%= @month %>, year: <%= @year %> })
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  alert('✅ All assignments completed successfully!');
+                  setTimeout(() => location.reload(), 1000);
+                } else {
+                  alert('❌ Error: ' + (data.message || 'Unknown error'));
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error completing assignments');
+              })
+              .finally(() => {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+              });
+            ">
               <i class="fas fa-check-double me-2"></i>
-              Complete All (<%= all_pending.count %>)
+              Complete All This Month (<%= @pending_till_month_end_count %>)
             </button>
           <% end %>
         </div>

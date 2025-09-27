@@ -241,8 +241,8 @@ function updateProcurementScheduleTable(schedules) {
     const statusBadge = getStatusBadge(schedule.status);
     const fromDate = new Date(schedule.from_date).toLocaleDateString('en-IN');
     const toDate = new Date(schedule.to_date).toLocaleDateString('en-IN');
-    const duration = Math.ceil((new Date(schedule.to_date) - new Date(schedule.from_date)) / (1000 * 60 * 60 * 24)) + 1;
-    const totalAmount = (schedule.quantity * schedule.buying_price * duration).toFixed(2);
+    const duration = schedule.duration || Math.ceil((new Date(schedule.to_date) - new Date(schedule.from_date)) / (1000 * 60 * 60 * 24)) + 1;
+    const totalAmount = (schedule.total_amount && typeof schedule.total_amount === 'number') ? schedule.total_amount.toFixed(2) : (parseFloat(schedule.quantity || 0) * parseFloat(schedule.buying_price || 0) * duration).toFixed(2);
 
     return `
       <tr data-schedule-id="${schedule.id}">

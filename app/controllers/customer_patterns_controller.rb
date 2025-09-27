@@ -87,6 +87,16 @@ class CustomerPatternsController < ApplicationController
       .includes(:customer, :user, :product, :delivery_schedule)
       .where(customer_id: @customer.id, scheduled_date: start_date..end_date)
       .order(:scheduled_date)
+    # Calculate separate pending counts for button display
+    @pending_till_today_count = @delivery_assignments
+      .where(status: 'pending').where(customer_id: @customer.id)
+      .where(scheduled_date: start_date..Date.current)
+      .count
+
+    @pending_till_month_end_count = @delivery_assignments
+      .where(status: 'pending').where(customer_id: @customer.id)
+      .where(scheduled_date: start_date..end_date)
+      .count
 
     @month_name = start_date.strftime("%B %Y")
 
@@ -102,17 +112,16 @@ class CustomerPatternsController < ApplicationController
 
     start_date = Date.new(year, month, 1).beginning_of_month
     end_date = start_date.end_of_month
-
     # Find pending assignments till today for this customer in the selected month
     assignments_to_complete = DeliveryAssignment
       .where(customer_id: @customer.id)
       .where(status: 'pending')
       .where(scheduled_date: start_date..Date.current)
-      .where(scheduled_date: start_date..end_date)
 
     completed_count = 0
     assignments_to_complete.each do |assignment|
-      if assignment.update(status: 'completed', completed_at: Time.current)
+
+      if assignment.update(status: 'completed', completed_at: Time.current, booked_by: 0)
         completed_count += 1
       end
     end
@@ -154,7 +163,7 @@ class CustomerPatternsController < ApplicationController
 
     completed_count = 0
     assignments_to_complete.each do |assignment|
-      if assignment.update(status: 'completed', completed_at: Time.current)
+      if assignment.update(status: 'completed', completed_at: Time.current, booked_by: 0)
         completed_count += 1
       end
     end
@@ -301,18 +310,26 @@ class CustomerPatternsController < ApplicationController
   end
 
   def complete_all_till_today
+    Rails.logger.info "🎯 COMPLETE_ALL_TILL_TODAY called with params: #{params.inspect}"
+    customer_id = params[:customer_id]
     month = params[:month]&.to_i || Date.current.month
     year = params[:year]&.to_i || Date.current.year
     delivery_person_id = params[:delivery_person_id].presence
 
-    start_date = Date.new(year, month, 1).beginning_of_month
-    end_date = start_date.end_of_month
+    # Use current month boundaries for filtering
+    start_date = Date.current.beginning_of_month
+    end_date = Date.current.end_of_month
+    Rails.logger.info "🗓️ Date range: #{start_date} to #{Date.current} (current month till today)"
 
-    # Find all pending assignments till today for the selected month/filters
+    # Find all pending assignments till today for the specific customer in current month
     query = DeliveryAssignment
       .where(status: 'pending')
       .where(scheduled_date: start_date..Date.current)
-      .where(scheduled_date: start_date..end_date)
+
+    # Filter by specific customer
+    if customer_id.present?
+      query = query.where(customer_id: customer_id)
+    end
 
     if delivery_person_id.present?
       query = query.where(user_id: delivery_person_id)
@@ -325,7 +342,7 @@ class CustomerPatternsController < ApplicationController
     delivery_people_affected = []
 
     assignments_to_complete.each do |assignment|
-      if assignment.update(status: 'completed', completed_at: Time.current)
+      if assignment.update(status: 'completed', completed_at: Time.current, booked_by: 0)
         completed_count += 1
         customers_affected << assignment.customer.name unless customers_affected.include?(assignment.customer.name)
         delivery_people_affected << assignment.user.name unless delivery_people_affected.include?(assignment.user.name)

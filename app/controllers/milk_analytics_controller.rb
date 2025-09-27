@@ -93,13 +93,32 @@ class MilkAnalyticsController < ApplicationController
       end
 
       schedules = schedules_query.map do |schedule|
-        # Try to get product name from schedule, then from first assignment with product, then fallback
+        # Try to get product name from schedule first (most efficient)
         product_name = schedule.product&.name
-        if product_name.blank?
-          assignment_with_product = schedule.procurement_assignments.find { |a| a.product_id.present? }
+
+        # If no product on schedule, use preloaded assignments to avoid N+1 queries
+        if product_name.blank? && schedule.procurement_assignments.loaded?
+          # Find assignment with product from preloaded data
+          assignment_with_product = schedule.procurement_assignments
+            .find { |a| a.product_id.present? && a.product&.name.present? }
           product_name = assignment_with_product&.product&.name
         end
-        product_name ||= 'Generic Product'
+
+        # If still no product and assignments aren't preloaded, get most common product efficiently
+        if product_name.blank? && !schedule.procurement_assignments.loaded?
+          assignment_with_product = schedule.procurement_assignments
+            .joins(:product)
+            .where.not(product_id: nil)
+            .first
+          product_name = assignment_with_product&.product&.name
+        end
+
+        # Final fallback - use a more descriptive name
+        product_name = product_name.presence || 'Milk/Dairy Product'
+
+        # Calculate total amount accurately
+        duration = (schedule.to_date - schedule.from_date).to_i + 1
+        total_amount = (schedule.quantity || 0) * (schedule.buying_price || 0) * duration
 
         {
           id: schedule.id,
@@ -112,6 +131,8 @@ class MilkAnalyticsController < ApplicationController
           quantity: schedule.quantity,
           buying_price: schedule.buying_price,
           selling_price: schedule.selling_price,
+          total_amount: total_amount,
+          duration: duration,
           status: schedule.status,
           created_by_name: schedule.user&.name,
           created_at: schedule.created_at
@@ -1873,7 +1894,8 @@ class MilkAnalyticsController < ApplicationController
 
   def calculate_summaries
     # Use caching for vendor summary
-    cache_key = "milk_analytics_vendor_summary_#{current_user.id}_#{@start_date}_#{@end_date}_#{@product_id}"
+    # Added v2 to force cache invalidation after fixing calculations
+    cache_key = "milk_analytics_vendor_summary_v2_#{current_user.id}_#{@start_date}_#{@end_date}_#{@product_id}"
 
     @vendor_summary = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
       calculate_vendor_summary_uncached
@@ -1888,6 +1910,9 @@ class MilkAnalyticsController < ApplicationController
     end
 
     calculate_delivery_summary(delivery_query)
+
+    # Calculate product-wise delivery breakdown for detailed analysis
+    calculate_product_wise_delivery_summary(delivery_query)
   end
 
   def calculate_vendor_summary_uncached
@@ -1918,38 +1943,7 @@ class MilkAnalyticsController < ApplicationController
       }
     end
     
-    # Delivery summary with safe nil handling and error recovery
-    begin
-      delivery_data = DeliveryAssignment.where(scheduled_date: @start_date..@end_date)
-      
-      # Apply product filter if specified
-      if @product_id.present?
-        delivery_data = delivery_data.where(product_id: @product_id)
-      end
-      
-      if delivery_data.any?
-        @delivery_summary = delivery_data.group_by(&:status)
-                                        .map do |status, assignments|
-          # Calculate revenue safely
-          total_revenue = 0
-          assignments.each do |assignment|
-            total_revenue += assignment.final_amount_after_discount || 0
-          end
-          
-          {
-            status: status || 'unknown',
-            count: assignments.count,
-            quantity: assignments.sum { |a| a.quantity || 0 },
-            revenue: total_revenue
-          }
-        end
-      else
-        @delivery_summary = []
-      end
-    rescue => e
-      Rails.logger.error "Error calculating delivery summary: #{e.message}"
-      @delivery_summary = []
-    end
+    # Return vendor summary only - delivery summary is handled separately in calculate_summaries method
   end
 
   def generate_daily_procurement_delivery_report(from_date, to_date)
@@ -2238,7 +2232,8 @@ class MilkAnalyticsController < ApplicationController
   
   def calculate_dashboard_stats
     # Use caching with a short TTL for dashboard stats
-    cache_key = "milk_analytics_dashboard_#{current_user.id}_#{@start_date}_#{@end_date}_#{@product_id}"
+    # Added v2 to force cache invalidation after fixing average price calculation
+    cache_key = "milk_analytics_dashboard_v2_#{current_user.id}_#{@start_date}_#{@end_date}_#{@product_id}"
 
     @dashboard_stats = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
       calculate_dashboard_stats_and_return_hash
@@ -2359,8 +2354,12 @@ class MilkAnalyticsController < ApplicationController
         assignments_query = assignments_query.where(product_id: @product_id)
       end
       
-      # 1. Total Vendors - COUNT(DISTINCT vendor_name)
-      total_vendors = assignments_query.reorder('').distinct.count(:vendor_name)
+      # 1. Total Vendors - COUNT(DISTINCT vendor_name) with normalization
+      unique_vendor_names = assignments_query.reorder('').pluck(:vendor_name)
+        .map { |name| name&.strip&.downcase }
+        .compact
+        .uniq
+      total_vendors = unique_vendor_names.count
       
       # 2. Liters Purchased - Use ONLY planned_quantity
       liters_purchased = assignments_query.reorder('').sum('planned_quantity') || 0
@@ -2543,11 +2542,17 @@ class MilkAnalyticsController < ApplicationController
   end
   
   def calculate_procurement_summary(assignments_query)
+    total_quantity = assignments_query.reorder('').sum('planned_quantity') || 0
+    total_amount = assignments_query.reorder('').sum('planned_quantity * procurement_assignments.buying_price') || 0
+
+    # Calculate correct average price: total cost divided by total quantity
+    average_price = total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
+
     @procurement_summary = {
       total_vendors: assignments_query.reorder('').distinct.count(:vendor_name),
-      total_quantity: assignments_query.reorder('').sum('planned_quantity') || 0,
-      total_amount: assignments_query.reorder('').sum('planned_quantity * procurement_assignments.buying_price') || 0,
-      average_price: assignments_query.reorder('').average('procurement_assignments.buying_price')&.round(2) || 0
+      total_quantity: total_quantity,
+      total_amount: total_amount,
+      average_price: average_price
     }
   end
   
@@ -2588,21 +2593,68 @@ class MilkAnalyticsController < ApplicationController
       @delivery_summary = []
     end
   end
-  
-  def calculate_detailed_analysis(assignments_query, delivery_query)
-    # Vendor-wise spending analysis
-    assignments_array = assignments_query.to_a
-    @vendor_analysis = assignments_array.group_by(&:vendor_name).map do |vendor, assignments|
-      total_quantity = assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 }
-      total_amount = assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
 
-      {
-        vendor_name: vendor,
-        total_liters: total_quantity,
-        total_amount: total_amount,
-        average_price: total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
-      }
-    end.sort_by { |v| -v[:total_amount] }
+  def calculate_product_wise_delivery_summary(delivery_query)
+    begin
+      # Calculate product-wise delivery breakdown for the detailed analysis view
+      # Store in separate variable to avoid overriding status-wise @delivery_summary from dashboard stats
+      product_wise_data = delivery_query.joins(:product)
+                                      .group('products.name')
+                                      .select(
+                                        'products.name as product_name',
+                                        'SUM(delivery_assignments.quantity) as total_delivered',
+                                        'SUM(delivery_assignments.final_amount_after_discount) as total_revenue'
+                                      )
+
+      @product_wise_delivery_summary = product_wise_data.map do |record|
+        {
+          product_name: record.product_name || 'Unknown Product',
+          total_delivered: record.total_delivered&.to_f || 0,
+          total_revenue: record.total_revenue&.to_f || 0
+        }
+      end
+
+      # If no product-wise data is available, fall back to a summary of all deliveries
+      if @product_wise_delivery_summary.empty?
+        total_delivered = delivery_query.sum(:quantity) || 0
+        total_revenue = delivery_query.sum(:final_amount_after_discount) || 0
+
+        if total_delivered > 0 || total_revenue > 0
+          @product_wise_delivery_summary = [{
+            product_name: 'All Products',
+            total_delivered: total_delivered,
+            total_revenue: total_revenue
+          }]
+        end
+      end
+
+    rescue => e
+      Rails.logger.error "Error calculating product-wise delivery summary: #{e.message}"
+      @product_wise_delivery_summary = []
+    end
+  end
+
+  def calculate_detailed_analysis(assignments_query, delivery_query)
+    # Vendor-wise spending analysis with normalized vendor names for uniqueness
+    assignments_array = assignments_query.to_a
+    @vendor_analysis = assignments_array
+      .group_by { |a| a.vendor_name&.strip&.downcase }  # Normalize vendor names
+      .map do |normalized_vendor, assignments|
+        # Use the first assignment's original vendor name for display
+        display_vendor = assignments.first&.vendor_name&.strip
+        total_quantity = assignments.sum { |a| a.planned_quantity || a.actual_quantity || 0 }
+        total_amount = assignments.sum { |a| (a.planned_quantity || a.actual_quantity || 0) * a.buying_price }
+
+        {
+          vendor_name: display_vendor,
+          total_liters: total_quantity,
+          total_amount: total_amount,
+          average_price: total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0,
+          assignment_count: assignments.count  # Add count for debugging
+        }
+      end
+      .reject { |v| v[:vendor_name].blank? }  # Remove entries with empty vendor names
+      .sort_by { |v| -v[:total_amount] }
 
     # Daily procurement tracking
     @daily_procurement = (@start_date..@end_date).map do |date|
@@ -2672,11 +2724,21 @@ class MilkAnalyticsController < ApplicationController
   end
   
   def calculate_procurement_summary_data(assignments_query)
+    total_quantity = assignments_query.reorder('').sum('planned_quantity') || 0
+    total_amount = assignments_query.reorder('').sum('planned_quantity * procurement_assignments.buying_price') || 0
+
+    # Calculate unique vendor count with normalization
+    unique_vendor_count = assignments_query.reorder('').pluck(:vendor_name)
+      .map { |name| name&.strip&.downcase }
+      .compact
+      .uniq
+      .count
+
     {
-      total_vendors: assignments_query.reorder('').distinct.count(:vendor_name),
-      total_quantity: assignments_query.reorder('').sum('planned_quantity') || 0,
-      total_amount: assignments_query.reorder('').sum('planned_quantity * procurement_assignments.buying_price') || 0,
-      average_price: assignments_query.reorder('').average('procurement_assignments.buying_price')&.round(2) || 0
+      total_vendors: unique_vendor_count,
+      total_quantity: total_quantity,
+      total_amount: total_amount,
+      average_price: total_quantity > 0 ? (total_amount / total_quantity).round(2) : 0
     }
   end
   

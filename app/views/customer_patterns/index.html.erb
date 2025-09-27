@@ -549,22 +549,7 @@
                           </button>
 
                           <% if data[:pattern] == 'regular' %>
-                            <button type="button"
-                                    class="btn bulk-edit-btn"
-                                    style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none; color: white; border-radius: 25px; padding: 8px 12px; font-size: 12px; transition: all 0.3s ease;"
-                                    data-customer-id="<%= data[:customer].id %>"
-                                    data-customer-name="<%= data[:customer].name %>"
-                                    data-scheduled-quantity="<%= data[:scheduled_quantity] || 0 %>"
-                                    data-scheduled-product="<%= data[:scheduled_product] %>"
-                                    data-month="<%= @current_month %>"
-                                    data-year="<%= @current_year %>"
-                                    title="Edit All Assignments for this Month"
-                                    data-action="bulk-edit"
-                                    onclick="openBulkEditModal('<%= data[:customer].id %>', '<%= data[:customer].name %>', '<%= data[:scheduled_quantity] || 0 %>', '<%= data[:scheduled_product] %>', '<%= @current_month %>', '<%= @current_year %>')"
-                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(240, 147, 251, 0.4)';"
-                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(240, 147, 251, 0.3)';">
-                              <i class="fas fa-edit me-1"></i>Edit
-                            </button>
+                           
                           <% end %>
                         </div>
                       </td>
@@ -2454,10 +2439,119 @@ body:not(.modal-open) {
 <%= render 'shared/super_attractive_loader_js' %>
 
 <script>
+// CRITICAL FUNCTIONS - MUST BE FIRST TO LOAD
+// These functions are called from onclick handlers and must be available immediately
+
+window.completeAll = function(customerId, month, year) {
+  console.log('🎯 completeAll called:', customerId, month, year);
+  if (!confirm('Mark ALL pending assignments for this customer as completed?')) return;
+
+  const button = event.target.closest('button');
+  if (button) {
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+    button.disabled = true;
+
+    fetch('/customer-patterns/complete_all', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        customer_id: customerId,
+        month: month,
+        year: year
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ All assignments completed successfully!');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert('❌ Error completing assignments: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error completing assignments');
+    })
+    .finally(() => {
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+    });
+  }
+};
+
+window.completeTillToday = function(customerId, month, year) {
+  console.log('🎯 completeTillToday called:', customerId, month, year);
+  if (!confirm('Mark all pending assignments till today as completed?')) return;
+
+  const button = event.target.closest('button');
+  if (button) {
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+    button.disabled = true;
+
+    fetch('/customer-patterns/complete_all_till_today', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        customer_id: customerId,
+        month: month,
+        year: year
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ Assignments till today completed successfully!');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert('❌ Error completing assignments: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error completing assignments till today');
+    })
+    .finally(() => {
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+    });
+  }
+};
+
+console.log('🔧 CRITICAL functions loaded immediately:', {
+  completeAll: typeof window.completeAll,
+  completeTillToday: typeof window.completeTillToday
+});
+
 // Assignment action functions - Defined at very top for immediate global access
 console.log('🔧 Loading assignment functions at page level...');
 
 // Define critical functions immediately to prevent undefined errors
+
+// CRITICAL: reloadCurrentModal function - must be defined first
+window.reloadCurrentModal = function() {
+  console.log('🔄 reloadCurrentModal called');
+
+  if (window.currentModalData) {
+    console.log('✅ Found currentModalData:', window.currentModalData);
+    const { customerId, customerName, month, year } = window.currentModalData;
+    console.log('🔄 Reloading modal content for:', { customerId, customerName, month, year });
+    loadModalContent(customerId, customerName, month, year);
+  } else {
+    console.log('❌ No currentModalData found, cannot reload');
+  }
+};
+
+// REMOVED: Duplicate completeAll function (defined at top of script)
+
 window.openBulkEditModal = function(customerId, customerName, scheduledQuantity, scheduledProduct, month, year) {
   console.log('🎯 Opening bulk edit modal for:', customerName);
 
@@ -2498,97 +2592,29 @@ window.openBulkEditModal = function(customerId, customerName, scheduledQuantity,
   console.log('✅ Bulk edit modal opened successfully');
 };
 
-window.reloadCurrentModal = function() {
-  console.log('🔄 reloadCurrentModal called');
-
-  if (window.currentModalData) {
-    console.log('✅ Found currentModalData:', window.currentModalData);
-    const { customerId, customerName, month, year } = window.currentModalData;
-    console.log('🔄 Reloading modal content for:', { customerId, customerName, month, year });
-    loadModalContent(customerId, customerName, month, year);
-
-    // Ensure handlers are initialized after reload
-    setTimeout(() => {
-      initializeModalButtonHandlers();
-    }, 200);
-  } else {
-    console.error('❌ No currentModalData found - cannot reload modal');
-    if (typeof window.showSimpleToast === 'function') {
-      window.showSimpleToast('Error: Cannot reload modal - no current data', 'error');
-    }
-  }
-};
+// REMOVED: Duplicate reloadCurrentModal function (defined at top of script)
 
 console.log('✅ Critical functions defined immediately:', {
   openBulkEditModal: typeof window.openBulkEditModal,
   reloadCurrentModal: typeof window.reloadCurrentModal
 });
 
-// Complete Till Today function
-window.completeTillToday = function(customerId, month, year) {
-  console.log('🎯 completeTillToday called:', customerId, month, year);
-  if (!confirm('Mark all pending assignments till today as completed?')) return;
+// Test function availability globally
+console.log('🧪 Testing global access to openBulkEditModal:', typeof openBulkEditModal);
+console.log('🧪 Testing window access to openBulkEditModal:', typeof window.openBulkEditModal);
 
-  const button = event.target.closest('button');
-  const originalHTML = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
-  button.disabled = true;
+// Ensure function is available in global scope (not just window)
+openBulkEditModal = window.openBulkEditModal;
+reloadCurrentModal = window.reloadCurrentModal;
 
-  fetch('/customer-patterns/complete_till_today', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    },
-    body: JSON.stringify({ customer_id: customerId, month: month, year: year })
-  })
-  .then(response => response.json())
-  .then(data => {
-    alert(data.message || 'Assignments completed successfully!');
-    location.reload();
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Error completing assignments');
-  })
-  .finally(() => {
-    button.innerHTML = originalHTML;
-    button.disabled = false;
-  });
-};
+console.log('🔧 Functions assigned to global scope:', {
+  openBulkEditModal: typeof openBulkEditModal,
+  reloadCurrentModal: typeof reloadCurrentModal
+});
 
-// Complete All function
-window.completeAll = function(customerId, month, year) {
-  console.log('🎯 completeAll called:', customerId, month, year);
-  if (!confirm('Mark ALL pending assignments for this customer as completed?')) return;
+// REMOVED: Duplicate completeTillToday function (defined at top of script)
 
-  const button = event.target.closest('button');
-  const originalHTML = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
-  button.disabled = true;
-
-  fetch('/customer-patterns/complete_all', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    },
-    body: JSON.stringify({ customer_id: customerId, month: month, year: year })
-  })
-  .then(response => response.json())
-  .then(data => {
-    alert(data.message || 'All assignments completed successfully!');
-    location.reload();
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Error completing all assignments');
-  })
-  .finally(() => {
-    button.innerHTML = originalHTML;
-    button.disabled = false;
-  });
-};
+// REMOVED: Duplicate completeAll function (defined at top of script)
 
 // Complete Assignment function
 window.completeAssignment = function(id) {
@@ -6138,44 +6164,70 @@ function handleEditAssignmentSubmission(submitBtn) {
             }, 100);
           } else {
             console.error('❌ reloadCurrentModal function not found!');
-            // Fallback: manually reload the modal using direct API call
-            console.log('🔄 Attempting manual modal reload...');
+            // Fallback: Close all modals and reopen the main one
+            console.log('🔄 Fallback: Closing all modals and reopening...');
+
             if (window.currentModalData) {
               const { customerId, customerName, month, year } = window.currentModalData;
-              console.log('🔄 Reloading with data:', { customerId, customerName, month, year });
+              console.log('🔄 Will reopen modal with data:', { customerId, customerName, month, year });
 
-              // Direct API call to reload modal content
-              fetch(`/customer-patterns/customer_deliveries?customer_id=${customerId}&month=${month}&year=${year}`, {
-                method: 'GET',
-                headers: {
-                  'Accept': 'application/json',
-                  'X-Requested-With': 'XMLHttpRequest',
-                  'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.getAttribute('content')
+              // Step 1: Close all existing modals
+              console.log('🔄 Step 1: Closing all modals...');
+
+              // Close edit modal
+              const editModal = document.getElementById('editModal');
+              if (editModal) {
+                const editModalInstance = bootstrap.Modal.getInstance(editModal);
+                if (editModalInstance) {
+                  editModalInstance.hide();
                 }
-              })
-              .then(response => response.json())
-              .then(data => {
-                console.log('✅ Modal content reloaded successfully');
-                const modalContent = document.getElementById('modalContent');
-                if (modalContent) {
-                  modalContent.innerHTML = data.html;
-                  console.log('✅ Modal HTML updated with fresh data');
+              }
 
-                  // Ensure modal is visible
-                  const mainModal = document.getElementById('assignmentModal');
-                  if (mainModal && !mainModal.classList.contains('show')) {
-                    console.log('🔄 Showing main modal...');
-                    const modalInstance = bootstrap.Modal.getInstance(mainModal) || new bootstrap.Modal(mainModal);
-                    modalInstance.show();
+              // Close assignment modal
+              const assignmentModal = document.getElementById('assignmentModal');
+              if (assignmentModal) {
+                const assignmentModalInstance = bootstrap.Modal.getInstance(assignmentModal);
+                if (assignmentModalInstance) {
+                  assignmentModalInstance.hide();
+                }
+              }
+
+              // Remove any lingering backdrops
+              setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+
+                console.log('🔄 Step 2: All modals closed, reopening in 500ms...');
+
+                // Step 2: Reopen the assignment modal after a brief delay
+                setTimeout(() => {
+                  console.log('🔄 Step 3: Reopening assignment modal...');
+
+                  // Find the button that originally opened this modal and click it
+                  const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+                  const triggerButton = document.querySelector(`[onclick*="openDeliveryModal(${customerId}"]`);
+
+                  if (triggerButton) {
+                    console.log('✅ Found original trigger button, clicking...');
+                    triggerButton.click();
+                  } else {
+                    // Manual reopening as last resort
+                    console.log('🔄 Manual reopening as fallback...');
+                    if (typeof window.openDeliveryModal === 'function') {
+                      window.openDeliveryModal(customerId, customerName, month, year);
+                    } else {
+                      console.error('❌ openDeliveryModal function not available');
+                      window.showSimpleToast('Please click the view button again to see updated data', 'info');
+                    }
                   }
-                } else {
-                  console.error('❌ Modal content container not found');
-                }
-              })
-              .catch(error => {
-                console.error('❌ Error reloading modal:', error);
-                window.showSimpleToast('Error reloading modal data', 'error');
-              });
+                }, 500);
+              }, 300);
+            } else {
+              console.error('❌ No currentModalData found, cannot reopen');
+              window.showSimpleToast('Modal updated successfully. Please reopen to see changes.', 'success');
             }
           }
         }, 800); // Reduced from 1500ms to 800ms for faster UX
