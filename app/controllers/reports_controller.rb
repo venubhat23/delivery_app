@@ -10,21 +10,21 @@ class ReportsController < ApplicationController
   def generate_gst_report
     from_date = params[:from_date]
     to_date = params[:to_date]
-    
+
     if from_date.blank? || to_date.blank?
-      render json: { 
-        success: false, 
-        message: "Please select both from and to dates" 
+      render json: {
+        success: false,
+        message: "Please select both from and to dates"
       }
       return
     end
-    
+
     begin
       # Create a new report record
-      report = create_report_record(from_date, to_date)
-      
-      render json: { 
-        success: true, 
+      report = create_report_record(from_date, to_date, 'gst')
+
+      render json: {
+        success: true,
         message: "GST Report generated successfully",
         report: {
           id: report.id,
@@ -35,32 +35,221 @@ class ReportsController < ApplicationController
         }
       }
     rescue => e
-      render json: { 
-        success: false, 
-        message: "Failed to generate report: #{e.message}" 
+      render json: {
+        success: false,
+        message: "Failed to generate report: #{e.message}"
+      }
+    end
+  end
+
+  def generate_sales_report
+    from_date = params[:from_date]
+    to_date = params[:to_date]
+
+    if from_date.blank? || to_date.blank?
+      render json: {
+        success: false,
+        message: "Please select both from and to dates"
+      }
+      return
+    end
+
+    begin
+      report = create_report_record(from_date, to_date, 'sales')
+
+      render json: {
+        success: true,
+        message: "Sales Report generated successfully",
+        report: {
+          id: report.id,
+          name: report.name,
+          generated_at: report.created_at.strftime("%B %d, %Y at %I:%M %p"),
+          from_date: from_date,
+          to_date: to_date
+        }
+      }
+    rescue => e
+      render json: {
+        success: false,
+        message: "Failed to generate report: #{e.message}"
+      }
+    end
+  end
+
+  def generate_delivery_report
+    from_date = params[:from_date]
+    to_date = params[:to_date]
+
+    if from_date.blank? || to_date.blank?
+      render json: {
+        success: false,
+        message: "Please select both from and to dates"
+      }
+      return
+    end
+
+    begin
+      report = create_report_record(from_date, to_date, 'delivery')
+
+      render json: {
+        success: true,
+        message: "Delivery Report generated successfully",
+        report: {
+          id: report.id,
+          name: report.name,
+          generated_at: report.created_at.strftime("%B %d, %Y at %I:%M %p"),
+          from_date: from_date,
+          to_date: to_date
+        }
+      }
+    rescue => e
+      render json: {
+        success: false,
+        message: "Failed to generate report: #{e.message}"
+      }
+    end
+  end
+
+  def generate_customer_report
+    from_date = params[:from_date]
+    to_date = params[:to_date]
+
+    if from_date.blank? || to_date.blank?
+      render json: {
+        success: false,
+        message: "Please select both from and to dates"
+      }
+      return
+    end
+
+    begin
+      report = create_report_record(from_date, to_date, 'customer')
+
+      render json: {
+        success: true,
+        message: "Customer Report generated successfully",
+        report: {
+          id: report.id,
+          name: report.name,
+          generated_at: report.created_at.strftime("%B %d, %Y at %I:%M %p"),
+          from_date: from_date,
+          to_date: to_date
+        }
+      }
+    rescue => e
+      render json: {
+        success: false,
+        message: "Failed to generate report: #{e.message}"
+      }
+    end
+  end
+
+  def generate_product_report
+    from_date = params[:from_date]
+    to_date = params[:to_date]
+
+    if from_date.blank? || to_date.blank?
+      render json: {
+        success: false,
+        message: "Please select both from and to dates"
+      }
+      return
+    end
+
+    begin
+      report = create_report_record(from_date, to_date, 'product')
+
+      render json: {
+        success: true,
+        message: "Product Performance Report generated successfully",
+        report: {
+          id: report.id,
+          name: report.name,
+          generated_at: report.created_at.strftime("%B %d, %Y at %I:%M %p"),
+          from_date: from_date,
+          to_date: to_date
+        }
+      }
+    rescue => e
+      render json: {
+        success: false,
+        message: "Failed to generate report: #{e.message}"
+      }
+    end
+  end
+
+  def generate_financial_report
+    from_date = params[:from_date]
+    to_date = params[:to_date]
+
+    if from_date.blank? || to_date.blank?
+      render json: {
+        success: false,
+        message: "Please select both from and to dates"
+      }
+      return
+    end
+
+    begin
+      report = create_report_record(from_date, to_date, 'financial')
+
+      render json: {
+        success: true,
+        message: "Financial Summary Report generated successfully",
+        report: {
+          id: report.id,
+          name: report.name,
+          generated_at: report.created_at.strftime("%B %d, %Y at %I:%M %p"),
+          from_date: from_date,
+          to_date: to_date
+        }
+      }
+    rescue => e
+      render json: {
+        success: false,
+        message: "Failed to generate report: #{e.message}"
       }
     end
   end
   
   def show
     @report = find_report
-    
+
     if @report.nil?
       redirect_to reports_path, alert: "Report not found"
       return
     end
-    
-    # Generate GST report data
+
     from_date = @report.respond_to?(:from_date) ? @report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
     to_date = @report.respond_to?(:to_date) ? @report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
-    
-    @gst_data = get_gst_report_data(from_date, to_date)
+
+    # Generate appropriate report data based on report type
+    report_type = @report.respond_to?(:report_type) ? @report.report_type : 'gst'
+
+    case report_type
+    when 'gst'
+      @report_data = get_gst_report_data(from_date, to_date)
+    when 'sales'
+      @report_data = get_sales_report_data(from_date, to_date)
+    when 'delivery'
+      @report_data = get_delivery_report_data(from_date, to_date)
+    when 'customer'
+      @report_data = get_customer_report_data(from_date, to_date)
+    when 'product'
+      @report_data = get_product_report_data(from_date, to_date)
+    when 'financial'
+      @report_data = get_financial_report_data(from_date, to_date)
+    else
+      @report_data = get_gst_report_data(from_date, to_date)
+    end
+
     @from_date = from_date
     @to_date = to_date
-    
+    @report_type = report_type
+
     respond_to do |format|
       format.html
-      format.json { render json: @gst_data }
+      format.json { render json: @report_data }
     end
   end
 
@@ -108,11 +297,22 @@ class ReportsController < ApplicationController
     end
   end
   
-  def create_report_record(from_date, to_date)
+  def create_report_record(from_date, to_date, report_type = 'gst')
+    report_names = {
+      'gst' => 'GST Report',
+      'sales' => 'Sales Report',
+      'delivery' => 'Delivery Report',
+      'customer' => 'Customer Report',
+      'product' => 'Product Performance Report',
+      'financial' => 'Financial Summary Report'
+    }
+
+    name = "#{report_names[report_type] || 'Report'} - #{Date.parse(from_date).strftime('%b %d')} to #{Date.parse(to_date).strftime('%b %d, %Y')}"
+
     if defined?(Report)
       Report.create!(
-        name: "GST Report - #{Date.parse(from_date).strftime('%b %d')} to #{Date.parse(to_date).strftime('%b %d, %Y')}",
-        report_type: 'gst',
+        name: name,
+        report_type: report_type,
         from_date: Date.parse(from_date),
         to_date: Date.parse(to_date),
         user: current_user
@@ -121,8 +321,8 @@ class ReportsController < ApplicationController
       # Fallback for demo purposes
       OpenStruct.new(
         id: rand(1000..9999),
-        name: "GST Report - #{Date.parse(from_date).strftime('%b %d')} to #{Date.parse(to_date).strftime('%b %d, %Y')}",
-        report_type: 'gst',
+        name: name,
+        report_type: report_type,
         from_date: Date.parse(from_date),
         to_date: Date.parse(to_date),
         created_at: Time.current,
@@ -478,7 +678,243 @@ class ReportsController < ApplicationController
       "Ladakh" => "38",
       "Jammu and Kashmir" => "01"
     }
-    
+
     state_codes[state_name] || "29" # Default to Karnataka
+  end
+
+  # Sales Report Data
+  def get_sales_report_data(from_date, to_date)
+    sales_invoices = SalesInvoice.includes(:sales_invoice_items, :customer, :sales_customer)
+                                 .where(invoice_date: from_date..to_date)
+                                 .where.not(status: 'cancelled')
+
+    total_sales = 0
+    total_invoices = sales_invoices.count
+    invoice_data = []
+
+    sales_invoices.each do |invoice|
+      invoice_total = invoice.sales_invoice_items.sum(&:total_with_tax) || 0
+      total_sales += invoice_total
+
+      invoice_data << {
+        invoice_number: invoice.invoice_number,
+        customer_name: invoice.customer_name || invoice.get_customer&.name || "Unknown",
+        date: invoice.invoice_date.strftime('%d/%m/%Y'),
+        amount: invoice_total.round(2),
+        status: invoice.status&.humanize || 'Pending'
+      }
+    end
+
+    average_order_value = total_invoices > 0 ? (total_sales / total_invoices).round(2) : 0
+
+    {
+      summary: {
+        total_sales: total_sales.round(2),
+        total_invoices: total_invoices,
+        average_order_value: average_order_value,
+        period: "#{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}"
+      },
+      invoices: invoice_data.sort_by { |i| i[:date] }.reverse
+    }
+  end
+
+  # Delivery Report Data
+  def get_delivery_report_data(from_date, to_date)
+    delivery_assignments = DeliveryAssignment.includes(:customer, :product, :user)
+                                           .where(scheduled_date: from_date..to_date)
+
+    total_assignments = delivery_assignments.count
+    completed_assignments = delivery_assignments.where(status: 'completed').count
+    pending_assignments = delivery_assignments.where(status: 'pending').count
+    cancelled_assignments = delivery_assignments.where(status: 'cancelled').count
+
+    completion_rate = total_assignments > 0 ? ((completed_assignments.to_f / total_assignments) * 100).round(2) : 0
+
+    delivery_people_performance = delivery_assignments.joins(:user)
+                                                     .group('users.name')
+                                                     .group(:status)
+                                                     .count
+
+    performance_data = []
+    delivery_assignments.joins(:user).group('users.name').each do |name, assignments|
+      user_assignments = delivery_assignments.joins(:user).where('users.name = ?', name)
+      completed = user_assignments.where(status: 'completed').count
+      total = user_assignments.count
+      rate = total > 0 ? ((completed.to_f / total) * 100).round(2) : 0
+
+      performance_data << {
+        delivery_person: name,
+        total_assignments: total,
+        completed: completed,
+        completion_rate: rate
+      }
+    end
+
+    {
+      summary: {
+        total_assignments: total_assignments,
+        completed_assignments: completed_assignments,
+        pending_assignments: pending_assignments,
+        cancelled_assignments: cancelled_assignments,
+        completion_rate: completion_rate,
+        period: "#{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}"
+      },
+      delivery_people_performance: performance_data.sort_by { |d| d[:completion_rate] }.reverse
+    }
+  end
+
+  # Customer Report Data
+  def get_customer_report_data(from_date, to_date)
+    # Get customers with activity in the date range
+    customer_sales = SalesInvoice.includes(:customer, :sales_customer)
+                                .where(invoice_date: from_date..to_date)
+                                .where.not(status: 'cancelled')
+                                .group(:customer_id)
+                                .group(:sales_customer_id)
+                                .sum('COALESCE((SELECT SUM(total_with_tax) FROM sales_invoice_items WHERE sales_invoice_id = sales_invoices.id), 0)')
+
+    customer_deliveries = DeliveryAssignment.includes(:customer)
+                                          .where(scheduled_date: from_date..to_date, status: 'completed')
+                                          .group(:customer_id)
+                                          .count
+
+    total_customers = Customer.count
+    active_customers = customer_sales.keys.count + customer_deliveries.keys.count
+
+    top_customers = []
+    customer_sales.each do |customer_id, sales_amount|
+      next if customer_id.blank?
+
+      customer = Customer.find_by(id: customer_id)
+      next unless customer
+
+      deliveries = customer_deliveries[customer_id] || 0
+
+      top_customers << {
+        name: customer.name,
+        phone: customer.phone,
+        total_sales: sales_amount.round(2),
+        total_deliveries: deliveries,
+        last_order_date: SalesInvoice.where(customer_id: customer_id)
+                                   .where(invoice_date: from_date..to_date)
+                                   .maximum(:invoice_date)&.strftime('%d/%m/%Y') || 'N/A'
+      }
+    end
+
+    {
+      summary: {
+        total_customers: total_customers,
+        active_customers: active_customers,
+        new_customers: Customer.where(created_at: from_date..to_date).count,
+        period: "#{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}"
+      },
+      top_customers: top_customers.sort_by { |c| c[:total_sales] }.reverse.first(20)
+    }
+  end
+
+  # Product Report Data
+  def get_product_report_data(from_date, to_date)
+    # Get product sales from invoice items
+    product_sales = SalesInvoiceItem.joins(:sales_invoice)
+                                   .where(sales_invoices: { invoice_date: from_date..to_date })
+                                   .where.not(sales_invoices: { status: 'cancelled' })
+                                   .group(:product_name)
+                                   .group(:sales_product_id)
+                                   .sum(:quantity)
+
+    product_revenue = SalesInvoiceItem.joins(:sales_invoice)
+                                     .where(sales_invoices: { invoice_date: from_date..to_date })
+                                     .where.not(sales_invoices: { status: 'cancelled' })
+                                     .group(:product_name)
+                                     .group(:sales_product_id)
+                                     .sum(:total_with_tax)
+
+    product_data = []
+    product_sales.each do |key, quantity|
+      product_name = key.is_a?(Array) ? key[0] : 'Unknown Product'
+      revenue = product_revenue[key] || 0
+
+      product_data << {
+        name: product_name,
+        quantity_sold: quantity,
+        total_revenue: revenue.round(2),
+        average_price: quantity > 0 ? (revenue / quantity).round(2) : 0
+      }
+    end
+
+    total_products_sold = product_sales.values.sum
+    total_revenue = product_revenue.values.sum
+
+    {
+      summary: {
+        total_products_sold: total_products_sold,
+        total_revenue: total_revenue.round(2),
+        unique_products: product_data.count,
+        period: "#{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}"
+      },
+      products: product_data.sort_by { |p| p[:total_revenue] }.reverse
+    }
+  end
+
+  # Financial Report Data
+  def get_financial_report_data(from_date, to_date)
+    # Sales Revenue
+    sales_revenue = SalesInvoice.includes(:sales_invoice_items)
+                               .where(invoice_date: from_date..to_date)
+                               .where.not(status: 'cancelled')
+                               .sum('COALESCE((SELECT SUM(total_with_tax) FROM sales_invoice_items WHERE sales_invoice_id = sales_invoices.id), 0)')
+
+    # Purchase Costs
+    purchase_costs = PurchaseInvoice.where(invoice_date: from_date..to_date)
+                                   .where.not(status: 'cancelled')
+                                   .sum(:total_amount)
+
+    # Tax collected
+    tax_collected = SalesInvoiceItem.joins(:sales_invoice)
+                                   .where(sales_invoices: { invoice_date: from_date..to_date })
+                                   .where.not(sales_invoices: { status: 'cancelled' })
+                                   .sum(:tax_amount)
+
+    # Basic calculations
+    gross_profit = sales_revenue - purchase_costs
+    profit_margin = sales_revenue > 0 ? ((gross_profit / sales_revenue) * 100).round(2) : 0
+
+    # Monthly breakdown
+    monthly_data = []
+    current_date = from_date.beginning_of_month
+    while current_date <= to_date.end_of_month
+      month_start = current_date.beginning_of_month
+      month_end = current_date.end_of_month
+
+      month_sales = SalesInvoice.includes(:sales_invoice_items)
+                               .where(invoice_date: month_start..month_end)
+                               .where.not(status: 'cancelled')
+                               .sum('COALESCE((SELECT SUM(total_with_tax) FROM sales_invoice_items WHERE sales_invoice_id = sales_invoices.id), 0)')
+
+      month_purchases = PurchaseInvoice.where(invoice_date: month_start..month_end)
+                                      .where.not(status: 'cancelled')
+                                      .sum(:total_amount)
+
+      monthly_data << {
+        month: current_date.strftime('%B %Y'),
+        sales: month_sales.round(2),
+        purchases: month_purchases.round(2),
+        profit: (month_sales - month_purchases).round(2)
+      }
+
+      current_date = current_date.next_month
+    end
+
+    {
+      summary: {
+        total_sales: sales_revenue.round(2),
+        total_purchases: purchase_costs.round(2),
+        gross_profit: gross_profit.round(2),
+        profit_margin: profit_margin,
+        tax_collected: tax_collected.round(2),
+        period: "#{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}"
+      },
+      monthly_breakdown: monthly_data
+    }
   end
 end

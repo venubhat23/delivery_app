@@ -193,7 +193,6 @@ class DeliveryAssignment < ApplicationRecord
   def self.monthly_summary_for_customer(customer_id, month, year)
     start_date = Date.new(year, month, 1).beginning_of_month
     end_date = start_date.end_of_month
-    debugger
     assignments = where(
       customer_id: customer_id,
       status: 'completed',

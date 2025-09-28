@@ -1,0 +1,240 @@
+<div class="row mb-4">
+  <% case report_type %>
+  <% when 'gst' %>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-primary">
+        <div class="stats-icon">
+          <i class="fas fa-rupee-sign"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:total_sales]) %></div>
+        <div class="stats-label">Total Sales</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-success">
+        <div class="stats-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:total_tax]) %></div>
+        <div class="stats-label">Total Tax</div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="stats-card stats-card-info">
+        <div class="stats-icon">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:cgst]) %></div>
+        <div class="stats-label">CGST</div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="stats-card stats-card-warning">
+        <div class="stats-icon">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:sgst]) %></div>
+        <div class="stats-label">SGST</div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="stats-card stats-card-danger">
+        <div class="stats-icon">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:igst]) %></div>
+        <div class="stats-label">IGST</div>
+      </div>
+    </div>
+
+  <% when 'sales' %>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-primary">
+        <div class="stats-icon">
+          <i class="fas fa-rupee-sign"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:total_sales]) %></div>
+        <div class="stats-label">Total Sales</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-success">
+        <div class="stats-icon">
+          <i class="fas fa-file-invoice"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:total_invoices] %></div>
+        <div class="stats-label">Total Invoices</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-info">
+        <div class="stats-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:average_order_value]) %></div>
+        <div class="stats-label">Average Order Value</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-warning">
+        <div class="stats-icon">
+          <i class="fas fa-calendar"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:period] %></div>
+        <div class="stats-label">Period</div>
+      </div>
+    </div>
+
+  <% when 'delivery' %>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-primary">
+        <div class="stats-icon">
+          <i class="fas fa-truck"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:total_assignments] %></div>
+        <div class="stats-label">Total Assignments</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-success">
+        <div class="stats-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:completed_assignments] %></div>
+        <div class="stats-label">Completed</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-warning">
+        <div class="stats-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:pending_assignments] %></div>
+        <div class="stats-label">Pending</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-info">
+        <div class="stats-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:completion_rate] %>%</div>
+        <div class="stats-label">Completion Rate</div>
+      </div>
+    </div>
+
+  <% when 'customer' %>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-primary">
+        <div class="stats-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:total_customers] %></div>
+        <div class="stats-label">Total Customers</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-success">
+        <div class="stats-icon">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:active_customers] %></div>
+        <div class="stats-label">Active Customers</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-info">
+        <div class="stats-icon">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:new_customers] %></div>
+        <div class="stats-label">New Customers</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-warning">
+        <div class="stats-icon">
+          <i class="fas fa-calendar"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:period] %></div>
+        <div class="stats-label">Period</div>
+      </div>
+    </div>
+
+  <% when 'product' %>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-primary">
+        <div class="stats-icon">
+          <i class="fas fa-box"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:total_products_sold] %></div>
+        <div class="stats-label">Products Sold</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-success">
+        <div class="stats-icon">
+          <i class="fas fa-rupee-sign"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:total_revenue]) %></div>
+        <div class="stats-label">Total Revenue</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-info">
+        <div class="stats-icon">
+          <i class="fas fa-boxes"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:unique_products] %></div>
+        <div class="stats-label">Unique Products</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-warning">
+        <div class="stats-icon">
+          <i class="fas fa-calendar"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:period] %></div>
+        <div class="stats-label">Period</div>
+      </div>
+    </div>
+
+  <% when 'financial' %>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-primary">
+        <div class="stats-icon">
+          <i class="fas fa-rupee-sign"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:total_sales]) %></div>
+        <div class="stats-label">Total Sales</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-danger">
+        <div class="stats-icon">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:total_purchases]) %></div>
+        <div class="stats-label">Total Purchases</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-success">
+        <div class="stats-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:gross_profit]) %></div>
+        <div class="stats-label">Gross Profit</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-info">
+        <div class="stats-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:profit_margin] %>%</div>
+        <div class="stats-label">Profit Margin</div>
+      </div>
+    </div>
+  <% end %>
+</div>

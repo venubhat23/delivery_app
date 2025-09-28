@@ -66,8 +66,15 @@
         <label for="report_type" class="form-label">
           <i class="fas fa-list me-2"></i>Report Type
         </label>
-        <%= form.select :report_type, 
-              options_for_select([['GST Report', 'gst']]), 
+        <%= form.select :report_type,
+              options_for_select([
+                ['GST Report', 'gst'],
+                ['Sales Report', 'sales'],
+                ['Delivery Report', 'delivery'],
+                ['Customer Report', 'customer'],
+                ['Product Performance Report', 'product'],
+                ['Financial Summary Report', 'financial']
+              ]),
               { selected: 'gst' },
               { class: "form-select", id: "report_type" } %>
       </div>
@@ -149,8 +156,20 @@
                   </div>
                 </td>
                 <td>
-                  <span class="badge bg-info">
-                    <i class="fas fa-receipt me-1"></i>GST Report
+                  <%
+                    report_type = report.respond_to?(:report_type) ? report.report_type : 'gst'
+                    report_configs = {
+                      'gst' => { icon: 'fa-receipt', label: 'GST Report', class: 'bg-info' },
+                      'sales' => { icon: 'fa-chart-line', label: 'Sales Report', class: 'bg-success' },
+                      'delivery' => { icon: 'fa-truck', label: 'Delivery Report', class: 'bg-warning' },
+                      'customer' => { icon: 'fa-users', label: 'Customer Report', class: 'bg-primary' },
+                      'product' => { icon: 'fa-box', label: 'Product Report', class: 'bg-secondary' },
+                      'financial' => { icon: 'fa-dollar-sign', label: 'Financial Report', class: 'bg-danger' }
+                    }
+                    config = report_configs[report_type] || report_configs['gst']
+                  %>
+                  <span class="badge <%= config[:class] %>">
+                    <i class="fas <%= config[:icon] %> me-1"></i><%= config[:label] %>
                   </span>
                 </td>
                 <td>
@@ -677,9 +696,32 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Get form data
       const formData = new FormData(reportForm);
-      
+      const reportType = document.getElementById('report_type').value;
+
+      // Determine the correct endpoint based on report type
+      let actionUrl = reportForm.action;
+      switch(reportType) {
+        case 'sales':
+          actionUrl = '/reports/generate_sales_report';
+          break;
+        case 'delivery':
+          actionUrl = '/reports/generate_delivery_report';
+          break;
+        case 'customer':
+          actionUrl = '/reports/generate_customer_report';
+          break;
+        case 'product':
+          actionUrl = '/reports/generate_product_report';
+          break;
+        case 'financial':
+          actionUrl = '/reports/generate_financial_report';
+          break;
+        default:
+          actionUrl = '/reports/generate_gst_report';
+      }
+
       // Make AJAX request
-      fetch(reportForm.action, {
+      fetch(actionUrl, {
         method: 'POST',
         body: formData,
         headers: {
@@ -734,6 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function addReportToTable(report) {
+    const reportType = document.getElementById('report_type').value;
     const newRow = document.createElement('tr');
     newRow.className = 'report-row';
     newRow.innerHTML = `
@@ -748,8 +791,8 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </td>
       <td>
-        <span class="badge bg-info">
-          <i class="fas fa-receipt me-1"></i>GST Report
+        <span class="badge ${getReportBadgeClass(reportType)}">
+          <i class="fas ${getReportIcon(reportType)} me-1"></i>${getReportLabel(reportType)}
         </span>
       </td>
       <td>
@@ -809,6 +852,43 @@ document.addEventListener('DOMContentLoaded', function() {
       const currentCount = parseInt(todayStatsElement.textContent);
       todayStatsElement.textContent = currentCount + 1;
     }
+  }
+
+  // Helper functions for report styling
+  function getReportIcon(reportType) {
+    const icons = {
+      'gst': 'fa-receipt',
+      'sales': 'fa-chart-line',
+      'delivery': 'fa-truck',
+      'customer': 'fa-users',
+      'product': 'fa-box',
+      'financial': 'fa-dollar-sign'
+    };
+    return icons[reportType] || 'fa-receipt';
+  }
+
+  function getReportLabel(reportType) {
+    const labels = {
+      'gst': 'GST Report',
+      'sales': 'Sales Report',
+      'delivery': 'Delivery Report',
+      'customer': 'Customer Report',
+      'product': 'Product Report',
+      'financial': 'Financial Report'
+    };
+    return labels[reportType] || 'GST Report';
+  }
+
+  function getReportBadgeClass(reportType) {
+    const classes = {
+      'gst': 'bg-info',
+      'sales': 'bg-success',
+      'delivery': 'bg-warning',
+      'customer': 'bg-primary',
+      'product': 'bg-secondary',
+      'financial': 'bg-danger'
+    };
+    return classes[reportType] || 'bg-info';
   }
 });
 </script>

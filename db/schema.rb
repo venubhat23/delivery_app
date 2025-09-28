@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_110403) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_27_175137) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -164,6 +164,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_110403) do
     t.string "monthly_pattern", default: "irregular"
     t.datetime "pattern_updated_at"
     t.integer "invoices_count", default: 0, null: false
+    t.decimal "wallet_amount", precision: 10, scale: 2, default: "50.0", null: false
     t.index ["alt_phone_number"], name: "index_customers_on_alt_phone_number", where: "(alt_phone_number IS NOT NULL)"
     t.index ["created_at"], name: "idx_customers_created_at"
     t.index ["customer_type"], name: "index_customers_on_customer_type"

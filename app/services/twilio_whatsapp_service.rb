@@ -17,7 +17,6 @@ class TwilioWhatsappService
 
     invoices.each do |invoice|
       begin
-        debugger
         if send_invoice_notification(invoice)
           success_count += 1
         else
@@ -33,7 +32,6 @@ class TwilioWhatsappService
   end
 
   def send_invoice_notification(invoice)
-    debugger
     return false unless invoice.customer&.phone_number.present?
 
     # Format phone number for WhatsApp

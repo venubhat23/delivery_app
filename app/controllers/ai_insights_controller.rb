@@ -37,7 +37,13 @@ class AiInsightsController < ApplicationController
   def generate_reorder_suggestions
     suggestions = []
 
-    Customer.includes(:delivery_assignments).each do |customer|
+    # Optimized query to get customers with their recent orders
+    customers_with_orders = Customer.joins(:delivery_assignments)
+                                   .where(delivery_assignments: { status: 'completed' })
+                                   .includes(delivery_assignments: [:product])
+                                   .distinct
+
+    customers_with_orders.find_each do |customer|
       last_orders = customer.delivery_assignments
                            .where(status: 'completed')
                            .order(scheduled_date: :desc)
@@ -79,7 +85,13 @@ class AiInsightsController < ApplicationController
   def generate_churn_predictions
     predictions = []
 
-    Customer.includes(:delivery_assignments).each do |customer|
+    # Optimized query to get customers with their assignments
+    customers_with_orders = Customer.joins(:delivery_assignments)
+                                   .where(delivery_assignments: { status: 'completed' })
+                                   .includes(:delivery_assignments)
+                                   .distinct
+
+    customers_with_orders.find_each do |customer|
       assignments = customer.delivery_assignments
                            .where(status: 'completed')
                            .order(scheduled_date: :desc)

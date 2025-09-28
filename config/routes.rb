@@ -8,6 +8,14 @@ Rails.application.routes.draw do
     end
   end
   resources :customer_points, path: 'customer-points', only: [:index, :show]
+
+  # Customer Wallets Management
+  resources :customer_wallets, path: 'customer-wallets' do
+    member do
+      patch :add_funds
+      patch :deduct_funds
+    end
+  end
   # Handle Chrome DevTools requests with a simple 404 response
   get "/.well-known/appspecific/com.chrome.devtools.json", to: proc { [404, {}, ['']] }
   # Customer Patterns Analysis
@@ -312,6 +320,11 @@ Rails.application.routes.draw do
   resources :reports, only: [:index, :show] do
     collection do
       post :generate_gst_report
+      post :generate_sales_report
+      post :generate_delivery_report
+      post :generate_customer_report
+      post :generate_product_report
+      post :generate_financial_report
     end
     member do
       get :download_pdf

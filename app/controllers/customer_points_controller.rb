@@ -1,32 +1,59 @@
 class CustomerPointsController < ApplicationController
   def index
-    # Get all customers and calculate points on-the-fly based on delivery assignments
-    all_customers = Customer.includes(:delivery_assignments).order(:name)
+    # Optimized query to get all customer totals in one go
+    customer_totals = DeliveryAssignment
+                     .where(status: 'completed')
+                     .joins(:customer)
+                     .group('customers.id, customers.name, customers.phone_number, customers.email, customers.address, customers.is_active, customers.created_at')
+                     .select('customers.*, SUM(delivery_assignments.final_amount_after_discount) as total_amount')
+                     .order('customers.name')
 
-    customers_with_calculated_points = all_customers.map do |customer|
-      # Calculate total amount from completed delivery assignments
-      total_amount = customer.delivery_assignments
-                            .where(status: 'completed')
-                            .sum(:final_amount_after_discount) || 0
-
-      # Calculate points: 10 points for every ₹1000
+    # Convert to hash for quick lookup
+    totals_hash = {}
+    customer_totals.each do |customer_data|
+      total_amount = customer_data.total_amount.to_f || 0
       calculated_points = (total_amount / 1000.0 * 10).floor
 
-      # Add dynamic method to customer object
-      customer.define_singleton_method(:total_points) { calculated_points }
-      customer.define_singleton_method(:total_delivery_amount) { total_amount }
+      totals_hash[customer_data.id] = {
+        customer: customer_data,
+        total_amount: total_amount,
+        total_points: calculated_points
+      }
+    end
 
+    # Get customers without any completed deliveries
+    customers_with_deliveries = totals_hash.keys
+    customers_without_deliveries = Customer.where.not(id: customers_with_deliveries)
+                                          .order(:name)
+
+    # Prepare customers with points (sorted by points descending)
+    @customers_with_points = totals_hash.values
+                            .select { |data| data[:total_points] > 0 }
+                            .sort_by { |data| -data[:total_points] }
+                            .map do |data|
+      customer = data[:customer]
+      customer.define_singleton_method(:total_points) { data[:total_points] }
+      customer.define_singleton_method(:total_delivery_amount) { data[:total_amount] }
       customer
     end
 
-    # Split customers into those with points and those without
-    @customers_with_points = customers_with_calculated_points
-                            .select { |c| c.total_points > 0 }
-                            .sort_by(&:total_points)
-                            .reverse
+    # Prepare customers without points
+    customers_with_zero_points = totals_hash.values
+                                .select { |data| data[:total_points] == 0 }
+                                .map do |data|
+      customer = data[:customer]
+      customer.define_singleton_method(:total_points) { 0 }
+      customer.define_singleton_method(:total_delivery_amount) { data[:total_amount] }
+      customer
+    end
 
-    @customers_without_points = customers_with_calculated_points
-                               .select { |c| c.total_points == 0 }
+    # Add customers without any deliveries
+    customers_without_deliveries.each do |customer|
+      customer.define_singleton_method(:total_points) { 0 }
+      customer.define_singleton_method(:total_delivery_amount) { 0 }
+    end
+
+    @customers_without_points = customers_with_zero_points + customers_without_deliveries.to_a
   end
 
   def show

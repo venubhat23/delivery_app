@@ -1,0 +1,315 @@
+<% case report_type %>
+<% when 'gst' %>
+  <!-- GST Sales Table -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="mb-0">
+        <i class="fas fa-table me-2"></i>Sales Transactions
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover" id="reportTable">
+          <thead class="table-dark">
+            <tr>
+              <th rowspan="2" class="align-middle">GSTIN</th>
+              <th rowspan="2" class="align-middle">Customer Name</th>
+              <th colspan="2" class="text-center">Place of Supply</th>
+              <th colspan="3" class="text-center">Invoice Details</th>
+              <th colspan="6" class="text-center">Amount of Tax</th>
+              <th rowspan="2" class="align-middle">Total Tax</th>
+            </tr>
+            <tr>
+              <th>State Code</th>
+              <th>State Name</th>
+              <th>Invoice No.</th>
+              <th>Invoice Date</th>
+              <th>Invoice Value</th>
+              <th>Total Tax %</th>
+              <th>Taxable Value</th>
+              <th>Central Tax Amount</th>
+              <th>State/UT Tax Amount</th>
+              <th>Integrated Tax Amount</th>
+              <th>CESS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if report_data[:sales_transactions].any? %>
+              <% report_data[:sales_transactions].each do |transaction| %>
+                <tr>
+                  <td>-</td>
+                  <td><%= transaction[:customer_name] %></td>
+                  <td><%= transaction[:state_code] %></td>
+                  <td><%= transaction[:state_name] %></td>
+                  <td><%= transaction[:invoice_no] %></td>
+                  <td><%= transaction[:invoice_date] %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(transaction[:invoice_value]) %></td>
+                  <td class="text-end"><%= transaction[:tax_rate] %>%</td>
+                  <td class="text-end">₹<%= number_with_delimiter(transaction[:taxable_value]) %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(transaction[:central_tax]) %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(transaction[:state_tax]) %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(transaction[:integrated_tax]) %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(transaction[:cess]) %></td>
+                  <td class="text-end fw-bold">₹<%= number_with_delimiter(transaction[:total_tax]) %></td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="14" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                  No sales transactions found for the selected period.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <% if report_data[:sales_transactions].any? %>
+            <tfoot class="table-secondary">
+              <tr class="fw-bold">
+                <td colspan="6">Total</td>
+                <td class="text-end">₹<%= number_with_delimiter(report_data[:summary][:total_sales]) %></td>
+                <td></td>
+                <td class="text-end">₹<%= number_with_delimiter(report_data[:summary][:total_sales] - report_data[:summary][:total_tax]) %></td>
+                <td class="text-end">₹<%= number_with_delimiter(report_data[:summary][:cgst]) %></td>
+                <td class="text-end">₹<%= number_with_delimiter(report_data[:summary][:sgst]) %></td>
+                <td class="text-end">₹<%= number_with_delimiter(report_data[:summary][:igst]) %></td>
+                <td class="text-end">₹0.0</td>
+                <td class="text-end">₹<%= number_with_delimiter(report_data[:summary][:total_tax]) %></td>
+              </tr>
+            </tfoot>
+          <% end %>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<% when 'sales' %>
+  <!-- Sales Report Table -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="mb-0">
+        <i class="fas fa-table me-2"></i>Sales Invoices
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover" id="reportTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Invoice Number</th>
+              <th>Customer Name</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if report_data[:invoices].any? %>
+              <% report_data[:invoices].each do |invoice| %>
+                <tr>
+                  <td><%= invoice[:invoice_number] %></td>
+                  <td><%= invoice[:customer_name] %></td>
+                  <td><%= invoice[:date] %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(invoice[:amount]) %></td>
+                  <td>
+                    <span class="badge bg-<%= invoice[:status] == 'Paid' ? 'success' : 'warning' %>">
+                      <%= invoice[:status] %>
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                  No sales found for the selected period.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<% when 'delivery' %>
+  <!-- Delivery Report Table -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="mb-0">
+        <i class="fas fa-table me-2"></i>Delivery People Performance
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover" id="reportTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Delivery Person</th>
+              <th>Total Assignments</th>
+              <th>Completed</th>
+              <th>Completion Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if report_data[:delivery_people_performance].any? %>
+              <% report_data[:delivery_people_performance].each do |person| %>
+                <tr>
+                  <td><%= person[:delivery_person] %></td>
+                  <td><%= person[:total_assignments] %></td>
+                  <td><%= person[:completed] %></td>
+                  <td>
+                    <span class="badge bg-<%= person[:completion_rate] >= 80 ? 'success' : person[:completion_rate] >= 60 ? 'warning' : 'danger' %>">
+                      <%= person[:completion_rate] %>%
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                  No delivery data found for the selected period.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<% when 'customer' %>
+  <!-- Customer Report Table -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="mb-0">
+        <i class="fas fa-table me-2"></i>Top Customers
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover" id="reportTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Customer Name</th>
+              <th>Phone</th>
+              <th>Total Sales</th>
+              <th>Total Deliveries</th>
+              <th>Last Order Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if report_data[:top_customers].any? %>
+              <% report_data[:top_customers].each do |customer| %>
+                <tr>
+                  <td><%= customer[:name] %></td>
+                  <td><%= customer[:phone] %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(customer[:total_sales]) %></td>
+                  <td><%= customer[:total_deliveries] %></td>
+                  <td><%= customer[:last_order_date] %></td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                  No customer data found for the selected period.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<% when 'product' %>
+  <!-- Product Report Table -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="mb-0">
+        <i class="fas fa-table me-2"></i>Product Performance
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover" id="reportTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Product Name</th>
+              <th>Quantity Sold</th>
+              <th>Total Revenue</th>
+              <th>Average Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if report_data[:products].any? %>
+              <% report_data[:products].each do |product| %>
+                <tr>
+                  <td><%= product[:name] %></td>
+                  <td><%= product[:quantity_sold] %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(product[:total_revenue]) %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(product[:average_price]) %></td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                  No product data found for the selected period.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<% when 'financial' %>
+  <!-- Financial Report Table -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="mb-0">
+        <i class="fas fa-table me-2"></i>Monthly Breakdown
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover" id="reportTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Month</th>
+              <th>Sales</th>
+              <th>Purchases</th>
+              <th>Profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if report_data[:monthly_breakdown].any? %>
+              <% report_data[:monthly_breakdown].each do |month_data| %>
+                <tr>
+                  <td><%= month_data[:month] %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(month_data[:sales]) %></td>
+                  <td class="text-end">₹<%= number_with_delimiter(month_data[:purchases]) %></td>
+                  <td class="text-end">
+                    <span class="<%= month_data[:profit] >= 0 ? 'text-success' : 'text-danger' %>">
+                      ₹<%= number_with_delimiter(month_data[:profit]) %>
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                  No financial data found for the selected period.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% end %>

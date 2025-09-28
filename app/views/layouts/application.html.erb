@@ -1443,6 +1443,16 @@
               </li>
 
               <li class="nav-item" role="none">
+                <%= link_to customer_wallets_path,
+                    class: "nav-link #{'active' if current_page?(customer_wallets_path) || controller_name == 'customer_wallets'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(customer_wallets_path) || controller_name == 'customer_wallets') ? "page" : nil do %>
+                  <i class="fas fa-wallet nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Customer Wallets</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
                 <%= link_to ai_insights_path,
                     class: "nav-link #{'active' if current_page?(ai_insights_path) || controller_name == 'ai_insights'}",
                     role: "menuitem",
