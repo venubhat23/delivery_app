@@ -361,15 +361,7 @@ class DeliveryAssignmentsController < ApplicationController
       schedules_deleted = 0
       
       ActiveRecord::Base.transaction do
-        # Delete delivery assignments for the customer in the specified month
-        assignments_to_delete = DeliveryAssignment.where(
-          customer_id: customer_id,
-          scheduled_date: start_date..end_date
-        )
-        assignments_deleted = assignments_to_delete.count
-        assignments_to_delete.delete_all
-        
-        # Delete delivery schedules for the customer that overlap with the specified month
+        # First, find delivery schedules for the customer that overlap with the specified month
         schedules_to_delete = DeliverySchedule.where(customer_id: customer_id)
                                              .where(
                                                "(start_date <= ? AND end_date >= ?) OR " +
@@ -379,7 +371,24 @@ class DeliveryAssignmentsController < ApplicationController
                                                start_date, end_date,
                                                start_date, end_date
                                              )
+        schedule_ids_to_delete = schedules_to_delete.pluck(:id)
         schedules_deleted = schedules_to_delete.count
+
+        # Delete delivery assignments for the customer in the specified month
+        assignments_to_delete = DeliveryAssignment.where(
+          customer_id: customer_id,
+          scheduled_date: start_date..end_date
+        )
+        assignments_deleted = assignments_to_delete.count
+
+        # First nullify the delivery_schedule_id for assignments that reference schedules we're about to delete
+        DeliveryAssignment.where(delivery_schedule_id: schedule_ids_to_delete)
+                         .update_all(delivery_schedule_id: nil)
+
+        # Now safely delete the assignments
+        assignments_to_delete.delete_all
+
+        # Finally, delete the delivery schedules
         schedules_to_delete.delete_all
       end
       

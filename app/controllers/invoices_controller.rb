@@ -198,7 +198,6 @@ end
       
       # Send WhatsApp notifications in bulk using Twilio
       whatsapp_results = { success_count: 0, failure_count: 0 }
-      debugger
       if successful_invoices.any?
         begin
           twilio_service = TwilioWhatsappService.new
@@ -624,7 +623,6 @@ end
       render json: { success: false, error: 'Invalid phone number format' }, status: 400
       return
     end
-
     begin
       # Find or create invoice for the customer and month
       customer = Customer.find(customer_id)
@@ -682,10 +680,9 @@ end
       # Send via Twilio WhatsApp service
       twilio_success = false
       twilio_error = nil
-
       begin
         twilio_service = TwilioWhatsappService.new
-        twilio_success = twilio_service.send_invoice_notification(invoice)
+        twilio_success = twilio_service.send_invoice_notification(invoice, phone_number: params[:phone_number], public_url: public_url)
       rescue => e
         Rails.logger.error "Twilio WhatsApp sending failed: #{e.message}"
         twilio_error = e.message

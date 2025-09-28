@@ -17,7 +17,9 @@ class TwilioWhatsappService
 
     invoices.each do |invoice|
       begin
-        if send_invoice_notification(invoice)
+        host = Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+        public_url = invoice.public_url(host: host).gsub(':3000', '')
+        if send_invoice_notification(invoice, public_url: public_url)
           success_count += 1
         else
           failure_count += 1
@@ -31,15 +33,22 @@ class TwilioWhatsappService
     { success_count: success_count, failure_count: failure_count }
   end
 
-  def send_invoice_notification(invoice)
-    return false unless invoice.customer&.phone_number.present?
+  def send_invoice_notification(invoice, phone_number: nil, public_url: nil)
+    if phone_number.nil?
+      return false unless invoice.customer&.phone_number.present?
+    end
 
     # Format phone number for WhatsApp
-    phone_number = format_phone_number(invoice.customer.phone_number)
-
+    phone_number = phone_number || invoice.customer.phone_number
+    phone_number = format_phone_number(phone_number)
     # Calculate due date (10 days from now or use invoice due date)
     due_date = invoice.due_date.presence || (Date.current + 10.days)
-
+      
+    if public_url.present?
+      public_url = public_url
+    else
+      public_url = generate_invoice_pdf_url(invoice)
+    end
     # Prepare content variables
     content_variables = {
       '1' => invoice.customer.name,
@@ -47,11 +56,11 @@ class TwilioWhatsappService
       '3' => invoice.invoice_number,
       '4' => invoice.total_amount.to_s,
       '5' => due_date.strftime('%d/%m/%Y'),
-      '6' => generate_invoice_pdf_url(invoice)
+      '6' => public_url
     }
 
     # Generate PDF URL for media attachment
-    pdf_url = generate_invoice_pdf_url(invoice)
+    pdf_url = public_url
 
     message = @client.messages.create(
       content_sid: @content_sid,
