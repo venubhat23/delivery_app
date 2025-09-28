@@ -1,9 +1,9 @@
 class CustomerPointsController < ApplicationController
   def index
     # Optimized query to get all customer totals in one go
-    customer_totals = DeliveryAssignment
-                     .where(status: 'completed')
-                     .joins(:customer)
+    customer_totals = Customer
+                     .joins(:delivery_assignments)
+                     .where(delivery_assignments: { status: 'completed' })
                      .group('customers.id, customers.name, customers.phone_number, customers.email, customers.address, customers.is_active, customers.created_at')
                      .select('customers.*, SUM(delivery_assignments.final_amount_after_discount) as total_amount')
                      .order('customers.name')

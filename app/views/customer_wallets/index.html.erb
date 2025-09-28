@@ -98,101 +98,27 @@
                       <td class="text-center">
                         <div class="btn-group" role="group">
                           <!-- Add Funds Button -->
-                          <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addFundsModal<%= customer.id %>">
+                          <button type="button"
+                                  class="btn btn-sm btn-success"
+                                  onclick="openAddFundsModal(<%= customer.id %>, '<%= customer.name %>', <%= customer.wallet_amount %>)">
                             <i class="fas fa-plus"></i> Add
                           </button>
 
                           <!-- Deduct Funds Button -->
-                          <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#deductFundsModal<%= customer.id %>">
+                          <button type="button"
+                                  class="btn btn-sm btn-warning"
+                                  onclick="openDeductFundsModal(<%= customer.id %>, '<%= customer.name %>', <%= customer.wallet_amount %>)">
                             <i class="fas fa-minus"></i> Deduct
                           </button>
 
                           <!-- Edit Button -->
-                          <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editWalletModal<%= customer.id %>">
+                          <button type="button"
+                                  class="btn btn-sm btn-outline-primary"
+                                  onclick="openEditWalletModal(<%= customer.id %>, '<%= customer.name %>', <%= customer.wallet_amount %>)">
                             <i class="fas fa-edit"></i>
                           </button>
                         </div>
 
-                        <!-- Add Funds Modal -->
-                        <div class="modal fade" id="addFundsModal<%= customer.id %>" tabindex="-1">
-                          <div class="modal-dialog">
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title">Add Funds - <%= customer.name %></h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                              </div>
-                              <%= form_with url: add_funds_customer_wallet_path(customer), method: :patch, local: true do |form| %>
-                                <div class="modal-body">
-                                  <div class="mb-3">
-                                    <label class="form-label">Amount to Add (₹)</label>
-                                    <%= form.number_field :amount, step: 0.01, min: 0.01, class: "form-control", placeholder: "Enter amount" %>
-                                  </div>
-                                  <div class="alert alert-info">
-                                    Current Balance: ₹<%= number_with_delimiter(customer.wallet_amount, delimiter: ',') %>
-                                  </div>
-                                </div>
-                                <div class="modal-footer">
-                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                  <%= form.submit "Add Funds", class: "btn btn-success" %>
-                                </div>
-                              <% end %>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Deduct Funds Modal -->
-                        <div class="modal fade" id="deductFundsModal<%= customer.id %>" tabindex="-1">
-                          <div class="modal-dialog">
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title">Deduct Funds - <%= customer.name %></h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                              </div>
-                              <%= form_with url: deduct_funds_customer_wallet_path(customer), method: :patch, local: true do |form| %>
-                                <div class="modal-body">
-                                  <div class="mb-3">
-                                    <label class="form-label">Amount to Deduct (₹)</label>
-                                    <%= form.number_field :amount, step: 0.01, min: 0.01, max: customer.wallet_amount, class: "form-control", placeholder: "Enter amount" %>
-                                  </div>
-                                  <div class="alert alert-warning">
-                                    Current Balance: ₹<%= number_with_delimiter(customer.wallet_amount, delimiter: ',') %>
-                                  </div>
-                                </div>
-                                <div class="modal-footer">
-                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                  <%= form.submit "Deduct Funds", class: "btn btn-warning" %>
-                                </div>
-                              <% end %>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Edit Wallet Modal -->
-                        <div class="modal fade" id="editWalletModal<%= customer.id %>" tabindex="-1">
-                          <div class="modal-dialog">
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title">Edit Wallet - <%= customer.name %></h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                              </div>
-                              <%= form_with model: customer, url: customer_wallet_path(customer), method: :patch, local: true do |form| %>
-                                <div class="modal-body">
-                                  <div class="mb-3">
-                                    <label class="form-label">Wallet Balance (₹)</label>
-                                    <%= form.number_field :wallet_amount, step: 0.01, min: 0, class: "form-control" %>
-                                  </div>
-                                  <div class="alert alert-info">
-                                    Current Balance: ₹<%= number_with_delimiter(customer.wallet_amount, delimiter: ',') %>
-                                  </div>
-                                </div>
-                                <div class="modal-footer">
-                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                  <%= form.submit "Update Wallet", class: "btn btn-primary" %>
-                                </div>
-                              <% end %>
-                            </div>
-                          </div>
-                        </div>
                       </td>
                     </tr>
                   <% end %>
@@ -226,6 +152,117 @@
   </div>
 </div>
 
+<!-- Add Funds Modal -->
+<div id="addFundsModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeAddFundsModal()"></div>
+  <div class="custom-edit-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-plus me-2"></i>
+        <span id="addFundsModalTitle">Add Funds</span>
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeAddFundsModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <form id="addFundsForm">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Customer</label>
+          <input type="text" id="addFundsCustomerName" class="form-control" readonly style="background-color: #f8f9fa;">
+          <input type="hidden" id="addFundsCustomerId">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Amount to Add (₹)</label>
+          <input type="number" id="addFundsAmount" class="form-control" step="0.01" min="0.01" placeholder="Enter amount to add" required>
+        </div>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          Current Balance: ₹<span id="addFundsCurrentBalance">0</span>
+        </div>
+      </form>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary me-2" onclick="closeAddFundsModal()">Cancel</button>
+      <button type="button" class="btn btn-success" onclick="submitAddFunds()">
+        <i class="fas fa-plus me-1"></i>Add Funds
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Deduct Funds Modal -->
+<div id="deductFundsModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeDeductFundsModal()"></div>
+  <div class="custom-edit-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-minus me-2"></i>
+        <span id="deductFundsModalTitle">Deduct Funds</span>
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeDeductFundsModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <form id="deductFundsForm">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Customer</label>
+          <input type="text" id="deductFundsCustomerName" class="form-control" readonly style="background-color: #f8f9fa;">
+          <input type="hidden" id="deductFundsCustomerId">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Amount to Deduct (₹)</label>
+          <input type="number" id="deductFundsAmount" class="form-control" step="0.01" min="0.01" placeholder="Enter amount to deduct" required>
+        </div>
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Current Balance: ₹<span id="deductFundsCurrentBalance">0</span>
+        </div>
+      </form>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary me-2" onclick="closeDeductFundsModal()">Cancel</button>
+      <button type="button" class="btn btn-warning" onclick="submitDeductFunds()">
+        <i class="fas fa-minus me-1"></i>Deduct Funds
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Wallet Modal -->
+<div id="editWalletModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeEditWalletModal()"></div>
+  <div class="custom-edit-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-edit me-2"></i>
+        <span id="editWalletModalTitle">Edit Wallet</span>
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeEditWalletModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <form id="editWalletForm">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Customer</label>
+          <input type="text" id="editWalletCustomerName" class="form-control" readonly style="background-color: #f8f9fa;">
+          <input type="hidden" id="editWalletCustomerId">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Wallet Balance (₹)</label>
+          <input type="number" id="editWalletAmount" class="form-control" step="0.01" min="0" placeholder="Enter wallet balance" required>
+        </div>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          Current Balance: ₹<span id="editWalletCurrentBalance">0</span>
+        </div>
+      </form>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary me-2" onclick="closeEditWalletModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="submitEditWallet()">
+        <i class="fas fa-save me-1"></i>Update Wallet
+      </button>
+    </div>
+  </div>
+</div>
+
 <style>
 .avatar-circle {
   width: 40px;
@@ -237,4 +274,323 @@
   font-weight: bold;
   font-size: 16px;
 }
+
+/* Custom Modal Styles - Same as Customer Patterns */
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.custom-modal.show {
+  display: flex !important;
+}
+
+.custom-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.custom-edit-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 600px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.custom-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.custom-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.custom-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.custom-close-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-modal-body {
+  padding: 24px;
+}
+
+.custom-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
 </style>
+
+<script>
+// Global variables to store current modal data
+let currentCustomer = null;
+
+// Add Funds Modal Functions
+function openAddFundsModal(customerId, customerName, currentBalance) {
+  currentCustomer = { id: customerId, name: customerName, balance: currentBalance };
+
+  document.getElementById('addFundsModalTitle').textContent = `Add Funds - ${customerName}`;
+  document.getElementById('addFundsCustomerName').value = customerName;
+  document.getElementById('addFundsCustomerId').value = customerId;
+  document.getElementById('addFundsCurrentBalance').textContent = numberWithCommas(currentBalance);
+  document.getElementById('addFundsAmount').value = '';
+
+  const modal = document.getElementById('addFundsModal');
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+}
+
+function closeAddFundsModal() {
+  const modal = document.getElementById('addFundsModal');
+  modal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+  currentCustomer = null;
+}
+
+function submitAddFunds() {
+  const amount = parseFloat(document.getElementById('addFundsAmount').value);
+
+  if (!amount || amount <= 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+
+  if (!currentCustomer) {
+    alert('Error: Customer information not found');
+    return;
+  }
+
+  // Create and submit form
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/customer-wallets/${currentCustomer.id}/add_funds`;
+
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken.getAttribute('content');
+    form.appendChild(csrfInput);
+  }
+
+  // Add method override for PATCH
+  const methodInput = document.createElement('input');
+  methodInput.type = 'hidden';
+  methodInput.name = '_method';
+  methodInput.value = 'patch';
+  form.appendChild(methodInput);
+
+  // Add amount
+  const amountInput = document.createElement('input');
+  amountInput.type = 'hidden';
+  amountInput.name = 'amount';
+  amountInput.value = amount;
+  form.appendChild(amountInput);
+
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// Deduct Funds Modal Functions
+function openDeductFundsModal(customerId, customerName, currentBalance) {
+  currentCustomer = { id: customerId, name: customerName, balance: currentBalance };
+
+  document.getElementById('deductFundsModalTitle').textContent = `Deduct Funds - ${customerName}`;
+  document.getElementById('deductFundsCustomerName').value = customerName;
+  document.getElementById('deductFundsCustomerId').value = customerId;
+  document.getElementById('deductFundsCurrentBalance').textContent = numberWithCommas(currentBalance);
+  document.getElementById('deductFundsAmount').value = '';
+  document.getElementById('deductFundsAmount').max = currentBalance;
+
+  const modal = document.getElementById('deductFundsModal');
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+}
+
+function closeDeductFundsModal() {
+  const modal = document.getElementById('deductFundsModal');
+  modal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+  currentCustomer = null;
+}
+
+function submitDeductFunds() {
+  const amount = parseFloat(document.getElementById('deductFundsAmount').value);
+
+  if (!amount || amount <= 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+
+  if (!currentCustomer) {
+    alert('Error: Customer information not found');
+    return;
+  }
+
+  if (amount > currentCustomer.balance) {
+    alert('Insufficient wallet balance');
+    return;
+  }
+
+  // Create and submit form
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/customer-wallets/${currentCustomer.id}/deduct_funds`;
+
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken.getAttribute('content');
+    form.appendChild(csrfInput);
+  }
+
+  // Add method override for PATCH
+  const methodInput = document.createElement('input');
+  methodInput.type = 'hidden';
+  methodInput.name = '_method';
+  methodInput.value = 'patch';
+  form.appendChild(methodInput);
+
+  // Add amount
+  const amountInput = document.createElement('input');
+  amountInput.type = 'hidden';
+  amountInput.name = 'amount';
+  amountInput.value = amount;
+  form.appendChild(amountInput);
+
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// Edit Wallet Modal Functions
+function openEditWalletModal(customerId, customerName, currentBalance) {
+  currentCustomer = { id: customerId, name: customerName, balance: currentBalance };
+
+  document.getElementById('editWalletModalTitle').textContent = `Edit Wallet - ${customerName}`;
+  document.getElementById('editWalletCustomerName').value = customerName;
+  document.getElementById('editWalletCustomerId').value = customerId;
+  document.getElementById('editWalletCurrentBalance').textContent = numberWithCommas(currentBalance);
+  document.getElementById('editWalletAmount').value = currentBalance;
+
+  const modal = document.getElementById('editWalletModal');
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+}
+
+function closeEditWalletModal() {
+  const modal = document.getElementById('editWalletModal');
+  modal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+  currentCustomer = null;
+}
+
+function submitEditWallet() {
+  const amount = parseFloat(document.getElementById('editWalletAmount').value);
+
+  if (amount < 0) {
+    alert('Wallet balance cannot be negative');
+    return;
+  }
+
+  if (!currentCustomer) {
+    alert('Error: Customer information not found');
+    return;
+  }
+
+  // Create and submit form
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/customer-wallets/${currentCustomer.id}`;
+
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken.getAttribute('content');
+    form.appendChild(csrfInput);
+  }
+
+  // Add method override for PATCH
+  const methodInput = document.createElement('input');
+  methodInput.type = 'hidden';
+  methodInput.name = '_method';
+  methodInput.value = 'patch';
+  form.appendChild(methodInput);
+
+  // Add wallet amount
+  const amountInput = document.createElement('input');
+  amountInput.type = 'hidden';
+  amountInput.name = 'customer[wallet_amount]';
+  amountInput.value = amount;
+  form.appendChild(amountInput);
+
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// Utility function to format numbers with commas
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Close modals when pressing Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeAddFundsModal();
+    closeDeductFundsModal();
+    closeEditWalletModal();
+  }
+});
+</script>

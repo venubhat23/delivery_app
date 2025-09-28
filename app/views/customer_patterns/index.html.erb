@@ -528,7 +528,7 @@
                       </td>
                       <td class="align-middle text-center p-4">
                         <div class="d-flex gap-2 justify-content-center flex-wrap">
-                          <%= link_to customer_path(data[:customer]),
+                          <%= link_to customer_path(data[:customer].id),
                               class: "btn btn-modern",
                               style: "padding: 8px 12px; font-size: 12px;",
                               title: "View Customer Profile",
@@ -6260,5 +6260,134 @@ function handleEditAssignmentSubmission(submitBtn) {
     }, 2000);
   });
 }
+
+// ===== CRITICAL MODAL FUNCTION FIXES =====
+// Fix for JavaScript errors and missing functions
+(function() {
+  'use strict';
+
+  console.log('🔧 Applying critical modal function fixes...');
+
+  // Ensure reloadCurrentModal is always available
+  if (typeof window.reloadCurrentModal !== 'function') {
+    console.log('🔧 Adding missing reloadCurrentModal function...');
+    window.reloadCurrentModal = function() {
+      console.log('🔄 reloadCurrentModal called');
+      if (window.currentModalData) {
+        console.log('✅ Found currentModalData:', window.currentModalData);
+        const { customerId, customerName, month, year } = window.currentModalData;
+        console.log('🔄 Reloading modal content for:', { customerId, customerName, month, year });
+        if (typeof loadModalContent === 'function') {
+          loadModalContent(customerId, customerName, month, year);
+        } else {
+          console.error('❌ loadModalContent function not found');
+          location.reload(); // Fallback
+        }
+      } else {
+        console.log('❌ No currentModalData found, cannot reload');
+      }
+    };
+  }
+
+  // Fix Bootstrap modal conflicts
+  if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+    const originalModalHide = bootstrap.Modal.prototype.hide;
+    if (originalModalHide) {
+      bootstrap.Modal.prototype.hide = function() {
+        try {
+          return originalModalHide.call(this);
+        } catch (error) {
+          console.warn('Modal hide error caught and handled:', error);
+          // Fallback manual hide
+          if (this._element) {
+            this._element.style.display = 'none';
+            this._element.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+          }
+        }
+      };
+    }
+  }
+
+  // Fix modal backdrop clicks
+  document.addEventListener('click', function(e) {
+    // Handle custom modal backdrop clicks
+    if (e.target.classList.contains('custom-modal-backdrop')) {
+      const modal = e.target.closest('.custom-modal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+      }
+    }
+  });
+
+  // Fix unassign modal functionality
+  window.openUnassignModal = function() {
+    console.log('🔧 Opening unassign modal...');
+    const unassignModal = document.getElementById('unassignModal');
+    if (unassignModal) {
+      try {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+          const bsModal = new bootstrap.Modal(unassignModal);
+          bsModal.show();
+        } else {
+          // Fallback for non-Bootstrap modals
+          unassignModal.style.display = 'block';
+          unassignModal.classList.add('show');
+          document.body.classList.add('modal-open');
+        }
+      } catch (error) {
+        console.error('Bootstrap modal error:', error);
+        // Fallback
+        unassignModal.style.display = 'block';
+        unassignModal.classList.add('show');
+        document.body.classList.add('modal-open');
+      }
+    } else {
+      console.error('❌ Unassign modal not found');
+    }
+  };
+
+  // Global error handler for modal issues
+  window.addEventListener('error', function(e) {
+    if (e.message && e.message.includes('modal')) {
+      console.warn('Modal error caught by global handler:', e.message);
+      // Prevent the error from breaking other functionality
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // Ensure the unassign button in the sidebar works
+  document.addEventListener('DOMContentLoaded', function() {
+    const unassignButton = document.querySelector('[data-bs-target="#unassignModal"]');
+    if (unassignButton) {
+      unassignButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('🔧 Unassign button clicked, opening modal...');
+        if (typeof window.openUnassignModal === 'function') {
+          window.openUnassignModal();
+        } else {
+          // Fallback
+          const modal = document.getElementById('unassignModal');
+          if (modal) {
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            document.body.classList.add('modal-open');
+          }
+        }
+      });
+    }
+  });
+
+  console.log('✅ Critical modal function fixes applied successfully');
+  console.log('🔧 Available functions:', {
+    reloadCurrentModal: typeof window.reloadCurrentModal,
+    openUnassignModal: typeof window.openUnassignModal
+  });
+
+})();
 
 </script>

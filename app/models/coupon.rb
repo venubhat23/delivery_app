@@ -23,7 +23,7 @@ class Coupon < ApplicationRecord
     expires_at < Time.current || status == 'expired'
   end
 
-  def valid?
+  def active_and_valid?
     status == 'active' && expires_at > Time.current
   end
 

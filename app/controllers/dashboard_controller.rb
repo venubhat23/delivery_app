@@ -17,6 +17,23 @@ class DashboardController < ApplicationController
       Invoice.count
     end
 
+    # Coupon statistics
+    @total_coupons = Rails.cache.fetch("dashboard_coupons_count", expires_in: 5.minutes) do
+      Coupon.count
+    end
+
+    @active_coupons = Rails.cache.fetch("dashboard_active_coupons_count", expires_in: 5.minutes) do
+      Coupon.active.count
+    end
+
+    @expired_coupons = Rails.cache.fetch("dashboard_expired_coupons_count", expires_in: 5.minutes) do
+      Coupon.expired.count
+    end
+
+    @total_coupon_value = Rails.cache.fetch("dashboard_coupon_value", expires_in: 5.minutes) do
+      Coupon.active.sum(:amount)
+    end
+
     # Cache top products for 10 minutes
     @top_products = Rails.cache.fetch("dashboard_top_products", expires_in: 10.minutes) do
       Product.order(:name).limit(5).to_a

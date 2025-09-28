@@ -1,0 +1,2 @@
+# This file ensures the pdf directory is created and tracked by git
+# PDF files are generated dynamically and cleaned up automatically

@@ -5,6 +5,14 @@ Rails.application.routes.draw do
       get :churn_predictions
       post :send_reorder_notification
       post :send_churn_prevention
+      get :demand_forecasting
+      get :customer_lifetime_value
+      get :smart_pricing
+      get :seasonal_patterns
+      get :product_recommendations
+      get :route_optimization
+      get :customer_segmentation
+      get :revenue_anomalies
     end
   end
   resources :customer_points, path: 'customer-points', only: [:index, :show]
@@ -117,6 +125,7 @@ Rails.application.routes.draw do
     end
   end
   resources :categories
+  resources :coupons
   resources :customers do
     collection do
       get :search_suggestions
@@ -307,6 +316,9 @@ Rails.application.routes.draw do
   # Public invoice view (no authentication required)
   get '/invoice/:token', to: 'invoices#public_view', as: 'public_invoice'
   get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download', defaults: { format: :pdf }
+
+  # Public PDF serving for WhatsApp (no authentication required)
+  get '/invoices/pdf/:filename', to: 'invoices#serve_pdf', as: 'serve_invoice_pdf'
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings' do

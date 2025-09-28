@@ -110,6 +110,85 @@
   </div>
 </div>
 
+<!-- Coupons Stats Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="stats-card stats-card-coupon h-100">
+      <div class="stats-icon">
+        <i class="fas fa-ticket-alt"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          <%= @total_coupons || 0 %>
+        </div>
+        <div class="stats-label">Total Coupons</div>
+        <div class="stats-trend neutral">
+          <i class="fas fa-equals"></i>
+          <span>Generated</span>
+          <small>all time</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stats-card stats-card-active h-100">
+      <div class="stats-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          <%= @active_coupons || 0 %>
+        </div>
+        <div class="stats-label">Active Coupons</div>
+        <div class="stats-trend positive">
+          <i class="fas fa-arrow-up"></i>
+          <span>Available</span>
+          <small>for use</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stats-card stats-card-expired h-100">
+      <div class="stats-icon">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          <%= @expired_coupons || 0 %>
+        </div>
+        <div class="stats-label">Expired Coupons</div>
+        <div class="stats-trend negative">
+          <i class="fas fa-arrow-down"></i>
+          <span>Past Due</span>
+          <small>expired</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stats-card stats-card-value h-100">
+      <div class="stats-icon">
+        <i class="fas fa-rupee-sign"></i>
+      </div>
+      <div class="stats-content">
+        <div class="stats-number">
+          ₹<%= number_with_delimiter((@total_coupon_value || 0).round(2), delimiter: ',') %>
+        </div>
+        <div class="stats-label">Total Discount Value</div>
+        <div class="stats-trend positive">
+          <i class="fas fa-arrow-up"></i>
+          <span>+12.3%</span>
+          <small>vs last month</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Total Delivered Milk Supply Analytics Section -->
 <div class="row mb-4">
   <div class="col-12">

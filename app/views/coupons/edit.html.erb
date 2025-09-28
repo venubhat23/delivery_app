@@ -1,0 +1,575 @@
+<!-- Enhanced Edit Coupon Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem;">
+    <div class="col-12">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">
+              <i class="fas fa-edit me-3"></i>Edit Coupon
+            </h1>
+            <p class="text-muted mb-0">Update coupon information and settings</p>
+          </div>
+          <div class="d-flex gap-2">
+            <%= link_to coupon_path(@coupon), class: "btn btn-info" do %>
+              <i class="fas fa-eye me-2"></i>View Coupon
+            <% end %>
+            <%= link_to coupons_path, class: "btn btn-secondary" do %>
+              <i class="fas fa-arrow-left me-2"></i>Back to Coupons
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Card -->
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="fas fa-ticket-alt me-2"></i>Update Coupon Details
+              </h5>
+            </div>
+            <div class="card-body">
+              <%= form_with(model: @coupon, local: true, html: { class: "needs-validation", novalidate: true }) do |form| %>
+                <% if @coupon.errors.any? %>
+                  <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                    <ul class="mb-0">
+                      <% @coupon.errors.each do |error| %>
+                        <li><%= error.full_message %></li>
+                      <% end %>
+                    </ul>
+                  </div>
+                <% end %>
+
+                <div class="row">
+                  <!-- Coupon Code Field -->
+                  <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                      <%= form.text_field :code,
+                          class: "form-control",
+                          id: "couponCode",
+                          placeholder: "Coupon Code",
+                          required: true %>
+                      <%= form.label :code, "Coupon Code", for: "couponCode" %>
+                    </div>
+                    <div class="form-text">
+                      <i class="fas fa-barcode me-1"></i>Unique identifier for this coupon
+                    </div>
+                  </div>
+
+                  <!-- Amount Field -->
+                  <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                      <%= form.number_field :amount,
+                          class: "form-control",
+                          id: "couponAmount",
+                          placeholder: "0.00",
+                          step: 0.01,
+                          min: 0.01,
+                          required: true %>
+                      <%= form.label :amount, "Discount Amount (₹)", for: "couponAmount" %>
+                    </div>
+                    <div class="form-text">
+                      <i class="fas fa-rupee-sign me-1"></i>Enter the discount amount in rupees
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <!-- Status Field -->
+                  <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                      <%= form.select :status,
+                          options_for_select([
+                            ['Active', 'active'],
+                            ['Inactive', 'inactive'],
+                            ['Expired', 'expired']
+                          ], @coupon.status),
+                          { },
+                          { class: "form-select", id: "couponStatus" } %>
+                      <%= form.label :status, "Status", for: "couponStatus" %>
+                    </div>
+                    <div class="form-text">
+                      <i class="fas fa-toggle-on me-1"></i>Current status of the coupon
+                    </div>
+                  </div>
+
+                  <!-- Expiry Date Field -->
+                  <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                      <%= form.datetime_local_field :expires_at,
+                          class: "form-control",
+                          id: "couponExpiry",
+                          value: @coupon.expires_at.strftime("%Y-%m-%dT%H:%M") %>
+                      <%= form.label :expires_at, "Expires At", for: "couponExpiry" %>
+                    </div>
+                    <div class="form-text">
+                      <i class="fas fa-calendar-times me-1"></i>When this coupon expires
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Description Field -->
+                <div class="mb-4">
+                  <div class="form-floating">
+                    <%= form.text_area :description,
+                        class: "form-control",
+                        id: "couponDescription",
+                        placeholder: "Optional description for the coupon",
+                        style: "height: 100px;" %>
+                    <%= form.label :description, "Description (Optional)", for: "couponDescription" %>
+                  </div>
+                  <div class="form-text">
+                    <i class="fas fa-align-left me-1"></i>Provide additional details about this coupon
+                  </div>
+                </div>
+
+                <!-- Current Coupon Preview -->
+                <div class="current-coupon-preview mb-4">
+                  <h6 class="mb-3">
+                    <i class="fas fa-eye me-2"></i>Current Coupon Preview
+                  </h6>
+                  <div class="coupon-preview-container">
+                    <div class="coupon-preview current">
+                      <div class="coupon-preview-header">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span class="preview-code"><%= @coupon.code %></span>
+                        <span class="preview-status badge bg-<%= @coupon.status_class %>">
+                          <%= @coupon.status.titleize %>
+                        </span>
+                      </div>
+                      <div class="coupon-preview-body">
+                        <div class="preview-amount">₹<%= number_with_precision(@coupon.amount, precision: 2) %></div>
+                        <div class="preview-description">
+                          <%= @coupon.description.present? ? @coupon.description : 'Discount Coupon' %>
+                        </div>
+                        <div class="preview-expiry">
+                          Expires: <%= @coupon.expires_at.strftime("%b %d, %Y") %>
+                          <% if @coupon.expired? %>
+                            <span class="text-danger ms-2">(Expired)</span>
+                          <% elsif @coupon.expiring_soon? %>
+                            <span class="text-warning ms-2">(Expiring Soon)</span>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Live Preview -->
+                <div class="preview-card mb-4">
+                  <h6 class="mb-3">
+                    <i class="fas fa-magic me-2"></i>Live Preview (Updates as you type)
+                  </h6>
+                  <div class="coupon-preview">
+                    <div class="coupon-preview-header">
+                      <i class="fas fa-ticket-alt"></i>
+                      <span class="preview-code-live"><%= @coupon.code %></span>
+                    </div>
+                    <div class="coupon-preview-body">
+                      <div class="preview-amount-live">₹<%= number_with_precision(@coupon.amount, precision: 2) %></div>
+                      <div class="preview-description-live">
+                        <%= @coupon.description.present? ? @coupon.description : 'Discount Coupon' %>
+                      </div>
+                      <div class="preview-expiry-live">Expires: <%= @coupon.expires_at.strftime("%b %d, %Y") %></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between">
+                  <%= link_to coupon_path(@coupon), class: "btn btn-outline-secondary" do %>
+                    <i class="fas fa-times me-2"></i>Cancel
+                  <% end %>
+                  <%= form.submit "Update Coupon", class: "btn btn-primary" do %>
+                    <i class="fas fa-save me-2"></i>Update Coupon
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Enhanced Edit Coupon Form Styles */
+
+/* Page Header */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1, .page-header p {
+  position: relative;
+  z-index: 2;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Card */
+.card {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1.5rem 2rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+/* Enhanced Form Controls */
+.form-floating > .form-control,
+.form-floating > .form-select {
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  padding: 1rem 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.form-floating > .form-control:focus,
+.form-floating > .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15);
+}
+
+.form-floating > label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.form-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+.form-text i {
+  color: #667eea;
+}
+
+/* Error Styles */
+.alert-danger {
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+  color: #dc2626;
+  border-left: 4px solid #ef4444;
+}
+
+.alert-danger h6 {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Current Coupon Preview */
+.current-coupon-preview {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+  border-radius: 15px;
+  padding: 1.5rem;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.coupon-preview-container {
+  display: flex;
+  justify-content: center;
+}
+
+/* Preview Card */
+.preview-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 15px;
+  padding: 1.5rem;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.coupon-preview {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 2px dashed #667eea;
+  transition: all 0.3s ease;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.coupon-preview:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.15);
+}
+
+.coupon-preview.current {
+  border-color: #10b981;
+}
+
+.coupon-preview-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.coupon-preview.current .coupon-preview-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.coupon-preview-header i {
+  font-size: 1.5rem;
+}
+
+.preview-code, .preview-code-live {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  flex: 1;
+  text-align: center;
+}
+
+.preview-status {
+  font-size: 0.7rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.coupon-preview-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.preview-amount, .preview-amount-live {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #059669;
+  margin-bottom: 0.5rem;
+}
+
+.preview-description, .preview-description-live {
+  color: #64748b;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.preview-expiry, .preview-expiry-live {
+  color: #667eea;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Enhanced Buttons */
+.btn {
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  color: white;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  border: none;
+  color: white;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  color: white;
+}
+
+.btn-outline-secondary {
+  border: 2px solid #64748b;
+  color: #64748b;
+  background: transparent;
+}
+
+.btn-outline-secondary:hover {
+  background: #64748b;
+  color: white;
+  border-color: #64748b;
+}
+
+/* Enhanced Badges */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .coupon-preview-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Real-time preview updates
+  const codeInput = document.getElementById('couponCode');
+  const amountInput = document.getElementById('couponAmount');
+  const descriptionInput = document.getElementById('couponDescription');
+  const expiryInput = document.getElementById('couponExpiry');
+
+  const previewCodeLive = document.querySelector('.preview-code-live');
+  const previewAmountLive = document.querySelector('.preview-amount-live');
+  const previewDescriptionLive = document.querySelector('.preview-description-live');
+  const previewExpiryLive = document.querySelector('.preview-expiry-live');
+
+  function updateLivePreview() {
+    // Update code
+    const code = codeInput.value || 'COUP123456';
+    previewCodeLive.textContent = code;
+
+    // Update amount
+    const amount = amountInput.value || '0.00';
+    previewAmountLive.textContent = `₹${parseFloat(amount).toFixed(2)}`;
+
+    // Update description
+    const description = descriptionInput.value || 'Discount Coupon';
+    previewDescriptionLive.textContent = description;
+
+    // Update expiry
+    if (expiryInput.value) {
+      const expiryDate = new Date(expiryInput.value);
+      previewExpiryLive.textContent = `Expires: ${expiryDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })}`;
+    }
+  }
+
+  // Add event listeners
+  codeInput.addEventListener('input', updateLivePreview);
+  amountInput.addEventListener('input', updateLivePreview);
+  descriptionInput.addEventListener('input', updateLivePreview);
+  expiryInput.addEventListener('input', updateLivePreview);
+
+  // Initial preview update
+  updateLivePreview();
+});
+</script>

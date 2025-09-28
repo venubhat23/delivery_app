@@ -86,6 +86,9 @@ class CustomersController < ApplicationController
   end
   
   def show
+    # @customer is already set by before_action :set_customer
+    # Reload customer with associated data for the customer show page
+    @customer = Customer.includes(:user, :delivery_person, :customer_preference).find(params[:id])
   end
   
   def new

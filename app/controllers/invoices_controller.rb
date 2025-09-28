@@ -2,7 +2,7 @@
 class InvoicesController < ApplicationController
   before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :convert_to_completed, :share_whatsapp, :download_pdf]
   before_action :set_customers, only: [:index, :new, :create, :generate]
-  skip_before_action :require_login, only: [:public_view, :public_download_pdf]
+  skip_before_action :require_login, only: [:public_view, :public_download_pdf, :serve_pdf]
   
   def index
     # Optimize queries with proper includes to prevent N+1 queries
@@ -709,6 +709,37 @@ end
       Rails.logger.error "Error generating invoice and WhatsApp: #{e.message}"
       render json: { success: false, error: 'An error occurred while processing your request' }, status: 500
     end
+  end
+
+  # Serve PDF files for WhatsApp (public access)
+  def serve_pdf
+    filename = params[:filename]
+    pdf_path = Rails.root.join('public', 'invoices', 'pdf', filename)
+
+    unless File.exist?(pdf_path)
+      Rails.logger.warn "PDF file not found: #{filename}"
+      render file: "#{Rails.root}/public/404.html", layout: false, status: 404
+      return
+    end
+
+    # Security check - only allow PDF files
+    unless filename.end_with?('.pdf') && filename.match?(/\Ainvoice_\d+_\d+\.pdf\z/)
+      Rails.logger.warn "Invalid PDF filename format: #{filename}"
+      render file: "#{Rails.root}/public/404.html", layout: false, status: 404
+      return
+    end
+
+    # Set security headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Content-Security-Policy'] = "default-src 'none'; object-src 'none';"
+
+    # Send file with proper content type
+    send_file(
+      pdf_path,
+      type: 'application/pdf',
+      disposition: 'inline',
+      filename: filename
+    )
   end
 
   private

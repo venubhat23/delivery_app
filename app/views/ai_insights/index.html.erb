@@ -164,7 +164,7 @@
       </div>
 
       <!-- Customer Churn Predictions -->
-      <div class="card">
+      <div class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0">
             <i class="fas fa-exclamation-triangle text-danger me-2"></i>
@@ -246,6 +246,243 @@
           <% end %>
         </div>
       </div>
+
+      <!-- Demand Forecasting -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-line text-info me-2"></i>
+            📈 Demand Forecasting (Next 7 Days)
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @demand_forecast.any? %>
+            <div class="row">
+              <% @demand_forecast.each do |product_name, forecast_data| %>
+                <div class="col-md-6 mb-3">
+                  <div class="card border-info">
+                    <div class="card-header bg-light">
+                      <h6 class="mb-0"><%= product_name %></h6>
+                    </div>
+                    <div class="card-body">
+                      <% forecast_data.each do |day_data| %>
+                        <div class="d-flex justify-content-between mb-2">
+                          <span><%= day_data[:day] %></span>
+                          <span class="badge bg-info">
+                            <%= day_data[:forecasted_quantity] %>L
+                            (<%= day_data[:forecasted_orders] %> orders)
+                          </span>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-muted text-center">Insufficient data for demand forecasting</p>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Customer Segmentation -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-users-cog text-success me-2"></i>
+            🎯 Customer Segmentation (RFM Analysis)
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @customer_segments.any? %>
+            <div class="row">
+              <% @customer_segments.each do |segment_name, segment_data| %>
+                <div class="col-md-4 mb-3">
+                  <div class="card">
+                    <div class="card-header
+                      <%= case segment_name
+                          when 'Champions' then 'bg-success text-white'
+                          when 'Loyal Customers' then 'bg-primary text-white'
+                          when 'At Risk' then 'bg-warning text-dark'
+                          when 'Lost' then 'bg-danger text-white'
+                          else 'bg-info text-white'
+                          end %>">
+                      <h6 class="mb-0">
+                        <%= segment_name %>
+                        <span class="badge bg-light text-dark ms-2"><%= segment_data[:count] %></span>
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <small class="text-muted">Total Value:</small>
+                      <h5 class="text-success">₹<%= number_with_delimiter(segment_data[:total_value].round) %></h5>
+                      <small class="text-muted">Top Customers:</small>
+                      <% segment_data[:customers].first(3).each do |customer| %>
+                        <div class="small"><%= customer[:name] %> - ₹<%= customer[:monetary_value] %></div>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-muted text-center">No customer segments available</p>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Smart Pricing Recommendations -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-tags text-warning me-2"></i>
+            💰 Smart Pricing Recommendations
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @pricing_insights.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th>Current Price</th>
+                    <th>Suggested Price</th>
+                    <th>Change</th>
+                    <th>Recommendation</th>
+                    <th>Revenue Impact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @pricing_insights.each do |insight| %>
+                    <tr>
+                      <td><%= insight[:product_name] %></td>
+                      <td>₹<%= insight[:current_price] %></td>
+                      <td>₹<%= insight[:suggested_price] %></td>
+                      <td>
+                        <span class="badge <%= insight[:price_change_percent] > 0 ? 'bg-success' : 'bg-danger' %>">
+                          <%= insight[:price_change_percent] > 0 ? '+' : '' %><%= insight[:price_change_percent] %>%
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge
+                          <%= case insight[:recommendation]
+                              when 'increase' then 'bg-success'
+                              when 'decrease' then 'bg-warning text-dark'
+                              else 'bg-info'
+                              end %>">
+                          <%= insight[:recommendation].capitalize %>
+                        </span>
+                      </td>
+                      <td class="<%= insight[:revenue_impact] > 0 ? 'text-success' : 'text-danger' %>">
+                        ₹<%= number_with_delimiter(insight[:revenue_impact]) %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <p class="text-muted text-center">No pricing recommendations available</p>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Seasonal Trends -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-calendar-alt text-primary me-2"></i>
+            📊 Seasonal Patterns & Trends
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @seasonal_trends.any? %>
+            <div class="row">
+              <% @seasonal_trends.each do |trend| %>
+                <div class="col-md-3 mb-3">
+                  <div class="card text-center">
+                    <div class="card-body">
+                      <h6><%= trend[:month] %></h6>
+                      <div class="h4"><%= trend[:trend_indicator] %></div>
+                      <span class="badge
+                        <%= case trend[:season_type]
+                            when 'Peak' then 'bg-success'
+                            when 'Low' then 'bg-danger'
+                            else 'bg-secondary'
+                            end %>">
+                        <%= trend[:season_type] %>
+                      </span>
+                      <div class="small mt-2">
+                        <div><%= trend[:avg_orders] %> orders</div>
+                        <div>₹<%= number_with_delimiter(trend[:avg_revenue].round) %></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-muted text-center">Insufficient data for seasonal analysis</p>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Additional AI Features Buttons -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-robot text-primary me-2"></i>
+            🤖 Additional AI Features
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3 mb-3">
+              <button class="btn btn-outline-info w-100" onclick="loadFeature('customer_lifetime_value')">
+                <i class="fas fa-user-friends d-block mb-2 fa-2x"></i>
+                <span>Customer Lifetime Value</span>
+              </button>
+            </div>
+            <div class="col-md-3 mb-3">
+              <button class="btn btn-outline-success w-100" onclick="loadFeature('product_recommendations')">
+                <i class="fas fa-shopping-cart d-block mb-2 fa-2x"></i>
+                <span>Product Recommendations</span>
+              </button>
+            </div>
+            <div class="col-md-3 mb-3">
+              <button class="btn btn-outline-warning w-100" onclick="loadFeature('route_optimization')">
+                <i class="fas fa-route d-block mb-2 fa-2x"></i>
+                <span>Route Optimization</span>
+              </button>
+            </div>
+            <div class="col-md-3 mb-3">
+              <button class="btn btn-outline-danger w-100" onclick="loadFeature('revenue_anomalies')">
+                <i class="fas fa-exclamation-circle d-block mb-2 fa-2x"></i>
+                <span>Revenue Anomalies</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal for Additional Features -->
+      <div class="modal fade" id="aiFeatureModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="aiFeatureModalTitle">AI Feature</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="aiFeatureModalBody">
+              <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -299,5 +536,169 @@ function sendChurnPrevention(customerId) {
       alert('Error sending offer');
     });
   }
+}
+
+function loadFeature(featureName) {
+  const modal = new bootstrap.Modal(document.getElementById('aiFeatureModal'));
+  const titleElement = document.getElementById('aiFeatureModalTitle');
+  const bodyElement = document.getElementById('aiFeatureModalBody');
+
+  // Set title based on feature
+  const titles = {
+    'customer_lifetime_value': '💰 Customer Lifetime Value Analysis',
+    'product_recommendations': '🛒 Product Recommendation Engine',
+    'route_optimization': '🗺️ Route Optimization',
+    'revenue_anomalies': '⚠️ Revenue Anomaly Detection'
+  };
+
+  titleElement.textContent = titles[featureName] || 'AI Feature';
+
+  // Show loading
+  bodyElement.innerHTML = `
+    <div class="text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Analyzing data...</p>
+    </div>
+  `;
+
+  modal.show();
+
+  // Fetch feature data
+  fetch(`/ai-insights/${featureName}`)
+    .then(response => response.json())
+    .then(data => {
+      renderFeatureData(featureName, data, bodyElement);
+    })
+    .catch(error => {
+      bodyElement.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Error loading feature data. Please try again.
+        </div>
+      `;
+    });
+}
+
+function renderFeatureData(featureName, data, container) {
+  let html = '';
+
+  switch(featureName) {
+    case 'customer_lifetime_value':
+      html = `
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Customer</th>
+                <th>Total Orders</th>
+                <th>Total Spent</th>
+                <th>Avg Order Value</th>
+                <th>Predicted CLV</th>
+                <th>Tier</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(item => `
+                <tr>
+                  <td>${item.customer_name}</td>
+                  <td>${item.total_orders}</td>
+                  <td>₹${item.total_spent.toLocaleString()}</td>
+                  <td>₹${item.avg_order_value.toLocaleString()}</td>
+                  <td class="fw-bold text-success">₹${item.predicted_clv.toLocaleString()}</td>
+                  <td><span class="badge bg-primary">${item.clv_tier}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+
+    case 'product_recommendations':
+      html = `
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Base Product</th>
+                <th>Recommended Product</th>
+                <th>Co-occurrence</th>
+                <th>Strength</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(item => `
+                <tr>
+                  <td>${item.base_product}</td>
+                  <td>${item.recommended_product}</td>
+                  <td>${item.co_occurrence}</td>
+                  <td>${item.strength}%</td>
+                  <td><span class="badge ${item.confidence_level === 'High' ? 'bg-success' : item.confidence_level === 'Medium' ? 'bg-warning' : 'bg-secondary'}">${item.confidence_level}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+
+    case 'route_optimization':
+      html = '<div class="row">';
+      Object.keys(data).forEach(person => {
+        html += `
+          <div class="col-md-6 mb-3">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user me-2"></i>${person}</h6>
+              </div>
+              <div class="card-body">
+                ${data[person].map(customer => `
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>${customer.customer_name}</span>
+                    <span class="badge bg-info">${customer.frequency} deliveries</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      break;
+
+    case 'revenue_anomalies':
+      html = `
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Revenue</th>
+                <th>Orders</th>
+                <th>Anomaly Type</th>
+                <th>Variance</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(item => `
+                <tr>
+                  <td>${item.date}</td>
+                  <td>₹${item.revenue.toLocaleString()}</td>
+                  <td>${item.orders}</td>
+                  <td><span class="badge ${item.anomaly_type.includes('High') ? 'bg-success' : 'bg-danger'}">${item.anomaly_type}</span></td>
+                  <td class="${item.variance_from_avg > 0 ? 'text-success' : 'text-danger'}">${item.variance_from_avg > 0 ? '+' : ''}${item.variance_from_avg}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+  }
+
+  container.innerHTML = html;
 }
 </script>

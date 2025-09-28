@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_175137) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_27_175433) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -75,6 +75,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_175137) do
     t.datetime "updated_at", null: false
     t.index ["published_at"], name: "index_cms_pages_on_published_at"
     t.index ["slug", "locale"], name: "index_cms_pages_on_slug_and_locale", unique: true
+  end
+
+  create_table "coupons", force: :cascade do |t|
+    t.string "code"
+    t.decimal "amount"
+    t.text "description"
+    t.datetime "expires_at"
+    t.string "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "customer_addresses", force: :cascade do |t|

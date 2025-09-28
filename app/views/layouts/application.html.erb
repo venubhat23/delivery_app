@@ -1403,12 +1403,22 @@
               </li>
               
               <li class="nav-item" role="none">
-                <%= link_to categories_path, 
-                    class: "nav-link #{'active' if current_page?(categories_path) || controller_name == 'categories'}", 
+                <%= link_to categories_path,
+                    class: "nav-link #{'active' if current_page?(categories_path) || controller_name == 'categories'}",
                     role: "menuitem",
                     "aria-current": (current_page?(categories_path) || controller_name == 'categories') ? "page" : nil do %>
                   <i class="fas fa-tags nav-icon" aria-hidden="true"></i>
                   <span class="nav-text">Categories</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
+                <%= link_to coupons_path,
+                    class: "nav-link #{'active' if current_page?(coupons_path) || controller_name == 'coupons'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(coupons_path) || controller_name == 'coupons') ? "page" : nil do %>
+                  <i class="fas fa-ticket-alt nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Coupons</span>
                 <% end %>
               </li>
               

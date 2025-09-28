@@ -1,0 +1,567 @@
+<!-- Enhanced Coupons Index Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem;">
+    <div class="col-12">
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-ticket-alt me-3"></i>Coupon Management
+      </h1>
+      <p class="text-muted mb-0">Generate and manage discount coupons for your customers</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_coupon_path, class: "btn btn-primary" do %>
+        <i class="fas fa-plus me-2"></i>Generate Coupon
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-ticket-alt"></i>
+      </div>
+      <div class="stats-number"><%= @total_coupons %></div>
+      <div class="stats-label">Total Coupons</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stats-number"><%= @active_coupons %></div>
+      <div class="stats-label">Active Coupons</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <div class="stats-number"><%= @expired_coupons %></div>
+      <div class="stats-label">Expired Coupons</div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-rupee-sign"></i>
+      </div>
+      <div class="stats-number">₹<%= number_with_delimiter(@total_coupon_value.round(2), delimiter: ',') %></div>
+      <div class="stats-label">Total Value</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters & Search -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <%= form_with url: coupons_path, method: :get, local: true, class: "d-flex align-items-center" do |form| %>
+          <div class="me-3">
+            <%= form.text_field :search,
+                placeholder: "Search coupons by code or description...",
+                value: params[:search],
+                class: "form-control",
+                style: "min-width: 250px;" %>
+          </div>
+          <div class="me-3">
+            <%= form.select :status,
+                options_for_select([['All Status', ''], ['Active', 'active'], ['Inactive', 'inactive'], ['Expired', 'expired']], params[:status]),
+                { },
+                { class: "form-select" } %>
+          </div>
+          <%= form.submit "Search & Filter", class: "btn btn-outline-primary" %>
+        <% end %>
+      </div>
+      <div class="col-md-4 text-end">
+        <% if params[:status].present? || params[:search].present? %>
+          <%= link_to coupons_path, class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-times me-1"></i>Clear All
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Coupons Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="fas fa-list me-2"></i>Coupons List
+      </h6>
+      <div class="d-flex align-items-center">
+        <span class="badge bg-primary me-2"><%= @coupons.count %> items</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <% if @coupons.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th><i class="fas fa-hashtag me-1"></i>ID</th>
+              <th><i class="fas fa-barcode me-1"></i>Coupon Code</th>
+              <th><i class="fas fa-rupee-sign me-1"></i>Amount</th>
+              <th><i class="fas fa-align-left me-1"></i>Description</th>
+              <th><i class="fas fa-toggle-on me-1"></i>Status</th>
+              <th><i class="fas fa-calendar-times me-1"></i>Expires At</th>
+              <th><i class="fas fa-calendar me-1"></i>Created</th>
+              <th><i class="fas fa-cogs me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @coupons.each do |coupon| %>
+              <tr class="coupon-row">
+                <td>
+                  <span class="badge bg-secondary coupon-id-badge">#<%= coupon.id %></span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="coupon-avatar me-3">
+                      <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div>
+                      <strong class="text-primary coupon-code"><%= coupon.code %></strong>
+                      <% if coupon.expiring_soon? && !coupon.expired? %>
+                        <span class="badge bg-warning ms-2">Expiring Soon</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">
+                    ₹<%= number_with_precision(coupon.amount, precision: 2) %>
+                  </span>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    <%= truncate(coupon.description, length: 50) if coupon.description.present? %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-<%= coupon.status_class %>">
+                    <%= coupon.status.titleize %>
+                  </span>
+                </td>
+                <td>
+                  <div class="expiry-info">
+                    <span class="<%= coupon.expired? ? 'text-danger' : 'text-success' %>">
+                      <%= coupon.expires_at.strftime("%b %d, %Y") %>
+                    </span>
+                    <% unless coupon.expired? %>
+                      <small class="text-muted d-block">
+                        <%= coupon.days_until_expiry %> days left
+                      </small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    <%= coupon.created_at.strftime("%b %d, %Y") %>
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to coupon_path(coupon), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_coupon_path(coupon), class: "btn btn-sm btn-outline-warning", title: "Edit Coupon" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <%= button_to coupon_path(coupon),
+                        method: :delete,
+                        form: { "data-turbo-confirm": "Are you sure you want to delete this coupon?", class: "d-inline" },
+                        class: "btn btn-sm btn-outline-danger",
+                        title: "Delete Coupon" do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <i class="fas fa-ticket-alt"></i>
+        <h4>No Coupons Found</h4>
+        <p>Start creating discount coupons for your customers.</p>
+        <%= link_to new_coupon_path, class: "btn btn-primary mt-3" do %>
+          <i class="fas fa-plus me-2"></i>Generate First Coupon
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Enhanced Coupon Index Styles - Following Product Page Pattern */
+
+/* Page Layout Improvements */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.page-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header .btn {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stats-card:hover {
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stats-card .stats-icon {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  z-index: 2;
+}
+
+.stats-card .stats-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card .stats-label {
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Enhanced Coupon Table */
+.table {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: none;
+  margin: 0;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  padding: 1.5rem 1rem;
+  border: none;
+  position: relative;
+}
+
+.coupon-row {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.05);
+}
+
+.coupon-row:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  transform: translateX(8px) scale(1.01);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+}
+
+.coupon-row td {
+  padding: 1.5rem 1rem;
+  vertical-align: middle;
+  border-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Enhanced Coupon Avatar */
+.coupon-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.coupon-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+}
+
+/* Coupon Code Styling */
+.coupon-code {
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  padding: 0.25rem 0.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+}
+
+/* Coupon ID Badge */
+.coupon-id-badge {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-transform: none;
+  letter-spacing: 1px;
+}
+
+/* Expiry Information */
+.expiry-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Enhanced Badges */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+}
+
+/* Enhanced Action Buttons */
+.btn-group .btn {
+  border-radius: 12px !important;
+  margin-right: 6px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Enhanced Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #64748b;
+}
+
+.empty-state i {
+  font-size: 5rem;
+  opacity: 0.2;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state h4 {
+  color: #1e293b;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+/* Enhanced Form Controls */
+.form-select {
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Card Enhancements */
+.card {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 1.5rem 2rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .stats-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .coupon-row:hover {
+    transform: translateX(4px);
+  }
+
+  .btn-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-group .btn {
+    margin-right: 0;
+    width: 100%;
+  }
+}
+</style>

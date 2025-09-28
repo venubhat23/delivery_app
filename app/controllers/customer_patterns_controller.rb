@@ -906,7 +906,11 @@ class CustomerPatternsController < ApplicationController
                               end
 
         {
-          customer: OpenStruct.new(id: row[0], name: row[1]),
+          customer: OpenStruct.new(
+            id: row[0],
+            name: row[1],
+            to_param: row[0].to_s  # This is needed for Rails path helpers
+          ),
           delivery_person_name: row[2] || "Not Assigned",
           total_liters: row[5].to_f.round(2),
           primary_product: nil, # Skip expensive lookup
