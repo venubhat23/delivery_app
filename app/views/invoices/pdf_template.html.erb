@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Invoice <%= invoice.formatted_number %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice <%= @invoice.formatted_number %></title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -13,7 +14,7 @@
       padding: 20px;
     }
 
-    .invoice-header {
+    .@invoice-header {
       text-align: center;
       border-bottom: 2px solid #4a90e2;
       padding-bottom: 20px;
@@ -32,7 +33,7 @@
       font-size: 11px;
     }
 
-    .invoice-title {
+    .@invoice-title {
       background: #4a90e2;
       color: white;
       padding: 10px;
@@ -42,17 +43,17 @@
       margin: 20px 0;
     }
 
-    .invoice-info {
+    .@invoice-info {
       display: flex;
       justify-content: space-between;
       margin-bottom: 30px;
     }
 
-    .invoice-details, .customer-details {
+    .@invoice-details, .customer-details {
       width: 45%;
     }
 
-    .invoice-details h3, .customer-details h3 {
+    .@invoice-details h3, .customer-details h3 {
       color: #4a90e2;
       font-size: 14px;
       margin-bottom: 10px;
@@ -164,6 +165,66 @@
       color: white;
     }
 
+    /* Mobile responsiveness */
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 10px;
+        font-size: 11px;
+      }
+
+      .company-name {
+        font-size: 20px;
+      }
+
+      .invoice-info {
+        flex-direction: column;
+      }
+
+      .invoice-details, .customer-details {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .detail-label {
+        width: 80px;
+        font-size: 11px;
+      }
+
+      .items-table {
+        font-size: 10px;
+      }
+
+      .items-table th,
+      .items-table td {
+        padding: 6px 4px;
+      }
+
+      .total-section {
+        width: 100%;
+        float: none;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body {
+        padding: 5px;
+        font-size: 10px;
+      }
+
+      .company-name {
+        font-size: 18px;
+      }
+
+      .items-table {
+        font-size: 9px;
+      }
+
+      .items-table th,
+      .items-table td {
+        padding: 4px 2px;
+      }
+    }
+
     @media print {
       body { margin: 0; }
       .no-print { display: none; }
@@ -179,29 +240,29 @@
     </div>
   </div>
 
-  <div class="invoice-title">
+  <div class="@invoice-title">
     INVOICE
   </div>
 
-  <div class="invoice-info">
-    <div class="invoice-details">
+  <div class="@invoice-info">
+    <div class="@invoice-details">
       <h3>Invoice Details</h3>
       <div class="detail-row">
         <span class="detail-label">Invoice #:</span>
-        <%= invoice.formatted_number %>
+        <%= @@invoice.formatted_number %>
       </div>
       <div class="detail-row">
         <span class="detail-label">Date:</span>
-        <%= invoice.invoice_date.strftime('%d %b %Y') %>
+        <%= @invoice.@invoice_date.strftime('%d %b %Y') %>
       </div>
       <div class="detail-row">
         <span class="detail-label">Due Date:</span>
-        <%= invoice.due_date.strftime('%d %b %Y') %>
+        <%= @invoice.due_date.strftime('%d %b %Y') %>
       </div>
       <div class="detail-row">
         <span class="detail-label">Status:</span>
-        <span class="status-badge status-<%= invoice.status %>">
-          <%= invoice.status.humanize %>
+        <span class="status-badge status-<%= @invoice.status %>">
+          <%= @invoice.status.humanize %>
         </span>
       </div>
     </div>
@@ -210,24 +271,24 @@
       <h3>Bill To</h3>
       <div class="detail-row">
         <span class="detail-label">Name:</span>
-        <%= invoice.customer.name %>
+        <%= @invoice.customer.name %>
       </div>
-      <% if invoice.customer.phone_number.present? %>
+      <% if @invoice.customer.phone_number.present? %>
         <div class="detail-row">
           <span class="detail-label">Phone:</span>
-          <%= invoice.customer.phone_number %>
+          <%= @invoice.customer.phone_number %>
         </div>
       <% end %>
-      <% if invoice.customer.address.present? %>
+      <% if @invoice.customer.address.present? %>
         <div class="detail-row">
           <span class="detail-label">Address:</span>
-          <%= invoice.customer.address %>
+          <%= @invoice.customer.address %>
         </div>
       <% end %>
     </div>
   </div>
 
-  <% if invoice.invoice_items.any? %>
+  <% if @invoice.@invoice_items.any? %>
     <table class="items-table">
       <thead>
         <tr>
@@ -238,7 +299,7 @@
         </tr>
       </thead>
       <tbody>
-        <% invoice.invoice_items.each do |item| %>
+        <% @invoice.@invoice_items.each do |item| %>
           <tr>
             <td>
               <%= item.product&.name || 'Product' %>
@@ -258,39 +319,39 @@
   <div class="total-section">
     <div class="total-row">
       <span>Subtotal:</span>
-      <span>₹<%= number_with_precision(invoice.subtotal, precision: 2) %></span>
+      <span>₹<%= number_with_precision(@invoice.subtotal, precision: 2) %></span>
     </div>
 
-    <% if invoice.tax_amount && invoice.tax_amount > 0 %>
+    <% if @invoice.tax_amount && @invoice.tax_amount > 0 %>
       <div class="total-row">
         <span>Tax:</span>
-        <span>₹<%= number_with_precision(invoice.tax_amount, precision: 2) %></span>
+        <span>₹<%= number_with_precision(@invoice.tax_amount, precision: 2) %></span>
       </div>
     <% end %>
 
-    <% if invoice.discount_amount && invoice.discount_amount > 0 %>
+    <% if @invoice.discount_amount && @invoice.discount_amount > 0 %>
       <div class="total-row">
         <span>Discount:</span>
-        <span>-₹<%= number_with_precision(invoice.discount_amount, precision: 2) %></span>
+        <span>-₹<%= number_with_precision(@invoice.discount_amount, precision: 2) %></span>
       </div>
     <% end %>
 
     <div class="total-row final">
       <span>Total Amount:</span>
-      <span>₹<%= number_with_precision(invoice.total_amount, precision: 2) %></span>
+      <span>₹<%= number_with_precision(@invoice.total_amount, precision: 2) %></span>
     </div>
   </div>
 
-  <% if invoice.notes.present? %>
+  <% if @invoice.notes.present? %>
     <div class="notes-section">
       <h3>Notes:</h3>
-      <p><%= simple_format(invoice.notes) %></p>
+      <p><%= simple_format(@invoice.notes) %></p>
     </div>
   <% end %>
 
   <div class="footer">
     <p>Thank you for your business!</p>
-    <p>This is a computer-generated invoice. For any queries, please contact us.</p>
+    <p>This is a computer-generated @invoice. For any queries, please contact us.</p>
     <p>Generated on <%= Time.current.strftime('%d %b %Y at %I:%M %p') %></p>
   </div>
 </body>

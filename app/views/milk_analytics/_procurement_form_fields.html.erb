@@ -11,6 +11,18 @@
 </div>
 
 <div class="col-md-6">
+  <%= form.label :whatsapp_phone_number, "WhatsApp Phone Number", class: "form-label fw-bold" %>
+  <%= form.telephone_field :whatsapp_phone_number,
+      class: "form-control",
+      placeholder: "e.g., +919876543210",
+      pattern: "\\+?[1-9]\\d{1,14}",
+      title: "Please enter a valid phone number with country code" %>
+  <div class="form-text">
+    <i class="fas fa-phone me-1"></i>Phone number for sending invoices via WhatsApp
+  </div>
+</div>
+
+<div class="col-md-6">
   <%= form.label :unit, "Unit of Measurement", class: "form-label fw-bold" %>
   <%= form.select :unit,
       options_for_select([

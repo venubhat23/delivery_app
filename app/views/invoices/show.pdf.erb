@@ -893,5 +893,280 @@
         </tr>
       </table>
     </div>
+
+    <!-- Page break for second page -->
+    <div style="page-break-before: always;"></div>
+
+    <!-- Second Page: Monthly Delivery Report -->
+    <div class="invoice-container">
+      <!-- Page 2 Header -->
+      <table class="invoice-header-table">
+        <tr>
+          <td class="logo-cell">
+            <img class="logo" src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhar Farm Logo" />
+          </td>
+          <td class="company-info-cell">
+            <div class="company-name">Atma Nirbhar Farm</div>
+            <div class="address">
+              #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi,
+              Bangalore, Karnataka, 560072
+            </div>
+            <div class="contact">
+              <span class="highlight">Mobile:</span> 9972808044 &nbsp;&nbsp;
+              <span class="highlight">Email:</span> atmanirbharfarm@gmail.com
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Top bar -->
+      <div class="top-bar"></div>
+
+      <!-- Monthly Report Header -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; background-color: #5a4ec9; color: white;">
+        <tr>
+          <td style="padding: 12px; font-size: 16px; font-weight: bold;">
+            📅 Monthly Delivery Report
+          </td>
+          <td style="padding: 12px; text-align: right; font-size: 14px;">
+            🚛 <%= @invoice.delivery_assignments.count %> DELIVERIES
+          </td>
+        </tr>
+      </table>
+
+      <!-- Customer Details and Summary -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+        <tr>
+          <td style="width: 50%; vertical-align: top; padding-right: 15px;">
+            <h3 style="color: #5a4ec9; margin: 0 0 10px 0; font-size: 14px;">CUSTOMER DETAILS</h3>
+            <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px;"><%= @invoice.customer&.name %></div>
+            <% if @invoice.customer&.address.present? %>
+              <div style="font-size: 11px; color: #666; margin-bottom: 5px;"><%= @invoice.customer.address %></div>
+            <% end %>
+            <% if @invoice.customer&.phone_number.present? %>
+              <div style="font-size: 11px; color: #666;">📞 <%= @invoice.customer.phone_number %></div>
+            <% end %>
+          </td>
+          <td style="width: 50%; vertical-align: top;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 50%; text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-right: 5px;">
+                  <div style="font-size: 18px; font-weight: bold; color: #28a745; margin-bottom: 5px;">
+                    <%= @invoice.delivery_assignments.where(status: 'completed').count %>
+                  </div>
+                  <div style="font-size: 11px; color: #666;">Completed</div>
+                </td>
+                <td style="width: 50%; text-align: center; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-left: 5px;">
+                  <div style="font-size: 18px; font-weight: bold; color: #5a4ec9; margin-bottom: 5px;">
+                    ₹<%= number_with_delimiter(@invoice.total_amount.round(2), delimiter: ',') %>
+                  </div>
+                  <div style="font-size: 11px; color: #666;">Total Amount</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Product-wise Summary -->
+      <div style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+        <h3 style="color: #5a4ec9; margin: 0 0 10px 0; font-size: 14px;">📦 Product-wise Summary</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <thead style="background-color: #343a40; color: white;">
+            <tr>
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">PRODUCT</th>
+              <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">TOTAL QTY</th>
+              <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">UNIT PRICE</th>
+              <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">AMOUNT</th>
+              <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">DELIVERIES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%
+              # Calculate product-wise summary from invoice items
+              product_summary = {}
+              @invoice_items.each do |item|
+                product = item.product
+                if product_summary[product.id]
+                  product_summary[product.id][:quantity] += item.quantity
+                  product_summary[product.id][:total_amount] += (item.quantity * item.unit_price)
+                  product_summary[product.id][:deliveries_count] += 1
+                else
+                  product_summary[product.id] = {
+                    product: product,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    total_amount: (item.quantity * item.unit_price),
+                    deliveries_count: 1
+                  }
+                end
+              end
+            %>
+            <% product_summary.each do |product_id, summary| %>
+              <tr style="<%= 'background-color: #f8f9fa;' if product_summary.keys.index(product_id).even? %>">
+                <td style="padding: 6px; border: 1px solid #ddd;">
+                  <div style="font-weight: bold;"><%= summary[:product].name %></div>
+                  <% if summary[:product].description.present? %>
+                    <div style="font-size: 10px; color: #666; font-style: italic;"><%= summary[:product].description %></div>
+                  <% end %>
+                  <% if summary[:product].unit_type.present? %>
+                    <span style="background-color: #6c757d; color: white; padding: 2px 5px; border-radius: 3px; font-size: 9px; margin-top: 3px; display: inline-block;"><%= summary[:product].unit_type %></span>
+                  <% end %>
+                </td>
+                <td style="padding: 6px; text-align: center; border: 1px solid #ddd;">
+                  <span style="font-weight: bold;"><%= summary[:quantity] %></span>
+                  <br><small style="color: #666;"><%= summary[:product].unit_type %></small>
+                </td>
+                <td style="padding: 6px; text-align: right; border: 1px solid #ddd; font-weight: bold;">
+                  ₹<%= number_with_delimiter(summary[:unit_price], delimiter: ',') %>
+                </td>
+                <td style="padding: 6px; text-align: right; border: 1px solid #ddd; font-weight: bold; color: #28a745;">
+                  ₹<%= number_with_delimiter(summary[:total_amount], delimiter: ',') %>
+                </td>
+                <td style="padding: 6px; text-align: center; border: 1px solid #ddd;">
+                  <span style="background-color: #5a4ec9; color: white; padding: 3px 8px; border-radius: 12px; font-size: 10px;">
+                    <%= summary[:deliveries_count] %>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot style="background-color: #6c757d; color: white; font-weight: bold;">
+            <tr>
+              <th style="padding: 8px; border: 1px solid #ddd;">GRAND TOTAL</th>
+              <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">
+                <%= product_summary.values.sum { |s| s[:quantity] } %>
+              </th>
+              <th style="padding: 8px; border: 1px solid #ddd;"></th>
+              <th style="padding: 8px; text-align: right; border: 1px solid #ddd; font-size: 14px; color: #28a745;">
+                ₹<%= number_with_delimiter(@invoice.total_amount.round(2), delimiter: ',') %>
+              </th>
+              <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">
+                <span style="background-color: #28a745; color: white; padding: 3px 8px; border-radius: 12px;">
+                  <%= @invoice.delivery_assignments.count %>
+                </span>
+              </th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Detailed Delivery History -->
+      <div style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h3 style="color: #5a4ec9; margin: 0; font-size: 14px;">📋 Detailed Delivery History</h3>
+          <small style="color: #666; font-size: 10px;">Sorted by completion date</small>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+          <thead style="background-color: #f1f3f4;">
+            <tr>
+              <th style="padding: 6px; text-align: left; border: 1px solid #ddd; font-size: 10px;">📅 DATE</th>
+              <th style="padding: 6px; text-align: left; border: 1px solid #ddd; font-size: 10px;">📦 PRODUCT</th>
+              <th style="padding: 6px; text-align: center; border: 1px solid #ddd; font-size: 10px;">⚖️ QTY</th>
+              <th style="padding: 6px; text-align: right; border: 1px solid #ddd; font-size: 10px;">💰 AMOUNT</th>
+              <th style="padding: 6px; text-align: center; border: 1px solid #ddd; font-size: 10px;">📊 STATUS</th>
+              <th style="padding: 6px; text-align: left; border: 1px solid #ddd; font-size: 10px;">👤 DELIVERED BY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date).each_with_index do |assignment, index| %>
+              <tr style="<%= 'background-color: #fff3cd;' if assignment.has_discount? %><%= 'background-color: #f8f9fa;' if index.even? && !assignment.has_discount? %>">
+                <td style="padding: 5px; border: 1px solid #ddd; white-space: nowrap;">
+                  <% display_date = assignment.scheduled_date %>
+                  <%= display_date&.strftime('%d %b %Y') %>
+                  <% if assignment.completed_at.present? %>
+                    <br><small style="color: #28a745; font-size: 9px;"><%= assignment.completed_at.strftime('%H:%M') %></small>
+                  <% end %>
+                </td>
+                <td style="padding: 5px; border: 1px solid #ddd;">
+                  <div style="font-weight: bold;"><%= assignment.product.name %></div>
+                  <% if assignment.has_discount? %>
+                    <br><small style="color: #f39c12; font-size: 9px;">
+                      💰 Discount: ₹<%= assignment.discount_amount %>
+                      (<%= assignment.discount_percentage %>%)
+                    </small>
+                  <% end %>
+                </td>
+                <td style="padding: 5px; text-align: center; border: 1px solid #ddd;">
+                  <span style="font-weight: bold;"><%= assignment.quantity %></span>
+                  <br><small style="color: #666; font-size: 9px;"><%= assignment.product.unit_type %></small>
+                </td>
+                <td style="padding: 5px; text-align: right; border: 1px solid #ddd;">
+                  <% if assignment.has_discount? %>
+                    <s style="color: #666; font-size: 9px;">₹<%= number_with_delimiter(assignment.total_amount, delimiter: ',') %></s>
+                    <br><strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount, delimiter: ',') %></strong>
+                  <% else %>
+                    <strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount, delimiter: ',') %></strong>
+                  <% end %>
+                </td>
+                <td style="padding: 5px; text-align: center; border: 1px solid #ddd;">
+                  <% case assignment.status %>
+                  <% when 'completed' %>
+                    <span style="background-color: #28a745; color: white; padding: 2px 6px; border-radius: 10px; font-size: 9px;">
+                      ✅ Completed
+                    </span>
+                  <% when 'pending' %>
+                    <span style="background-color: #ffc107; color: #212529; padding: 2px 6px; border-radius: 10px; font-size: 9px;">
+                      ⏰ Pending
+                    </span>
+                  <% when 'cancelled' %>
+                    <span style="background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 10px; font-size: 9px;">
+                      ❌ Cancelled
+                    </span>
+                  <% else %>
+                    <span style="background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 10px; font-size: 9px;"><%= assignment.status.humanize %></span>
+                  <% end %>
+                </td>
+                <td style="padding: 5px; border: 1px solid #ddd;">
+                  <div><%= assignment.delivery_person_name %></div>
+                  <% if assignment.special_instructions.present? %>
+                    <br><small style="color: #666; font-size: 9px;">
+                      📝 <%= truncate(assignment.special_instructions, length: 30) %>
+                    </small>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Summary Statistics -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+        <tr>
+          <td style="width: 50%; padding-right: 10px;">
+            <div style="background-color: #f8f9fa; padding: 15px; text-align: center; border-radius: 5px;">
+              <h4 style="color: #666; margin: 0 0 5px 0; font-size: 12px;">Total Deliveries</h4>
+              <div style="font-size: 24px; font-weight: bold; color: #5a4ec9;"><%= @invoice.delivery_assignments.count %></div>
+              <small style="color: #666; font-size: 10px;">assignments</small>
+            </div>
+          </td>
+          <td style="width: 50%; padding-left: 10px;">
+            <div style="background-color: #f8f9fa; padding: 15px; text-align: center; border-radius: 5px;">
+              <h4 style="color: #666; margin: 0 0 5px 0; font-size: 12px;">Success Rate</h4>
+              <% completed_count = @invoice.delivery_assignments.where(status: 'completed').count %>
+              <% success_rate = @invoice.delivery_assignments.count > 0 ? (completed_count.to_f / @invoice.delivery_assignments.count * 100).round(1) : 0 %>
+              <div style="font-size: 24px; font-weight: bold; color: #28a745;"><%= success_rate %>%</div>
+              <small style="color: #666; font-size: 10px;">completed on time</small>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Report Information -->
+      <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 12px; border-radius: 5px; color: #0c5460;">
+        <div style="display: flex; align-items: center;">
+          <div style="font-size: 20px; margin-right: 10px;">ℹ️</div>
+          <div>
+            <h4 style="margin: 0 0 5px 0; font-size: 12px; color: #0c5460;">Monthly Delivery Report</h4>
+            <p style="margin: 0; font-size: 11px;">
+              This report shows all deliveries for <strong><%= @invoice.customer&.name %></strong>
+              during <strong><%= @invoice.invoice_date&.strftime('%B %Y') %></strong> included in this invoice.
+              Total amount: <strong style="color: #28a745;">₹<%= number_with_delimiter(@invoice.total_amount.round(2), delimiter: ',') %></strong>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

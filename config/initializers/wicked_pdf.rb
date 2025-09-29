@@ -73,10 +73,13 @@ WickedPdf.configure do |config|
   if Rails.env.production?
     config.use_xvfb = true
     config.disable_javascript = true
-    config.disable_external_links = true
+    config.disable_external_links = false  # Allow external assets
     config.javascript_delay = 1000
     config.no_stop_slow_scripts = true
-    config.quiet = true
+    config.quiet = false  # Enable logging for debugging
+    config.load_error_handling = 'ignore'  # Ignore missing assets
+    config.disable_plugins = true
+    config.disable_internal_links = false
   end
   
   # Debug mode

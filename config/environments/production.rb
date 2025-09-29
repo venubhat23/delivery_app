@@ -26,6 +26,18 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
+  # Configure host for URL generation
+  config.action_controller.default_url_options = {
+    host: ENV.fetch('DOMAIN_NAME', 'atmanirbharfarmbangalore.com'),
+    protocol: 'https'
+  }
+
+  # Configure action mailer for production URLs
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch('DOMAIN_NAME', 'atmanirbharfarmbangalore.com'),
+    protocol: 'https'
+  }
+
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
 

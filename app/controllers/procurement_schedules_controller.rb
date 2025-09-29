@@ -180,6 +180,128 @@ class ProcurementSchedulesController < ApplicationController
     end
   end
 
+  def send_monthly_invoices
+    month = params[:month].to_i
+    year = params[:year].to_i
+    vendor_filter = params[:vendor]
+    generate_if_missing = params[:generate_if_missing] == true
+    send_existing = params[:send_existing] == true
+
+    begin
+      # Validate parameters
+      unless (1..12).include?(month) && year.present?
+        return render json: { success: false, error: 'Invalid month or year' }, status: 400
+      end
+
+      # Calculate date range for the month
+      start_date = Date.new(year, month, 1)
+      end_date = start_date.end_of_month
+
+      # Get procurement schedules for the month
+      schedules_query = current_user.procurement_schedules
+                                   .where("from_date <= ? AND to_date >= ?", end_date, start_date)
+
+      # Filter by vendor if specified
+      if vendor_filter != 'all'
+        schedules_query = schedules_query.where(vendor_name: vendor_filter)
+      end
+
+      schedules = schedules_query.includes(:procurement_invoices)
+
+      if schedules.empty?
+        return render json: { success: false, error: 'No procurement schedules found for the selected criteria' }
+      end
+
+      # Process invoices for each schedule
+      success_count = 0
+      error_count = 0
+      messages = []
+
+      schedules.each do |schedule|
+        begin
+          # Skip if no WhatsApp number
+          unless schedule.whatsapp_phone_number.present?
+            messages << "Skipped #{schedule.vendor_name}: No WhatsApp number provided"
+            error_count += 1
+            next
+          end
+
+          # Check if invoice already exists for this month
+          existing_invoice = schedule.procurement_invoices
+                                   .where('extract(month from invoice_date) = ? AND extract(year from invoice_date) = ?', month, year)
+                                   .first
+
+          invoice = nil
+
+          if existing_invoice
+            if send_existing
+              invoice = existing_invoice
+              messages << "Using existing invoice for #{schedule.vendor_name}"
+            else
+              messages << "Skipped #{schedule.vendor_name}: Invoice already exists"
+              next
+            end
+          elsif generate_if_missing
+            # Generate new invoice
+            invoice = schedule.procurement_invoices.build(
+              user: current_user,
+              invoice_date: start_date,
+              due_date: end_date,
+              status: 'draft'
+            )
+
+            if invoice.save
+              invoice.mark_as_generated!
+              messages << "Generated new invoice for #{schedule.vendor_name}"
+            else
+              messages << "Failed to generate invoice for #{schedule.vendor_name}: #{invoice.errors.full_messages.join(', ')}"
+              error_count += 1
+              next
+            end
+          else
+            messages << "Skipped #{schedule.vendor_name}: No existing invoice and generation disabled"
+            error_count += 1
+            next
+          end
+
+          # Send WhatsApp message
+          if invoice && send_whatsapp_invoice(invoice, schedule)
+            invoice.mark_as_sent!
+            success_count += 1
+            messages << "Successfully sent invoice to #{schedule.vendor_name}"
+          else
+            messages << "Failed to send WhatsApp message to #{schedule.vendor_name}"
+            error_count += 1
+          end
+
+        rescue => e
+          Rails.logger.error "Error processing invoice for schedule #{schedule.id}: #{e.message}"
+          messages << "Error processing #{schedule.vendor_name}: #{e.message}"
+          error_count += 1
+        end
+      end
+
+      # Return response
+      if success_count > 0
+        render json: {
+          success: true,
+          message: "Successfully sent #{success_count} invoice(s). #{error_count} failed.",
+          details: messages
+        }
+      else
+        render json: {
+          success: false,
+          error: "Failed to send all invoices. #{error_count} failed.",
+          details: messages
+        }
+      end
+
+    rescue => e
+      Rails.logger.error "Error in send_monthly_invoices: #{e.message}"
+      render json: { success: false, error: 'An unexpected error occurred' }, status: 500
+    end
+  end
+
   private
 
   def set_procurement_schedule
@@ -194,8 +316,8 @@ class ProcurementSchedulesController < ApplicationController
   end
 
   def procurement_schedule_params
-    params.require(:procurement_schedule).permit(:vendor_name, :from_date, :to_date, :quantity, 
-                                                  :buying_price, :selling_price, :status, :unit, :notes, :product_id)
+    params.require(:procurement_schedule).permit(:vendor_name, :from_date, :to_date, :quantity,
+                                                  :buying_price, :selling_price, :status, :unit, :notes, :product_id, :whatsapp_phone_number)
   end
 
   def authenticate_user!
@@ -370,5 +492,71 @@ class ProcurementSchedulesController < ApplicationController
       # Use procurement completion data as proxy
       assignments_query.completed.sum(:actual_quantity) || 0
     end
+  end
+
+  def send_whatsapp_invoice(invoice, schedule)
+    begin
+      # Generate invoice message
+      invoice_data = invoice.parsed_invoice_data
+
+      # Format phone number (ensure it has country code)
+      phone_number = format_phone_number(schedule.whatsapp_phone_number)
+
+      # Create invoice message
+      message = generate_invoice_message(invoice, schedule, invoice_data)
+
+      # Send WhatsApp message using existing service
+      whatsapp_service = WhatsappService.new
+      success = whatsapp_service.send_text(phone_number, message)
+
+      # Log the attempt
+      Rails.logger.info "WhatsApp invoice sent to #{schedule.vendor_name} (#{phone_number}): #{success ? 'Success' : 'Failed'}"
+
+      success
+    rescue => e
+      Rails.logger.error "Error sending WhatsApp invoice to #{schedule.vendor_name}: #{e.message}"
+      false
+    end
+  end
+
+  def format_phone_number(phone)
+    # Remove all non-numeric characters
+    clean_number = phone.gsub(/[^\d]/, '')
+
+    # Add country code if missing (assuming India +91)
+    if clean_number.length == 10
+      clean_number = "91#{clean_number}"
+    elsif clean_number.length == 11 && clean_number.start_with?('0')
+      clean_number = "91#{clean_number[1..]}"
+    end
+
+    # Ensure it starts with +
+    clean_number.start_with?('+') ? clean_number : "+#{clean_number}"
+  end
+
+  def generate_invoice_message(invoice, schedule, invoice_data)
+    totals = invoice_data[:totals] || {}
+    schedule_details = invoice_data[:schedule_details] || {}
+
+    <<~MESSAGE
+🧾 *MONTHLY PROCUREMENT INVOICE*
+
+📋 *Invoice Details:*
+• Invoice Number: #{invoice.invoice_number}
+• Date: #{invoice.invoice_date.strftime('%d %B %Y')}
+• Vendor: #{schedule.vendor_name}
+
+📅 *Period:* #{schedule_details[:from_date]} to #{schedule_details[:to_date]}
+
+📊 *Summary:*
+• Total Quantity: #{totals[:total_quantity]&.round(2) || 0} liters
+• Total Amount: ₹#{invoice.total_amount&.round(2) || 0}
+
+💰 *Payment Due Date:* #{invoice.due_date&.strftime('%d %B %Y') || 'N/A'}
+
+📱 For any queries, please contact us.
+
+Generated by Delivery Management System
+    MESSAGE
   end
 end

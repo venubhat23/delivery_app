@@ -449,10 +449,14 @@ end
       invoice.save! if invoice.changed?
       
       # Generate public URL
-      public_url = invoice.public_url(host: host).gsub(':3000', '')
-      
+      protocol = Rails.env.production? ? 'https' : (request&.protocol || 'http')
+      public_url = invoice.public_url(host: host, protocol: protocol).gsub(':3000', '')
+
+      # Generate public PDF URL
+      pdf_url = invoice.generate_public_pdf_url
+
       # Build WhatsApp message
-      message = build_whatsapp_message(invoice, public_url)
+      message = build_whatsapp_message(invoice, public_url, pdf_url)
       
       # Sanitize phone number and add country code if needed
       sanitized_phone = invoice.customer.phone_number.gsub(/\D/, '')
@@ -510,12 +514,16 @@ end
     @invoice.generate_share_token if @invoice.share_token.blank?
     @invoice.save! if @invoice.changed?
     
-    # Generate public URL with explicit host (without port for WhatsApp)
+    # Generate public URL with explicit host and protocol
     host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
-    public_url = @invoice.public_url(host: host).gsub(':3000', '')
+    protocol = Rails.env.production? ? 'https' : request.protocol || 'http'
+    public_url = @invoice.public_url(host: host, protocol: protocol).gsub(':3000', '')
     
+    # Generate public PDF URL
+    pdf_url = @invoice.generate_public_pdf_url
+
     # Build WhatsApp message
-    message = build_whatsapp_message(@invoice, public_url)
+    message = build_whatsapp_message(@invoice, public_url, pdf_url)
     
     # Create WhatsApp URL - using web.whatsapp.com for direct WhatsApp Web access
     whatsapp_url = "https://web.whatsapp.com/send?phone=#{sanitized_phone}&text=#{CGI.escape(message)}"
@@ -654,12 +662,16 @@ end
       invoice.generate_share_token if invoice.share_token.blank?
       invoice.save! if invoice.changed?
 
-      # Generate public URL
-      host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
-      public_url = invoice.public_url(host: host).gsub(':3000', '')
+      # Generate public URL for invoice view
+      host = Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+      protocol = 'https'
+      public_url = invoice.public_url(host: host, protocol: protocol).gsub(':3000', '')
 
-      # Build WhatsApp message
-      message = build_enhanced_invoice_message(invoice, public_url)
+      # Generate public PDF URL
+      pdf_url = invoice.generate_public_pdf_url
+
+      # Build WhatsApp message with PDF URL
+      message = build_enhanced_invoice_message(invoice, public_url, pdf_url)
 
       # Add country code if needed
       unless sanitized_phone.start_with?('91')
@@ -756,10 +768,10 @@ end
     @customers = Customer.order(:name)
   end
 
-  def build_whatsapp_message(invoice, public_url)
+  def build_whatsapp_message(invoice, public_url, pdf_url = nil)
     formatted_amount = ActionController::Base.helpers.number_with_delimiter(invoice.total_amount, delimiter: ',')
-    
-    <<~MESSAGE.strip
+
+    message = <<~MESSAGE.strip
       🧾 *Invoice Ready - #{invoice.formatted_number}*
 
       Dear #{invoice.customer.name},
@@ -767,10 +779,14 @@ end
 
       📥 *View & Download:*
       #{public_url}
-
-      Thank you for your business! 🙏
-      🌾 *Atmanirbhar Farm*
     MESSAGE
+
+    if pdf_url.present?
+      message += "\n\n📄 *Direct PDF:*\n#{pdf_url}"
+    end
+
+    message += "\n\nThank you for your business! 🙏\n🌾 *Atmanirbhar Farm*"
+    message
   end
 
   # Method to send invoice via WhatsApp using WANotifier
@@ -851,35 +867,76 @@ end
   end
 
   # Enhanced message for invoice with better formatting
-  def build_enhanced_invoice_message(invoice, public_url)
+  def build_enhanced_invoice_message(invoice, public_url, pdf_url = nil)
     month_year = invoice.invoice_date.strftime("%B %Y")
     formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}"
     due_date = invoice.due_date.strftime('%d %B %Y')
-    
-    <<~MESSAGE.strip
-      Hello #{invoice.customer.name}! 👋
 
-      Your #{month_year} invoice is ready! 📋
+    message = <<~MESSAGE.strip
+      👋 Hello #{invoice.customer.name}!
 
-      📄 Invoice #: #{invoice.formatted_number}
-      💰 Total Amount: #{formatted_amount}
-      📅 Due Date: #{due_date}
+      🎉 Your #{month_year} Invoice is ready to view! 🧾
 
-      📱 View/Download your invoice: #{public_url}
+      ───────────────────
+      📋 Invoice #: #{invoice.formatted_number}
+      💵 Total: #{formatted_amount}
+      📆 Due Date: #{due_date}
+      ───────────────────
 
-      Thank you for your continued business! 🙏
-
-      For any queries, please contact us.
-      - Atma Nirbhar Farm
+      👇 Click below to view your invoice:
+      #{public_url}
     MESSAGE
+
+    if pdf_url.present?
+      message += "\n\n📄 Direct PDF Download:\n#{pdf_url}"
+    end
+
+    message += <<~FOOTER
+
+      Thank you for trusting Atma Nirbhar Farm! 🙏
+
+      🏠 Bangalore
+      📞 +91 9972808044 | +91 9008860329
+      📱 WhatsApp: +91 9972808044
+      📧 atmanirbharfarmbangalore@gmail.com
+    FOOTER
+
+    message
   end
 
   def generate_pdf_response
-    render pdf: "invoice_#{@invoice.id}",
-           template: 'invoices/show',
-           layout: false,
-           page_size: 'A4',
-           margin: { top: 5, bottom: 5, left: 5, right: 5 },
-           encoding: 'UTF-8'
+    begin
+      render pdf: "invoice_#{@invoice.id}",
+             template: 'invoices/show',
+             layout: false,
+             page_size: 'A4',
+             margin: { top: 5, bottom: 5, left: 5, right: 5 },
+             encoding: 'UTF-8'
+    rescue => e
+      Rails.logger.error "PDF generation failed: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+
+      # Fallback: serve HTML with print-friendly styling that users can save as PDF
+      respond_to do |format|
+        format.pdf do
+          render template: 'invoices/pdf_template',
+                 layout: false,
+                 content_type: 'text/html',
+                 headers: {
+                   'Content-Disposition' => "inline; filename=\"invoice_#{@invoice.id}.html\""
+                 }
+        end
+
+        format.html do
+          render template: 'invoices/pdf_template',
+                 layout: false
+        end
+
+        format.any do
+          render template: 'invoices/pdf_template',
+                 layout: false
+        end
+      end
+    end
   end
 end

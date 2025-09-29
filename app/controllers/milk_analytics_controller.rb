@@ -4,7 +4,7 @@ class MilkAnalyticsController < ApplicationController
   def index
     # Handle dashboard filters - Default to current month (1st to end of current month)
     @product_id = params[:product_id]
-    @date_range = params[:date_range] || 'monthly'
+    @date_range = params[:date_range] || 'today'
     
     case @date_range
     when 'today'

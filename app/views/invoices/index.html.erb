@@ -275,15 +275,15 @@
                           target: '_blank' do %>
                       <i class="fas fa-file-pdf"></i>
                     <% end %>
-                    <button type="button" 
-                            class="btn btn-sm btn-outline-warning share-whatsapp-btn" 
+                    <button type="button"
+                            class="btn btn-sm btn-outline-warning share-whatsapp-btn"
                             data-invoice-id="<%= invoice.id %>"
                             data-invoice-number="<%= invoice.formatted_number %>"
                             data-customer-name="<%= invoice.customer.name %>"
                             data-customer-phone="<%= invoice.customer.phone_number %>"
+                            data-customer-id="<%= invoice.customer.id %>"
                             data-amount="<%= invoice.total_amount %>"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#shareWhatsAppModal"
+                            onclick="openWhatsAppModal(this)"
                             title="Share via WhatsApp">
                       <i class="fab fa-whatsapp"></i>
                     </button>
@@ -361,15 +361,15 @@
                           target: '_blank' do %>
                       <i class="fas fa-file-pdf me-1"></i>PDF
                     <% end %>
-                    <button type="button" 
-                            class="btn btn-sm btn-outline-warning me-1 share-whatsapp-btn" 
+                    <button type="button"
+                            class="btn btn-sm btn-outline-warning me-1 share-whatsapp-btn"
                             data-invoice-id="<%= invoice.id %>"
                             data-invoice-number="<%= invoice.formatted_number %>"
                             data-customer-name="<%= invoice.customer.name %>"
                             data-customer-phone="<%= invoice.customer.phone_number %>"
+                            data-customer-id="<%= invoice.customer.id %>"
                             data-amount="<%= invoice.total_amount %>"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#shareWhatsAppModal">
+                            onclick="openWhatsAppModal(this)"
                       <i class="fab fa-whatsapp me-1"></i>WhatsApp
                     </button>
                     <% if invoice.status != 'paid' %>
@@ -1592,121 +1592,258 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // WhatsApp Modal Functionality
-  let currentInvoiceId = null;
-  
-  // Handle WhatsApp share button clicks
-  document.querySelectorAll('.share-whatsapp-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      currentInvoiceId = this.dataset.invoiceId;
-      const invoiceNumber = this.dataset.invoiceNumber;
-      const customerName = this.dataset.customerName;
-      const customerPhone = this.dataset.customerPhone;
-      const amount = this.dataset.amount;
-      
-      // Update modal content
-      document.getElementById('previewInvoiceNumber').textContent = invoiceNumber;
-      document.getElementById('previewAmount').textContent = parseFloat(amount).toLocaleString();
-      
-      // Pre-fill phone number if available
-      const phoneInput = document.getElementById('customerPhoneNumber');
-      if (customerPhone && customerPhone !== 'null' && customerPhone !== '') {
-        phoneInput.value = customerPhone.startsWith('+') ? customerPhone : '+91' + customerPhone;
-      } else {
-        phoneInput.value = '';
-      }
-      
-      // Update current date
-      const today = new Date();
-      const dateString = today.toLocaleDateString('en-GB', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
-      });
-      document.getElementById('previewDate').textContent = dateString;
-      
-      // Reset send button
-      const sendBtn = document.getElementById('sendWhatsAppBtn');
-      sendBtn.disabled = phoneInput.value.length < 10;
-      sendBtn.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Send via WhatsApp';
+  // Interactive WhatsApp Modal Functionality with Customer Pattern
+  let currentInvoiceData = null;
+  let currentCustomerPattern = null;
+
+  // Global function to open WhatsApp modal - similar to deliveries modal pattern
+  window.openWhatsAppModal = function(button) {
+    console.log('🚀 Opening WhatsApp modal with customer pattern functionality');
+
+    // Extract data from button
+    currentInvoiceData = {
+      id: button.dataset.invoiceId,
+      number: button.dataset.invoiceNumber,
+      customerName: button.dataset.customerName,
+      customerPhone: button.dataset.customerPhone,
+      customerId: button.dataset.customerId,
+      amount: button.dataset.amount
+    };
+
+    console.log('📊 Invoice data:', currentInvoiceData);
+
+    // Show modal with custom modal approach
+    const modal = document.getElementById('shareWhatsAppModal');
+    modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
+
+    // Initialize modal content
+    initializeWhatsAppModalContent();
+
+    // Load customer pattern data
+    loadCustomerPatternData(currentInvoiceData.customerId, currentInvoiceData.customerName);
+  };
+
+  // Global function to close WhatsApp modal
+  window.closeWhatsAppModal = function() {
+    console.log('🔒 Closing WhatsApp modal');
+    const modal = document.getElementById('shareWhatsAppModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
+
+    // Clear current data
+    currentInvoiceData = null;
+    currentCustomerPattern = null;
+  };
+
+  // Initialize modal content with invoice data
+  function initializeWhatsAppModalContent() {
+    if (!currentInvoiceData) return;
+
+    console.log('🎨 Initializing WhatsApp modal content');
+
+    // Update invoice details in preview
+    document.getElementById('previewInvoiceNumber').textContent = currentInvoiceData.number;
+    document.getElementById('previewAmount').textContent = parseFloat(currentInvoiceData.amount).toLocaleString();
+
+    // Set today's date
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     });
-  });
-  
-  // Handle phone number input validation
-  const phoneInput = document.getElementById('customerPhoneNumber');
-  const sendBtn = document.getElementById('sendWhatsAppBtn');
-  
-  if (phoneInput && sendBtn) {
-    phoneInput.addEventListener('input', function() {
-      const phone = this.value.trim();
-      const isValid = phone.length >= 10 && /^\+?[\d\s\-\(\)]+$/.test(phone);
-      sendBtn.disabled = !isValid;
-      
-      if (isValid) {
-        this.classList.remove('is-invalid');
-        this.classList.add('is-valid');
-      } else if (phone.length > 0) {
-        this.classList.remove('is-valid');
-        this.classList.add('is-invalid');
+    document.getElementById('previewDate').textContent = dateStr;
+
+    // Update customer info display
+    document.getElementById('displayCustomerName').textContent = currentInvoiceData.customerName;
+
+    // Pre-fill phone number if available
+    const phoneInput = document.getElementById('whatsAppCustomerPhone');
+    if (currentInvoiceData.customerPhone && currentInvoiceData.customerPhone !== 'null' && currentInvoiceData.customerPhone !== '') {
+      phoneInput.value = currentInvoiceData.customerPhone.startsWith('+') ? currentInvoiceData.customerPhone : '+91' + currentInvoiceData.customerPhone;
+    } else {
+      phoneInput.value = '';
+    }
+
+    // Validate phone number initially
+    phoneInput.dispatchEvent(new Event('input'));
+  }
+
+  // Load customer pattern data - similar to deliveries modal
+  function loadCustomerPatternData(customerId, customerName) {
+    console.log(`🔍 Loading customer pattern for: ${customerName} (ID: ${customerId})`);
+
+    const patternDisplay = document.getElementById('customerPatternDisplay');
+    const memberDisplay = document.getElementById('displayCustomerMember');
+
+    // Show loading state
+    patternDisplay.innerHTML = `
+      <div class="pattern-loading">
+        <div class="spinner-border spinner-border-sm me-2"></div>
+        Loading customer pattern...
+      </div>
+    `;
+
+    // Simulate customer pattern data for now - you can implement actual API endpoint
+    setTimeout(() => {
+      // Mock pattern data - replace with actual API call
+      const mockPatternData = {
+        success: true,
+        member_id: 'MEM' + customerId.toString().padStart(4, '0'),
+        pattern: [
+          { product_name: 'Milk', total_quantity: 30, unit: 'liters', frequency: 'Daily' },
+          { product_name: 'Cheese', total_quantity: 2, unit: 'kg', frequency: 'Weekly' },
+          { product_name: 'Butter', total_quantity: 1, unit: 'kg', frequency: 'Bi-weekly' }
+        ]
+      };
+
+      currentCustomerPattern = mockPatternData;
+
+      // Update member ID
+      if (mockPatternData.member_id) {
+        memberDisplay.textContent = `Member ID: ${mockPatternData.member_id}`;
       } else {
-        this.classList.remove('is-valid', 'is-invalid');
+        memberDisplay.textContent = 'Member ID: Not set';
       }
+
+      // Display pattern information
+      displayCustomerPattern(mockPatternData.pattern);
+    }, 1000);
+  }
+
+  // Display customer pattern in interactive format
+  function displayCustomerPattern(pattern) {
+    const patternDisplay = document.getElementById('customerPatternDisplay');
+
+    if (!pattern || pattern.length === 0) {
+      patternDisplay.innerHTML = `
+        <div class="pattern-empty">
+          <i class="fas fa-info-circle text-muted me-2"></i>
+          No recent purchase pattern available
+        </div>
+      `;
+      return;
+    }
+
+    // Create interactive pattern display similar to customer patterns page
+    let patternHtml = '<div class="pattern-items">';
+
+    pattern.slice(0, 3).forEach((item, index) => {
+      patternHtml += `
+        <div class="pattern-item" style="border-left: 4px solid ${index === 0 ? '#28a745' : index === 1 ? '#007bff' : '#ffc107'}; padding: 8px 12px; margin-bottom: 8px; background: ${index === 0 ? '#f8fff9' : index === 1 ? '#f8fbff' : '#fffdf8'}; border-radius: 6px;">
+          <div class="pattern-product fw-bold">${item.product_name}</div>
+          <div class="pattern-details small text-muted">
+            <span><i class="fas fa-box me-1"></i>${item.total_quantity} ${item.unit}</span>
+            <span class="ms-3"><i class="fas fa-calendar me-1"></i>${item.frequency}</span>
+          </div>
+        </div>
+      `;
     });
-    
-    // Handle send WhatsApp button click
-    sendBtn.addEventListener('click', function() {
-      if (!currentInvoiceId) {
-        alert('Please select an invoice first');
-        return;
-      }
-      
-      const phoneNumber = phoneInput.value.trim();
-      if (!phoneNumber) {
-        alert('Please enter a phone number');
-        return;
-      }
-      
-      // Disable button and show loading state
-      this.disabled = true;
-      this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating link...';
-      
-      // Make AJAX request to share_whatsapp endpoint
-      fetch(`/invoices/${currentInvoiceId}/share_whatsapp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-          phone_number: phoneNumber
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Open WhatsApp with the generated link
-          window.open(data.whatsapp_url, '_blank');
-          
-          // Close modal
-          const modal = bootstrap.Modal.getInstance(document.getElementById('shareWhatsAppModal'));
-          modal.hide();
-          
-          // Show success message
-          showNotification('WhatsApp link generated successfully!', 'success');
+
+    patternHtml += '</div>';
+
+    if (pattern.length > 3) {
+      patternHtml += `<div class="pattern-more small text-muted">And ${pattern.length - 3} more products...</div>`;
+    }
+
+    patternDisplay.innerHTML = patternHtml;
+  }
+
+  // Enhanced phone validation and send functionality
+  function initializeWhatsAppModalEvents() {
+    const phoneInput = document.getElementById('whatsAppCustomerPhone');
+    const sendBtn = document.getElementById('sendWhatsAppBtn');
+
+    if (phoneInput && sendBtn) {
+      // Phone validation
+      phoneInput.addEventListener('input', function() {
+        const phone = this.value.trim();
+        const isValid = phone.length >= 10 && /^\+?[\d\s\-\(\)]+$/.test(phone);
+        sendBtn.disabled = !isValid;
+
+        if (isValid) {
+          this.classList.remove('is-invalid');
+          this.classList.add('is-valid');
+        } else if (phone.length > 0) {
+          this.classList.remove('is-valid');
+          this.classList.add('is-invalid');
         } else {
-          alert('Error: ' + (data.error || 'Failed to generate WhatsApp link'));
+          this.classList.remove('is-valid', 'is-invalid');
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Network error. Please try again.');
-      })
-      .finally(() => {
-        // Reset button state
-        this.disabled = false;
-        this.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Send via WhatsApp';
       });
-    });
+
+      // Enhanced send WhatsApp functionality
+      sendBtn.addEventListener('click', function() {
+        if (!currentInvoiceData) {
+          alert('Please select an invoice first');
+          return;
+        }
+
+        const phoneNumber = phoneInput.value.trim();
+        if (!phoneNumber) {
+          alert('Please enter a phone number');
+          return;
+        }
+
+        console.log('📱 Sending WhatsApp for invoice:', currentInvoiceData.id);
+
+        // Show loading state with better UX
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating secure link...';
+
+        // Make AJAX request to share_whatsapp endpoint
+        fetch(`/invoices/${currentInvoiceData.id}/share_whatsapp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({
+            phone_number: phoneNumber
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Open WhatsApp with the generated link
+            window.open(data.whatsapp_url, '_blank');
+
+            // Close modal using custom function
+            closeWhatsAppModal();
+
+            // Show success message
+            showNotification('WhatsApp link generated successfully! 🚀', 'success');
+          } else {
+            alert('Error: ' + (data.error || 'Failed to generate WhatsApp link'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Network error. Please try again.');
+        })
+        .finally(() => {
+          // Reset button state
+          this.disabled = false;
+          this.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Send via WhatsApp';
+        });
+      });
+    }
+  }
+
+  // Initialize events when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeWhatsAppModalEvents();
+  });
+
+  // Also initialize immediately if DOM is already loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeWhatsAppModalEvents);
+  } else {
+    initializeWhatsAppModalEvents();
   }
   
   // Utility function to show notifications
@@ -2636,17 +2773,247 @@ document.addEventListener('DOMContentLoaded', function() {
     transition: all 0.3s ease;
   }
 
+  /* Enhanced WhatsApp Modal Styles - Similar to Deliveries Modal */
+  .custom-whatsapp-modal {
+    width: 100%;
+    max-width: 900px;
+    max-height: 90%;
+    overflow-y: auto;
+  }
+
+  .customer-pattern-card, .message-preview-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .customer-pattern-card .card-header, .message-preview-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px 10px 0 0;
+    border: none;
+  }
+
+  .customer-pattern-card .card-body, .message-preview-card .card-body {
+    padding: 20px;
+  }
+
+  .customer-info-display {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+
+  .customer-avatar {
+    font-size: 2.5rem;
+    color: #667eea;
+    margin-right: 15px;
+  }
+
+  .customer-details {
+    flex: 1;
+  }
+
+  .customer-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #495057;
+    margin-bottom: 4px;
+  }
+
+  .customer-member {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .pattern-history-section {
+    margin-top: 20px;
+  }
+
+  .pattern-header {
+    color: #495057;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
+  }
+
+  .pattern-loading, .pattern-empty, .pattern-error {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px dashed #dee2e6;
+  }
+
+  .pattern-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pattern-item {
+    transition: all 0.3s ease;
+    cursor: default;
+  }
+
+  .pattern-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .pattern-product {
+    color: #495057;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .pattern-details {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .pattern-more {
+    text-align: center;
+    padding: 10px;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  .whatsapp-message-preview {
+    background: #e5ddd5;
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  .message-bubble {
+    background: #dcf8c6;
+    padding: 16px;
+    border-radius: 18px;
+    position: relative;
+    max-width: 85%;
+    margin-left: auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .message-bubble::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: -8px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid #dcf8c6;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+
+  .message-header {
+    font-weight: bold;
+    color: #075e54;
+    margin-bottom: 8px;
+  }
+
+  .message-content {
+    color: #303030;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  .invoice-details {
+    background: rgba(255,255,255,0.3);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin: 10px 0;
+    border-left: 3px solid #25d366;
+  }
+
+  .message-footer {
+    color: #075e54;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    border-top: 1px solid rgba(7,94,84,0.1);
+    padding-top: 8px;
+  }
+
+  .input-group-text {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    color: white;
+    border: none;
+  }
+
+  #whatsAppCustomerPhone:focus {
+    border-color: #25d366;
+    box-shadow: 0 0 0 0.2rem rgba(37, 211, 102, 0.25);
+  }
+
+  .custom-modal-footer {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 0 0 10px 10px;
+    display: flex;
+    justify-content: end;
+    gap: 12px;
+  }
+
+  .custom-modal-footer .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .custom-modal-footer .btn-success {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    border: none;
+  }
+
+  .custom-modal-footer .btn-success:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  }
+
   /* Responsive adjustments for WhatsApp modal */
   @media (max-width: 768px) {
-    #generateWhatsAppInvoiceModal.custom-modal {
-      padding: 20px;
+    .custom-whatsapp-modal {
+      max-width: 95%;
+      margin: 0 10px;
     }
 
-    #generateWhatsAppInvoiceModal .custom-modal-content {
-      margin: 0;
-      max-width: 100%;
-      border-radius: 15px;
+    .customer-info-display {
+      flex-direction: column;
+      text-align: center;
     }
+
+    .customer-avatar {
+      margin-right: 0;
+      margin-bottom: 10px;
+    }
+
+    .pattern-details {
+      justify-content: center;
+    }
+
+    .message-bubble {
+      max-width: 100%;
+    }
+
+    .custom-modal-footer {
+      flex-direction: column;
+    }
+
+    .custom-modal-footer .btn {
+      width: 100%;
+    }
+  }
 
     #generateWhatsAppInvoiceModal .custom-modal-header {
       padding: 1rem 1.5rem;
@@ -2797,67 +3164,125 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Share Invoice via WhatsApp Modal -->
-<div class="modal fade" id="shareWhatsAppModal" tabindex="-1" aria-labelledby="shareWhatsAppModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="shareWhatsAppModalLabel">
-          <i class="fab fa-whatsapp me-2"></i>Share Invoice via WhatsApp
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-12">
-            <label for="customerPhoneNumber" class="form-label">Customer Phone Number</label>
-            <input type="text" 
-                   class="form-control" 
-                   id="customerPhoneNumber" 
-                   placeholder="Enter phone number with country code (e.g., +919844145993)"
-                   maxlength="15">
-            <div class="form-text">Enter the phone number with country code (e.g., +919876543210)</div>
-          </div>
-          
-          <div class="col-12">
-            <label for="messagePreview" class="form-label">Message Preview</label>
-            <div class="message-preview-container">
-              <div class="message-preview" id="messagePreview">
-                <div class="message-header">Hi! 👋</div>
-                <div class="message-body">
-                  <p>Your invoice has been generated:</p>
-                  <p>📄 Invoice #<span id="previewInvoiceNumber">INV-000006</span></p>
-                  <p>💰 Amount: ₹<span id="previewAmount">2,300.0</span></p>
-                  <p>📅 Date: <span id="previewDate">1 August 2025</span></p>
-                  <p>Download your invoice PDF: [Secure PDF link will be generated]</p>
+<!-- Share Invoice via WhatsApp Modal - Custom Interactive Modal -->
+<div id="shareWhatsAppModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeWhatsAppModal()"></div>
+  <div class="custom-modal-content custom-whatsapp-modal">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fab fa-whatsapp me-2"></i>Share Invoice via WhatsApp
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeWhatsAppModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <!-- Customer Pattern Section - Interactive -->
+      <div class="row g-4">
+        <!-- Customer Selection with Pattern Display -->
+        <div class="col-12">
+          <div class="customer-pattern-card">
+            <div class="card-header">
+              <h6 class="mb-0">
+                <i class="fas fa-user me-2"></i>Customer Information
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="whatsAppCustomerPhone" class="form-label fw-bold">Phone Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fab fa-whatsapp"></i></span>
+                    <input type="text"
+                           class="form-control"
+                           id="whatsAppCustomerPhone"
+                           placeholder="Customer's WhatsApp number"
+                           maxlength="15">
+                  </div>
+                  <div class="form-text">Enter with country code (e.g., +919876543210)</div>
                 </div>
-                <div class="message-footer">
-                  <p>Thank you for your business! 🙏</p>
-                  <p>- Atma Nirbhar Farm</p>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Customer Details</label>
+                  <div class="customer-info-display" id="customerInfoDisplay">
+                    <div class="customer-avatar">
+                      <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="customer-details">
+                      <div class="customer-name" id="displayCustomerName">Loading...</div>
+                      <div class="customer-member" id="displayCustomerMember">Member ID: ...</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Customer Pattern History -->
+              <div class="mt-3">
+                <div class="pattern-history-section">
+                  <h6 class="pattern-header">
+                    <i class="fas fa-chart-line me-2"></i>Recent Purchase Pattern
+                  </h6>
+                  <div class="pattern-display" id="customerPatternDisplay">
+                    <div class="pattern-loading">
+                      <div class="spinner-border spinner-border-sm me-2"></div>
+                      Loading customer pattern...
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
-        <div class="alert alert-info mt-3" id="howItWorks">
-          <div class="d-flex align-items-start">
-            <i class="fas fa-info-circle me-2 mt-1"></i>
-            <div>
-              <strong>How it works:</strong> We'll generate a secure link to your invoice and create a WhatsApp message. When you click "Send via WhatsApp", WhatsApp will open with the pre-filled message ready to send.
+
+        <!-- Message Preview Section -->
+        <div class="col-12">
+          <div class="message-preview-card">
+            <div class="card-header">
+              <h6 class="mb-0">
+                <i class="fas fa-comment-alt me-2"></i>WhatsApp Message Preview
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="whatsapp-message-preview" id="whatsAppMessagePreview">
+                <div class="message-bubble">
+                  <div class="message-header">Hi! 👋</div>
+                  <div class="message-content">
+                    <p>Your invoice has been generated:</p>
+                    <div class="invoice-details">
+                      <p>📄 Invoice #<span id="previewInvoiceNumber">Loading...</span></p>
+                      <p>💰 Amount: ₹<span id="previewAmount">Loading...</span></p>
+                      <p>📅 Date: <span id="previewDate">Loading...</span></p>
+                    </div>
+                    <p>Download your invoice PDF: [Secure PDF link will be generated]</p>
+                  </div>
+                  <div class="message-footer">
+                    <p>Thank you for your business! 🙏</p>
+                    <p>- Atma Nirbhar Farm</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Info Section -->
+        <div class="col-12">
+          <div class="alert alert-info">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-info-circle me-3 mt-1"></i>
+              <div>
+                <strong>How it works:</strong> We'll generate a secure link to your invoice and create a WhatsApp message. When you click "Send via WhatsApp", WhatsApp will open with the pre-filled message ready to send.
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button"
-                class="btn btn-success"
-                id="sendWhatsAppBtn"
-                disabled>
-          <i class="fab fa-whatsapp me-2"></i>Send via WhatsApp
-        </button>
-      </div>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeWhatsAppModal()">Cancel</button>
+      <button type="button"
+              class="btn btn-success"
+              id="sendWhatsAppBtn"
+              disabled>
+        <i class="fab fa-whatsapp me-2"></i>Send via WhatsApp
+      </button>
     </div>
   </div>
 </div>

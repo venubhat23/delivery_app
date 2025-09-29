@@ -99,14 +99,31 @@ class Invoice < ApplicationRecord
     update!(shared_at: Time.current)
   end
 
-  def public_url(host: nil, port: nil)
+  def public_url(host: nil, port: nil, protocol: nil)
     url_options = { token: share_token }
-    url_options[:host] = "https://atmanirbharfarmbangalore.com"
+
+    # Use provided host or fallback to configured host
+    final_host = host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+    final_protocol = protocol || (Rails.env.production? ? 'https' : 'http')
+
+    url_options[:host] = final_host
+    url_options[:protocol] = final_protocol
+    url_options[:port] = port if port.present?
+
     Rails.application.routes.url_helpers.public_invoice_url(url_options)
   end
 
-  def public_pdf_url(host: nil, port: nil)
+  def public_pdf_url(host: nil, port: nil, protocol: nil)
     url_options = { token: share_token }
+
+    # Use provided host or fallback to configured host
+    final_host = host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+    final_protocol = protocol || (Rails.env.production? ? 'https' : 'http')
+
+    url_options[:host] = final_host
+    url_options[:protocol] = final_protocol
+    url_options[:port] = port if port.present?
+
     Rails.application.routes.url_helpers.public_invoice_download_url(url_options)
   end
   
@@ -122,9 +139,41 @@ class Invoice < ApplicationRecord
   def is_sales_invoice?
     invoice_type == 'sales_invoice'
   end
-  
+
   def month_year
     invoice_date.strftime("%B %Y")
+  end
+
+  # Generate and return public PDF URL
+  def generate_public_pdf_url
+    result = PublicPdfService.generate_invoice_pdf(self)
+    if result[:success]
+      result[:public_url]
+    else
+      result[:fallback_public_url] # Return HTML fallback if PDF fails
+    end
+  end
+
+  # Get direct public PDF URL (if file exists)
+  def public_pdf_direct_url
+    filename = "invoice_#{id}_#{share_token}.pdf"
+
+    if Rails.env.development?
+      host = 'localhost:3002'  # Use development server
+      protocol = 'http'
+    else
+      host = Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+      protocol = 'https'
+    end
+
+    "#{protocol}://#{host}/invoices/#{filename}"
+  end
+
+  # Check if public PDF exists
+  def public_pdf_exists?
+    filename = "invoice_#{id}_#{share_token}.pdf"
+    file_path = Rails.root.join('public', 'invoices', filename)
+    File.exist?(file_path)
   end
   
   private

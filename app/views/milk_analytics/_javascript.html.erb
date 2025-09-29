@@ -2145,4 +2145,189 @@ window.showLoader = showLoader;
 window.hideLoader = hideLoader;
 window.startLoadingTimer = startLoadingTimer;
 
+// Monthly Invoice Functions
+function openMonthlyInvoiceModal() {
+  console.log('🚀 Opening enhanced monthly invoice modal');
+
+  // Update preview first
+  updateInvoicePreview();
+
+  // Show custom modal
+  const modal = document.getElementById('monthlyInvoiceModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
+
+    // Update preview when form values change
+    const formElements = ['invoiceMonth', 'invoiceYear', 'invoiceVendor'];
+    formElements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        // Remove existing listeners to avoid duplicates
+        element.removeEventListener('change', updateInvoicePreview);
+        element.addEventListener('change', updateInvoicePreview);
+      }
+    });
+
+    // Load vendor list based on current selection
+    loadVendorList();
+
+    console.log('✅ Enhanced invoice modal opened successfully');
+  } else {
+    console.error('❌ Monthly invoice modal not found');
+  }
+}
+
+function closeMonthlyInvoiceModal() {
+  console.log('🔒 Closing monthly invoice modal');
+  const modal = document.getElementById('monthlyInvoiceModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+
+    // Ensure body returns to normal state
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+
+    console.log('✅ Modal closed successfully');
+  }
+}
+
+function loadVendorList() {
+  console.log('📋 Loading vendor list for enhanced preview');
+  // This function can be enhanced to fetch vendor statistics
+  // For now, it just triggers the preview update
+  updateInvoicePreview();
+}
+
+function updateInvoicePreview() {
+  const month = document.getElementById('invoiceMonth')?.value;
+  const year = document.getElementById('invoiceYear')?.value;
+  const vendor = document.getElementById('invoiceVendor')?.value;
+  const vendorSelect = document.getElementById('invoiceVendor');
+
+  if (!month || !year || !vendor) return;
+
+  const monthName = document.querySelector(`#invoiceMonth option[value="${month}"]`)?.text || month;
+  const vendorName = vendor === 'all' ? 'All Vendors' :
+                     (vendorSelect?.options[vendorSelect.selectedIndex]?.text || vendor);
+
+  // Update the enhanced preview elements
+  const previewElement = document.getElementById('invoicePreview');
+  if (previewElement) {
+    previewElement.innerHTML = `<strong>${monthName} ${year}</strong>`;
+  }
+
+  const vendorPreviewElement = document.getElementById('vendorPreview');
+  if (vendorPreviewElement) {
+    vendorPreviewElement.innerHTML = `<strong>${vendorName}</strong>`;
+  }
+
+  // Update vendor list preview
+  updateVendorListPreview(vendor);
+}
+
+function updateVendorListPreview(selectedVendor) {
+  const vendorListElement = document.getElementById('vendorList');
+  if (!vendorListElement) return;
+
+  if (selectedVendor === 'all') {
+    const vendorSelect = document.getElementById('invoiceVendor');
+    const vendors = Array.from(vendorSelect.options)
+      .filter(option => option.value !== 'all')
+      .map(option => option.text);
+
+    if (vendors.length > 0) {
+      vendorListElement.innerHTML = `Vendors: ${vendors.join(', ')}`;
+    } else {
+      vendorListElement.innerHTML = 'No vendors found';
+    }
+  } else {
+    const vendorSelect = document.getElementById('invoiceVendor');
+    const vendorName = vendorSelect?.options[vendorSelect.selectedIndex]?.text || selectedVendor;
+    vendorListElement.innerHTML = `Selected vendor: ${vendorName}`;
+  }
+}
+
+function sendMonthlyInvoices() {
+  const form = document.getElementById('monthlyInvoiceForm');
+  const formData = new FormData(form);
+
+  const data = {
+    month: formData.get('month'),
+    year: formData.get('year'),
+    vendor: formData.get('vendor'),
+    generate_if_missing: formData.get('generate_if_missing') ? true : false,
+    send_existing: formData.get('send_existing') ? true : false
+  };
+
+  // Show loading state
+  const sendButton = document.getElementById('sendInvoicesBtn');
+  const originalText = sendButton.innerHTML;
+  sendButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+  sendButton.disabled = true;
+
+  // Make API call
+  fetch('/procurement_schedules/send_monthly_invoices', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showSuccessMessage(data.message || 'Invoices sent successfully!');
+      const modal = bootstrap.Modal.getInstance(document.getElementById('monthlyInvoiceModal'));
+      modal.hide();
+    } else {
+      showErrorMessage(data.error || 'Failed to send invoices');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showErrorMessage('An error occurred while sending invoices');
+  })
+  .finally(() => {
+    // Restore button state
+    sendButton.innerHTML = originalText;
+    sendButton.disabled = false;
+  });
+}
+
+function showSuccessMessage(message) {
+  // Create or update success alert
+  const alertHtml = `
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fas fa-check-circle me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+
+  // Insert at the top of the page
+  const container = document.querySelector('.container-fluid');
+  if (container) {
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+  }
+}
+
+function showErrorMessage(message) {
+  // Create or update error alert
+  const alertHtml = `
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+
+  // Insert at the top of the page
+  const container = document.querySelector('.container-fluid');
+  if (container) {
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+  }
+}
+
 </script>

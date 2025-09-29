@@ -21,32 +21,11 @@
             <%= form.label :customer_id, class: "form-label fw-bold text-primary" do %>
               <i class="fas fa-user me-2"></i>Customer *
             <% end %>
-            <div class="customer-search-container position-relative">
-              <input type="text" 
-                     class="form-control customer-search-input" 
-                     id="customer-search-input"
-                     placeholder="Search customers by name..."
-                     autocomplete="off">
-              <div class="search-icon">
-                <i class="fas fa-search"></i>
-              </div>
-              <%= form.hidden_field :customer_id, id: 'customer-select' %>
-              <div class="customer-suggestions" id="customer-suggestions" style="display: none;">
-                <!-- Customer suggestions will be populated here -->
-              </div>
-              <div class="customer-loading" id="customer-loading" style="display: none;">
-                <i class="fas fa-spinner fa-spin me-2"></i>Searching customers...
-              </div>
-              <%= render 'shared/super_attractive_loader', loader_id: 'superCustomerSearchLoader', loading_text: 'Finding Perfect Customers' %>
-              <div class="selected-customer" id="selected-customer" style="display: none;">
-                <div class="selected-customer-info">
-                  <div class="selected-customer-name"></div>
-                  <div class="selected-customer-phone"></div>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary clear-customer">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
+            <div data-controller="searchable-select" data-searchable-select-search-type-value="local" data-searchable-select-placeholder-value="Search customers...">
+              <%= form.select :customer_id,
+                              options_for_select([['Select customer', '']] + @customers.map { |c| ["#{c.name} - #{c.phone_number}", c.id, { 'data-phone' => c.phone_number, 'data-member' => c.member_id }] }),
+                              { prompt: 'Select customer' },
+                              { class: "form-select customer-select2", data: { "searchable-select-target" => "select" }, required: true, 'data-placeholder' => 'Search and select customer...' } %>
             </div>
             <div class="form-text">
               <small><i class="fas fa-info-circle me-1"></i>Search and select a customer</small>
@@ -359,268 +338,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  initializeCustomerSearch();
   initializePricingCalculations();
   initializeSelect2Dropdowns();
   initializeDateSelectionFeature();
   initializeFormSubmissionLoader();
 });
 
-function initializeCustomerSearch() {
-  // Customer Search Functionality
-  const customerSearchInput = document.getElementById('customer-search-input');
-  const customerSuggestions = document.getElementById('customer-suggestions');
-  const customerLoading = document.getElementById('customer-loading');
-  const selectedCustomer = document.getElementById('selected-customer');
-  const customerSelect = document.getElementById('customer-select');
-
-  // Create super attractive loader instance
-  const superCustomerSearchLoader = createSuperAttractiveLoader('superCustomerSearchLoader');
-
-  let customerSearchTimeout;
-  let currentCustomerSearchTerm = '';
-  let currentPage = 1;
-  let isLoadingMore = false;
-  let hasMoreData = true;
-  
-  if (customerSearchInput) {
-    // Trigger customer search as you type
-    customerSearchInput.addEventListener('input', function(e) {
-      clearTimeout(customerSearchTimeout);
-      const query = this.value.trim();
-      currentCustomerSearchTerm = query;
-      
-      // Reset pagination on new search
-      currentPage = 1;
-      hasMoreData = true;
-      
-      if (query.length === 0) {
-        // Show all customers when input is empty
-        customerSearchTimeout = setTimeout(() => {
-          superCustomerSearchLoader.show(1000, 2500);
-        superCustomerSearchLoader.simulateRealisticLoading();
-          fetchCustomerSuggestions('', true);
-        }, 100);
-        return;
-      }
-      
-      // Add debouncing - wait 300ms after user stops typing
-      customerSearchTimeout = setTimeout(() => {
-        superCustomerSearchLoader.show(1000, 2500);
-        superCustomerSearchLoader.simulateRealisticLoading();
-        fetchCustomerSuggestions(query, true);
-      }, 300);
-    });
-    
-    // Handle focus - show dropdown with all customers
-    customerSearchInput.addEventListener('focus', function() {
-      if (!customerSelect.value) {
-        const query = this.value.trim();
-        currentPage = 1;
-        hasMoreData = true;
-        superCustomerSearchLoader.show(1000, 2500);
-        superCustomerSearchLoader.simulateRealisticLoading();
-        fetchCustomerSuggestions(query, true);
-      }
-    });
-    
-    // Handle blur (with delay to allow clicking suggestions)
-    customerSearchInput.addEventListener('blur', function() {
-      setTimeout(() => {
-        hideCustomerSuggestions();
-      }, 200);
-    });
-  }
-  
-  // Clear customer button
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.clear-customer')) {
-      clearSelectedCustomer();
-    }
-  });
-  
-  function fetchCustomerSuggestions(query, resetList = false) {
-    if (resetList) {
-      currentPage = 1;
-      hasMoreData = true;
-    }
-    
-    fetch(`/assign_deliveries/search_suggestions?q=${encodeURIComponent(query)}&page=${currentPage}`)
-      .then(response => response.json())
-      .then(data => {
-        superCustomerSearchLoader.hide();
-        // Filter only customer suggestions
-        const customerSuggestionsList = data.suggestions.filter(s => s.type === 'customer');
-        hasMoreData = data.has_more;
-        
-        if (resetList || currentPage === 1) {
-          displayCustomerSuggestions(customerSuggestionsList);
-        } else {
-          appendCustomerSuggestions(customerSuggestionsList);
-        }
-        
-        isLoadingMore = false;
-      })
-      .catch(error => {
-        console.error('Customer search error:', error);
-        superCustomerSearchLoader.hide();
-        isLoadingMore = false;
-      });
-  }
-  
-  function displayCustomerSuggestions(suggestions) {
-    if (suggestions.length === 0) {
-      customerSuggestions.innerHTML = '<div class="customer-suggestion-item">No customers found</div>';
-      customerSuggestions.style.display = 'block';
-      return;
-    }
-    
-    const html = suggestions.map(suggestion => {
-      const highlightedName = highlightSearchTerm(suggestion.label, currentCustomerSearchTerm);
-      const phone = suggestion.phone || '';
-      
-      return `
-        <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${phone}">
-          <div class="customer-suggestion-name">${highlightedName}</div>
-          ${phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${phone}</div>` : ''}
-        </div>
-      `;
-    }).join('');
-    
-    customerSuggestions.innerHTML = html;
-    if (hasMoreData) {
-      customerSuggestions.innerHTML += '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>';
-    }
-    customerSuggestions.style.display = 'block';
-    
-    attachSuggestionEventListeners();
-    attachScrollListener();
-  }
-  
-  function appendCustomerSuggestions(suggestions) {
-    if (suggestions.length === 0) return;
-    
-    // Remove the load more indicator if it exists
-    const loadMoreIndicator = customerSuggestions.querySelector('.load-more-indicator');
-    if (loadMoreIndicator) {
-      loadMoreIndicator.remove();
-    }
-    
-    const html = suggestions.map(suggestion => {
-      const highlightedName = highlightSearchTerm(suggestion.label, currentCustomerSearchTerm);
-      const phone = suggestion.phone || '';
-      
-      return `
-        <div class="customer-suggestion-item" data-customer-id="${suggestion.id}" data-customer-name="${suggestion.label}" data-customer-phone="${phone}">
-          <div class="customer-suggestion-name">${highlightedName}</div>
-          ${phone ? `<div class="customer-suggestion-phone"><i class="fas fa-phone me-1"></i>${phone}</div>` : ''}
-        </div>
-      `;
-    }).join('');
-    
-    customerSuggestions.insertAdjacentHTML('beforeend', html);
-    
-    if (hasMoreData) {
-      customerSuggestions.insertAdjacentHTML('beforeend', '<div class="load-more-indicator" style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.85rem;">Scroll for more...</div>');
-    }
-    
-    attachSuggestionEventListeners();
-  }
-  
-  function attachSuggestionEventListeners() {
-    // Add click handlers to new items only
-    document.querySelectorAll('.customer-suggestion-item:not([data-listeners-attached])').forEach(item => {
-      if (item.dataset.customerId) {
-        item.addEventListener('click', function() {
-          selectCustomer(
-            this.dataset.customerId,
-            this.dataset.customerName,
-            this.dataset.customerPhone
-          );
-        });
-        
-        item.addEventListener('mouseenter', function() {
-          document.querySelectorAll('.customer-suggestion-item.active').forEach(active => {
-            active.classList.remove('active');
-          });
-          this.classList.add('active');
-        });
-        
-        item.setAttribute('data-listeners-attached', 'true');
-      }
-    });
-  }
-  
-  function attachScrollListener() {
-    customerSuggestions.removeEventListener('scroll', handleScroll);
-    customerSuggestions.addEventListener('scroll', handleScroll);
-  }
-  
-  function handleScroll() {
-    if (!hasMoreData || isLoadingMore) return;
-    
-    const scrollTop = customerSuggestions.scrollTop;
-    const scrollHeight = customerSuggestions.scrollHeight;
-    const clientHeight = customerSuggestions.clientHeight;
-    
-    // Load more when user scrolls to within 50px of the bottom
-    if (scrollTop + clientHeight >= scrollHeight - 50) {
-      isLoadingMore = true;
-      currentPage++;
-      
-      // Show loading indicator
-      const loadMoreIndicator = customerSuggestions.querySelector('.load-more-indicator');
-      if (loadMoreIndicator) {
-        loadMoreIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading more...';
-      }
-      
-      fetchCustomerSuggestions(currentCustomerSearchTerm, false);
-    }
-  }
-  
-  function selectCustomer(id, name, phone) {
-    customerSelect.value = id;
-    showSelectedCustomer(id, name, phone);
-    hideCustomerSuggestions();
-  }
-  
-  function showSelectedCustomer(id, name, phone) {
-    customerSearchInput.style.display = 'none';
-    selectedCustomer.style.display = 'flex';
-    
-    selectedCustomer.querySelector('.selected-customer-name').textContent = name;
-    selectedCustomer.querySelector('.selected-customer-phone').textContent = phone ? phone : 'No phone number';
-  }
-  
-  function clearSelectedCustomer() {
-    customerSelect.value = '';
-    customerSearchInput.value = '';
-    customerSearchInput.style.display = 'block';
-    selectedCustomer.style.display = 'none';
-    hideCustomerSuggestions();
-  }
-  
-  function highlightSearchTerm(text, term) {
-    if (!term) return text;
-    
-    const regex = new RegExp(`(${term})`, 'gi');
-    return text.replace(regex, '<span class="search-highlight">$1</span>');
-  }
-  
-  function showCustomerLoading() {
-    customerLoading.style.display = 'block';
-    customerSuggestions.style.display = 'none';
-  }
-  
-  function hideCustomerLoading() {
-    customerLoading.style.display = 'none';
-  }
-  
-  function hideCustomerSuggestions() {
-    customerSuggestions.style.display = 'none';
-    customerLoading.style.display = 'none';
-  }
-}
 
 function initializePricingCalculations() {
   // Elements for calculation (matching customer form exactly)
@@ -678,6 +401,43 @@ function initializePricingCalculations() {
 }
 
 function initializeSelect2Dropdowns() {
+  // Initialize Customer Select2 (local search)
+  $('.customer-select2').select2({
+    placeholder: 'Search and select customer...',
+    allowClear: true,
+    templateResult: function(customer) {
+      if (!customer.id) return customer.text;
+
+      var $customer = $('<div class="select2-result-customer"></div>');
+      var $avatar = $('<div class="select2-result-customer__avatar"></div>');
+      var $meta = $('<div class="select2-result-customer__meta"></div>');
+      var $name = $('<div class="select2-result-customer__name"></div>');
+      var $details = $('<div class="select2-result-customer__details"></div>');
+
+      // Extract customer name and phone from the text
+      var parts = customer.text.split(' - ');
+      var customerName = parts[0] || customer.text;
+      var customerPhone = parts[1] || '';
+
+      $avatar.text(customerName.charAt(0).toUpperCase());
+      $name.text(customerName);
+
+      if (customerPhone) {
+        $details.html('<i class="fas fa-phone me-1"></i>' + customerPhone);
+      }
+
+      $meta.append($name).append($details);
+      $customer.append($avatar).append($meta);
+
+      return $customer;
+    },
+    templateSelection: function(customer) {
+      if (!customer.id) return customer.text;
+      var parts = customer.text.split(' - ');
+      return parts[0] || customer.text;
+    }
+  });
+
   // Initialize Product Select2 (local search)
   $('.product-select2').select2({
     placeholder: 'Search products by name...',

@@ -348,6 +348,9 @@ Rails.application.routes.draw do
     member do
       patch :generate_assignments
     end
+    collection do
+      post :send_monthly_invoices
+    end
     
     collection do
       get :analytics

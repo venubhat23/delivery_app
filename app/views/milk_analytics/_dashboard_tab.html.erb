@@ -37,7 +37,7 @@
                     ['Weekly', 'weekly'],
                     ['Monthly', 'monthly'],
                     ['Custom Range', 'custom']
-                  ], params[:date_range] || 'monthly'),
+                  ], params[:date_range] || 'today'),
                   {},
                   {
                     class: "form-select",
@@ -51,14 +51,14 @@
               <div>
                 <label class="form-label fw-bold text-primary mb-1">From Date</label>
                 <%= form.date_field :from_date,
-                    value: params[:from_date] || Date.today.to_s,
+                    value: params[:from_date] || Date.current.to_s,
                     class: "form-control",
                     style: "min-width: 140px;" %>
               </div>
               <div>
                 <label class="form-label fw-bold text-primary mb-1">To Date</label>
                 <%= form.date_field :to_date,
-                    value: params[:to_date] || Date.today.to_s,
+                    value: params[:to_date] || Date.current.to_s,
                     class: "form-control",
                     style: "min-width: 140px;" %>
               </div>

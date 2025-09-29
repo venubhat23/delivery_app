@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invoice #<%= @invoice.invoice_number || @invoice.id %></title>
     <style>
       body {
@@ -590,6 +591,229 @@
         color: white;
       }
 
+      /* Mobile responsiveness */
+      @media screen and (max-width: 768px) {
+        body {
+          padding: 5px;
+          font-size: 11px;
+        }
+
+        .invoice-container {
+          max-width: 100%;
+          padding: 15px;
+          margin: 0;
+        }
+
+        .top-download-section {
+          text-align: center;
+          margin-bottom: 15px;
+        }
+
+        .download-btn {
+          width: 100%;
+          max-width: 200px;
+          padding: 15px 20px;
+          font-size: 16px;
+        }
+
+        /* Header adjustments */
+        .invoice-header-table {
+          width: 100%;
+        }
+
+        .logo-cell {
+          width: 100px;
+          padding-right: 10px;
+        }
+
+        .logo {
+          width: 80px;
+          height: 80px;
+        }
+
+        .company-name {
+          font-size: 20px;
+        }
+
+        .address, .contact {
+          font-size: 11px;
+        }
+
+        /* Invoice meta responsive */
+        .invoice-meta-table {
+          font-size: 12px;
+        }
+
+        .invoice-meta-table td {
+          padding: 8px 4px;
+          font-size: 11px;
+        }
+
+        /* Bill/Ship section */
+        .bill-ship-table {
+          display: block;
+        }
+
+        .bill-ship-table tr {
+          display: block;
+        }
+
+        .bill-ship-table td {
+          display: block;
+          width: 100%;
+          padding: 10px 0;
+          border-bottom: 1px solid #eee;
+        }
+
+        /* Items table responsive */
+        .items-table {
+          font-size: 10px;
+        }
+
+        .items-table th,
+        .items-table td {
+          padding: 4px 2px;
+          font-size: 10px;
+        }
+
+        .items-table th:nth-child(2),
+        .items-table td:nth-child(2) {
+          display: none; /* Hide HSN on mobile */
+        }
+
+        /* Details section responsive */
+        .details-main-table {
+          display: block;
+        }
+
+        .details-main-table tr {
+          display: block;
+        }
+
+        .details-main-table td {
+          display: block;
+          width: 100%;
+          padding: 15px 0;
+          border: none;
+        }
+
+        .bank-details-cell {
+          border-bottom: 2px solid #eee;
+          margin-bottom: 15px;
+        }
+
+        .tax-summary-cell {
+          border-left: none;
+          padding-left: 0;
+        }
+
+        /* Bank details responsive */
+        .bank-details-table {
+          font-size: 11px;
+        }
+
+        .payment-qr-table td {
+          padding: 5px;
+        }
+
+        .qr-image {
+          width: 60px;
+          height: 60px;
+        }
+
+        .upi-icons svg {
+          height: 25px;
+          width: 25px;
+        }
+
+        /* Tax summary responsive */
+        .tax-summary {
+          font-size: 11px;
+          padding: 10px;
+        }
+
+        .tax-summary .tax-line span:last-child {
+          min-width: 60px;
+        }
+
+        /* Terms section responsive */
+        .terms-signature-table {
+          display: block;
+        }
+
+        .terms-signature-table tr {
+          display: block;
+        }
+
+        .terms-signature-table td {
+          display: block;
+          width: 100%;
+          padding: 10px 0;
+        }
+
+        .signature-cell {
+          text-align: center;
+          border-top: 1px solid #eee;
+          margin-top: 15px;
+          padding-top: 15px;
+        }
+
+        .signature-box {
+          width: 120px;
+          height: 60px;
+        }
+
+        /* Share section responsive */
+        .btn-group {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .btn {
+          width: 100%;
+          max-width: 200px;
+          margin-bottom: 10px;
+          justify-content: center;
+        }
+      }
+
+      /* Extra small mobile devices */
+      @media screen and (max-width: 480px) {
+        body {
+          padding: 3px;
+          font-size: 10px;
+        }
+
+        .invoice-container {
+          padding: 10px;
+        }
+
+        .company-name {
+          font-size: 18px;
+        }
+
+        .items-table {
+          font-size: 9px;
+        }
+
+        .items-table th,
+        .items-table td {
+          padding: 3px 1px;
+          font-size: 9px;
+        }
+
+        /* Hide tax column on very small screens */
+        .items-table th:nth-child(5),
+        .items-table td:nth-child(5) {
+          display: none;
+        }
+
+        .tax-summary {
+          font-size: 10px;
+          padding: 8px;
+        }
+      }
+
       /* Responsive adjustments */
       @media print {
         body {
@@ -1034,6 +1258,268 @@
           </td>
         </tr>
       </table>
+    </div>
+
+    <!-- Second Page: Monthly Delivery Report -->
+    <div class="invoice-container" style="margin-top: 30px;">
+      <!-- Page 2 Header -->
+      <table class="invoice-header-table">
+        <tr>
+          <td class="logo-cell">
+            <img class="logo" src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhar Farm Logo" />
+          </td>
+          <td class="company-info-cell">
+            <div class="company-name">Atma Nirbhar Farm</div>
+            <div class="address">
+              #827 4th main 9th Block 2nd Stage Near Hanumagiri temple Nagarbhavi,
+              Bangalore, Karnataka, 560072
+            </div>
+            <div class="contact">
+              <span class="highlight">Mobile:</span> 9972808044 &nbsp;&nbsp;
+              <span class="highlight">Email:</span> atmanirbharfarm@gmail.com
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Top bar -->
+      <div class="top-bar"></div>
+
+      <!-- Monthly Report Header -->
+      <div style="background-color: #5a4ec9; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 18px; font-weight: bold;">
+          📅 Monthly Delivery Report
+        </div>
+        <div style="font-size: 16px;">
+          🚛 <%= @invoice.delivery_assignments.count %> DELIVERIES
+        </div>
+      </div>
+
+      <!-- Customer Details and Summary -->
+      <div style="display: flex; margin-bottom: 20px; gap: 20px;">
+        <div style="flex: 1;">
+          <h3 style="color: #5a4ec9; margin: 0 0 15px 0; font-size: 16px;">CUSTOMER DETAILS</h3>
+          <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;"><%= @invoice.customer&.name %></div>
+          <% if @invoice.customer&.address.present? %>
+            <div style="font-size: 12px; color: #666; margin-bottom: 8px;"><%= @invoice.customer.address %></div>
+          <% end %>
+          <% if @invoice.customer&.phone_number.present? %>
+            <div style="font-size: 12px; color: #666;">📞 <%= @invoice.customer.phone_number %></div>
+          <% end %>
+        </div>
+        <div style="flex: 1; display: flex; gap: 15px;">
+          <div style="flex: 1; text-align: center; background-color: #f0f0f0; padding: 15px; border-radius: 8px;">
+            <div style="font-size: 24px; font-weight: bold; color: #28a745; margin-bottom: 8px;">
+              <%= @invoice.delivery_assignments.where(status: 'completed').count %>
+            </div>
+            <div style="font-size: 12px; color: #666;">Completed</div>
+          </div>
+          <div style="flex: 1; text-align: center; background-color: #f0f0f0; padding: 15px; border-radius: 8px;">
+            <div style="font-size: 24px; font-weight: bold; color: #5a4ec9; margin-bottom: 8px;">
+              ₹<%= number_with_delimiter(@invoice.total_amount.round(2), delimiter: ',') %>
+            </div>
+            <div style="font-size: 12px; color: #666;">Total Amount</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product-wise Summary -->
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="color: #5a4ec9; margin: 0 0 15px 0; font-size: 16px;">📦 Product-wise Summary</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead style="background-color: #343a40; color: white;">
+            <tr>
+              <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">PRODUCT</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">TOTAL QTY</th>
+              <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">UNIT PRICE</th>
+              <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">AMOUNT</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">DELIVERIES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%
+              # Calculate product-wise summary from invoice items
+              product_summary = {}
+              @invoice_items.each do |item|
+                product = item.product
+                if product_summary[product.id]
+                  product_summary[product.id][:quantity] += item.quantity
+                  product_summary[product.id][:total_amount] += (item.quantity * item.unit_price)
+                  product_summary[product.id][:deliveries_count] += 1
+                else
+                  product_summary[product.id] = {
+                    product: product,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    total_amount: (item.quantity * item.unit_price),
+                    deliveries_count: 1
+                  }
+                end
+              end
+            %>
+            <% product_summary.each_with_index do |(product_id, summary), index| %>
+              <tr style="<%= 'background-color: #f8f9fa;' if index.even? %>">
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                  <div style="font-weight: bold; margin-bottom: 5px;"><%= summary[:product].name %></div>
+                  <% if summary[:product].description.present? %>
+                    <div style="font-size: 11px; color: #666; font-style: italic; margin-bottom: 5px;"><%= summary[:product].description %></div>
+                  <% end %>
+                  <% if summary[:product].unit_type.present? %>
+                    <span style="background-color: #6c757d; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;"><%= summary[:product].unit_type %></span>
+                  <% end %>
+                </td>
+                <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">
+                  <span style="font-weight: bold; font-size: 14px;"><%= summary[:quantity] %></span>
+                  <br><small style="color: #666;"><%= summary[:product].unit_type %></small>
+                </td>
+                <td style="padding: 10px; text-align: right; border: 1px solid #ddd; font-weight: bold;">
+                  ₹<%= number_with_delimiter(summary[:unit_price], delimiter: ',') %>
+                </td>
+                <td style="padding: 10px; text-align: right; border: 1px solid #ddd; font-weight: bold; color: #28a745;">
+                  ₹<%= number_with_delimiter(summary[:total_amount], delimiter: ',') %>
+                </td>
+                <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">
+                  <span style="background-color: #5a4ec9; color: white; padding: 5px 12px; border-radius: 15px; font-size: 11px;">
+                    <%= summary[:deliveries_count] %>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot style="background-color: #6c757d; color: white; font-weight: bold;">
+            <tr>
+              <th style="padding: 12px; border: 1px solid #ddd;">GRAND TOTAL</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">
+                <%= product_summary.values.sum { |s| s[:quantity] } %>
+              </th>
+              <th style="padding: 12px; border: 1px solid #ddd;"></th>
+              <th style="padding: 12px; text-align: right; border: 1px solid #ddd; font-size: 16px; color: #28a745;">
+                ₹<%= number_with_delimiter(@invoice.total_amount.round(2), delimiter: ',') %>
+              </th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">
+                <span style="background-color: #28a745; color: white; padding: 5px 12px; border-radius: 15px;">
+                  <%= @invoice.delivery_assignments.count %>
+                </span>
+              </th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Detailed Delivery History -->
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h3 style="color: #5a4ec9; margin: 0; font-size: 16px;">📋 Detailed Delivery History</h3>
+          <small style="color: #666; font-size: 11px;">Sorted by completion date</small>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <thead style="background-color: #f1f3f4;">
+            <tr>
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd; font-size: 11px;">📅 DATE</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd; font-size: 11px;">📦 PRODUCT</th>
+              <th style="padding: 10px; text-align: center; border: 1px solid #ddd; font-size: 11px;">⚖️ QTY</th>
+              <th style="padding: 10px; text-align: right; border: 1px solid #ddd; font-size: 11px;">💰 AMOUNT</th>
+              <th style="padding: 10px; text-align: center; border: 1px solid #ddd; font-size: 11px;">📊 STATUS</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd; font-size: 11px;">👤 DELIVERED BY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date).each_with_index do |assignment, index| %>
+              <tr style="<%= 'background-color: #fff3cd;' if assignment.has_discount? %><%= 'background-color: #f8f9fa;' if index.even? && !assignment.has_discount? %>">
+                <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">
+                  <% display_date = assignment.scheduled_date %>
+                  <%= display_date&.strftime('%d %b %Y') %>
+                  <% if assignment.completed_at.present? %>
+                    <br><small style="color: #28a745; font-size: 10px;"><%= assignment.completed_at.strftime('%H:%M') %></small>
+                  <% end %>
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                  <div style="font-weight: bold; margin-bottom: 3px;"><%= assignment.product.name %></div>
+                  <% if assignment.has_discount? %>
+                    <br><small style="color: #f39c12; font-size: 10px;">
+                      💰 Discount: ₹<%= assignment.discount_amount %>
+                      (<%= assignment.discount_percentage %>%)
+                    </small>
+                  <% end %>
+                </td>
+                <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">
+                  <span style="font-weight: bold;"><%= assignment.quantity %></span>
+                  <br><small style="color: #666; font-size: 10px;"><%= assignment.product.unit_type %></small>
+                </td>
+                <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">
+                  <% if assignment.has_discount? %>
+                    <s style="color: #666; font-size: 10px;">₹<%= number_with_delimiter(assignment.total_amount, delimiter: ',') %></s>
+                    <br><strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount, delimiter: ',') %></strong>
+                  <% else %>
+                    <strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount, delimiter: ',') %></strong>
+                  <% end %>
+                </td>
+                <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">
+                  <% case assignment.status %>
+                  <% when 'completed' %>
+                    <span style="background-color: #28a745; color: white; padding: 3px 8px; border-radius: 12px; font-size: 10px;">
+                      ✅ Completed
+                    </span>
+                  <% when 'pending' %>
+                    <span style="background-color: #ffc107; color: #212529; padding: 3px 8px; border-radius: 12px; font-size: 10px;">
+                      ⏰ Pending
+                    </span>
+                  <% when 'cancelled' %>
+                    <span style="background-color: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 10px;">
+                      ❌ Cancelled
+                    </span>
+                  <% else %>
+                    <span style="background-color: #6c757d; color: white; padding: 3px 8px; border-radius: 12px; font-size: 10px;"><%= assignment.status.humanize %></span>
+                  <% end %>
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                  <div><%= assignment.delivery_person_name %></div>
+                  <% if assignment.special_instructions.present? %>
+                    <br><small style="color: #666; font-size: 10px;">
+                      📝 <%= truncate(assignment.special_instructions, length: 30) %>
+                    </small>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Summary Statistics -->
+      <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div style="flex: 1;">
+          <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 8px;">
+            <h4 style="color: #666; margin: 0 0 10px 0; font-size: 14px;">Total Deliveries</h4>
+            <div style="font-size: 32px; font-weight: bold; color: #5a4ec9;"><%= @invoice.delivery_assignments.count %></div>
+            <small style="color: #666; font-size: 12px;">assignments</small>
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 8px;">
+            <h4 style="color: #666; margin: 0 0 10px 0; font-size: 14px;">Success Rate</h4>
+            <% completed_count = @invoice.delivery_assignments.where(status: 'completed').count %>
+            <% success_rate = @invoice.delivery_assignments.count > 0 ? (completed_count.to_f / @invoice.delivery_assignments.count * 100).round(1) : 0 %>
+            <div style="font-size: 32px; font-weight: bold; color: #28a745;"><%= success_rate %>%</div>
+            <small style="color: #666; font-size: 12px;">completed on time</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Information -->
+      <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; color: #0c5460;">
+        <div style="display: flex; align-items: center;">
+          <div style="font-size: 24px; margin-right: 15px;">ℹ️</div>
+          <div>
+            <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #0c5460;">Monthly Delivery Report</h4>
+            <p style="margin: 0; font-size: 12px;">
+              This report shows all deliveries for <strong><%= @invoice.customer&.name %></strong>
+              during <strong><%= @invoice.invoice_date&.strftime('%B %Y') %></strong> included in this invoice.
+              Total amount: <strong style="color: #28a745;">₹<%= number_with_delimiter(@invoice.total_amount.round(2), delimiter: ',') %></strong>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Share Again Section (visible only on screen) -->

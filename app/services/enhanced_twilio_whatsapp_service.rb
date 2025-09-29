@@ -31,6 +31,10 @@ class EnhancedTwilioWhatsappService
       return false
     end
 
+    # Debug: Log the actual PDF URL being used
+    Rails.logger.info "🔗 Using PDF URL for WhatsApp: #{pdf_url}"
+    puts "🔗 DEBUG: PDF URL = #{pdf_url}"
+
     # Prepare content variables
     content_variables = {
       '1' => invoice.customer.name,
@@ -43,6 +47,10 @@ class EnhancedTwilioWhatsappService
 
     begin
       if @content_sid.present?
+        # Debug: Log what we're sending to Twilio
+        Rails.logger.info "📱 Sending WhatsApp with media_url: #{[pdf_url]}"
+        puts "📱 DEBUG: media_url array = #{[pdf_url].inspect}"
+
         # Use WhatsApp Business template (recommended)
         message = @client.messages.create(
           content_sid: @content_sid,

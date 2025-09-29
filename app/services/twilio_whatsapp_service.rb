@@ -43,7 +43,7 @@ class TwilioWhatsappService
     phone_number = format_phone_number(phone_number)
     # Calculate due date (10 days from now or use invoice due date)
     due_date = invoice.due_date.presence || (Date.current + 10.days)
-      
+
     if public_url.present?
       public_url = public_url
     else
@@ -67,7 +67,7 @@ class TwilioWhatsappService
       to: "whatsapp:#{phone_number}",
       from: @from_number,
       content_variables: content_variables.to_json,
-      media_url: [pdf_url]
+      media_url: [invoice.generate_public_pdf_url]
     )
 
     Rails.logger.info "WhatsApp message sent successfully. SID: #{message.sid}"
@@ -96,15 +96,20 @@ class TwilioWhatsappService
   end
 
   def generate_invoice_pdf_url(invoice)
-    # Generate the full URL for the invoice PDF
-    # This should match your invoice PDF download route
-    Rails.application.routes.url_helpers.download_pdf_invoice_url(
-      invoice,
-      host: Rails.application.config.action_mailer.default_url_options[:host] || 'localhost:3000'
-    )
+    # Generate secure public URL for PDF using the invoice's public_pdf_url method
+    host = Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+    protocol = Rails.env.production? ? 'https' : 'http'
+
+    # Ensure invoice has a share token
+    invoice.generate_share_token if invoice.share_token.blank?
+    invoice.save! if invoice.changed?
+
+    # Generate the public PDF URL with HTTPS
+    invoice.public_pdf_url(host: host, protocol: protocol)
   rescue => e
     Rails.logger.error "Error generating PDF URL for invoice #{invoice.id}: #{e.message}"
-    # Fallback URL using the correct route
-    "#{Rails.application.config.action_mailer.default_url_options[:host] || 'http://localhost:3000'}/invoices/#{invoice.id}/download_pdf"
+    # Fallback URL using public route with token
+    token = invoice.share_token || SecureRandom.urlsafe_base64(32)
+    "#{protocol}://#{host}/invoice/#{token}/download"
   end
 end
