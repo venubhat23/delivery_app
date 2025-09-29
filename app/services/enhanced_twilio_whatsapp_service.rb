@@ -165,6 +165,10 @@ class EnhancedTwilioWhatsappService
     controller.instance_variable_set(:@invoice_items, invoice.invoice_items.includes(:product))
     controller.instance_variable_set(:@customer, invoice.customer)
 
+    # Load delivery assignments for the second page delivery report
+    delivery_assignments = invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+    controller.instance_variable_set(:@delivery_assignments, delivery_assignments)
+
     # Call your existing PDF generation method
     controller.send(:generate_pdf_response)
   rescue => e

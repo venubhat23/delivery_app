@@ -73,6 +73,10 @@ class InvoicePdfService
     controller.instance_variable_set(:@invoice_items, invoice.invoice_items.includes(:product))
     controller.instance_variable_set(:@customer, invoice.customer)
 
+    # Load delivery assignments for the second page delivery report
+    delivery_assignments = invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+    controller.instance_variable_set(:@delivery_assignments, delivery_assignments)
+
     # Generate PDF using WickedPDF or your existing PDF generator
     if defined?(WickedPdf)
       WickedPdf.new.pdf_from_string(
@@ -87,18 +91,25 @@ class InvoicePdfService
   end
 
   def render_invoice_template(invoice)
+    # Load delivery assignments for the second page delivery report
+    delivery_assignments = invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+
     ApplicationController.render(
-      template: 'invoices/pdf_template',
-      layout: 'pdf',
+      template: 'invoices/show',
+      layout: false,
       assigns: {
         invoice: invoice,
         invoice_items: invoice.invoice_items.includes(:product),
-        customer: invoice.customer
+        customer: invoice.customer,
+        delivery_assignments: delivery_assignments
       }
     )
   end
 
   def render_pdf_content(invoice)
+    # Load delivery assignments for the second page delivery report
+    delivery_assignments = invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+
     # Simple HTML to PDF conversion if no PDF gem is available
     html_content = ApplicationController.render(
       template: 'invoices/show',
@@ -106,7 +117,8 @@ class InvoicePdfService
       assigns: {
         invoice: invoice,
         invoice_items: invoice.invoice_items.includes(:product),
-        customer: invoice.customer
+        customer: invoice.customer,
+        delivery_assignments: delivery_assignments
       }
     )
 

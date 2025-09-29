@@ -111,17 +111,25 @@ class PublicPdfService
     controller.request = ActionDispatch::Request.new({})
     controller.response = ActionDispatch::Response.new
 
-    # Set instance variables for the template
+    # Set instance variables for the template - including delivery assignments for second page
     controller.instance_variable_set(:@invoice, @invoice)
     controller.instance_variable_set(:@invoice_items, @invoice.invoice_items.includes(:product))
     controller.instance_variable_set(:@customer, @invoice.customer)
 
-    # Render PDF using WickedPdf
+    # Load delivery assignments for the second page delivery report
+    delivery_assignments = @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+    controller.instance_variable_set(:@delivery_assignments, delivery_assignments)
+
+    # Render PDF using WickedPdf with both pages (invoice + delivery report)
     WickedPdf.new.pdf_from_string(
       controller.render_to_string(
         template: 'invoices/show',
         layout: false,
-        locals: { invoice: @invoice }
+        locals: {
+          invoice: @invoice,
+          invoice_items: @invoice.invoice_items.includes(:product),
+          delivery_assignments: delivery_assignments
+        }
       ),
       page_size: 'A4',
       margin: { top: 5, bottom: 5, left: 5, right: 5 },
@@ -135,16 +143,24 @@ class PublicPdfService
     controller.request = ActionDispatch::Request.new({})
     controller.response = ActionDispatch::Response.new
 
-    # Set instance variables for the template
+    # Set instance variables for the template - including delivery assignments for second page
     controller.instance_variable_set(:@invoice, @invoice)
     controller.instance_variable_set(:@invoice_items, @invoice.invoice_items.includes(:product))
     controller.instance_variable_set(:@customer, @invoice.customer)
 
-    # Render HTML using the PDF template
+    # Load delivery assignments for the second page delivery report
+    delivery_assignments = @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+    controller.instance_variable_set(:@delivery_assignments, delivery_assignments)
+
+    # Render HTML using the PDF template with both pages (invoice + delivery report)
     controller.render_to_string(
-      template: 'invoices/pdf_template',
+      template: 'invoices/show',
       layout: false,
-      locals: { invoice: @invoice }
+      locals: {
+        invoice: @invoice,
+        invoice_items: @invoice.invoice_items.includes(:product),
+        delivery_assignments: delivery_assignments
+      }
     )
   end
 end

@@ -68,11 +68,19 @@ class RenderInvoicePdfService
   private
 
   def generate_pdf_content(invoice)
-    # Use WickedPDF to generate PDF from HTML template
+    # Load delivery assignments for the second page delivery report
+    delivery_assignments = invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+
+    # Use WickedPDF to generate PDF from HTML template with both pages (invoice + delivery report)
     html_content = ApplicationController.new.render_to_string(
-      template: 'invoices/pdf_template',
-      locals: { invoice: invoice },
-      layout: 'pdf'
+      template: 'invoices/show',
+      locals: {
+        invoice: invoice,
+        invoice_items: invoice.invoice_items.includes(:product),
+        customer: invoice.customer,
+        delivery_assignments: delivery_assignments
+      },
+      layout: false
     )
 
     WickedPdf.new.pdf_from_string(
