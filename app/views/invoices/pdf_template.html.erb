@@ -229,6 +229,51 @@
       body { margin: 0; }
       .no-print { display: none; }
     }
+
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+      clear: both;
+      height: 0;
+    }
+
+    .delivery-report {
+      margin-top: 20px;
+    }
+
+    .delivery-report h2 {
+      color: #4a90e2;
+      font-size: 18px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #4a90e2;
+      padding-bottom: 5px;
+    }
+
+    .delivery-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .stat-box {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+      width: 22%;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #4a90e2;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #666;
+      margin-top: 3px;
+    }
   </style>
 </head>
 <body>
@@ -354,5 +399,97 @@
     <p>This is a computer-generated @invoice. For any queries, please contact us.</p>
     <p>Generated on <%= Time.current.strftime('%d %b %Y at %I:%M %p') %></p>
   </div>
+
+  <%
+    # Load delivery assignments if available
+    delivery_assignments = defined?(@delivery_assignments) ? @delivery_assignments : @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+
+    if delivery_assignments.any?
+  %>
+    <div class="page-break"></div>
+
+    <div class="delivery-report">
+      <h2>Monthly Delivery Report</h2>
+
+      <div class="delivery-stats">
+        <div class="stat-box">
+          <div class="stat-value"><%= delivery_assignments.count %></div>
+          <div class="stat-label">Total Deliveries</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value"><%= delivery_assignments.where(status: 'completed').count %></div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value"><%= delivery_assignments.where(status: 'pending').count %></div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value"><%= delivery_assignments.where(status: 'cancelled').count %></div>
+          <div class="stat-label">Cancelled</div>
+        </div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="text-center">Quantity</th>
+            <th class="text-center">Date</th>
+            <th class="text-center">Status</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% delivery_assignments.each do |delivery| %>
+            <tr>
+              <td><%= delivery.product&.name || 'Product' %></td>
+              <td class="text-center"><%= delivery.quantity %></td>
+              <td class="text-center">
+                <%= delivery.completed_at&.strftime('%d %b %Y') || delivery.scheduled_date&.strftime('%d %b %Y') || 'N/A' %>
+              </td>
+              <td class="text-center">
+                <span class="status-badge status-<%= delivery.status %>">
+                  <%= delivery.status.humanize %>
+                </span>
+              </td>
+              <td class="text-right">₹<%= number_with_precision(delivery.quantity * (delivery.unit_price || delivery.product&.price || 0), precision: 2) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <%
+        # Product-wise summary
+        product_summary = delivery_assignments.joins(:product).group('products.name').sum(:quantity)
+      %>
+
+      <% if product_summary.any? %>
+        <div style="margin-top: 30px;">
+          <h3 style="color: #4a90e2; margin-bottom: 15px;">Product-wise Summary</h3>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="text-center">Total Quantity</th>
+                <th class="text-center">Avg per Delivery</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% product_summary.each do |product_name, total_qty| %>
+                <% product_deliveries = delivery_assignments.joins(:product).where('products.name' => product_name) %>
+                <% avg_qty = product_deliveries.count > 0 ? (total_qty.to_f / product_deliveries.count).round(2) : 0 %>
+                <tr>
+                  <td><%= product_name %></td>
+                  <td class="text-center"><%= total_qty %></td>
+                  <td class="text-center"><%= avg_qty %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </body>
 </html>

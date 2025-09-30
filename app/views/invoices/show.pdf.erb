@@ -20,6 +20,20 @@
         border: 1px solid #ddd;
       }
 
+      /* Page break CSS for wkhtmltopdf */
+      .page-break {
+        page-break-before: always;
+        page-break-after: avoid;
+        break-before: page;
+        clear: both;
+        height: 0;
+      }
+
+      .page-break-avoid {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
       /* Header section */
       .invoice-header-table {
         width: 100%;
@@ -895,13 +909,13 @@
     </div>
 
     <!-- Page break for second page -->
-    <div style="page-break-before: always; page-break-after: avoid; break-before: page; clear: both; height: 0;"></div>
+    <div class="page-break"></div>
 
-    <!-- Additional spacing for page break -->
-    <div style="margin-top: 50px; height: 1px; clear: both;"></div>
+    <!-- Additional spacing to ensure clean page break -->
+    <div style="margin-top: 20px; height: 1px; clear: both;"></div>
 
     <!-- Second Page: Monthly Delivery Report -->
-    <div class="invoice-container">
+    <div class="invoice-container page-break-avoid">
       <!-- Page 2 Header -->
       <table class="invoice-header-table">
         <tr>

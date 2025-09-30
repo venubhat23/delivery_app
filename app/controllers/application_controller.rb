@@ -37,13 +37,13 @@ class ApplicationController < ActionController::Base
 
   def serve_sample_pdf
     # Skip authentication for this public sample
-    pdf_path = Rails.root.join('public', 'sample_invoice.pdf')
+    pdf_path = Rails.root.join('public', 'invoices', 'sample_invoice.pdf')
 
     if File.exist?(pdf_path)
       send_file pdf_path,
                 type: 'application/pdf',
                 disposition: 'inline',
-                filename: 'sample-invoice.pdf'
+                filename: 'sample_invoice.pdf'
     else
       render json: { error: 'Sample PDF not found' }, status: :not_found
     end

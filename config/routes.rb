@@ -324,7 +324,7 @@ Rails.application.routes.draw do
   get '/files/invoices/:token/:filename', to: 's3_proxy#serve_invoice_pdf', as: 'proxy_invoice_pdf'
 
   # Sample PDF for testing public access (skip authentication)
-  get '/sample-invoice.pdf', to: 'application#serve_sample_pdf', as: 'sample_invoice_pdf'
+  get '/invoices/sample_invoice.pdf', to: 'application#serve_sample_pdf', as: 'sample_invoice_pdf'
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings' do
