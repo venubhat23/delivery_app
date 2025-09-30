@@ -319,6 +319,12 @@ Rails.application.routes.draw do
 
   # Public PDF serving for WhatsApp (no authentication required)
   get '/invoices/pdf/:filename', to: 'invoices#serve_pdf', as: 'serve_invoice_pdf'
+
+  # S3 Proxy routes (serve S3 files through your domain)
+  get '/files/invoices/:token/:filename', to: 's3_proxy#serve_invoice_pdf', as: 'proxy_invoice_pdf'
+
+  # Sample PDF for testing public access (skip authentication)
+  get '/sample-invoice.pdf', to: 'application#serve_sample_pdf', as: 'sample_invoice_pdf'
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings' do
