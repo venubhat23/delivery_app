@@ -52,7 +52,7 @@ class TwilioWhatsappService
     # Prepare content variables
     content_variables = {
       '1' => invoice.customer.name,
-      '2' => invoice.created_at.strftime('%B %Y'),  # Month year
+      '2' => "September 2025",  # Month year
       '3' => invoice.invoice_number,
       '4' => invoice.total_amount.to_s,
       '5' => due_date.strftime('%d/%m/%Y'),
