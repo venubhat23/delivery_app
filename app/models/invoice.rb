@@ -303,7 +303,6 @@ class Invoice < ApplicationRecord
     assignments = DeliveryAssignment.where(
       customer: customer,
       status: 'completed',
-      completed_at: start_date..end_date,
       scheduled_date: start_date..end_date,
       invoice_generated: false
     ).includes(:product)
@@ -324,7 +323,7 @@ class Invoice < ApplicationRecord
     customers_with_deliveries = Customer.joins(:delivery_assignments)
                                       .where(delivery_assignments: { 
                                         status: 'completed',
-                                        completed_at: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
+                                        scheduled_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
                                         invoice_generated: false
                                       })
                                       .distinct
@@ -347,7 +346,7 @@ class Invoice < ApplicationRecord
                                         delivery_person_id: delivery_person_id,
                                         delivery_assignments: { 
                                           status: 'completed',
-                                          completed_at: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
+                                          scheduled_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
                                           invoice_generated: false
                                         }
                                       )
@@ -371,8 +370,7 @@ class Invoice < ApplicationRecord
                                         id: customer_ids,
                                         delivery_assignments: { 
                                           status: 'completed',
-                                          completed_at: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
-                                          invoice_generated: false
+                                          scheduled_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
                                         }
                                       )
                                       .distinct
