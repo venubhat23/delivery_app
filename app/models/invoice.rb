@@ -304,6 +304,7 @@ class Invoice < ApplicationRecord
       customer: customer,
       status: 'completed',
       completed_at: start_date..end_date,
+      scheduled_date: start_date..end_date,
       invoice_generated: false
     ).includes(:product)
     

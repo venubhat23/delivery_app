@@ -14,6 +14,7 @@ def detect_wkhtmltopdf_path
   
   # Known working paths in order of preference
   candidate_paths = [
+    Rails.root.join('bin', 'wkhtmltopdf').to_s,              # Vendored binary (priority)
     '/usr/bin/wkhtmltopdf',                                    # System package
     '/usr/local/bin/wkhtmltopdf',                             # Manual install
     '/bin/wkhtmltopdf',                                       # Alternative system path
@@ -59,7 +60,20 @@ Rails.logger.info "Final wkhtmltopdf path: #{detected_path}"
 
 # Configure WickedPDF
 WickedPdf.configure do |config|
-  config.exe_path = detected_path
+  # Force vendored binary path in production
+  if Rails.env.production?
+    vendored_path = Rails.root.join('bin', 'wkhtmltopdf').to_s
+    if File.exist?(vendored_path) && File.executable?(vendored_path)
+      config.exe_path = vendored_path
+      Rails.logger.info "Using vendored wkhtmltopdf: #{vendored_path}"
+    else
+      config.exe_path = detected_path
+      Rails.logger.warn "Vendored binary not found, using detected path: #{detected_path}"
+    end
+  else
+    config.exe_path = detected_path
+  end
+
   config.page_size = 'A4'
   config.margin = { top: 5, bottom: 5, left: 5, right: 5 }
   config.encoding = 'UTF-8'
@@ -68,10 +82,11 @@ WickedPdf.configure do |config|
   config.print_media_type = true
   config.lowquality = false
   config.dpi = 75
-  
+
   # Production specific settings
   if Rails.env.production?
-    config.use_xvfb = true
+    # Disable xvfb since vendored binary should work without it
+    config.use_xvfb = false
     config.disable_javascript = true
     config.disable_external_links = false  # Allow external assets
     config.javascript_delay = 1000
@@ -81,7 +96,7 @@ WickedPdf.configure do |config|
     config.disable_plugins = true
     config.disable_internal_links = false
   end
-  
+
   # Debug mode
   config.show_as_html = Rails.env.development? && ENV['DEBUG_PDF'] == 'true'
 end
