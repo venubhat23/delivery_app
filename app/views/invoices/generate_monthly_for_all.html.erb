@@ -1,0 +1,445 @@
+<% content_for :title, "Generate Monthly Invoices" %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="fas fa-file-invoice text-primary"></i>
+            Generate Monthly Invoices
+          </h4>
+          <small class="text-muted">
+            <%= Date::MONTHNAMES[@month] %> <%= @year %>
+          </small>
+        </div>
+
+        <div class="card-body">
+          <!-- Filter Form -->
+          <div class="row mb-4">
+            <div class="col-md-12">
+              <%= form_with url: generate_monthly_for_all_invoices_path, method: :get, local: true, class: "d-flex align-items-end gap-3" do |form| %>
+                <div>
+                  <%= form.label :month, "Month", class: "form-label" %>
+                  <%= form.select :month, options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, @month), {}, { class: "form-select" } %>
+                </div>
+                <div>
+                  <%= form.label :year, "Year", class: "form-label" %>
+                  <%= form.select :year, options_for_select((2020..2030).map { |y| [y, y] }, @year), {}, { class: "form-select" } %>
+                </div>
+                <div>
+                  <%= form.label :delivery_person_id, "Delivery Person", class: "form-label" %>
+                  <%= form.select :delivery_person_id,
+                      options_from_collection_for_select(@delivery_people, :id, :name, @delivery_person_id),
+                      { prompt: "All Delivery People" },
+                      { class: "form-select" } %>
+                </div>
+                <div>
+                  <%= form.submit "Filter", class: "btn btn-outline-primary" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <% if @customers.any? %>
+            <!-- Generation Form -->
+            <%= form_with url: generate_monthly_for_all_invoices_path, method: :post, id: "invoice-generation-form", class: "needs-validation", novalidate: true do |form| %>
+              <%= form.hidden_field :month, value: @month %>
+              <%= form.hidden_field :year, value: @year %>
+              <%= form.hidden_field :delivery_person_id, value: @delivery_person_id %>
+
+              <!-- Customer Selection -->
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>
+                      <i class="fas fa-users text-success"></i>
+                      Available Customers
+                      <span class="badge bg-primary"><%= @customers.count %></span>
+                    </h5>
+                    <div>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllCustomers()">
+                        <i class="fas fa-check-square"></i> Select All
+                      </button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllCustomers()">
+                        <i class="fas fa-square"></i> Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> Only customers without existing invoices for <%= Date::MONTHNAMES[@month] %> <%= @year %> are shown.
+                  </div>
+
+                  <!-- Customer Cards -->
+                  <div class="row" id="customer-list">
+                    <% @customers.each do |customer| %>
+                      <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card customer-card" data-customer-id="<%= customer.id %>">
+                          <div class="card-body">
+                            <div class="form-check">
+                              <%= check_box_tag "customer_ids[]", customer.id, false,
+                                  id: "customer_#{customer.id}",
+                                  class: "form-check-input customer-checkbox" %>
+                              <%= label_tag "customer_#{customer.id}", customer.name,
+                                  class: "form-check-label fw-bold" %>
+                            </div>
+                            <small class="text-muted">
+                              <i class="fas fa-phone"></i> <%= customer.phone_number %>
+                              <% if customer.delivery_person %>
+                                <br><i class="fas fa-truck"></i> <%= customer.delivery_person.name %>
+                              <% end %>
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Submit Button -->
+                  <div class="text-center mt-4">
+                    <%= form.submit "Generate Invoices",
+                        class: "btn btn-success btn-lg",
+                        id: "generate-btn",
+                        disabled: true %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+
+          <% else %>
+            <!-- No Customers Message -->
+            <div class="text-center py-5">
+              <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+              <h4 class="mt-3">All Invoices Generated!</h4>
+              <p class="text-muted">
+                All customers already have invoices for <%= Date::MONTHNAMES[@month] %> <%= @year %>.
+              </p>
+              <%= link_to "View Invoices", invoices_path, class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Attractive Loader Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-5">
+        <!-- Animated Icon -->
+        <div class="mb-4">
+          <i class="fas fa-file-invoice text-primary loading-icon" style="font-size: 4rem;"></i>
+        </div>
+
+        <!-- Progress Info -->
+        <h5 class="mb-3">Generating Invoices</h5>
+        <p class="text-muted mb-4" id="progress-text">Preparing batch processing...</p>
+
+        <!-- Progress Bar -->
+        <div class="progress mb-3" style="height: 8px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated"
+               role="progressbar"
+               style="width: 0%"
+               id="progress-bar"></div>
+        </div>
+
+        <!-- Batch Details -->
+        <div class="row text-center" id="batch-details" style="display: none;">
+          <div class="col-4">
+            <div class="text-primary fw-bold" id="processed-count">0</div>
+            <small class="text-muted">Processed</small>
+          </div>
+          <div class="col-4">
+            <div class="text-success fw-bold" id="success-count">0</div>
+            <small class="text-muted">Success</small>
+          </div>
+          <div class="col-4">
+            <div class="text-danger fw-bold" id="error-count">0</div>
+            <small class="text-muted">Errors</small>
+          </div>
+        </div>
+
+        <!-- Results List -->
+        <div class="mt-4" id="results-container" style="display: none;">
+          <div class="text-start" style="max-height: 200px; overflow-y: auto;">
+            <ul class="list-unstyled mb-0" id="results-list"></ul>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-4" id="action-buttons" style="display: none;">
+          <button type="button" class="btn btn-success" onclick="window.location.href='/invoices'">
+            <i class="fas fa-list"></i> View Invoices
+          </button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Custom Styles */
+.customer-card {
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.customer-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+}
+
+.customer-card.selected {
+  border-color: #28a745;
+  background-color: #f8fff9;
+}
+
+/* Loading Animation */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+.loading-icon {
+  animation: bounce 2s infinite;
+}
+
+/* Progress Animation */
+.progress-bar-animated {
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+  0% { background-position: 1rem 0; }
+  100% { background-position: 0 0; }
+}
+
+/* Results Styling */
+.result-item {
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.result-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.result-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('invoice-generation-form');
+  const generateBtn = document.getElementById('generate-btn');
+  const checkboxes = document.querySelectorAll('.customer-checkbox');
+
+  // Enable/disable generate button based on selection
+  function updateGenerateButton() {
+    const selectedCount = document.querySelectorAll('.customer-checkbox:checked').length;
+    generateBtn.disabled = selectedCount === 0;
+    generateBtn.textContent = selectedCount > 0 ?
+      `Generate ${selectedCount} Invoice${selectedCount !== 1 ? 's' : ''}` :
+      'Generate Invoices';
+  }
+
+  // Add change listener to checkboxes
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const card = this.closest('.customer-card');
+      if (this.checked) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
+      updateGenerateButton();
+    });
+  });
+
+  // Form submission
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const customerIds = Array.from(formData.getAll('customer_ids[]'));
+
+      if (customerIds.length === 0) {
+        alert('Please select at least one customer.');
+        return;
+      }
+
+      // Show loading modal
+      const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+      loadingModal.show();
+
+      // Start batch processing
+      startBatchProcessing(customerIds, formData.get('month'), formData.get('year'));
+    });
+  }
+
+  // Initial button state
+  updateGenerateButton();
+});
+
+// Select/Deselect functions
+function selectAllCustomers() {
+  const checkboxes = document.querySelectorAll('.customer-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = true;
+    checkbox.closest('.customer-card').classList.add('selected');
+  });
+  document.getElementById('generate-btn').disabled = false;
+  document.getElementById('generate-btn').textContent = `Generate ${checkboxes.length} Invoice${checkboxes.length !== 1 ? 's' : ''}`;
+}
+
+function deselectAllCustomers() {
+  const checkboxes = document.querySelectorAll('.customer-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = false;
+    checkbox.closest('.customer-card').classList.remove('selected');
+  });
+  document.getElementById('generate-btn').disabled = true;
+  document.getElementById('generate-btn').textContent = 'Generate Invoices';
+}
+
+// Batch Processing Function
+async function startBatchProcessing(customerIds, month, year) {
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const batchDetails = document.getElementById('batch-details');
+  const resultsContainer = document.getElementById('results-container');
+  const resultsList = document.getElementById('results-list');
+  const actionButtons = document.getElementById('action-buttons');
+
+  try {
+    // Get batch configuration
+    const response = await fetch('/invoices/generate_monthly_for_all', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        customer_ids: customerIds,
+        month: month,
+        year: year
+      })
+    });
+
+    const config = await response.json();
+
+    if (!config.success) {
+      throw new Error(config.message || 'Failed to start batch processing');
+    }
+
+    // Show batch details
+    batchDetails.style.display = 'block';
+    progressText.textContent = `Processing ${config.total_customers} customers in ${config.total_batches} batches...`;
+
+    let totalProcessed = 0;
+    let totalSuccess = 0;
+    let totalErrors = 0;
+
+    // Process each batch
+    for (let batchIndex = 0; batchIndex < config.total_batches; batchIndex++) {
+      progressText.textContent = `Processing batch ${batchIndex + 1} of ${config.total_batches}...`;
+
+      const batchResponse = await fetch('/invoices/process_invoice_batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          batch_index: batchIndex,
+          customer_ids: customerIds,
+          month: month,
+          year: year,
+          batch_size: config.batch_size
+        })
+      });
+
+      const batchResult = await batchResponse.json();
+
+      if (batchResult.success) {
+        totalProcessed += batchResult.processed;
+
+        // Update progress
+        const progressPercent = (totalProcessed / config.total_customers) * 100;
+        progressBar.style.width = progressPercent + '%';
+
+        // Process results
+        batchResult.results.forEach(result => {
+          if (result.success) {
+            totalSuccess++;
+            addResultItem(result.customer_name, result.message, 'success');
+          } else {
+            totalErrors++;
+            addResultItem(result.customer_name, result.message, 'error');
+          }
+        });
+
+        // Process errors
+        batchResult.errors.forEach(error => {
+          totalErrors++;
+          addResultItem(`Customer ${error.customer_id}`, error.error, 'error');
+        });
+
+        // Update counters
+        document.getElementById('processed-count').textContent = totalProcessed;
+        document.getElementById('success-count').textContent = totalSuccess;
+        document.getElementById('error-count').textContent = totalErrors;
+
+        // Show results if any
+        if (totalProcessed > 0) {
+          resultsContainer.style.display = 'block';
+        }
+      }
+
+      // Small delay between batches
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Completion
+    progressBar.style.width = '100%';
+    progressText.textContent = `Completed! ${totalSuccess} successful, ${totalErrors} failed.`;
+    actionButtons.style.display = 'block';
+
+  } catch (error) {
+    console.error('Batch processing error:', error);
+    progressText.textContent = 'Error: ' + error.message;
+    actionButtons.style.display = 'block';
+  }
+}
+
+function addResultItem(customerName, message, type) {
+  const resultsList = document.getElementById('results-list');
+  const li = document.createElement('li');
+  li.className = `result-item result-${type}`;
+  li.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check' : 'times'}"></i>
+    <strong>${customerName}:</strong> ${message}
+  `;
+  resultsList.appendChild(li);
+
+  // Auto-scroll to bottom
+  const container = resultsList.closest('.text-start');
+  container.scrollTop = container.scrollHeight;
+}
+</script>
