@@ -299,7 +299,7 @@ Rails.application.routes.draw do
       post :share_whatsapp
       get :download_pdf
     end
-    
+
     collection do
       get :generate
       post :generate
@@ -310,6 +310,7 @@ Rails.application.routes.draw do
       get :search_suggestions
       get :export_for_whatsapp
       post :generate_and_send_whatsapp
+      get :download_customer_list
     end
   end
   

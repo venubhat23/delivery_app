@@ -2407,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <select name="customer_ids[]" multiple class="form-select customer-select" id="modal-customer-select"
                       data-search="true" data-placeholder="Search customers..." style="height: 120px;">
                 <option value="all" selected>All Customers</option>
-                <% Customer.includes(:delivery_person).order(:name).each do |customer| %>
+                <% Customer.includes(:delivery_person).limit(500).order(:name).each do |customer| %>
                   <option value="<%= customer.id %>" data-delivery-person="<%= customer.delivery_person_id %>">
                     <%= customer.name %> (<%= customer.delivery_person&.name || 'No Delivery Person' %>)
                   </option>
@@ -2415,6 +2415,33 @@ document.addEventListener('DOMContentLoaded', function() {
               </select>
             </div>
             <small class="text-muted">Hold Ctrl/Cmd to select multiple customers</small>
+
+            <!-- Customer Count Display -->
+            <div class="mt-2">
+              <span class="badge bg-primary" id="customer-count-badge">
+                <i class="fas fa-users me-1"></i>
+                <span id="customer-count-text">0 customers selected</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Download Section -->
+        <div class="row g-3 mt-2">
+          <div class="col-12">
+            <div class="card border-secondary">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-download me-2"></i>Download Customer List
+                </h6>
+              </div>
+              <div class="card-body py-2">
+                <p class="small mb-2">Download customer details (Name, ID, Phone) for selected delivery person/customers</p>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="download-customers-btn">
+                  <i class="fas fa-file-pdf me-1"></i>Download Customer List PDF
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2469,8 +2496,9 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     width: 100%;
     max-width: 800px;
-    max-height: 85%;
-    overflow: hidden;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
     z-index: 10001;
     animation: modalFadeIn 0.3s ease-out;
     margin: 0 20px;
@@ -2484,6 +2512,7 @@ document.addEventListener('DOMContentLoaded', function() {
     justify-content: space-between;
     align-items: center;
     border-radius: 10px 10px 0 0;
+    flex-shrink: 0;
   }
 
   #generateMonthlyModal .custom-modal-title {
@@ -2510,8 +2539,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   #generateMonthlyModal .custom-modal-body {
     padding: 1.5rem;
-    max-height: 70vh;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0;
   }
 
   #generateMonthlyModal .custom-modal-footer {
@@ -2522,6 +2552,7 @@ document.addEventListener('DOMContentLoaded', function() {
     gap: 0.5rem;
     background-color: #f8f9fa;
     border-radius: 0 0 10px 10px;
+    flex-shrink: 0;
   }
 
   /* Responsive adjustments */
@@ -3086,21 +3117,24 @@ document.addEventListener('DOMContentLoaded', function() {
   // Filter customers based on selected delivery person
   function filterCustomersByDeliveryPerson() {
     const selectedDeliveryPersonId = deliveryPersonSelect.value;
-    
+
     // Clear current options except "All Customers"
     customerSelect.innerHTML = '<option value="all" selected>All Customers</option>';
-    
+
     // Filter and add relevant customers
     originalCustomerOptions.forEach(option => {
       if (option.value === 'all') return; // Skip the "All Customers" option
-      
+
       const customerDeliveryPersonId = option.getAttribute('data-delivery-person');
-      
-      if (selectedDeliveryPersonId === 'all' || 
+
+      if (selectedDeliveryPersonId === 'all' ||
           selectedDeliveryPersonId === customerDeliveryPersonId) {
         customerSelect.appendChild(option.cloneNode(true));
       }
     });
+
+    // Update customer count after filtering
+    updateCustomerCount();
   }
   
   // Handle delivery person selection change
@@ -3118,22 +3152,58 @@ document.addEventListener('DOMContentLoaded', function() {
   customerSelect.addEventListener('change', function() {
     const allOption = customerSelect.querySelector('option[value="all"]');
     const otherOptions = Array.from(customerSelect.options).filter(opt => opt.value !== 'all');
-    
+
     // If "All Customers" is selected, deselect others
     if (allOption && allOption.selected && customerSelect.selectedOptions.length > 1) {
       otherOptions.forEach(opt => opt.selected = false);
     }
-    
+
     // If any specific customer is selected, deselect "All Customers"
     if (otherOptions.some(opt => opt.selected) && allOption) {
       allOption.selected = false;
     }
-    
+
     // If nothing is selected, select "All Customers"
     if (customerSelect.selectedOptions.length === 0 && allOption) {
       allOption.selected = true;
     }
+
+    // Update customer count
+    updateCustomerCount();
   });
+
+  // Function to update customer count display
+  function updateCustomerCount() {
+    const customerSelect = document.getElementById('modal-customer-select');
+    const countText = document.getElementById('customer-count-text');
+
+    if (!customerSelect || !countText) return;
+
+    const selectedOptions = Array.from(customerSelect.selectedOptions);
+    const allOption = customerSelect.querySelector('option[value="all"]');
+
+    let count = 0;
+    let text = '';
+
+    if (allOption && allOption.selected) {
+      // Count all visible options except "All Customers"
+      const visibleOptions = Array.from(customerSelect.options)
+        .filter(opt => opt.value !== 'all' && opt.style.display !== 'none');
+      count = visibleOptions.length;
+      text = `${count} customers (All)`;
+    } else {
+      count = selectedOptions.length;
+      text = count === 1 ? `${count} customer selected` : `${count} customers selected`;
+    }
+
+    countText.textContent = text;
+
+    // Update badge color based on count
+    const badge = document.getElementById('customer-count-badge');
+    if (badge) {
+      badge.className = count > 0 ? 'badge bg-primary' : 'badge bg-secondary';
+    }
+  }
   
   // Initialize search functionality when modal opens
   document.getElementById('generateMonthlyModal').addEventListener('shown.bs.modal', function() {
@@ -3147,11 +3217,69 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add search functionality
     addSearchToDeliveryPerson();
     addSearchToCustomer();
-    
+
     // Reset selections
     deliveryPersonSelect.value = 'all';
     filterCustomersByDeliveryPerson();
+
+    // Initialize customer count
+    updateCustomerCount();
+
+    // Add PDF download functionality
+    setupPdfDownload();
   });
+
+  // Setup PDF download functionality
+  function setupPdfDownload() {
+    const downloadBtn = document.getElementById('download-customers-btn');
+    if (downloadBtn) {
+      downloadBtn.onclick = function() {
+        downloadCustomerListPdf();
+      };
+    }
+  }
+
+  // Download customer list as PDF
+  function downloadCustomerListPdf() {
+    const deliveryPersonSelect = document.getElementById('modal-delivery-person-select');
+    const customerSelect = document.getElementById('modal-customer-select');
+
+    if (!deliveryPersonSelect || !customerSelect) return;
+
+    const selectedDeliveryPersonId = deliveryPersonSelect.value;
+    const selectedCustomerIds = Array.from(customerSelect.selectedOptions)
+      .map(opt => opt.value)
+      .filter(val => val !== 'all');
+
+    // Prepare data for download
+    const params = new URLSearchParams({
+      delivery_person_id: selectedDeliveryPersonId,
+      format: 'pdf'
+    });
+
+    // Add customer IDs if specific customers are selected
+    if (selectedCustomerIds.length > 0) {
+      selectedCustomerIds.forEach(id => params.append('customer_ids[]', id));
+    }
+
+    // Create download URL - add .pdf extension for correct routing
+    const downloadUrl = '/invoices/download_customer_list.pdf?' + params.toString();
+
+    // Trigger download
+    try {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'customer_list.pdf';
+      link.target = '_blank'; // Open in new tab if download fails
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: open in new window
+      window.open(downloadUrl, '_blank');
+    }
+  }
   
   // Clean up when modal closes
   document.getElementById('generateMonthlyModal').addEventListener('hidden.bs.modal', function() {

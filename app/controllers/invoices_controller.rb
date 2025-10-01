@@ -66,6 +66,9 @@ class InvoicesController < ApplicationController
 def show
   @invoice_items = @invoice.invoice_items.includes(:product)
   @customer = @invoice.customer
+
+  # Load delivery assignments for the second page delivery report
+  @delivery_assignments = @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
   
   respond_to do |format|
     format.html { render 'show_html' }  # Use new HTML template with actions
@@ -544,35 +547,41 @@ end
   # Public invoice view (no authentication required)
   def public_view
     @invoice = Invoice.find_by(share_token: params[:token])
-    
+
     if @invoice.nil?
       render file: "#{Rails.root}/public/404.html", layout: false, status: 404
       return
     end
-    
+
     # Mark as shared if first view
     @invoice.mark_as_shared! if @invoice.shared_at.nil?
-    
+
     @invoice_items = @invoice.invoice_items.includes(:product)
     @customer = @invoice.customer
-    
+
+    # Load delivery assignments for the second page delivery report
+    @delivery_assignments = @invoice.delivery_assignments.includes(:product, :user, :delivery_person).order(:completed_at, :scheduled_date)
+
     render layout: 'public'
   end
   
   # Public PDF download (no authentication required)
   def public_download_pdf
     @invoice = Invoice.find_by(share_token: params[:token])
-    
+
     if @invoice.nil?
       Rails.logger.warn "Invoice not found for token: #{params[:token]}"
       render file: "#{Rails.root}/public/404.html", layout: false, status: 404
       return
     end
-    
+
     Rails.logger.info "Generating PDF for invoice #{@invoice.id} with token #{params[:token]}"
-    
+
     @invoice_items = @invoice.invoice_items.includes(:product)
     @customer = @invoice.customer
+
+    # Load delivery assignments for the second page delivery report
+    @delivery_assignments = @invoice.delivery_assignments.includes(:product, :user, :delivery_person).order(:completed_at, :scheduled_date)
     
     respond_to do |format|
       format.pdf do
@@ -596,6 +605,9 @@ end
     @invoice_items = @invoice.invoice_items.includes(:product)
     @customer = @invoice.customer
 
+    # Load delivery assignments for the second page delivery report
+    @delivery_assignments = @invoice.delivery_assignments.includes(:product, :user, :delivery_person).order(:completed_at, :scheduled_date)
+
     respond_to do |format|
       format.pdf do
         generate_pdf_response
@@ -615,6 +627,7 @@ end
 
   # Generate and send invoice via WhatsApp
   def generate_and_send_whatsapp
+    debugger
     customer_id = params[:customer_id]
     month = params[:month].to_i
     year = params[:year].to_i
@@ -688,7 +701,7 @@ end
       if phone_number.present? && customer.phone_number != phone_number
         customer.update(phone_number: phone_number)
       end
-
+      debugger
       # Send via Twilio WhatsApp service
       twilio_success = false
       twilio_error = nil
@@ -820,16 +833,16 @@ end
                      .where(status: ['pending', 'generated'])
                      .where(shared_at: nil)
                      .where.not(customer: { phone_number: [nil, ''] })
-    
+
     # Apply filters if provided
     if params[:month].present? && params[:year].present?
       invoices = invoices.by_month(params[:month], params[:year])
     end
-    
+
     if params[:customer_id].present?
       invoices = invoices.where(customer_id: params[:customer_id])
     end
-    
+
     whatsapp_data = invoices.map do |invoice|
       {
         id: invoice.id,
@@ -843,13 +856,33 @@ end
         pdf_url: invoice_url(invoice, format: :pdf, host: request.host_with_port, protocol: request.protocol)
       }
     end
-    
+
     render json: {
       invoices: whatsapp_data,
       total_count: whatsapp_data.length,
       timestamp: Time.current.iso8601,
       message: "#{whatsapp_data.length} invoices ready for WhatsApp delivery"
     }
+  end
+
+  # Download customer list as PDF
+  def download_customer_list
+    begin
+      delivery_person_id = params[:delivery_person_id] || 'all'
+      @customers = Customer.includes(:delivery_person).order(:name).limit(10)
+      @delivery_person = nil
+
+      respond_to do |format|
+        format.html do
+          render plain: "Customer list test - Found #{@customers.count} customers"
+        end
+        format.pdf do
+          render plain: "PDF download test - Found #{@customers.count} customers", content_type: 'application/pdf'
+        end
+      end
+    rescue => e
+      render plain: "Error: #{e.message}", status: 500
+    end
   end
   
   # Mark invoice as sent via WhatsApp

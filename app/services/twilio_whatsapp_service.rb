@@ -5,9 +5,9 @@ require 'json'
 class TwilioWhatsappService
   def initialize
     @account_sid = 'AC1c16e45dd041d5fb75f4c0b16e4b1e1e'
-    @auth_token = '4f9a9be6caccd2e5bea55c892ed96e60'
-    @content_sid = 'HXebaf5fbe484dc5d8995a04882f82154c'
-    @from_number = 'whatsapp:+917338500872'
+    @auth_token = '775eb2c0f5253b42ba31911817af146e'
+    @content_sid = 'HX6d6a076f9410bfa567222bbb68fb71b2'
+    @from_number = 'whatsapp:+917619444966'
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
   end
 
@@ -61,14 +61,20 @@ class TwilioWhatsappService
 
     # Generate PDF URL for media attachment
     pdf_url = public_url
-
+    # message = @client.messages.create(
+    #   content_sid: @content_sid,
+    #   to: "whatsapp:#{phone_number}",
+    #   from: @from_number,
+    #   content_variables: content_variables.to_json,
+    #   mediaUrl: ['https://atmanirbharfarmbangalore.com/invoices/1.pdf']
+    # )
     message = @client.messages.create(
       content_sid: @content_sid,
       to: "whatsapp:#{phone_number}",
       from: @from_number,
-      content_variables: content_variables.to_json,
-      media_url: ['https://atmanirbharfarmbangalore.com/invoices/1.pdf']
+      content_variables: content_variables.to_json
     )
+
 
     Rails.logger.info "WhatsApp message sent successfully. SID: #{message.sid}"
 

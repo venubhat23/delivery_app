@@ -1428,8 +1428,14 @@
             </tr>
           </thead>
           <tbody>
-            <% @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date).each_with_index do |assignment, index| %>
-              <tr style="<%= 'background-color: #fff3cd;' if assignment.has_discount? %><%= 'background-color: #f8f9fa;' if index.even? && !assignment.has_discount? %>">
+            <% @delivery_assignments.each_with_index do |assignment, index| %>
+              <%
+                # Calculate amounts
+                total_amount = assignment.quantity * (assignment.product.price || 0)
+                has_discount = assignment.discount_amount > 0
+                discount_percentage = has_discount && total_amount > 0 ? ((assignment.discount_amount / total_amount) * 100).round(1) : 0
+              %>
+              <tr style="<%= 'background-color: #fff3cd;' if has_discount %><%= 'background-color: #f8f9fa;' if index.even? && !has_discount %>">
                 <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">
                   <% display_date = assignment.scheduled_date %>
                   <%= display_date&.strftime('%d %b %Y') %>
@@ -1439,10 +1445,10 @@
                 </td>
                 <td style="padding: 8px; border: 1px solid #ddd;">
                   <div style="font-weight: bold; margin-bottom: 3px;"><%= assignment.product.name %></div>
-                  <% if assignment.has_discount? %>
+                  <% if has_discount %>
                     <br><small style="color: #f39c12; font-size: 10px;">
                       💰 Discount: ₹<%= assignment.discount_amount %>
-                      (<%= assignment.discount_percentage %>%)
+                      (<%= discount_percentage %>%)
                     </small>
                   <% end %>
                 </td>
@@ -1451,11 +1457,11 @@
                   <br><small style="color: #666; font-size: 10px;"><%= assignment.product.unit_type %></small>
                 </td>
                 <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">
-                  <% if assignment.has_discount? %>
-                    <s style="color: #666; font-size: 10px;">₹<%= number_with_delimiter(assignment.total_amount, delimiter: ',') %></s>
-                    <br><strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount, delimiter: ',') %></strong>
+                  <% if has_discount %>
+                    <s style="color: #666; font-size: 10px;">₹<%= number_with_delimiter(total_amount, delimiter: ',') %></s>
+                    <br><strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount_after_discount, delimiter: ',') %></strong>
                   <% else %>
-                    <strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount, delimiter: ',') %></strong>
+                    <strong style="color: #28a745;">₹<%= number_with_delimiter(assignment.final_amount_after_discount, delimiter: ',') %></strong>
                   <% end %>
                 </td>
                 <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">
@@ -1477,7 +1483,7 @@
                   <% end %>
                 </td>
                 <td style="padding: 8px; border: 1px solid #ddd;">
-                  <div><%= assignment.delivery_person_name %></div>
+                  <div><%= assignment.user&.name || assignment.delivery_person&.name || 'Not assigned' %></div>
                   <% if assignment.special_instructions.present? %>
                     <br><small style="color: #666; font-size: 10px;">
                       📝 <%= truncate(assignment.special_instructions, length: 30) %>

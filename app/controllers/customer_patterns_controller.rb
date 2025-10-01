@@ -918,8 +918,8 @@ class CustomerPatternsController < ApplicationController
             id: row[0],
             name: row[1],
             to_param: row[0].to_s,  # This is needed for Rails path helpers
-            invoice_created_at: row[10] ? Time.parse(row[10]) : nil,
-            invoice_sent_at: row[11] ? Time.parse(row[11]) : nil
+            invoice_created_at: row[10].is_a?(String) ? Time.parse(row[10]) : row[10],
+            invoice_sent_at: row[11].is_a?(String) ? Time.parse(row[11]) : row[11]
           ),
           delivery_person_name: row[2] || "Not Assigned",
           total_liters: row[5].to_f.round(2),
