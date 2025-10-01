@@ -627,7 +627,6 @@ end
 
   # Generate and send invoice via WhatsApp
   def generate_and_send_whatsapp
-    debugger
     customer_id = params[:customer_id]
     month = params[:month].to_i
     year = params[:year].to_i
@@ -701,7 +700,6 @@ end
       if phone_number.present? && customer.phone_number != phone_number
         customer.update(phone_number: phone_number)
       end
-      debugger
       # Send via Twilio WhatsApp service
       twilio_success = false
       twilio_error = nil
