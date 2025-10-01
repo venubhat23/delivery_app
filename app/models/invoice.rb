@@ -235,6 +235,7 @@ class Invoice < ApplicationRecord
   before_create :generate_share_token
   before_save :calculate_total_amount
   after_create :mark_delivery_assignments_as_invoiced
+  after_create :mark_customer_invoice_created
   
   def profit_amount
     return 0 unless invoice_type == 'profit_invoice'
@@ -397,6 +398,10 @@ class Invoice < ApplicationRecord
   
   def mark_delivery_assignments_as_invoiced
     delivery_assignments.update_all(invoice_generated: true, invoice_id: id)
+  end
+
+  def mark_customer_invoice_created
+    customer.update_column(:invoice_created_at, Time.current) if customer
   end
 
   private

@@ -6,7 +6,7 @@ class TwilioWhatsappService
   def initialize
     @account_sid = 'AC1c16e45dd041d5fb75f4c0b16e4b1e1e'
     @auth_token = '4f9a9be6caccd2e5bea55c892ed96e60'
-    @content_sid = 'HX76519f55cd2df98449cb2a99852d796a'
+    @content_sid = 'HXebaf5fbe484dc5d8995a04882f82154c'
     @from_number = 'whatsapp:+917338500872'
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
   end
@@ -67,10 +67,14 @@ class TwilioWhatsappService
       to: "whatsapp:#{phone_number}",
       from: @from_number,
       content_variables: content_variables.to_json,
-      media_url: [invoice.generate_public_pdf_url]
+      media_url: ['https://atmanirbharfarmbangalore.com/invoices/1.pdf']
     )
 
     Rails.logger.info "WhatsApp message sent successfully. SID: #{message.sid}"
+
+    # Mark customer as invoice sent
+    invoice.customer.update_column(:invoice_sent_at, Time.current) if invoice.customer
+
     true
   rescue => e
     Rails.logger.error "Twilio WhatsApp error: #{e.message}"

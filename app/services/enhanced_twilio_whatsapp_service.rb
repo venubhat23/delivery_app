@@ -93,19 +93,15 @@ class EnhancedTwilioWhatsappService
   private
 
   def generate_invoice_pdf_url(invoice)
-    # Method 1: AWS S3 Upload (Production Ready)
-    if aws_configured?
-      return upload_to_s3_and_get_url(invoice)
-    end
+    # Use the new PublicPdfService with clean URLs
+    result = PublicPdfService.generate_invoice_pdf(invoice)
 
-    # Method 2: Public Share URL (Good for development/small scale)
-    if invoice.share_token.present?
-      return build_public_url(invoice)
+    if result[:success]
+      return result[:public_url]
+    else
+      Rails.logger.error "PDF generation failed: #{result[:error]}"
+      return nil
     end
-
-    # Method 3: Generate token and create URL
-    invoice.update!(share_token: generate_share_token) if invoice.share_token.blank?
-    build_public_url(invoice)
   rescue => e
     Rails.logger.error "PDF URL generation failed: #{e.message}"
     nil

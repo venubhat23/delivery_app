@@ -52,7 +52,7 @@ class PublicPdfService
           success: true,
           file_path: file_path.to_s,
           filename: filename,
-          public_url: generate_local_public_url(filename),
+          public_url: generate_proxy_url(filename),
           storage: 'local',
           message: "PDF generated successfully locally (S3 not configured)"
         }
@@ -108,20 +108,19 @@ class PublicPdfService
   end
 
   def generate_proxy_url(filename)
-    # Use your app domain to serve S3 files
+    # Use clean URL format: /invoices/123.pdf
     if Rails.env.development?
       host = 'localhost:3002'
       protocol = 'http'
     else
-      # Your Render app domain
-      host = ENV['RENDER_EXTERNAL_URL']&.gsub(/https?:\/\//, '') ||
-             "#{ENV['RENDER_SERVICE_NAME']}.onrender.com" ||
-             Rails.application.config.action_controller.default_url_options[:host] ||
-             'atmanirbharfarmbangalore.com'
+      # Your production domain
+      host = 'atmanirbharfarmbangalore.com'
       protocol = 'https'
     end
 
-    "#{protocol}://#{host}/files/invoices/#{@invoice.share_token}/#{filename}"
+    # Clean filename format: just invoice ID + .pdf
+    clean_filename = "#{@invoice.id}.pdf"
+    "#{protocol}://#{host}/invoices/#{clean_filename}"
   end
 
   def generate_s3_https_url(s3_key)
@@ -163,7 +162,8 @@ class PublicPdfService
   end
 
   def generate_s3_key
-    "invoices/#{@invoice.share_token || @invoice.id}/invoice_#{@invoice.invoice_number || @invoice.id}.pdf"
+    # Simple S3 key that matches our clean URL: invoices/123.pdf
+    "invoices/#{@invoice.id}.pdf"
   end
 
   def upload_to_s3(s3_key, content, content_type: 'application/pdf')

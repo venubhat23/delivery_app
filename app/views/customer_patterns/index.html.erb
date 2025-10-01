@@ -397,7 +397,23 @@
                   { class: "form-select form-control-modern" } %>
             </div>
 
-            <div class="col-md-4 d-flex align-items-end">
+            <div class="col-md-2">
+              <label class="form-label fw-bold text-dark mb-3">Invoice Status</label>
+              <%= form.select :invoice_status,
+                  options_for_select([
+                    ["📄 All", ""],
+                    ["✅ Invoice Created & Sent", "created_and_sent"],
+                    ["📝 Invoice Created Only", "created_only"],
+                    ["📧 Invoice Sent Only", "sent_only"],
+                    ["⏳ Invoice Not Created", "not_created"],
+                    ["❌ Invoice Not Sent", "not_sent"],
+                    ["🚫 No Invoice Activity", "no_activity"]
+                  ], params[:invoice_status]),
+                  {},
+                  { class: "form-select form-control-modern" } %>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
               <div class="d-flex gap-3 w-100">
                 <%= form.submit "🔍 Apply Filters",
                     class: "btn btn-modern flex-fill" %>
@@ -442,6 +458,12 @@
                   </th>
                   <th class="text-nowrap fw-bold text-white" style="font-size: 14px; letter-spacing: 1px;">
                     <i class="fas fa-chart-line me-2"></i>PATTERN STATUS
+                  </th>
+                  <th class="text-nowrap fw-bold text-center text-white" style="font-size: 14px; letter-spacing: 1px;">
+                    <i class="fas fa-file-invoice me-2"></i>INVOICE CREATED
+                  </th>
+                  <th class="text-nowrap fw-bold text-center text-white" style="font-size: 14px; letter-spacing: 1px;">
+                    <i class="fas fa-paper-plane me-2"></i>INVOICE SENT
                   </th>
                   <th class="text-nowrap fw-bold text-center text-white" style="font-size: 14px; letter-spacing: 1px;">
                     <i class="fas fa-tools me-2"></i>ACTIONS
@@ -527,6 +549,28 @@
                         </div>
                       </td>
                       <td class="align-middle text-center p-4">
+                        <% if data[:customer].invoice_created_at.present? %>
+                          <div class="badge badge-modern" style="background: linear-gradient(135deg, #0f9b0f 0%, #38ef7d 100%); font-size: 11px;">
+                            ✅ <%= data[:customer].invoice_created_at.strftime('%d/%m') %>
+                          </div>
+                        <% else %>
+                          <div class="badge badge-modern" style="background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%); font-size: 11px;">
+                            ⏳ Not Created
+                          </div>
+                        <% end %>
+                      </td>
+                      <td class="align-middle text-center p-4">
+                        <% if data[:customer].invoice_sent_at.present? %>
+                          <div class="badge badge-modern" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); font-size: 11px;">
+                            📧 <%= data[:customer].invoice_sent_at.strftime('%d/%m') %>
+                          </div>
+                        <% else %>
+                          <div class="badge badge-modern" style="background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%); font-size: 11px;">
+                            ❌ Not Sent
+                          </div>
+                        <% end %>
+                      </td>
+                      <td class="align-middle text-center p-4">
                         <div class="d-flex gap-2 justify-content-center flex-wrap">
                           <%= link_to customer_path(data[:customer].id),
                               class: "btn btn-modern",
@@ -557,7 +601,7 @@
                   <% end %>
                 <% else %>
                   <tr>
-                    <td colspan="9" class="text-center py-4">
+                    <td colspan="11" class="text-center py-4">
                       <div class="py-2">
                         <i class="fas fa-search fs-2 text-muted mb-2"></i>
                         <h6 class="text-muted">No customer data found for <%= @month_name %></h6>

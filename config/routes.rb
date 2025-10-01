@@ -323,8 +323,8 @@ Rails.application.routes.draw do
   # S3 Proxy routes (serve S3 files through your domain)
   get '/files/invoices/:token/:filename', to: 's3_proxy#serve_invoice_pdf', as: 'proxy_invoice_pdf'
 
-  # Sample PDF for testing public access (skip authentication)
-  get '/invoices/sample_invoice.pdf', to: 'application#serve_sample_pdf', as: 'sample_invoice_pdf'
+  # Clean URL pattern for invoices: /invoices/123.pdf -> S3 proxy
+  get '/invoices/:filename', to: 'invoice_files#show', constraints: { filename: /.*\.pdf/ }, as: 'invoice_file'
   
   # Admin Settings
   resources :admin_settings, path: 'admin-settings' do

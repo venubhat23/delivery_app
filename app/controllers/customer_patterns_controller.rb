@@ -8,12 +8,13 @@ class CustomerPatternsController < ApplicationController
     @customer_id = params[:customer_id].presence
     @pattern_filter = params[:pattern].presence
     @customer_name = params[:customer_name].presence
+    @invoice_status = params[:invoice_status].presence
     @page = params[:page]&.to_i || 1
     @per_page = params[:per_page]&.to_i || 60
 
     # Cache key for this specific request with timestamp for real-time updates
     cache_timestamp = Time.current.to_i / 30 # Changes every 30 seconds
-    cache_key = "customer_patterns_#{@current_month}_#{@current_year}_#{@delivery_person_id}_#{@customer_id}_#{@pattern_filter}_#{@customer_name}_#{@page}_#{@per_page}_#{cache_timestamp}"
+    cache_key = "customer_patterns_#{@current_month}_#{@current_year}_#{@delivery_person_id}_#{@customer_id}_#{@pattern_filter}_#{@customer_name}_#{@invoice_status}_#{@page}_#{@per_page}_#{cache_timestamp}"
 
     # Try to get from cache first
     cached_data = Rails.cache.read(cache_key)
@@ -46,7 +47,7 @@ class CustomerPatternsController < ApplicationController
     end_date = start_date.end_of_month
 
     # Use optimized database query with CTEs and window functions
-    result = execute_optimized_patterns_query(start_date, end_date, @delivery_person_id, @customer_id, @pattern_filter, @customer_name, @page, @per_page)
+    result = execute_optimized_patterns_query(start_date, end_date, @delivery_person_id, @customer_id, @pattern_filter, @customer_name, @invoice_status, @page, @per_page)
 
     @total_customers = result[:total_customers]
     @regular_count = result[:regular_count]
@@ -794,12 +795,12 @@ class CustomerPatternsController < ApplicationController
   end
 
   # Optimized query with database-level pagination and heavy caching
-  def execute_optimized_patterns_query(start_date, end_date, delivery_person_id, customer_id, pattern_filter, customer_name, page, per_page)
+  def execute_optimized_patterns_query(start_date, end_date, delivery_person_id, customer_id, pattern_filter, customer_name, invoice_status, page, per_page)
     days_in_month = end_date.day
 
     # Create a comprehensive cache key with timestamp for better cache invalidation
     cache_timestamp = Time.current.to_i / 60 # Changes every minute
-    cache_key = "customer_patterns_optimized_#{start_date}_#{end_date}_#{delivery_person_id}_#{customer_id}_#{pattern_filter}_#{customer_name}_#{page}_#{per_page}_v4_#{cache_timestamp}"
+    cache_key = "customer_patterns_optimized_#{start_date}_#{end_date}_#{delivery_person_id}_#{customer_id}_#{pattern_filter}_#{customer_name}_#{invoice_status}_#{page}_#{per_page}_v5_#{cache_timestamp}"
 
     Rails.cache.fetch(cache_key, expires_in: 1.minute) do
       # Use the original optimized SQL but with LIMIT/OFFSET for real pagination
@@ -810,6 +811,8 @@ class CustomerPatternsController < ApplicationController
             c.name as customer_name,
             u.name as delivery_person_name,
             c.delivery_person_id,
+            c.invoice_created_at,
+            c.invoice_sent_at,
             COUNT(DISTINCT DATE(da.scheduled_date)) as days_delivered,
             COUNT(da.id) as total_assignments,
             COALESCE(SUM(CASE WHEN p.unit_type = 'liters' THEN da.quantity ELSE 0 END), 0) as total_liters,
@@ -842,7 +845,7 @@ class CustomerPatternsController < ApplicationController
             #{delivery_person_id.present? ? 'AND c.delivery_person_id = $5' : ''}
             #{customer_id.present? ? "AND c.id = $#{delivery_person_id.present? ? '6' : '5'}" : ''}
             #{customer_name.present? ? "AND c.name ILIKE $#{5 + [delivery_person_id, customer_id].compact.size}" : ''}
-          GROUP BY c.id, c.name, u.name, c.delivery_person_id
+          GROUP BY c.id, c.name, u.name, c.delivery_person_id, c.invoice_created_at, c.invoice_sent_at
         ),
         customer_patterns AS (
           SELECT *,
@@ -861,7 +864,9 @@ class CustomerPatternsController < ApplicationController
         ),
         filtered_patterns AS (
           SELECT * FROM customer_patterns
-          #{pattern_filter.present? ? "WHERE pattern = $#{5 + [delivery_person_id, customer_id, customer_name].compact.size}" : ''}
+          WHERE 1=1
+          #{pattern_filter.present? ? "AND pattern = $#{5 + [delivery_person_id, customer_id, customer_name].compact.size}" : ''}
+          #{invoice_status.present? ? get_invoice_status_filter(invoice_status, 5 + [delivery_person_id, customer_id, customer_name, pattern_filter].compact.size) : ''}
           ORDER BY customer_name
         )
         SELECT
@@ -875,6 +880,8 @@ class CustomerPatternsController < ApplicationController
           fp.pattern,
           fp.scheduled_quantity,
           fp.scheduled_product,
+          fp.invoice_created_at,
+          fp.invoice_sent_at,
           pc.total_customers,
           pc.regular_count,
           pc.irregular_count,
@@ -890,6 +897,7 @@ class CustomerPatternsController < ApplicationController
       params << customer_id if customer_id.present?
       params << "%#{customer_name}%" if customer_name.present?
       params << pattern_filter if pattern_filter.present?
+      # Add invoice status parameter if needed (no additional param needed since we use direct SQL conditions)
 
       # Execute the query
       results = ActiveRecord::Base.connection.exec_query(sql, 'customer_patterns_fast', params)
@@ -909,7 +917,9 @@ class CustomerPatternsController < ApplicationController
           customer: OpenStruct.new(
             id: row[0],
             name: row[1],
-            to_param: row[0].to_s  # This is needed for Rails path helpers
+            to_param: row[0].to_s,  # This is needed for Rails path helpers
+            invoice_created_at: row[10] ? Time.parse(row[10]) : nil,
+            invoice_sent_at: row[11] ? Time.parse(row[11]) : nil
           ),
           delivery_person_name: row[2] || "Not Assigned",
           total_liters: row[5].to_f.round(2),
@@ -929,10 +939,10 @@ class CustomerPatternsController < ApplicationController
       # Get counts from first row or set defaults
       if results.rows.any?
         first_row = results.rows.first
-        total_customers = first_row[10].to_i
-        regular_count = first_row[11].to_i
-        irregular_count = first_row[12].to_i
-        total_filtered_count = first_row[13].to_i
+        total_customers = first_row[12].to_i
+        regular_count = first_row[13].to_i
+        irregular_count = first_row[14].to_i
+        total_filtered_count = first_row[15].to_i
       else
         total_customers = 0
         regular_count = 0
@@ -1023,6 +1033,25 @@ class CustomerPatternsController < ApplicationController
       'Every day'
     else
       "Days: #{delivery_days.join(', ')}"
+    end
+  end
+
+  def get_invoice_status_filter(invoice_status, param_index)
+    case invoice_status
+    when 'created_and_sent'
+      'AND invoice_created_at IS NOT NULL AND invoice_sent_at IS NOT NULL'
+    when 'created_only'
+      'AND invoice_created_at IS NOT NULL AND invoice_sent_at IS NULL'
+    when 'sent_only'
+      'AND invoice_sent_at IS NOT NULL AND invoice_created_at IS NULL'
+    when 'not_created'
+      'AND invoice_created_at IS NULL'
+    when 'not_sent'
+      'AND invoice_sent_at IS NULL'
+    when 'no_activity'
+      'AND invoice_created_at IS NULL AND invoice_sent_at IS NULL'
+    else
+      ''
     end
   end
 end
