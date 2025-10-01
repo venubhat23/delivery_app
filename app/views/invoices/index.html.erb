@@ -2403,6 +2403,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
           <div class="col-md-6">
             <%= form.label :customer_ids, 'Customers', class: 'form-label' %>
+            <div class="d-flex align-items-center mb-2">
+              <small class="text-muted me-3">Filter:</small>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="customer-filter" id="filter-uninvoiced" value="uninvoiced" checked>
+                <label class="form-check-label" for="filter-uninvoiced">
+                  <small>Not invoiced yet</small>
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="customer-filter" id="filter-all" value="all">
+                <label class="form-check-label" for="filter-all">
+                  <small>All customers</small>
+                </label>
+              </div>
+            </div>
             <div class="position-relative">
               <!-- Customer Checkboxes Container -->
               <div class="customer-checkbox-container" id="customer-checkbox-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px;">
@@ -2413,25 +2428,55 @@ document.addEventListener('DOMContentLoaded', function() {
                   </label>
                 </div>
                 <hr class="my-2">
-                <% Customer.where(invoice_sent_at: nil).includes(:delivery_person).limit(500).order(:name).each do |customer| %>
-                  <div class="form-check customer-checkbox" data-delivery-person="<%= customer.delivery_person_id %>">
-                    <input type="checkbox" class="form-check-input customer-checkbox-input"
-                           id="customer-<%= customer.id %>"
-                           name="customer_ids[]"
-                           value="<%= customer.id %>">
-                    <label class="form-check-label" for="customer-<%= customer.id %>">
-                      <div class="d-flex align-items-center">
-                        <div class="customer-avatar-small me-2">
-                          <%= customer.name.first.upcase %>
+                <!-- Uninvoiced customers -->
+                <div id="uninvoiced-customers">
+                  <% Customer.where(invoice_created_at: nil, invoice_sent_at: nil).includes(:delivery_person).limit(500).order(:name).each do |customer| %>
+                    <div class="form-check customer-checkbox" data-delivery-person="<%= customer.delivery_person_id %>" data-invoiced="false">
+                      <input type="checkbox" class="form-check-input customer-checkbox-input"
+                             id="customer-<%= customer.id %>"
+                             name="customer_ids[]"
+                             value="<%= customer.id %>">
+                      <label class="form-check-label" for="customer-<%= customer.id %>">
+                        <div class="d-flex align-items-center">
+                          <div class="customer-avatar-small me-2">
+                            <%= customer.name.first.upcase %>
+                          </div>
+                          <div>
+                            <div class="fw-medium"><%= customer.name %></div>
+                            <small class="text-muted"><%= customer.delivery_person&.name || 'No Delivery Person' %></small>
+                          </div>
                         </div>
-                        <div>
-                          <div class="fw-medium"><%= customer.name %></div>
-                          <small class="text-muted"><%= customer.delivery_person&.name || 'No Delivery Person' %></small>
+                      </label>
+                    </div>
+                  <% end %>
+                </div>
+                <!-- All customers (hidden by default) -->
+                <div id="all-customers" style="display: none;">
+                  <% Customer.includes(:delivery_person).limit(500).order(:name).each do |customer| %>
+                    <div class="form-check customer-checkbox" data-delivery-person="<%= customer.delivery_person_id %>" data-invoiced="<%= customer.invoice_sent_at.present? %>">
+                      <input type="checkbox" class="form-check-input customer-checkbox-input"
+                             id="all-customer-<%= customer.id %>"
+                             name="customer_ids[]"
+                             value="<%= customer.id %>">
+                      <label class="form-check-label" for="all-customer-<%= customer.id %>">
+                        <div class="d-flex align-items-center">
+                          <div class="customer-avatar-small me-2">
+                            <%= customer.name.first.upcase %>
+                          </div>
+                          <div>
+                            <div class="fw-medium">
+                              <%= customer.name %>
+                              <% if customer.invoice_sent_at.present? %>
+                                <span class="badge bg-success text-white ms-1" style="font-size: 0.6rem;">✓ Invoiced</span>
+                              <% end %>
+                            </div>
+                            <small class="text-muted"><%= customer.delivery_person&.name || 'No Delivery Person' %></small>
+                          </div>
                         </div>
-                      </div>
-                    </label>
-                  </div>
-                <% end %>
+                      </label>
+                    </div>
+                  <% end %>
+                </div>
               </div>
               <!-- Hidden input to ensure form submission works -->
               <input type="hidden" name="customer_ids[]" id="selected-customer-ids" value="all">
@@ -2444,25 +2489,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="fas fa-users me-1"></i>
                 <span id="customer-count-text">0 customers selected</span>
               </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Customer Download Section -->
-        <div class="row g-3 mt-2">
-          <div class="col-12">
-            <div class="card border-secondary">
-              <div class="card-header bg-light">
-                <h6 class="mb-0">
-                  <i class="fas fa-download me-2"></i>Download Customer List
-                </h6>
-              </div>
-              <div class="card-body py-2">
-                <p class="small mb-2">Download customer details (Name, ID, Phone) for selected delivery person/customers</p>
-                <button type="button" class="btn btn-outline-secondary btn-sm" id="download-customers-btn">
-                  <i class="fas fa-file-pdf me-1"></i>Download Customer List PDF
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -3409,6 +3435,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Store original customer checkboxes
   const originalCustomerCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox'));
+
+  // Handle customer filter radio buttons
+  const filterRadios = document.querySelectorAll('input[name="customer-filter"]');
+  filterRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      const uninvoicedContainer = document.getElementById('uninvoiced-customers');
+      const allContainer = document.getElementById('all-customers');
+      const selectAllCheckbox = document.getElementById('select-all-customers');
+
+      if (this.value === 'all') {
+        // Show all customers
+        uninvoicedContainer.style.display = 'none';
+        allContainer.style.display = 'block';
+        console.log('Switched to show all customers');
+      } else {
+        // Show only uninvoiced customers
+        uninvoicedContainer.style.display = 'block';
+        allContainer.style.display = 'none';
+        console.log('Switched to show uninvoiced customers only');
+      }
+
+      // Reset selections when filter changes
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      }
+
+      // Uncheck all checkboxes
+      const allCheckboxes = customerCheckboxContainer.querySelectorAll('.customer-checkbox-input');
+      allCheckboxes.forEach(cb => cb.checked = false);
+
+      // Re-setup handlers and update counts
+      if (window.reSetupCheckboxHandlers) {
+        window.reSetupCheckboxHandlers();
+      }
+      updateCustomerCount();
+      updateSelectedCustomerIds();
+    });
+  });
   
   // Add search functionality to delivery person dropdown
   function addSearchToDeliveryPerson() {
@@ -3463,8 +3528,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Filtering by delivery person:', selectedDeliveryPersonId);
 
+    // Get all customer checkboxes from both containers
+    const allCustomerCheckboxes = customerCheckboxContainer.querySelectorAll('.customer-checkbox');
+
     // Show/hide customer checkboxes based on delivery person
-    originalCustomerCheckboxes.forEach(checkbox => {
+    allCustomerCheckboxes.forEach(checkbox => {
       const deliveryPersonId = checkbox.getAttribute('data-delivery-person');
 
       if (selectedDeliveryPersonId === 'all' || deliveryPersonId === selectedDeliveryPersonId) {
@@ -3514,11 +3582,24 @@ document.addEventListener('DOMContentLoaded', function() {
     selectAllCheckbox.addEventListener('change', function() {
       console.log('Select All clicked:', this.checked);
 
-      // Get all visible customer checkboxes (not hidden by delivery person filter)
-      const visibleCustomerCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+      // Determine which container is currently visible
+      const uninvoicedContainer = document.getElementById('uninvoiced-customers');
+      const allContainer = document.getElementById('all-customers');
+
+      let activeContainer;
+      if (uninvoicedContainer && uninvoicedContainer.style.display !== 'none') {
+        activeContainer = uninvoicedContainer;
+      } else if (allContainer && allContainer.style.display !== 'none') {
+        activeContainer = allContainer;
+      } else {
+        activeContainer = uninvoicedContainer; // default
+      }
+
+      // Get all visible customer checkboxes from active container only
+      const visibleCustomerCheckboxes = Array.from(activeContainer.querySelectorAll('.customer-checkbox-input'))
         .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
 
-      console.log('Found visible checkboxes:', visibleCustomerCheckboxes.length);
+      console.log('Found visible checkboxes:', visibleCustomerCheckboxes.length, 'in container:', activeContainer.id);
 
       // Select or deselect all visible checkboxes
       visibleCustomerCheckboxes.forEach(checkbox => {
@@ -3543,13 +3624,26 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleIndividualCheckboxChange() {
       console.log('Individual checkbox changed:', this.value, this.checked);
 
-      // Get all visible checkboxes
-      const visibleCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+      // Determine which container is currently visible
+      const uninvoicedContainer = document.getElementById('uninvoiced-customers');
+      const allContainer = document.getElementById('all-customers');
+
+      let activeContainer;
+      if (uninvoicedContainer && uninvoicedContainer.style.display !== 'none') {
+        activeContainer = uninvoicedContainer;
+      } else if (allContainer && allContainer.style.display !== 'none') {
+        activeContainer = allContainer;
+      } else {
+        activeContainer = uninvoicedContainer; // default
+      }
+
+      // Get all visible checkboxes from active container only
+      const visibleCheckboxes = Array.from(activeContainer.querySelectorAll('.customer-checkbox-input'))
         .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
 
       const checkedVisibleCheckboxes = visibleCheckboxes.filter(cb => cb.checked);
 
-      console.log('Visible checkboxes:', visibleCheckboxes.length, 'Checked:', checkedVisibleCheckboxes.length);
+      console.log('Visible checkboxes:', visibleCheckboxes.length, 'Checked:', checkedVisibleCheckboxes.length, 'Container:', activeContainer.id);
 
       // Update "Select All" checkbox state
       if (checkedVisibleCheckboxes.length === 0) {
@@ -3582,15 +3676,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const hiddenInput = document.getElementById('selected-customer-ids');
     const selectAllCheckbox = document.getElementById('select-all-customers');
 
-    // Get all visible and checked customer checkboxes
-    const visibleCheckedCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+    // Determine which container is currently visible
+    const uninvoicedContainer = document.getElementById('uninvoiced-customers');
+    const allContainer = document.getElementById('all-customers');
+
+    let activeContainer;
+    if (uninvoicedContainer && uninvoicedContainer.style.display !== 'none') {
+      activeContainer = uninvoicedContainer;
+    } else if (allContainer && allContainer.style.display !== 'none') {
+      activeContainer = allContainer;
+    } else {
+      activeContainer = uninvoicedContainer; // default
+    }
+
+    // Get all visible and checked customer checkboxes from active container only
+    const visibleCheckedCheckboxes = Array.from(activeContainer.querySelectorAll('.customer-checkbox-input'))
       .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none' && cb.checked);
 
-    // Get all visible checkboxes
-    const allVisibleCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+    // Get all visible checkboxes from active container only
+    const allVisibleCheckboxes = Array.from(activeContainer.querySelectorAll('.customer-checkbox-input'))
       .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
 
-    console.log('Updating hidden input. Checked:', visibleCheckedCheckboxes.length, 'Total visible:', allVisibleCheckboxes.length);
+    console.log('Updating hidden input. Checked:', visibleCheckedCheckboxes.length, 'Total visible:', allVisibleCheckboxes.length, 'Container:', activeContainer.id);
 
     if (selectAllCheckbox.checked && visibleCheckedCheckboxes.length === allVisibleCheckboxes.length) {
       // All customers selected
@@ -3611,11 +3718,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!countText) return;
 
-    // Get all visible checkboxes
-    const visibleCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+    // Determine which container is currently visible
+    const uninvoicedContainer = document.getElementById('uninvoiced-customers');
+    const allContainer = document.getElementById('all-customers');
+
+    let activeContainer;
+    if (uninvoicedContainer && uninvoicedContainer.style.display !== 'none') {
+      activeContainer = uninvoicedContainer;
+    } else if (allContainer && allContainer.style.display !== 'none') {
+      activeContainer = allContainer;
+    } else {
+      activeContainer = uninvoicedContainer; // default
+    }
+
+    // Get checkboxes only from the active container
+    const visibleCheckboxes = Array.from(activeContainer.querySelectorAll('.customer-checkbox-input'))
       .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
 
-    // Get all checked visible checkboxes
+    // Get all checked visible checkboxes from active container
     const checkedCheckboxes = visibleCheckboxes.filter(cb => cb.checked);
 
     const count = checkedCheckboxes.length;
@@ -3633,7 +3753,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     countText.textContent = text;
 
-    console.log('Updated count display:', text, 'Checked:', count, 'Total visible:', totalVisible);
+    console.log('Updated count display:', text, 'Checked:', count, 'Total visible:', totalVisible, 'Active container:', activeContainer.id);
 
     // Update badge color based on count
     const badge = document.getElementById('customer-count-badge');
@@ -3679,8 +3799,6 @@ document.addEventListener('DOMContentLoaded', function() {
       selectAllCheckbox.dispatchEvent(new Event('change'));
     }
 
-    // Add PDF download functionality
-    setupPdfDownload();
   }
 
   // Call initialization when Bootstrap modal opens (if using Bootstrap)
@@ -3699,62 +3817,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(initializeModalContent, 100);
   };
 
-  // Setup PDF download functionality
-  function setupPdfDownload() {
-    const downloadBtn = document.getElementById('download-customers-btn');
-    if (downloadBtn) {
-      downloadBtn.onclick = function() {
-        downloadCustomerListPdf();
-      };
-    }
-  }
-
-  // Download customer list as PDF
-  function downloadCustomerListPdf() {
-    const deliveryPersonSelect = document.getElementById('modal-delivery-person-select');
-    const selectAllCheckbox = document.getElementById('select-all-customers');
-
-    if (!deliveryPersonSelect) return;
-
-    const selectedDeliveryPersonId = deliveryPersonSelect.value;
-    let selectedCustomerIds = [];
-
-    if (selectAllCheckbox && selectAllCheckbox.checked) {
-      selectedCustomerIds = []; // Empty array means all customers
-    } else {
-      selectedCustomerIds = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input:checked'))
-        .map(cb => cb.value);
-    }
-
-    // Prepare data for download
-    const params = new URLSearchParams({
-      delivery_person_id: selectedDeliveryPersonId,
-      format: 'pdf'
-    });
-
-    // Add customer IDs if specific customers are selected
-    if (selectedCustomerIds.length > 0) {
-      selectedCustomerIds.forEach(id => params.append('customer_ids[]', id));
-    }
-
-    // Create download URL - add .pdf extension for correct routing
-    const downloadUrl = '/invoices/download_customer_list.pdf?' + params.toString();
-
-    // Trigger download
-    try {
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = 'customer_list.pdf';
-      link.target = '_blank'; // Open in new tab if download fails
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Download failed:', error);
-      // Fallback: open in new window
-      window.open(downloadUrl, '_blank');
-    }
-  }
   
   // Clean up when modal closes
   document.getElementById('generateMonthlyModal').addEventListener('hidden.bs.modal', function() {
