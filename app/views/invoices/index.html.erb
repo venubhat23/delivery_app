@@ -2404,17 +2404,39 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="col-md-6">
             <%= form.label :customer_ids, 'Customers', class: 'form-label' %>
             <div class="position-relative">
-              <select name="customer_ids[]" multiple class="form-select customer-select" id="modal-customer-select"
-                      data-search="true" data-placeholder="Search customers..." style="height: 120px;">
-                <option value="all" selected>All Customers</option>
-                <% Customer.includes(:delivery_person).limit(500).order(:name).each do |customer| %>
-                  <option value="<%= customer.id %>" data-delivery-person="<%= customer.delivery_person_id %>">
-                    <%= customer.name %> (<%= customer.delivery_person&.name || 'No Delivery Person' %>)
-                  </option>
+              <!-- Customer Checkboxes Container -->
+              <div class="customer-checkbox-container" id="customer-checkbox-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px;">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="select-all-customers" value="all" checked>
+                  <label class="form-check-label fw-bold" for="select-all-customers">
+                    <i class="fas fa-users me-2"></i>All Customers
+                  </label>
+                </div>
+                <hr class="my-2">
+                <% Customer.where(invoice_sent_at: nil).includes(:delivery_person).limit(500).order(:name).each do |customer| %>
+                  <div class="form-check customer-checkbox" data-delivery-person="<%= customer.delivery_person_id %>">
+                    <input type="checkbox" class="form-check-input customer-checkbox-input"
+                           id="customer-<%= customer.id %>"
+                           name="customer_ids[]"
+                           value="<%= customer.id %>">
+                    <label class="form-check-label" for="customer-<%= customer.id %>">
+                      <div class="d-flex align-items-center">
+                        <div class="customer-avatar-small me-2">
+                          <%= customer.name.first.upcase %>
+                        </div>
+                        <div>
+                          <div class="fw-medium"><%= customer.name %></div>
+                          <small class="text-muted"><%= customer.delivery_person&.name || 'No Delivery Person' %></small>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
                 <% end %>
-              </select>
+              </div>
+              <!-- Hidden input to ensure form submission works -->
+              <input type="hidden" name="customer_ids[]" id="selected-customer-ids" value="all">
             </div>
-            <small class="text-muted">Hold Ctrl/Cmd to select multiple customers</small>
+            <small class="text-muted">Check/uncheck customers to select multiple</small>
 
             <!-- Customer Count Display -->
             <div class="mt-2">
@@ -2461,6 +2483,68 @@ document.addEventListener('DOMContentLoaded', function() {
               } %>
       </div>
     <% end %>
+  </div>
+</div>
+
+<!-- Attractive Loader Modal -->
+<div id="invoiceGenerationLoader" class="loader-modal" style="display: none;">
+  <div class="loader-backdrop"></div>
+  <div class="loader-content">
+    <div class="loader-header">
+      <h4><i class="fas fa-file-invoice me-2"></i>Generating Invoices</h4>
+    </div>
+    <div class="loader-body">
+      <div class="progress-container">
+        <div class="circular-progress">
+          <svg class="progress-ring" width="120" height="120">
+            <circle class="progress-ring-circle" stroke="#667eea" stroke-width="8"
+                    fill="transparent" r="52" cx="60" cy="60"/>
+          </svg>
+          <div class="progress-text">
+            <span id="progress-percentage">0%</span>
+          </div>
+        </div>
+      </div>
+      <div class="progress-steps">
+        <div class="step active" id="step-1">
+          <i class="fas fa-user-check"></i>
+          <span>Validating customers...</span>
+        </div>
+        <div class="step" id="step-2">
+          <i class="fas fa-receipt"></i>
+          <span>Generating invoices...</span>
+        </div>
+        <div class="step" id="step-3">
+          <i class="fas fa-paper-plane"></i>
+          <span>Sending notifications...</span>
+        </div>
+        <div class="step" id="step-4">
+          <i class="fas fa-check-circle"></i>
+          <span>Finalizing...</span>
+        </div>
+      </div>
+      <div class="progress-message" id="progress-message">
+        Preparing invoice generation...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Message Modal -->
+<div id="invoiceSuccessModal" class="success-modal" style="display: none;">
+  <div class="success-backdrop"></div>
+  <div class="success-content">
+    <div class="success-animation">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <h3>🎉 Success!</h3>
+    <p id="success-message">Invoices generated successfully!</p>
+    <div class="success-stats" id="success-stats">
+      <!-- Dynamic stats will be inserted here -->
+    </div>
+    <button type="button" class="btn btn-success" onclick="closeSuccessModal()">
+      <i class="fas fa-thumbs-up me-2"></i>Awesome!
+    </button>
   </div>
 </div>
 
@@ -2613,7 +2697,263 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: #0d6efd;
     color: white;
   }
-  
+
+  /* Customer Checkbox Styling */
+  .customer-checkbox-container {
+    background: #f8f9fa;
+  }
+
+  .customer-checkbox {
+    padding: 8px 12px;
+    margin: 0;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .customer-checkbox:hover {
+    background-color: #e9ecef;
+  }
+
+  .customer-checkbox-input:checked + .form-check-label {
+    color: #0d6efd;
+    font-weight: 500;
+  }
+
+  .customer-avatar-small {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .form-check-label {
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .customer-checkbox .form-check-input {
+    margin-top: 0.6rem;
+  }
+
+  /* Select All Checkbox Styling */
+  #select-all-customers {
+    transform: scale(1.2);
+  }
+
+  #select-all-customers:indeterminate {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  /* Loader Modal Styles */
+  .loader-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 12000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loader-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+  }
+
+  .loader-content {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    min-width: 400px;
+    animation: loaderFadeIn 0.5s ease-out;
+  }
+
+  .loader-header h4 {
+    color: #667eea;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+
+  .progress-container {
+    margin-bottom: 2rem;
+  }
+
+  .circular-progress {
+    position: relative;
+    display: inline-block;
+  }
+
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-circle {
+    stroke-dasharray: 327;
+    stroke-dashoffset: 327;
+    transition: stroke-dashoffset 0.5s ease;
+    stroke-linecap: round;
+  }
+
+  .progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #667eea;
+  }
+
+  .progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    opacity: 0.6;
+  }
+
+  .step.active {
+    background: rgba(102, 126, 234, 0.1);
+    opacity: 1;
+    transform: scale(1.02);
+  }
+
+  .step.completed {
+    opacity: 0.8;
+    color: #28a745;
+  }
+
+  .step i {
+    width: 20px;
+    text-align: center;
+  }
+
+  .progress-message {
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 1rem;
+  }
+
+  /* Success Modal Styles */
+  .success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 12000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .success-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+  }
+
+  .success-content {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    min-width: 400px;
+    animation: successFadeIn 0.5s ease-out;
+  }
+
+  .success-animation {
+    margin-bottom: 1.5rem;
+  }
+
+  .success-animation i {
+    font-size: 4rem;
+    color: #28a745;
+    animation: successBounce 0.6s ease-out;
+  }
+
+  .success-content h3 {
+    color: #28a745;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+
+  .success-stats {
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    color: #155724;
+  }
+
+  @keyframes loaderFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes successFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9) translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes successBounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-10px);
+    }
+    60% {
+      transform: translateY(-5px);
+    }
+  }
+
   /* Search input styling */
   #delivery-person-search,
   #customer-search {
@@ -3065,10 +3405,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const deliveryPersonSelect = document.getElementById('modal-delivery-person-select');
-  const customerSelect = document.getElementById('modal-customer-select');
-  
-  // Store original customer options
-  const originalCustomerOptions = Array.from(customerSelect.options);
+  const customerCheckboxContainer = document.getElementById('customer-checkbox-container');
+
+  // Store original customer checkboxes
+  const originalCustomerCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox'));
   
   // Add search functionality to delivery person dropdown
   function addSearchToDeliveryPerson() {
@@ -3092,25 +3432,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Add search functionality to customer dropdown
+  // Add search functionality to customer checkboxes
   function addSearchToCustomer() {
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
     searchInput.className = 'form-control mb-2';
     searchInput.placeholder = 'Search customers...';
     searchInput.id = 'customer-search';
-    
-    customerSelect.parentNode.insertBefore(searchInput, customerSelect);
-    
+
+    customerCheckboxContainer.parentNode.insertBefore(searchInput, customerCheckboxContainer);
+
     searchInput.addEventListener('input', function() {
       const searchTerm = this.value.toLowerCase();
-      const options = customerSelect.options;
-      
-      for (let i = 0; i < options.length; i++) {
-        const option = options[i];
-        const text = option.text.toLowerCase();
-        option.style.display = text.includes(searchTerm) ? '' : 'none';
-      }
+      const checkboxes = customerCheckboxContainer.querySelectorAll('.customer-checkbox');
+
+      checkboxes.forEach(checkbox => {
+        const label = checkbox.querySelector('label');
+        const text = label.textContent.toLowerCase();
+        checkbox.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
+
+      // Update count after search
+      updateCustomerCount();
     });
   }
   
@@ -3118,23 +3461,37 @@ document.addEventListener('DOMContentLoaded', function() {
   function filterCustomersByDeliveryPerson() {
     const selectedDeliveryPersonId = deliveryPersonSelect.value;
 
-    // Clear current options except "All Customers"
-    customerSelect.innerHTML = '<option value="all" selected>All Customers</option>';
+    console.log('Filtering by delivery person:', selectedDeliveryPersonId);
 
-    // Filter and add relevant customers
-    originalCustomerOptions.forEach(option => {
-      if (option.value === 'all') return; // Skip the "All Customers" option
+    // Show/hide customer checkboxes based on delivery person
+    originalCustomerCheckboxes.forEach(checkbox => {
+      const deliveryPersonId = checkbox.getAttribute('data-delivery-person');
 
-      const customerDeliveryPersonId = option.getAttribute('data-delivery-person');
-
-      if (selectedDeliveryPersonId === 'all' ||
-          selectedDeliveryPersonId === customerDeliveryPersonId) {
-        customerSelect.appendChild(option.cloneNode(true));
+      if (selectedDeliveryPersonId === 'all' || deliveryPersonId === selectedDeliveryPersonId) {
+        checkbox.style.display = '';
+      } else {
+        checkbox.style.display = 'none';
+        // Uncheck hidden customers
+        const input = checkbox.querySelector('input');
+        if (input) input.checked = false;
       }
     });
 
+    // Reset "Select All" checkbox when filter changes
+    const selectAllCheckbox = document.getElementById('select-all-customers');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    }
+
+    // Re-setup checkbox handlers for newly visible checkboxes
+    if (window.reSetupCheckboxHandlers) {
+      window.reSetupCheckboxHandlers();
+    }
+
     // Update customer count after filtering
     updateCustomerCount();
+    updateSelectedCustomerIds();
   }
   
   // Handle delivery person selection change
@@ -3148,55 +3505,135 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Handle customer selection
-  customerSelect.addEventListener('change', function() {
-    const allOption = customerSelect.querySelector('option[value="all"]');
-    const otherOptions = Array.from(customerSelect.options).filter(opt => opt.value !== 'all');
+  // Handle customer checkbox selection
+  function setupCustomerCheckboxHandlers() {
+    const selectAllCheckbox = document.getElementById('select-all-customers');
+    const hiddenInput = document.getElementById('selected-customer-ids');
 
-    // If "All Customers" is selected, deselect others
-    if (allOption && allOption.selected && customerSelect.selectedOptions.length > 1) {
-      otherOptions.forEach(opt => opt.selected = false);
+    // Handle "Select All" checkbox
+    selectAllCheckbox.addEventListener('change', function() {
+      console.log('Select All clicked:', this.checked);
+
+      // Get all visible customer checkboxes (not hidden by delivery person filter)
+      const visibleCustomerCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+        .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
+
+      console.log('Found visible checkboxes:', visibleCustomerCheckboxes.length);
+
+      // Select or deselect all visible checkboxes
+      visibleCustomerCheckboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+      });
+
+      updateSelectedCustomerIds();
+      updateCustomerCount();
+    });
+
+    // Handle individual customer checkboxes
+    function setupIndividualCheckboxHandlers() {
+      const customerCheckboxes = customerCheckboxContainer.querySelectorAll('.customer-checkbox-input');
+
+      customerCheckboxes.forEach(checkbox => {
+        // Remove any existing event listeners to prevent duplicates
+        checkbox.removeEventListener('change', handleIndividualCheckboxChange);
+        checkbox.addEventListener('change', handleIndividualCheckboxChange);
+      });
     }
 
-    // If any specific customer is selected, deselect "All Customers"
-    if (otherOptions.some(opt => opt.selected) && allOption) {
-      allOption.selected = false;
+    function handleIndividualCheckboxChange() {
+      console.log('Individual checkbox changed:', this.value, this.checked);
+
+      // Get all visible checkboxes
+      const visibleCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+        .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
+
+      const checkedVisibleCheckboxes = visibleCheckboxes.filter(cb => cb.checked);
+
+      console.log('Visible checkboxes:', visibleCheckboxes.length, 'Checked:', checkedVisibleCheckboxes.length);
+
+      // Update "Select All" checkbox state
+      if (checkedVisibleCheckboxes.length === 0) {
+        // No checkboxes selected
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      } else if (checkedVisibleCheckboxes.length === visibleCheckboxes.length) {
+        // All checkboxes selected
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+      } else {
+        // Some checkboxes selected (indeterminate state)
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+      }
+
+      updateSelectedCustomerIds();
+      updateCustomerCount();
     }
 
-    // If nothing is selected, select "All Customers"
-    if (customerSelect.selectedOptions.length === 0 && allOption) {
-      allOption.selected = true;
-    }
+    // Initial setup
+    setupIndividualCheckboxHandlers();
 
-    // Update customer count
-    updateCustomerCount();
-  });
+    // Re-setup handlers when delivery person filter changes
+    window.reSetupCheckboxHandlers = setupIndividualCheckboxHandlers;
+  }
+
+  // Function to update hidden input with selected customer IDs
+  function updateSelectedCustomerIds() {
+    const hiddenInput = document.getElementById('selected-customer-ids');
+    const selectAllCheckbox = document.getElementById('select-all-customers');
+
+    // Get all visible and checked customer checkboxes
+    const visibleCheckedCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+      .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none' && cb.checked);
+
+    // Get all visible checkboxes
+    const allVisibleCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+      .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
+
+    console.log('Updating hidden input. Checked:', visibleCheckedCheckboxes.length, 'Total visible:', allVisibleCheckboxes.length);
+
+    if (selectAllCheckbox.checked && visibleCheckedCheckboxes.length === allVisibleCheckboxes.length) {
+      // All customers selected
+      hiddenInput.value = 'all';
+      console.log('Set hidden input to: all');
+    } else {
+      // Specific customers selected
+      const selectedIds = visibleCheckedCheckboxes.map(cb => cb.value);
+      hiddenInput.value = selectedIds.length > 0 ? selectedIds.join(',') : '';
+      console.log('Set hidden input to:', hiddenInput.value);
+    }
+  }
 
   // Function to update customer count display
   function updateCustomerCount() {
-    const customerSelect = document.getElementById('modal-customer-select');
     const countText = document.getElementById('customer-count-text');
+    const selectAllCheckbox = document.getElementById('select-all-customers');
 
-    if (!customerSelect || !countText) return;
+    if (!countText) return;
 
-    const selectedOptions = Array.from(customerSelect.selectedOptions);
-    const allOption = customerSelect.querySelector('option[value="all"]');
+    // Get all visible checkboxes
+    const visibleCheckboxes = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input'))
+      .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
 
-    let count = 0;
+    // Get all checked visible checkboxes
+    const checkedCheckboxes = visibleCheckboxes.filter(cb => cb.checked);
+
+    const count = checkedCheckboxes.length;
+    const totalVisible = visibleCheckboxes.length;
+
     let text = '';
 
-    if (allOption && allOption.selected) {
-      // Count all visible options except "All Customers"
-      const visibleOptions = Array.from(customerSelect.options)
-        .filter(opt => opt.value !== 'all' && opt.style.display !== 'none');
-      count = visibleOptions.length;
-      text = `${count} customers (All)`;
+    if (count === 0) {
+      text = `🧑‍🤝‍🧑 0 customers selected`;
+    } else if (count === totalVisible && selectAllCheckbox && selectAllCheckbox.checked) {
+      text = `🧑‍🤝‍🧑 ${count} customers (All)`;
     } else {
-      count = selectedOptions.length;
-      text = count === 1 ? `${count} customer selected` : `${count} customers selected`;
+      text = count === 1 ? `🧑‍🤝‍🧑 ${count} customer selected` : `🧑‍🤝‍🧑 ${count} customers selected`;
     }
 
     countText.textContent = text;
+
+    console.log('Updated count display:', text, 'Checked:', count, 'Total visible:', totalVisible);
 
     // Update badge color based on count
     const badge = document.getElementById('customer-count-badge');
@@ -3206,7 +3643,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Initialize search functionality when modal opens
-  document.getElementById('generateMonthlyModal').addEventListener('shown.bs.modal', function() {
+  function initializeModalContent() {
     // Remove existing search inputs if any
     const existingDeliverySearch = document.getElementById('delivery-person-search');
     const existingCustomerSearch = document.getElementById('customer-search');
@@ -3218,16 +3655,49 @@ document.addEventListener('DOMContentLoaded', function() {
     addSearchToDeliveryPerson();
     addSearchToCustomer();
 
+    // Setup customer checkbox handlers
+    setupCustomerCheckboxHandlers();
+
     // Reset selections
     deliveryPersonSelect.value = 'all';
+
+    // Reset all customer checkboxes
+    const allCustomerCheckboxes = customerCheckboxContainer.querySelectorAll('.customer-checkbox-input');
+    allCustomerCheckboxes.forEach(cb => cb.checked = false);
+
+    // Reset Select All checkbox
+    const selectAllCheckbox = document.getElementById('select-all-customers');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = true; // Start with "All Customers" selected
+      selectAllCheckbox.indeterminate = false;
+    }
+
     filterCustomersByDeliveryPerson();
 
-    // Initialize customer count
-    updateCustomerCount();
+    // Trigger Select All to select all visible customers initially
+    if (selectAllCheckbox) {
+      selectAllCheckbox.dispatchEvent(new Event('change'));
+    }
 
     // Add PDF download functionality
     setupPdfDownload();
-  });
+  }
+
+  // Call initialization when Bootstrap modal opens (if using Bootstrap)
+  const modalElement = document.getElementById('generateMonthlyModal');
+  if (modalElement) {
+    modalElement.addEventListener('shown.bs.modal', initializeModalContent);
+  }
+
+  // Also call when custom modal opens (since we're using custom modal)
+  const originalOpenModal = window.openGenerateMonthlyModal;
+  window.openGenerateMonthlyModal = function() {
+    if (originalOpenModal) {
+      originalOpenModal();
+    }
+    // Initialize content after a short delay to ensure modal is visible
+    setTimeout(initializeModalContent, 100);
+  };
 
   // Setup PDF download functionality
   function setupPdfDownload() {
@@ -3242,14 +3712,19 @@ document.addEventListener('DOMContentLoaded', function() {
   // Download customer list as PDF
   function downloadCustomerListPdf() {
     const deliveryPersonSelect = document.getElementById('modal-delivery-person-select');
-    const customerSelect = document.getElementById('modal-customer-select');
+    const selectAllCheckbox = document.getElementById('select-all-customers');
 
-    if (!deliveryPersonSelect || !customerSelect) return;
+    if (!deliveryPersonSelect) return;
 
     const selectedDeliveryPersonId = deliveryPersonSelect.value;
-    const selectedCustomerIds = Array.from(customerSelect.selectedOptions)
-      .map(opt => opt.value)
-      .filter(val => val !== 'all');
+    let selectedCustomerIds = [];
+
+    if (selectAllCheckbox && selectAllCheckbox.checked) {
+      selectedCustomerIds = []; // Empty array means all customers
+    } else {
+      selectedCustomerIds = Array.from(customerCheckboxContainer.querySelectorAll('.customer-checkbox-input:checked'))
+        .map(cb => cb.value);
+    }
 
     // Prepare data for download
     const params = new URLSearchParams({
@@ -3289,6 +3764,153 @@ document.addEventListener('DOMContentLoaded', function() {
     if (deliverySearch) deliverySearch.remove();
     if (customerSearch) customerSearch.remove();
   });
+
+  // Enhanced form submission with loader
+  const generateForm = document.getElementById('generate-monthly-form');
+  if (generateForm) {
+    generateForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Show loader
+      showInvoiceLoader();
+
+      // Simulate invoice generation progress
+      simulateInvoiceGeneration();
+
+      // Submit form after animation
+      setTimeout(() => {
+        // Create form data
+        const formData = new FormData(generateForm);
+
+        // Submit via fetch to handle response
+        fetch(generateForm.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        })
+        .then(response => response.text())
+        .then(data => {
+          hideInvoiceLoader();
+          showSuccessMessage();
+          closeGenerateMonthlyModal();
+        })
+        .catch(error => {
+          hideInvoiceLoader();
+          console.error('Error:', error);
+          alert('An error occurred while generating invoices.');
+        });
+      }, 4000); // Wait for animation to complete
+    });
+  }
+
+  // Loader functions
+  function showInvoiceLoader() {
+    const loader = document.getElementById('invoiceGenerationLoader');
+    if (loader) {
+      loader.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function hideInvoiceLoader() {
+    const loader = document.getElementById('invoiceGenerationLoader');
+    if (loader) {
+      loader.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function simulateInvoiceGeneration() {
+    const steps = [
+      { id: 'step-1', message: 'Validating customer data...', percent: 25 },
+      { id: 'step-2', message: 'Generating invoice documents...', percent: 50 },
+      { id: 'step-3', message: 'Sending WhatsApp notifications...', percent: 75 },
+      { id: 'step-4', message: 'Finalizing and saving...', percent: 100 }
+    ];
+
+    const progressCircle = document.querySelector('.progress-ring-circle');
+    const progressText = document.getElementById('progress-percentage');
+    const progressMessage = document.getElementById('progress-message');
+
+    steps.forEach((step, index) => {
+      setTimeout(() => {
+        // Update progress circle
+        const circumference = 2 * Math.PI * 52;
+        const offset = circumference - (step.percent / 100) * circumference;
+        if (progressCircle) {
+          progressCircle.style.strokeDashoffset = offset;
+        }
+
+        // Update percentage text
+        if (progressText) {
+          progressText.textContent = step.percent + '%';
+        }
+
+        // Update message
+        if (progressMessage) {
+          progressMessage.textContent = step.message;
+        }
+
+        // Update step states
+        const currentStep = document.getElementById(step.id);
+        const previousSteps = document.querySelectorAll('.step');
+
+        previousSteps.forEach((stepEl, stepIndex) => {
+          if (stepIndex < index) {
+            stepEl.classList.add('completed');
+            stepEl.classList.remove('active');
+          } else if (stepIndex === index) {
+            stepEl.classList.add('active');
+            stepEl.classList.remove('completed');
+          } else {
+            stepEl.classList.remove('active', 'completed');
+          }
+        });
+
+      }, (index + 1) * 1000);
+    });
+  }
+
+  function showSuccessMessage() {
+    const successModal = document.getElementById('invoiceSuccessModal');
+    const successStats = document.getElementById('success-stats');
+    const customerCount = document.getElementById('customer-count-text').textContent;
+
+    if (successModal) {
+      // Update stats
+      if (successStats) {
+        successStats.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-file-invoice me-2"></i>Invoices Generated:</span>
+            <strong>${customerCount}</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span><i class="fab fa-whatsapp me-2"></i>WhatsApp Sent:</span>
+            <strong>${customerCount}</strong>
+          </div>
+        `;
+      }
+
+      successModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+
+      // Auto close after 5 seconds
+      setTimeout(() => {
+        closeSuccessModal();
+      }, 5000);
+    }
+  }
+
+  window.closeSuccessModal = function() {
+    const successModal = document.getElementById('invoiceSuccessModal');
+    if (successModal) {
+      successModal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  };
 });
 </script>
 
