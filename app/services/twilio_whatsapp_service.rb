@@ -5,7 +5,7 @@ require 'json'
 class TwilioWhatsappService
   def initialize
     @account_sid = 'AC1c16e45dd041d5fb75f4c0b16e4b1e1e'
-    @auth_token = '84f2849dd920d45ee10e134e4c214722'
+    @auth_token = '913f5eab31c3cdac8a70ccf582d19fbc'
     @content_sid = 'HX6d6a076f9410bfa567222bbb68fb71b2'
     @from_number = 'whatsapp:+917619444966'
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
