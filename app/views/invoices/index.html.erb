@@ -2919,7 +2919,7 @@ document.addEventListener('DOMContentLoaded', function() {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 12000;
+    z-index: 999999;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4163,15 +4163,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Updating hidden input. Checked:', visibleCheckedCheckboxes.length, 'Total visible:', allVisibleCheckboxes.length, 'Container:', activeContainer.id);
 
+    // Clear existing hidden inputs
+    const existingHiddenInputs = document.querySelectorAll('input[name="customer_ids[]"][type="hidden"]');
+    existingHiddenInputs.forEach(input => input.remove());
+
     if (selectAllCheckbox.checked && visibleCheckedCheckboxes.length === allVisibleCheckboxes.length) {
       // All customers selected
-      hiddenInput.value = 'all';
+      const allInput = document.createElement('input');
+      allInput.type = 'hidden';
+      allInput.name = 'customer_ids[]';
+      allInput.value = 'all';
+      hiddenInput.parentNode.appendChild(allInput);
       console.log('Set hidden input to: all');
     } else {
-      // Specific customers selected
+      // Specific customers selected - create individual hidden inputs
       const selectedIds = visibleCheckedCheckboxes.map(cb => cb.value);
-      hiddenInput.value = selectedIds.length > 0 ? selectedIds.join(',') : '';
-      console.log('Set hidden input to:', hiddenInput.value);
+      selectedIds.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'customer_ids[]';
+        input.value = id;
+        hiddenInput.parentNode.appendChild(input);
+      });
+      console.log('Set hidden inputs to:', selectedIds);
     }
   }
 
@@ -4297,6 +4311,25 @@ document.addEventListener('DOMContentLoaded', function() {
     generateForm.addEventListener('submit', function(e) {
       e.preventDefault();
 
+      // Validate that at least one customer is selected
+      const customerInputs = document.querySelectorAll('input[name="customer_ids[]"]');
+      const hasSelectedCustomers = Array.from(customerInputs).some(input => input.value && input.value !== '');
+
+      if (!hasSelectedCustomers) {
+        alert('Please select at least one customer before generating invoices.');
+        return;
+      }
+
+      console.log('Form submission: Customer inputs found:', customerInputs.length);
+      console.log('Selected values:', Array.from(customerInputs).map(i => i.value));
+
+      // Immediately disable button and show loading state
+      const submitButton = document.getElementById('modal-generate-btn');
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+      }
+
       // Show loader
       showInvoiceLoader();
 
@@ -4320,11 +4353,23 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.text())
         .then(data => {
           hideInvoiceLoader();
+          // Reset button state
+          const submitButton = document.getElementById('modal-generate-btn');
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Generate Invoices';
+          }
           showSuccessMessage();
           closeGenerateMonthlyModal();
         })
         .catch(error => {
           hideInvoiceLoader();
+          // Reset button state
+          const submitButton = document.getElementById('modal-generate-btn');
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Generate Invoices';
+          }
           console.error('Error:', error);
           alert('An error occurred while generating invoices.');
         });

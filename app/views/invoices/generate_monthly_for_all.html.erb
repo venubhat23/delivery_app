@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
 
       const formData = new FormData(form);
-      const customerIds = Array.from(formData.getAll('customer_ids[]'));
+      const customerIds = Array.from(formData.getAll('customer_ids[]')).filter(id => id && !id.includes(','));
 
       if (customerIds.length === 0) {
         alert('Please select at least one customer.');

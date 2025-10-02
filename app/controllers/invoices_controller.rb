@@ -117,7 +117,7 @@ end
     month = params[:month]&.to_i || Date.current.month
     year = params[:year]&.to_i || Date.current.year
     delivery_person_id = params[:delivery_person_id]
-    customer_ids = params[:customer_ids]
+    customer_ids = params[:customer_ids]&.reject { |id| id.blank? || id.include?(',') }&.uniq
 
     begin
       # Get date range for the month
