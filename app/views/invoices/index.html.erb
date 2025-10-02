@@ -4086,7 +4086,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleIndividualCheckboxChange() {
-      console.log('Individual checkbox changed:', this.value, this.checked);
+      console.log('🔥 Individual checkbox changed:', this.value, this.checked);
+      console.log('🔥 Calling updateCustomerCount and updateSelectedCustomerIds');
 
       // Determine which container is currently visible
       const uninvoicedContainer = document.getElementById('uninvoiced-customers');
@@ -4194,6 +4195,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const countText = document.getElementById('customer-count-text');
     const selectAllCheckbox = document.getElementById('select-all-customers');
 
+    console.log('🔍 updateCustomerCount called, countText element:', countText);
     if (!countText) return;
 
     // Determine which container is currently visible
@@ -4222,13 +4224,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let text = '';
 
     if (count === 0) {
-      text = `🧑‍🤝‍🧑 0 customers selected`;
+      text = `0 CUSTOMERS SELECTED`;
     } else if (count === totalVisible && selectAllCheckbox && selectAllCheckbox.checked) {
-      text = `🧑‍🤝‍🧑 ${count} customers (All)`;
+      text = `${count} CUSTOMERS SELECTED (ALL)`;
     } else {
-      text = count === 1 ? `🧑‍🤝‍🧑 ${count} customer selected` : `🧑‍🤝‍🧑 ${count} customers selected`;
+      text = count === 1 ? `${count} CUSTOMER SELECTED` : `${count} CUSTOMERS SELECTED`;
     }
 
+    console.log('🔍 Setting countText to:', text, 'Count:', count, 'Total visible:', totalVisible);
     countText.textContent = text;
 
     console.log('Updated count display:', text, 'Checked:', count, 'Total visible:', totalVisible, 'Active container:', activeContainer.id);
