@@ -546,7 +546,9 @@ end
   
   # Public invoice view (no authentication required)
   def public_view
-    @invoice = Invoice.find_by(share_token: params[:token])
+    # Load invoice with all needed associations at once
+    @invoice = Invoice.includes(:customer, invoice_items: :product, delivery_assignments: [:product, :user, :delivery_person, :customer])
+                     .find_by(share_token: params[:token])
 
     if @invoice.nil?
       render file: "#{Rails.root}/public/404.html", layout: false, status: 404
@@ -556,11 +558,18 @@ end
     # Mark as shared if first view
     @invoice.mark_as_shared! if @invoice.shared_at.nil?
 
-    @invoice_items = @invoice.invoice_items.includes(:product)
+    # Use pre-loaded associations
+    @invoice_items = @invoice.invoice_items
     @customer = @invoice.customer
 
-    # Load delivery assignments for the second page delivery report
-    @delivery_assignments = @invoice.delivery_assignments.includes(:product, :user, :delivery_person).order(:completed_at, :scheduled_date)
+    # Use pre-loaded delivery assignments and sort them
+    @delivery_assignments_array = @invoice.delivery_assignments
+                                         .sort_by { |a| [a.completed_at || Time.zone.now, a.scheduled_date || Date.current] }
+
+    # Pre-calculate counts to avoid repeated database queries in the view
+    @total_assignments_count = @delivery_assignments_array.count
+    @completed_assignments_count = @delivery_assignments_array.count { |assignment| assignment.status == 'completed' }
+    @success_rate = @total_assignments_count > 0 ? (@completed_assignments_count.to_f / @total_assignments_count * 100).round(1) : 0
 
     render layout: 'public'
   end

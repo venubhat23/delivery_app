@@ -5,10 +5,24 @@ class PublicInvoicesController < ApplicationController
   layout false
 
   def index
-    # Show all invoices in a simple list format - no filtering, just basic list
+    # Start with base query
     @invoices = Invoice.includes(:customer, :invoice_items)
-                      .order(created_at: :desc)
-                      .limit(50)  # Show last 50 invoices for performance
+
+    # Apply filters
+    if params[:customer_name].present?
+      # Use case-insensitive search that works across databases
+      search_term = "%#{params[:customer_name].downcase}%"
+      @invoices = @invoices.joins(:customer)
+                          .where("LOWER(customers.name) LIKE ?", search_term)
+    end
+
+    if params[:delivery_person_id].present? && params[:delivery_person_id] != 'all'
+      @invoices = @invoices.joins(:customer)
+                          .where(customers: { delivery_person_id: params[:delivery_person_id] })
+    end
+
+    # Order results (removed limit to show all invoices)
+    @invoices = @invoices.order(created_at: :desc)
 
     # Ensure all invoices have share tokens
     @invoices.each do |invoice|
@@ -17,5 +31,8 @@ class PublicInvoicesController < ApplicationController
         invoice.save!
       end
     end
+
+    # Load filter options
+    @delivery_people = User.delivery_people.order(:name)
   end
 end

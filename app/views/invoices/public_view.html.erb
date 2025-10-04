@@ -1569,7 +1569,7 @@
             </tr>
           </thead>
           <tbody>
-            <% @delivery_assignments.each_with_index do |assignment, index| %>
+            <% @delivery_assignments_array.each_with_index do |assignment, index| %>
               <%
                 total_amount = assignment.quantity * (assignment.product.price || 0)
                 has_discount = assignment.discount_amount > 0
@@ -1635,14 +1635,12 @@
     <div class="summary-stats-section">
       <div class="stat-box">
         <h4 class="stat-box-title">Total Deliveries</h4>
-        <div class="stat-box-value"><%= @invoice.delivery_assignments.count %></div>
+        <div class="stat-box-value"><%= @total_assignments_count %></div>
         <small class="stat-box-label">assignments</small>
       </div>
       <div class="stat-box">
         <h4 class="stat-box-title">Success Rate</h4>
-        <% completed_count = @invoice.delivery_assignments.where(status: 'completed').count %>
-        <% success_rate = @invoice.delivery_assignments.count > 0 ? (completed_count.to_f / @invoice.delivery_assignments.count * 100).round(1) : 0 %>
-        <div class="stat-box-value stat-success"><%= success_rate %>%</div>
+        <div class="stat-box-value stat-success"><%= @success_rate %>%</div>
         <small class="stat-box-label">completed on time</small>
       </div>
     </div>
