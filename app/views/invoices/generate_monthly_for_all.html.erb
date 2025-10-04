@@ -54,8 +54,9 @@
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5>
                       <i class="fas fa-users text-success"></i>
-                      Available Customers
-                      <span class="badge bg-primary"><%= @customers.count %></span>
+                      Customers
+                      <span class="badge bg-secondary" id="total-customers-count"><%= @customers.count %> Total</span>
+                      <span class="badge bg-primary" id="selected-customers-count">0 Selected</span>
                     </h5>
                     <div>
                       <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllCustomers()">
@@ -256,6 +257,12 @@ document.addEventListener('DOMContentLoaded', function() {
     generateBtn.textContent = selectedCount > 0 ?
       `Generate ${selectedCount} Invoice${selectedCount !== 1 ? 's' : ''}` :
       'Generate Invoices';
+
+    // Update selected customers count badge
+    const selectedCountBadge = document.getElementById('selected-customers-count');
+    if (selectedCountBadge) {
+      selectedCountBadge.textContent = `${selectedCount} Selected`;
+    }
   }
 
   // Add change listener to checkboxes
@@ -306,6 +313,12 @@ function selectAllCustomers() {
   });
   document.getElementById('generate-btn').disabled = false;
   document.getElementById('generate-btn').textContent = `Generate ${checkboxes.length} Invoice${checkboxes.length !== 1 ? 's' : ''}`;
+
+  // Update selected count badge
+  const selectedCountBadge = document.getElementById('selected-customers-count');
+  if (selectedCountBadge) {
+    selectedCountBadge.textContent = `${checkboxes.length} Selected`;
+  }
 }
 
 function deselectAllCustomers() {
@@ -316,6 +329,12 @@ function deselectAllCustomers() {
   });
   document.getElementById('generate-btn').disabled = true;
   document.getElementById('generate-btn').textContent = 'Generate Invoices';
+
+  // Update selected count badge
+  const selectedCountBadge = document.getElementById('selected-customers-count');
+  if (selectedCountBadge) {
+    selectedCountBadge.textContent = '0 Selected';
+  }
 }
 
 // Batch Processing Function

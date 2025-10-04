@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice List - Atma Nirbhar Farm</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background-attachment: fixed;
+    }
+
+    .main-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 25px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      margin: 15px;
+      overflow: hidden;
+      min-height: calc(100vh - 30px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-section {
+      background: linear-gradient(135deg, #5a4ec9 0%, #667eea 50%, #764ba2 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" style="stop-color:white;stop-opacity:0.1"/><stop offset="100%" style="stop-color:white;stop-opacity:0"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .header-section h1 {
+      margin: 0;
+      font-size: 2.8rem;
+      font-weight: 800;
+      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+      position: relative;
+      z-index: 2;
+      letter-spacing: -0.5px;
+    }
+
+    .header-section .subtitle {
+      margin-top: 15px;
+      font-size: 1.2rem;
+      opacity: 0.95;
+      position: relative;
+      z-index: 2;
+      font-weight: 400;
+    }
+
+    .header-icon {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      padding: 15px;
+      margin-bottom: 15px;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-icon i {
+      font-size: 2rem;
+    }
+
+    .invoice-list {
+      padding: 35px;
+      background: linear-gradient(to bottom, rgba(248, 249, 250, 0.8), rgba(248, 249, 250, 0.95));
+      backdrop-filter: blur(5px);
+    }
+
+    .invoice-item {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%);
+      border-radius: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+
+    .invoice-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: linear-gradient(135deg, #5a4ec9 0%, #667eea 100%);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .invoice-item:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 15px 45px rgba(90, 78, 201, 0.25);
+    }
+
+    .invoice-item:nth-child(even):hover {
+      box-shadow: 0 15px 45px rgba(118, 75, 162, 0.25);
+    }
+
+    .invoice-content {
+      padding: 30px;
+      position: relative;
+    }
+
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      padding-bottom: 15px;
+      border-bottom: 2px solid rgba(90, 78, 201, 0.1);
+    }
+
+    .invoice-number {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #5a4ec9 0%, #667eea 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      position: relative;
+    }
+
+    .invoice-number::before {
+      content: '💰';
+      position: absolute;
+      left: -35px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+    }
+
+    .invoice-amount {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    }
+
+    .invoice-details {
+      margin-bottom: 20px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .detail-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .detail-value {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-view {
+      background: linear-gradient(135deg, #5a4ec9 0%, #667eea 50%, #764ba2 100%);
+      border: none;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      flex: 1;
+      justify-content: center;
+      min-width: 140px;
+      box-shadow: 0 4px 15px rgba(90, 78, 201, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-view::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
+
+    .btn-view:hover::before {
+      left: 100%;
+    }
+
+    .btn-view:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(90, 78, 201, 0.4);
+      color: white;
+      text-decoration: none;
+    }
+
+    .btn-whatsapp {
+      background: linear-gradient(135deg, #25d366 0%, #20c997 50%, #128c7e 100%);
+      border: none;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      flex: 1;
+      justify-content: center;
+      min-width: 140px;
+      box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-whatsapp::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
+
+    .btn-whatsapp:hover::before {
+      left: 100%;
+    }
+
+    .btn-whatsapp:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
+      color: white;
+      text-decoration: none;
+    }
+
+    .status-badge {
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-pending {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      color: #856404;
+      border-color: #f1c40f;
+    }
+
+    .status-pending::before {
+      background-color: #f39c12;
+    }
+
+    .status-paid {
+      background: linear-gradient(135deg, #d1ecf1 0%, #a8e6cf 100%);
+      color: #0c5460;
+      border-color: #20c997;
+    }
+
+    .status-paid::before {
+      background-color: #28a745;
+    }
+
+    .status-overdue {
+      background: linear-gradient(135deg, #f8d7da 0%, #ff9ff3 100%);
+      color: #721c24;
+      border-color: #e74c3c;
+      animation: shake 0.5s ease-in-out infinite alternate;
+    }
+
+    .status-overdue::before {
+      background-color: #e74c3c;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(2px); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      color: #ddd;
+    }
+
+    /* Mobile Responsive Design */
+    @media (max-width: 768px) {
+      .main-container {
+        margin: 10px;
+        border-radius: 15px;
+        min-height: calc(100vh - 20px);
+      }
+
+      .header-section {
+        padding: 20px 15px;
+      }
+
+      .header-section h1 {
+        font-size: 2rem;
+      }
+
+      .header-section .subtitle {
+        font-size: 1rem;
+      }
+
+      .invoice-list {
+        padding: 15px;
+      }
+
+      .invoice-content {
+        padding: 20px;
+      }
+
+      .invoice-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .invoice-number {
+        font-size: 1.2rem;
+      }
+
+      .invoice-amount {
+        font-size: 1.3rem;
+      }
+
+      .detail-row {
+        flex-direction: column;
+        gap: 2px;
+        margin-bottom: 12px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .btn-view,
+      .btn-whatsapp {
+        width: 100%;
+        padding: 15px;
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header-section h1 {
+        font-size: 1.8rem;
+      }
+
+      .header-section .subtitle {
+        font-size: 0.9rem;
+      }
+
+      .invoice-content {
+        padding: 15px;
+      }
+
+      .invoice-number {
+        font-size: 1.1rem;
+      }
+
+      .invoice-amount {
+        font-size: 1.2rem;
+      }
+    }
+
+    /* Pagination styles */
+    .pagination-container {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .pagination {
+      justify-content: center;
+    }
+
+    .page-link {
+      color: #5a4ec9;
+      border-color: #5a4ec9;
+    }
+
+    .page-link:hover {
+      background-color: #5a4ec9;
+      border-color: #5a4ec9;
+      color: white;
+    }
+
+    .page-item.active .page-link {
+      background-color: #5a4ec9;
+      border-color: #5a4ec9;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-icon">
+        <i class="fas fa-receipt"></i>
+      </div>
+      <h1>Invoice List</h1>
+      <p class="subtitle">Atma Nirbhar Farm - All Invoices</p>
+    </div>
+
+    <!-- Invoice List Section -->
+    <div class="invoice-list">
+      <% if @invoices.any? %>
+        <% @invoices.each do |invoice| %>
+          <div class="invoice-item">
+            <div class="invoice-content">
+              <!-- Invoice Header -->
+              <div class="invoice-header">
+                <h3 class="invoice-number">#<%= invoice.formatted_number %></h3>
+                <h3 class="invoice-amount">₹<%= number_with_delimiter(invoice.total_amount, delimiter: ',') %></h3>
+              </div>
+
+              <!-- Invoice Details -->
+              <div class="invoice-details">
+                <div class="detail-row">
+                  <span class="detail-label"><i class="fas fa-user me-2"></i>Customer:</span>
+                  <span class="detail-value"><%= invoice.customer&.name || 'N/A' %></span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label"><i class="fas fa-calendar me-2"></i>Invoice Date:</span>
+                  <span class="detail-value"><%= invoice.invoice_date&.strftime('%d %b %Y') || invoice.created_at&.strftime('%d %b %Y') %></span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label"><i class="fas fa-calendar-check me-2"></i>Due Date:</span>
+                  <span class="detail-value"><%= invoice.due_date&.strftime('%d %b %Y') || 'Not set' %></span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label"><i class="fas fa-info-circle me-2"></i>Status:</span>
+                  <span class="detail-value">
+                    <% case invoice.status %>
+                    <% when 'paid' %>
+                      <span class="status-badge status-paid">Paid</span>
+                    <% when 'pending' %>
+                      <span class="status-badge status-pending">Pending</span>
+                    <% else %>
+                      <% if invoice.overdue? %>
+                        <span class="status-badge status-overdue">Overdue</span>
+                      <% else %>
+                        <span class="status-badge status-pending"><%= invoice.status.humanize %></span>
+                      <% end %>
+                    <% end %>
+                  </span>
+                </div>
+                <% if invoice.customer&.phone_number.present? %>
+                  <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-phone me-2"></i>Phone:</span>
+                    <span class="detail-value"><%= invoice.customer.phone_number %></span>
+                  </div>
+                <% end %>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="action-buttons">
+                <%
+                  # Generate share token if not exists
+                  invoice.generate_share_token if invoice.share_token.blank?
+                  invoice.save! if invoice.changed?
+
+                  # Generate public URL
+                  host = 'atmanirbharfarmbangalore.com'
+                  public_url = "https://#{host}/invoice/#{invoice.share_token}"
+                %>
+                <a href="<%= public_url %>" class="btn-view" target="_blank">
+                  <i class="fas fa-eye"></i>
+                  View Invoice
+                </a>
+                <% if invoice.customer&.phone_number.present? %>
+                  <button class="btn-whatsapp" onclick="shareViaWhatsApp('<%= invoice.customer.phone_number %>', '<%= public_url %>', '<%= invoice.formatted_number %>', '<%= number_with_delimiter(invoice.total_amount, delimiter: ',') %>', '<%= invoice.customer.name %>')">
+                    <i class="fab fa-whatsapp"></i>
+                    Share WhatsApp
+                  </button>
+                <% else %>
+                  <button class="btn-whatsapp" onclick="shareViaWhatsApp('', '<%= public_url %>', '<%= invoice.formatted_number %>', '<%= number_with_delimiter(invoice.total_amount, delimiter: ',') %>', '<%= invoice.customer&.name || 'Customer' %>')">
+                    <i class="fab fa-whatsapp"></i>
+                    Share WhatsApp
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Pagination -->
+        <% if @invoices.respond_to?(:total_pages) && @invoices.total_pages > 1 %>
+          <div class="pagination-container">
+            <%= paginate @invoices, theme: 'twitter_bootstrap_5' %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <h3>No Invoices Found</h3>
+          <p>There are no invoices available at the moment.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <script>
+    function shareViaWhatsApp(phoneNumber, invoiceUrl, invoiceNumber, amount, customerName) {
+      // Get current month and year (you can enhance this to get actual invoice date)
+      const currentDate = new Date();
+      const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      // Build WhatsApp message in the enhanced format
+      const message = `👋 Hello ${customerName}!
+
+🎉 Your ${monthYear} Invoice is ready to view! 🧾
+
+───────────────────
+📋 Invoice #: ${invoiceNumber}
+💵 Total Amount: ₹${amount}
+📆 Due Date: ${new Date(Date.now() + 10*24*60*60*1000).toLocaleDateString('en-GB')}
+───────────────────
+
+👇 Click below to download your invoice:
+${invoiceUrl}
+
+Thank you for trusting Atma Nirbhar Farm! 🙏
+
+🏠 Bangalore
+📞 +91 9972808044 | +91 9008860329
+📱 WhatsApp: +91 9972808044
+📧 atmanirbharfarmbangalore@gmail.com`;
+
+      let whatsappUrl;
+
+      if (phoneNumber && phoneNumber.trim() !== '') {
+        // Clean phone number - remove non-digits
+        let cleanPhone = phoneNumber.replace(/\D/g, '');
+
+        // Add country code if needed (assuming Indian numbers)
+        if (!cleanPhone.startsWith('91')) {
+          cleanPhone = '91' + cleanPhone.replace(/^0/, '');
+        }
+
+        // Create WhatsApp URL with phone number
+        whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      } else {
+        // No phone number, just open WhatsApp with message
+        whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      }
+
+      // Open WhatsApp
+      window.open(whatsappUrl, '_blank');
+    }
+
+    // Add smooth scrolling for better mobile experience
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add loading states to buttons
+      const whatsappButtons = document.querySelectorAll('.btn-whatsapp');
+      whatsappButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const originalText = this.innerHTML;
+          this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening WhatsApp...';
+
+          setTimeout(() => {
+            this.innerHTML = originalText;
+          }, 2000);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

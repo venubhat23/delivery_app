@@ -284,12 +284,12 @@
             </div>
             <div class="col-md-8">
               <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="stats-card text-center p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                       <div class="text-start">
                         <div class="text-muted small fw-semibold text-uppercase">Total</div>
-                        <div class="h2 fw-bold text-dark mb-0"><%= @total_customers %></div>
+                        <div class="h2 fw-bold text-dark mb-0" id="total-customers-stat"><%= @total_customers %></div>
                       </div>
                       <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-users text-white" style="font-size: 16px;"></i>
@@ -298,12 +298,12 @@
                     <div class="text-muted small">All Customers</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="stats-card text-center p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                       <div class="text-start">
                         <div class="text-muted small fw-semibold text-uppercase">Regular</div>
-                        <div class="h2 fw-bold mb-0" style="color: #10b981;"><%= @regular_count %></div>
+                        <div class="h2 fw-bold mb-0" style="color: #10b981;" id="regular-customers-stat"><%= @regular_count %></div>
                       </div>
                       <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #10b981, #059669); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-check-circle text-white" style="font-size: 16px;"></i>
@@ -312,18 +312,32 @@
                     <div class="text-muted small">Consistent Patterns</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="stats-card text-center p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                       <div class="text-start">
                         <div class="text-muted small fw-semibold text-uppercase">Irregular</div>
-                        <div class="h2 fw-bold mb-0" style="color: #f59e0b;"><%= @irregular_count %></div>
+                        <div class="h2 fw-bold mb-0" style="color: #f59e0b;" id="irregular-customers-stat"><%= @irregular_count %></div>
                       </div>
                       <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #f59e0b, #d97706); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-chart-line text-white" style="font-size: 16px;"></i>
                       </div>
                     </div>
                     <div class="text-muted small">Variable Patterns</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="stats-card text-center p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div class="text-start">
+                        <div class="text-muted small fw-semibold text-uppercase">Amount</div>
+                        <div class="h2 fw-bold mb-0" style="color: #11998e;" id="total-amount-stat">₹<%= number_with_precision(@total_amount || 0, precision: 0) %></div>
+                      </div>
+                      <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #11998e, #38ef7d); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-rupee-sign text-white" style="font-size: 16px;"></i>
+                      </div>
+                    </div>
+                    <div class="text-muted small">Total Revenue</div>
                   </div>
                 </div>
               </div>
@@ -6433,5 +6447,100 @@ function handleEditAssignmentSubmission(submitBtn) {
   });
 
 })();
+
+// Function to update stats based on visible table rows
+function updateStatsFromVisibleRows() {
+  const visibleRows = document.querySelectorAll('.customer-pattern-row:not(.d-none)');
+  let totalCustomers = 0;
+  let regularCount = 0;
+  let irregularCount = 0;
+  let totalAmount = 0;
+
+  visibleRows.forEach(row => {
+    totalCustomers++;
+
+    // Get pattern type from the pattern column (column 8)
+    const patternCell = row.querySelector('td:nth-child(8)');
+    if (patternCell) {
+      const patternBadge = patternCell.querySelector('.badge-modern');
+      if (patternBadge) {
+        const patternText = patternBadge.textContent.toLowerCase();
+        if (patternText.includes('regular') || patternText.includes('every day')) {
+          regularCount++;
+        } else {
+          irregularCount++;
+        }
+      }
+    }
+
+    // Get amount from the amount column (column 7 - contains ₹ symbol)
+    const amountCell = row.querySelector('td:nth-child(7)');
+    if (amountCell) {
+      const amountText = amountCell.textContent.replace(/[₹,]/g, '').trim();
+      const amount = parseFloat(amountText) || 0;
+      totalAmount += amount;
+    }
+  });
+
+  // Update the stat cards
+  const totalCustomersStat = document.getElementById('total-customers-stat');
+  const regularCustomersStat = document.getElementById('regular-customers-stat');
+  const irregularCustomersStat = document.getElementById('irregular-customers-stat');
+  const totalAmountStat = document.getElementById('total-amount-stat');
+
+  if (totalCustomersStat) totalCustomersStat.textContent = totalCustomers;
+  if (regularCustomersStat) regularCustomersStat.textContent = regularCount;
+  if (irregularCustomersStat) irregularCustomersStat.textContent = irregularCount;
+  if (totalAmountStat) {
+    totalAmountStat.textContent = '₹' + totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+}
+
+// Update stats when page loads and when filters change
+document.addEventListener('DOMContentLoaded', function() {
+  // Initial update after a brief delay to let content load
+  setTimeout(updateStatsFromVisibleRows, 500);
+
+  // Update stats when filters change via form submission
+  const filterForm = document.getElementById('patterns-filter-form');
+  if (filterForm) {
+    const filterInputs = filterForm.querySelectorAll('select, input');
+    filterInputs.forEach(input => {
+      input.addEventListener('change', function() {
+        // Since forms auto-submit, stats will update with the page reload
+        // This is just for any client-side filtering that might occur
+        setTimeout(updateStatsFromVisibleRows, 500);
+      });
+    });
+  }
+
+  // Observer for any dynamic content changes
+  const observer = new MutationObserver(function(mutations) {
+    let shouldUpdate = false;
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList' && mutation.target.tagName === 'TBODY') {
+        shouldUpdate = true;
+      }
+      if (mutation.type === 'attributes' &&
+          (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
+        shouldUpdate = true;
+      }
+    });
+
+    if (shouldUpdate) {
+      setTimeout(updateStatsFromVisibleRows, 100);
+    }
+  });
+
+  const tableBody = document.querySelector('.table tbody');
+  if (tableBody) {
+    observer.observe(tableBody, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+  }
+});
 
 </script>

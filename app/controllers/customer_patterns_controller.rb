@@ -29,6 +29,7 @@ class CustomerPatternsController < ApplicationController
       @total_pages = cached_data[:total_pages]
       @has_next_page = cached_data[:has_next_page]
       @has_prev_page = cached_data[:has_prev_page]
+      @total_amount = cached_data[:total_amount]
       @month_name = cached_data[:month_name]
       return
     end
@@ -57,6 +58,7 @@ class CustomerPatternsController < ApplicationController
     @total_pages = result[:total_pages]
     @has_next_page = result[:has_next_page]
     @has_prev_page = result[:has_prev_page]
+    @total_amount = result[:total_amount]
     @month_name = Date.new(@current_year, @current_month, 1).strftime("%B %Y")
 
     # Cache the results for 30 seconds to ensure near real-time updates
@@ -71,6 +73,7 @@ class CustomerPatternsController < ApplicationController
       total_pages: @total_pages,
       has_next_page: @has_next_page,
       has_prev_page: @has_prev_page,
+      total_amount: @total_amount,
       month_name: @month_name
     }
     Rails.cache.write(cache_key, cache_data, expires_in: 30.seconds)
@@ -859,7 +862,8 @@ class CustomerPatternsController < ApplicationController
           SELECT
             COUNT(*) as total_customers,
             COUNT(*) FILTER (WHERE pattern = 'regular') as regular_count,
-            COUNT(*) FILTER (WHERE pattern = 'irregular') as irregular_count
+            COUNT(*) FILTER (WHERE pattern = 'irregular') as irregular_count,
+            COALESCE(SUM(estimated_amount), 0) as total_amount
           FROM customer_patterns
         ),
         filtered_patterns AS (
@@ -885,6 +889,7 @@ class CustomerPatternsController < ApplicationController
           pc.total_customers,
           pc.regular_count,
           pc.irregular_count,
+          pc.total_amount,
           COUNT(*) OVER() as total_filtered_count
         FROM filtered_patterns fp
         CROSS JOIN pattern_counts pc
@@ -942,11 +947,13 @@ class CustomerPatternsController < ApplicationController
         total_customers = first_row[12].to_i
         regular_count = first_row[13].to_i
         irregular_count = first_row[14].to_i
-        total_filtered_count = first_row[15].to_i
+        total_amount = first_row[15].to_f
+        total_filtered_count = first_row[16].to_i
       else
         total_customers = 0
         regular_count = 0
         irregular_count = 0
+        total_amount = 0.0
         total_filtered_count = 0
       end
 
@@ -959,6 +966,7 @@ class CustomerPatternsController < ApplicationController
         total_customers: total_customers,
         regular_count: regular_count,
         irregular_count: irregular_count,
+        total_amount: total_amount,
         total_count: total_filtered_count,
         total_pages: total_pages,
         has_next_page: has_next_page,

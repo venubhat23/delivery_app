@@ -782,21 +782,34 @@ end
   def build_whatsapp_message(invoice, public_url, pdf_url = nil)
     formatted_amount = ActionController::Base.helpers.number_with_delimiter(invoice.total_amount, delimiter: ',')
 
+    # Get current month and year or use invoice creation date
+    month_year = invoice.invoice_date&.strftime('%B %Y') || invoice.created_at&.strftime('%B %Y') || Date.current.strftime('%B %Y')
+
+    # Calculate due date (use invoice due_date or 10 days from creation)
+    due_date = invoice.due_date&.strftime('%d/%m/%Y') || (invoice.created_at + 10.days).strftime('%d/%m/%Y')
+
     message = <<~MESSAGE.strip
-      🧾 *Invoice Ready - #{invoice.formatted_number}*
+      👋 Hello #{invoice.customer.name}!
 
-      Dear #{invoice.customer.name},
-      Your invoice for ₹#{formatted_amount} from *Atmanirbhar Farm* has been prepared.
+      🎉 Your #{month_year} Invoice is ready to view! 🧾
 
-      📥 *View & Download:*
+      ───────────────────
+      📋 Invoice #: #{invoice.formatted_number}
+      💵 Total Amount: ₹#{formatted_amount}
+      📆 Due Date: #{due_date}
+      ───────────────────
+
+      👇 Click below to download your invoice:
       #{public_url}
+
+      Thank you for trusting Atma Nirbhar Farm! 🙏
+
+      🏠 Bangalore
+      📞 +91 9972808044 | +91 9008860329
+      📱 WhatsApp: +91 9972808044
+      📧 atmanirbharfarmbangalore@gmail.com
     MESSAGE
 
-    if pdf_url.present?
-      message += "\n\n📄 *Direct PDF:*\n#{pdf_url}"
-    end
-
-    message += "\n\nThank you for your business! 🙏\n🌾 *Atmanirbhar Farm*"
     message
   end
 

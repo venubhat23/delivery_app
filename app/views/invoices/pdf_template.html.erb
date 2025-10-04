@@ -402,7 +402,7 @@
 
   <%
     # Load delivery assignments if available
-    delivery_assignments = defined?(@delivery_assignments) ? @delivery_assignments : @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date)
+    delivery_assignments = defined?(@delivery_assignments) ? @delivery_assignments : @invoice.delivery_assignments.includes(:product).order(Arel.sql('CASE WHEN completed_at IS NOT NULL THEN completed_at ELSE scheduled_date END'))
 
     if delivery_assignments.any?
   %>

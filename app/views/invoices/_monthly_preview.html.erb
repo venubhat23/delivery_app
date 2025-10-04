@@ -146,7 +146,7 @@
             </tr>
           </thead>
           <tbody>
-            <% preview_data[:assignments].order(:completed_at, :scheduled_date).each_with_index do |assignment, index| %>
+            <% preview_data[:assignments].order(Arel.sql('CASE WHEN completed_at IS NOT NULL THEN completed_at ELSE scheduled_date END')).each_with_index do |assignment, index| %>
               <tr class="<%= 'table-warning' if assignment.has_discount? %>">
                 <td class="text-nowrap">
                   <% display_date = assignment.scheduled_date %>

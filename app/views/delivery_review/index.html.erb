@@ -9,7 +9,14 @@
 
   <div class="filter-section card mb-4" data-enhanced-selects>
     <div class="card-header">
-      <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Delivery Filters</h5>
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Delivery Filters</h5>
+        <div class="status-counts d-flex gap-3" id="statusCounts">
+          <span class="badge bg-success" id="completedStatusCount">✅ Completed: 0</span>
+          <span class="badge bg-warning text-dark" id="pendingStatusCount">⏳ Pending: 0</span>
+          <span class="badge bg-danger" id="cancelledStatusCount">❌ Cancelled: 0</span>
+        </div>
+      </div>
     </div>
     <div class="card-body">
       <form id="deliveryReviewFilters">
@@ -51,9 +58,9 @@
             <label class="form-label fw-semibold">🏷️ Status</label>
             <select id="filterStatus" class="form-select form-select-enhanced">
               <option value="all" selected>All Status</option>
-              <option value="completed">✅ Completed</option>
-              <option value="pending">⏳ Pending</option>
-              <option value="cancelled">❌ Cancelled</option>
+              <option value="completed">✅ Completed <span id="completedCount">(0)</span></option>
+              <option value="pending">⏳ Pending <span id="pendingCount">(0)</span></option>
+              <option value="cancelled">❌ Cancelled <span id="cancelledCount">(0)</span></option>
             </select>
           </div>
 
@@ -98,6 +105,9 @@
               </button>
               <button type="button" id="bulkCompleteBtn" class="btn btn-success" style="display: none;">
                 <i class="fas fa-check-circle me-1"></i><span id="bulkCompleteText">Complete 0</span>
+              </button>
+              <button type="button" id="markAllCompletedBtn" class="btn btn-success btn-lg" style="display: none;">
+                <i class="fas fa-check-double me-1"></i><span id="markAllText">Mark All Completed</span>
               </button>
             </div>
             <div class="btn-group" role="group">
@@ -397,6 +407,83 @@
   }
 }
 
+/* Status counts styling */
+.delivery-review-page .status-counts .badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delivery-review-page .status-counts .badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.delivery-review-page .status-counts .bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white;
+}
+
+.delivery-review-page .status-counts .bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #1f2937;
+}
+
+.delivery-review-page .status-counts .bg-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white;
+}
+
+/* Mark All Completed button styling */
+.delivery-review-page #markAllCompletedBtn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border: none;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-review-page #markAllCompletedBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
+}
+
+.delivery-review-page #markAllCompletedBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+/* Responsive design for status counts */
+@media (max-width: 768px) {
+  .delivery-review-page .status-counts {
+    flex-direction: column;
+    gap: 0.5rem !important;
+    align-items: flex-end;
+  }
+
+  .delivery-review-page .status-counts .badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .delivery-review-page .filter-section .card-header .d-flex {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}
+
 /* Loading states */
 .delivery-review-page .loading {
   position: relative;
@@ -495,20 +582,60 @@
     document.getElementById('sumTotalCustomers').textContent = summary.total_customers || 0;
     document.getElementById('sumTotalAmount').textContent = formatINR(summary.total_amount || 0);
     document.getElementById('sumCompletionRate').textContent = (summary.completion_rate || 0) + '%';
-    
+
+    // Update status counts in filter section
+    updateStatusCounts(summary);
+
     // Update bulk complete button
     updateBulkCompleteButton(summary.pending_deliveries || 0);
+
+    // Update mark all completed button
+    updateMarkAllCompletedButton(summary.pending_deliveries || 0);
+  }
+
+  function updateStatusCounts(summary) {
+    // Update badges in filter header
+    document.getElementById('completedStatusCount').textContent = '✅ Completed: ' + (summary.completed_deliveries || 0);
+    document.getElementById('pendingStatusCount').textContent = '⏳ Pending: ' + (summary.pending_deliveries || 0);
+    document.getElementById('cancelledStatusCount').textContent = '❌ Cancelled: ' + (summary.cancelled_deliveries || 0);
+
+    // Update option text in dropdown (more complex since it needs to preserve HTML structure)
+    var statusSelect = document.getElementById('filterStatus');
+    if (statusSelect) {
+      var options = statusSelect.querySelectorAll('option');
+      options.forEach(function(option) {
+        if (option.value === 'completed') {
+          option.textContent = '✅ Completed (' + (summary.completed_deliveries || 0) + ')';
+        } else if (option.value === 'pending') {
+          option.textContent = '⏳ Pending (' + (summary.pending_deliveries || 0) + ')';
+        } else if (option.value === 'cancelled') {
+          option.textContent = '❌ Cancelled (' + (summary.cancelled_deliveries || 0) + ')';
+        }
+      });
+    }
   }
 
   function updateBulkCompleteButton(pendingCount) {
     var bulkBtn = document.getElementById('bulkCompleteBtn');
     var bulkText = document.getElementById('bulkCompleteText');
-    
+
     if (pendingCount > 0) {
       bulkText.textContent = 'Complete ' + pendingCount;
       bulkBtn.style.display = 'inline-block';
     } else {
       bulkBtn.style.display = 'none';
+    }
+  }
+
+  function updateMarkAllCompletedButton(pendingCount) {
+    var markAllBtn = document.getElementById('markAllCompletedBtn');
+    var markAllText = document.getElementById('markAllText');
+
+    if (pendingCount > 0) {
+      markAllText.textContent = 'Mark All ' + pendingCount + ' Completed';
+      markAllBtn.style.display = 'inline-block';
+    } else {
+      markAllBtn.style.display = 'none';
     }
   }
 
@@ -589,6 +716,7 @@
     document.getElementById('filterDate').addEventListener('change', toggleCustomDates);
     document.getElementById('applyFiltersBtn').addEventListener('click', fetchData);
     document.getElementById('bulkCompleteBtn').addEventListener('click', handleBulkComplete);
+    document.getElementById('markAllCompletedBtn').addEventListener('click', handleMarkAllCompleted);
     document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
 
     document.getElementById('exportCsvBtn').addEventListener('click', function() {
@@ -835,6 +963,51 @@
     .catch(function(error) {
       console.error('Error:', error);
       alert('Failed to complete assignments');
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    });
+  }
+
+  function handleMarkAllCompleted() {
+    if (pendingAssignmentIds.length === 0) {
+      alert('No pending assignments found to complete.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to mark ALL ' + pendingAssignmentIds.length + ' pending assignments as completed? This action cannot be undone.')) {
+      return;
+    }
+
+    var btn = document.getElementById('markAllCompletedBtn');
+    var originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Marking All Completed...';
+
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    fetch('/delivery-review/bulk-complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf ? csrf.getAttribute('content') : ''
+      },
+      body: JSON.stringify({ assignment_ids: pendingAssignmentIds })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+      if (result.success) {
+        // Show success message with enhanced feedback
+        alert('🎉 Successfully marked ' + result.completed_count + ' assignments as completed!');
+        // Refresh the data to show updated statuses
+        fetchData();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    })
+    .catch(function(error) {
+      console.error('Error:', error);
+      alert('Failed to mark assignments as completed');
     })
     .finally(function() {
       btn.disabled = false;

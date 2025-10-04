@@ -1062,7 +1062,7 @@
             </tr>
           </thead>
           <tbody>
-            <% @invoice.delivery_assignments.includes(:product).order(:completed_at, :scheduled_date).each_with_index do |assignment, index| %>
+            <% @invoice.delivery_assignments.includes(:product).order(Arel.sql('CASE WHEN completed_at IS NOT NULL THEN completed_at ELSE scheduled_date END')).each_with_index do |assignment, index| %>
               <tr style="<%= 'background-color: #fff3cd;' if assignment.has_discount? %><%= 'background-color: #f8f9fa;' if index.even? && !assignment.has_discount? %>">
                 <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">
                   <% display_date = assignment.scheduled_date %>

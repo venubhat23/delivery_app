@@ -283,7 +283,7 @@
                             data-customer-phone="<%= invoice.customer.phone_number %>"
                             data-customer-id="<%= invoice.customer.id %>"
                             data-amount="<%= invoice.total_amount %>"
-                            onclick="openWhatsAppModal(this)"
+                            onclick="openWhatsAppDirect(this)"
                             title="Share via WhatsApp">
                       <i class="fab fa-whatsapp"></i>
                     </button>
@@ -369,7 +369,7 @@
                             data-customer-phone="<%= invoice.customer.phone_number %>"
                             data-customer-id="<%= invoice.customer.id %>"
                             data-amount="<%= invoice.total_amount %>"
-                            onclick="openWhatsAppModal(this)"
+                            onclick="openWhatsAppDirect(this)"
                       <i class="fab fa-whatsapp me-1"></i>WhatsApp
                     </button>
                     <% if invoice.status != 'paid' %>
@@ -1595,6 +1595,66 @@ document.addEventListener('DOMContentLoaded', function() {
   // Interactive WhatsApp Modal Functionality with Customer Pattern
   let currentInvoiceData = null;
   let currentCustomerPattern = null;
+
+  // Global function to open WhatsApp directly without modal
+  window.openWhatsAppDirect = function(button) {
+    console.log('🚀 Opening WhatsApp directly');
+
+    // Extract data from button
+    const invoiceData = {
+      id: button.dataset.invoiceId,
+      number: button.dataset.invoiceNumber,
+      customerName: button.dataset.customerName,
+      customerPhone: button.dataset.customerPhone,
+      customerId: button.dataset.customerId,
+      amount: button.dataset.amount
+    };
+
+    console.log('📊 Invoice data:', invoiceData);
+
+    // Validate phone number
+    if (!invoiceData.customerPhone || invoiceData.customerPhone === 'null' || invoiceData.customerPhone === '') {
+      alert('No phone number found for this customer. Please update customer details.');
+      return;
+    }
+
+    // Show loading state
+    button.disabled = true;
+    const originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    // Make AJAX request to share_whatsapp endpoint
+    fetch(`/invoices/${invoiceData.id}/share_whatsapp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        phone_number: invoiceData.customerPhone
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Open WhatsApp directly
+        window.open(data.whatsapp_url, '_blank');
+        // Show success message
+        showNotification('WhatsApp opened successfully! 🚀', 'success');
+      } else {
+        alert('Error: ' + (data.error || 'Failed to generate WhatsApp link'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Network error. Please try again.');
+    })
+    .finally(() => {
+      // Reset button state
+      button.disabled = false;
+      button.innerHTML = originalHtml;
+    });
+  };
 
   // Global function to open WhatsApp modal - similar to deliveries modal pattern
   window.openWhatsAppModal = function(button) {
@@ -4198,6 +4258,37 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔍 updateCustomerCount called, countText element:', countText);
     if (!countText) return;
 
+    // Check if "All Customers" is selected
+    if (selectAllCheckbox && selectAllCheckbox.checked && !selectAllCheckbox.indeterminate) {
+      // Special case: All customers selected
+      const uninvoicedContainer = document.getElementById('uninvoiced-customers');
+      const allContainer = document.getElementById('all-customers');
+
+      let activeContainer;
+      if (uninvoicedContainer && uninvoicedContainer.style.display !== 'none') {
+        activeContainer = uninvoicedContainer;
+      } else if (allContainer && allContainer.style.display !== 'none') {
+        activeContainer = allContainer;
+      } else {
+        activeContainer = uninvoicedContainer; // default
+      }
+
+      const visibleCheckboxes = Array.from(activeContainer.querySelectorAll('.customer-checkbox-input'))
+        .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
+
+      const totalVisible = visibleCheckboxes.length;
+      countText.textContent = `${totalVisible} CUSTOMERS SELECTED (ALL)`;
+
+      // Update badge color
+      const badge = document.getElementById('customer-count-badge');
+      if (badge) {
+        badge.className = 'badge bg-primary';
+      }
+
+      console.log('🔍 All customers selected, count:', totalVisible);
+      return;
+    }
+
     // Determine which container is currently visible
     const uninvoicedContainer = document.getElementById('uninvoiced-customers');
     const allContainer = document.getElementById('all-customers');
@@ -4225,7 +4316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (count === 0) {
       text = `0 CUSTOMERS SELECTED`;
-    } else if (count === totalVisible && selectAllCheckbox && selectAllCheckbox.checked) {
+    } else if (count === totalVisible) {
       text = `${count} CUSTOMERS SELECTED (ALL)`;
     } else {
       text = count === 1 ? `${count} CUSTOMER SELECTED` : `${count} CUSTOMERS SELECTED`;

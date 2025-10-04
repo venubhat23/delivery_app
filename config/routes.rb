@@ -319,6 +319,9 @@ Rails.application.routes.draw do
   get '/invoice/:token', to: 'invoices#public_view', as: 'public_invoice'
   get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download', defaults: { format: :pdf }
 
+  # Public invoices list (no authentication required)
+  get '/invoices_public', to: 'public_invoices#index', as: 'public_invoices'
+
   # Public PDF serving for WhatsApp (no authentication required)
   get '/invoices/pdf/:filename', to: 'invoices#serve_pdf', as: 'serve_invoice_pdf'
 
