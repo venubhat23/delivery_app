@@ -780,10 +780,9 @@ end
   end
 
   def build_whatsapp_message(invoice, public_url, pdf_url = nil)
-    formatted_amount = ActionController::Base.helpers.number_with_delimiter(invoice.total_amount, delimiter: ',')
-
     # Get current month and year or use invoice creation date
     month_year = invoice.invoice_date&.strftime('%B %Y') || invoice.created_at&.strftime('%B %Y') || Date.current.strftime('%B %Y')
+    formatted_amount = ActionController::Base.helpers.number_with_delimiter(invoice.total_amount, delimiter: ',')
 
     # Calculate due date (use invoice due_date or 10 days from creation)
     due_date = invoice.due_date&.strftime('%d/%m/%Y') || (invoice.created_at + 10.days).strftime('%d/%m/%Y')

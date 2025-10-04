@@ -14,7 +14,6 @@ class TwilioWhatsappService
   def send_bulk_invoice_notifications(invoices)
     success_count = 0
     failure_count = 0
-
     invoices.each do |invoice|
       begin
         host = Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
@@ -41,40 +40,23 @@ class TwilioWhatsappService
     # Format phone number for WhatsApp
     phone_number = phone_number || invoice.customer.phone_number
     phone_number = format_phone_number(phone_number)
-    # Calculate due date (10 days from now or use invoice due date)
-    due_date = invoice.due_date.presence || (Date.current + 10.days)
 
+    # Generate public URL if not provided
     if public_url.present?
       public_url = public_url
     else
       public_url = generate_invoice_pdf_url(invoice)
     end
-    # Prepare content variables
-    content_variables = {
-      '1' => invoice.customer.name,
-      '2' => "September 2025",  # Month year
-      '3' => invoice.invoice_number,
-      '4' => invoice.total_amount.to_s,
-      '5' => due_date.strftime('%d/%m/%Y'),
-      '6' => public_url
-    }
 
-    # Generate PDF URL for media attachment
-    pdf_url = public_url
-    # message = @client.messages.create(
-    #   content_sid: @content_sid,
-    #   to: "whatsapp:#{phone_number}",
-    #   from: @from_number,
-    #   content_variables: content_variables.to_json,
-    #   mediaUrl: ['https://atmanirbharfarmbangalore.com/invoices/1.pdf']
-    # )
+    # Build enhanced message using the same format as the controller
+    message_body = build_enhanced_whatsapp_message(invoice, public_url)
+
+    # Send direct WhatsApp message instead of using template
     message = @client.messages.create(
-      content_sid: @content_sid,
+      body: message_body,
       to: "whatsapp:#{phone_number}",
-      from: @from_number,
-      content_variables: content_variables.to_json
+      from: @from_number
     )
-
 
     Rails.logger.info "WhatsApp message sent successfully. SID: #{message.sid}"
 
@@ -88,6 +70,41 @@ class TwilioWhatsappService
   end
 
   private
+
+  def build_enhanced_whatsapp_message(invoice, public_url)
+    # Get current month and year or use invoice creation date
+    month_year = invoice.invoice_date&.strftime('%B %Y') || invoice.created_at&.strftime('%B %Y') || Date.current.strftime('%B %Y')
+
+    # Format amount with delimiter
+    formatted_amount = invoice.total_amount.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\1,').reverse
+
+    # Calculate due date (use invoice due_date or 10 days from creation)
+    due_date = invoice.due_date&.strftime('%d/%m/%Y') || (invoice.created_at + 10.days).strftime('%d/%m/%Y')
+
+    message = <<~MESSAGE.strip
+      👋 Hello #{invoice.customer.name}!
+
+      🎉 Your #{month_year} Invoice is ready to view! 🧾
+
+      ───────────────────
+      📋 Invoice #: #{invoice.formatted_number}
+      💵 Total Amount: ₹#{formatted_amount}
+      📆 Due Date: #{due_date}
+      ───────────────────
+
+      👇 Click below to download your invoice:
+      #{public_url}
+
+      Thank you for trusting Atma Nirbhar Farm! 🙏
+
+      🏠 Bangalore
+      📞 +91 9972808044 | +91 9008860329
+      📱 WhatsApp: +91 9972808044
+      📧 atmanirbharfarmbangalore@gmail.com
+    MESSAGE
+
+    message
+  end
 
   def format_phone_number(phone)
     # Remove any non-digit characters and ensure it starts with +91
