@@ -853,7 +853,7 @@ class CustomerPatternsController < ApplicationController
         customer_patterns AS (
           SELECT *,
             CASE
-              WHEN days_delivered >= #{(days_in_month * 0.9).to_i} AND total_liters >= 0.5 THEN 'regular'
+              WHEN days_delivered >= #{[20, (days_in_month * 0.7).to_i].max} AND total_assignments > 0 THEN 'regular'
               ELSE 'irregular'
             END as pattern
           FROM customer_delivery_stats

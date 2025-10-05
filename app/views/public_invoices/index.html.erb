@@ -648,6 +648,11 @@
         font-size: 1.2rem;
       }
 
+      .invoice-number::before {
+        left: -25px;
+        font-size: 1rem;
+      }
+
       .invoice-amount {
         font-size: 1.3rem;
       }
@@ -932,6 +937,11 @@
 
       .invoice-number {
         font-size: 1.1rem;
+      }
+
+      .invoice-number::before {
+        left: -20px;
+        font-size: 0.9rem;
       }
 
       .invoice-amount {
@@ -1298,8 +1308,7 @@ Thank you for trusting Atma Nirbhar Farm! 🙏
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-Token': getCSRFToken()
+          'X-Requested-With': 'XMLHttpRequest'
         }
       })
       .then(response => response.json())
@@ -1366,8 +1375,7 @@ Thank you for trusting Atma Nirbhar Farm! 🙏
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-Token': getCSRFToken()
+          'X-Requested-With': 'XMLHttpRequest'
         }
       })
       .then(response => response.json())

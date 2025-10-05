@@ -635,6 +635,7 @@ Rails.application.routes.draw do
       get :unpaid_customers_data
       post :send_unpaid_customers_message
       get :total_customers_count
+      get :total_customers_data
       post :send_wishes_to_all
     end
   end

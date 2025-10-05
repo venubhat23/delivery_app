@@ -1426,9 +1426,6 @@
         ✅ Mark as Completed
       </button>
     <% end %>
-    <button type="button" class="action-btn delete-btn" onclick="openDeleteModal()">
-      🗑️ Delete Invoice
-    </button>
   </div>
 
   <!-- First Page: Bill of Supply / Tax Invoice -->
@@ -2007,55 +2004,6 @@
     </div>
   </div>
 
-  <!-- Delete Invoice Modal -->
-  <div id="deleteModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header danger">
-        <h2 class="modal-title">🗑️ Delete Invoice</h2>
-        <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-danger">
-          <strong>⚠️ PERMANENT DELETION WARNING</strong>
-        </div>
-
-        <p style="color: #dc3545; font-weight: bold; margin-bottom: 15px;">
-          This action will permanently delete the invoice and cannot be undone!
-        </p>
-
-        <div class="invoice-details-card">
-          <h4>Invoice to be deleted:</h4>
-          <p><strong>Invoice Number:</strong> <%= @invoice.formatted_number || @invoice.invoice_number %></p>
-          <p><strong>Customer:</strong> <%= @invoice.customer&.name %></p>
-          <p><strong>Amount:</strong> ₹<%= number_with_delimiter(@invoice.total_amount, delimiter: ',') %></p>
-        </div>
-
-        <div class="alert alert-warning">
-          <p><strong>This will also delete:</strong></p>
-          <ul>
-            <li>All invoice items associated with this invoice</li>
-            <li>All related data and records</li>
-          </ul>
-        </div>
-
-        <div class="form-group">
-          <label for="deleteConfirmation" class="form-label">
-            <strong>To confirm deletion, type "delete" below:</strong>
-          </label>
-          <input type="text"
-                 class="form-control"
-                 id="deleteConfirmation"
-                 placeholder="Type 'delete' to confirm"
-                 autocomplete="off">
-          <div class="form-text">This confirmation is required to prevent accidental deletions.</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete" disabled>Delete Invoice</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Success Modal -->
   <div id="successModal" class="modal">

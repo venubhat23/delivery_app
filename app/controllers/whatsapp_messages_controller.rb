@@ -10,7 +10,6 @@ class WhatsappMessagesController < ApplicationController
     term = params[:term]
     customers = Customer.active
                       .search(term)
-                      .includes(:delivery_person)
                       .limit(20)
                       .select(:id, :name, :phone_number, :member_id)
 
@@ -80,8 +79,8 @@ class WhatsappMessagesController < ApplicationController
                                           'customers.id',
                                           'customers.name',
                                           'customers.phone_number',
-                                          'SUM(invoices.total_amount) as total_unpaid_amount',
-                                          'COUNT(invoices.id) as unpaid_invoice_count'
+                                          'SUM(invoices.total_amount) AS total_unpaid_amount',
+                                          'COUNT(invoices.id) AS unpaid_invoice_count'
                                         )
                                         .group('customers.id, customers.name, customers.phone_number')
                                         .order('customers.name')
@@ -156,6 +155,28 @@ class WhatsappMessagesController < ApplicationController
     render json: {
       success: true,
       total_customers: total_customers
+    }
+  end
+
+  def total_customers_data
+    customers = Customer.active
+                      .where.not(phone_number: [nil, ''])
+                      .select(:id, :name, :phone_number, :member_id)
+                      .order(:name)
+
+    customers_data = customers.map do |customer|
+      {
+        id: customer.id,
+        name: customer.name,
+        phone_number: customer.phone_number,
+        member_id: customer.member_id
+      }
+    end
+
+    render json: {
+      success: true,
+      customers: customers_data,
+      count: customers_data.length
     }
   end
 

@@ -1,43 +1,77 @@
-<div class="container-fluid">
-  <div class="row">
+<div class="container-fluid px-2 px-md-4">
+  <!-- Modern Header -->
+  <div class="row mb-4">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">
-          <i class="fab fa-whatsapp text-success me-2"></i>
-          WhatsApp Message Center
-        </h1>
+      <div class="text-center py-4 bg-gradient-success rounded-4 text-white shadow-lg position-relative overflow-hidden">
+        <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10">
+          <div class="d-flex justify-content-around align-items-center h-100">
+            <i class="fab fa-whatsapp fa-4x"></i>
+            <i class="fas fa-mobile-alt fa-3x"></i>
+            <i class="fas fa-users fa-3x"></i>
+            <i class="fas fa-paper-plane fa-3x"></i>
+          </div>
+        </div>
+        <div class="position-relative">
+          <h1 class="display-5 fw-bold mb-2">
+            <i class="fab fa-whatsapp me-3 bounce-animation"></i>
+            WhatsApp Message Center
+          </h1>
+          <p class="lead mb-0 opacity-90">Send professional messages to your customers instantly</p>
+        </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Success/Error Messages -->
-      <div id="message-container" class="mb-3" style="display: none;">
-        <div id="message-alert" class="alert" role="alert"></div>
-      </div>
+  <!-- Success/Error Messages -->
+  <div id="message-container" class="mb-4" style="display: none;">
+    <div id="message-alert" class="alert alert-dismissible fade show shadow-sm" role="alert">
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  </div>
 
-      <!-- Three Function Cards -->
-      <div class="row g-4">
+  <!-- Two Main Sections -->
+  <div class="row g-4 mb-5">
 
-        <!-- 1. Send Message to Individual Customer -->
-        <div class="col-lg-4 col-md-12">
-          <div class="card h-100 shadow-sm">
-            <div class="card-header bg-primary text-white">
-              <h5 class="card-title mb-0">
-                <i class="fas fa-user me-2"></i>
-                Send to Individual Customer
-              </h5>
+    <!-- Section 1: Individual & Business Messaging -->
+    <div class="col-xl-6 col-lg-12">
+      <div class="card border-0 shadow-lg h-100 modern-card">
+        <div class="card-header bg-gradient-primary text-white border-0 py-4">
+          <div class="d-flex align-items-center">
+            <div class="bg-white bg-opacity-20 rounded-circle p-3 me-3">
+              <i class="fas fa-user-friends fa-2x"></i>
             </div>
-            <div class="card-body">
-              <form id="individual-message-form">
-                <div class="mb-3">
-                  <label for="customer-search" class="form-label">Search Customer</label>
-                  <select id="customer-search" class="form-select" style="width: 100%;">
-                    <option value="">Search by name or phone number...</option>
-                  </select>
-                  <small class="form-text text-muted">Type to search customers by name or phone number</small>
-                </div>
+            <div>
+              <h3 class="mb-1 fw-bold">Individual & Business</h3>
+              <p class="mb-0 opacity-75">Send targeted messages to specific customers or manage business communications</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
 
-                <div class="mb-3">
-                  <label for="individual-message" class="form-label">Message</label>
-                  <textarea id="individual-message" class="form-control" rows="4" placeholder="👋 Hello! Thank you for being a valued customer of Atma Nirbhar Farm!
+          <!-- Individual Customer Section -->
+          <div class="mb-5">
+            <div class="d-flex align-items-center mb-3">
+              <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                <i class="fas fa-user text-primary"></i>
+              </div>
+              <h5 class="mb-0 text-primary">Send to Individual Customer</h5>
+            </div>
+
+            <form id="individual-message-form">
+              <div class="mb-3">
+                <label for="customer-search" class="form-label fw-semibold">
+                  <i class="fas fa-search me-2 text-muted"></i>Search Customer
+                </label>
+                <select id="customer-search" class="form-select form-select-lg modern-select" style="width: 100%;">
+                  <option value="">Type customer name or phone number...</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="individual-message" class="form-label fw-semibold">
+                  <i class="fas fa-comment-alt me-2 text-muted"></i>Your Message
+                </label>
+                <textarea id="individual-message" class="form-control modern-textarea" rows="4" placeholder="👋 Hello! Thank you for being a valued customer of Atma Nirbhar Farm!
 
 🥛 We hope you're enjoying our fresh, pure desi cow milk.
 
@@ -48,18 +82,69 @@
 🙏 Thank you for your continued trust!
 
 🏠 Atma Nirbhar Farm, Bangalore"></textarea>
-                </div>
+              </div>
 
-                <button type="submit" class="btn btn-primary w-100" id="send-individual-btn">
+              <button type="submit" class="btn btn-primary btn-lg w-100 modern-btn" id="send-individual-btn">
+                <span class="btn-content">
+                  <i class="fab fa-whatsapp me-2"></i>
+                  Send Message
+                </span>
+                <span class="btn-loader d-none">
+                  <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span class="loading-text">Sending...</span>
+                  <span class="loading-dots">
+                    <span class="dot1">.</span>
+                    <span class="dot2">.</span>
+                    <span class="dot3">.</span>
+                  </span>
+                </span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Unpaid Customers Section -->
+          <div class="border-top pt-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+              </div>
+              <h5 class="mb-0 text-warning">Payment Reminders</h5>
+            </div>
+
+            <form id="unpaid-message-form">
+              <div class="row mb-3">
+                <div class="col-6">
+                  <label for="unpaid-month" class="form-label fw-semibold">Month</label>
+                  <select id="unpaid-month" class="form-select modern-select">
+                    <% Date::MONTHNAMES.compact.each_with_index do |month, index| %>
+                      <option value="<%= index + 1 %>" <%= 'selected' if index + 1 == Date.current.month %>><%= month %></option>
+                    <% end %>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label for="unpaid-year" class="form-label fw-semibold">Year</label>
+                  <select id="unpaid-year" class="form-select modern-select">
+                    <% (Date.current.year - 2..Date.current.year + 1).each do |year| %>
+                      <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>><%= year %></option>
+                    <% end %>
+                  </select>
+                </div>
+              </div>
+
+              <div class="text-center mb-4">
+                <button type="button" class="btn btn-warning btn-lg px-5 modern-btn" id="check-unpaid-btn">
                   <span class="btn-content">
-                    <i class="fab fa-whatsapp me-2"></i>
-                    Send Message
+                    <i class="fas fa-search me-2"></i>
+                    Check Unpaid Customers
+                    <small class="d-block mt-1 opacity-75">View payment reminders for this month</small>
                   </span>
                   <span class="btn-loader d-none">
                     <div class="spinner-border spinner-border-sm me-2" role="status">
                       <span class="visually-hidden">Loading...</span>
                     </div>
-                    <span class="loading-text">Sending...</span>
+                    <span class="loading-text">Checking...</span>
                     <span class="loading-dots">
                       <span class="dot1">.</span>
                       <span class="dot2">.</span>
@@ -67,65 +152,13 @@
                     </span>
                   </span>
                 </button>
-              </form>
-            </div>
-          </div>
-        </div>
+              </div>
 
-        <!-- 2. Send Message to Not Paid Customers -->
-        <div class="col-lg-4 col-md-12">
-          <div class="card h-100 shadow-sm">
-            <div class="card-header bg-warning text-dark">
-              <h5 class="card-title mb-0">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Send to Unpaid Customers
-              </h5>
-            </div>
-            <div class="card-body">
-              <form id="unpaid-message-form">
-                <div class="row mb-3">
-                  <div class="col-6">
-                    <label for="unpaid-month" class="form-label">Month</label>
-                    <select id="unpaid-month" class="form-select">
-                      <% Date::MONTHNAMES.compact.each_with_index do |month, index| %>
-                        <option value="<%= index + 1 %>" <%= 'selected' if index + 1 == Date.current.month %>><%= month %></option>
-                      <% end %>
-                    </select>
-                  </div>
-                  <div class="col-6">
-                    <label for="unpaid-year" class="form-label">Year</label>
-                    <select id="unpaid-year" class="form-select">
-                      <% (Date.current.year - 2..Date.current.year + 1).each do |year| %>
-                        <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>><%= year %></option>
-                      <% end %>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="text-center mb-3">
-                  <button type="button" class="btn btn-warning btn-lg" id="check-unpaid-btn">
-                    <span class="btn-content">
-                      <i class="fas fa-search me-2"></i>
-                      Check Unpaid Customers
-                      <small class="d-block mt-1 opacity-75">Click to view unpaid customers for this month</small>
-                    </span>
-                    <span class="btn-loader d-none">
-                      <div class="spinner-border spinner-border-sm me-2" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                      </div>
-                      <span class="loading-text">Checking...</span>
-                      <span class="loading-dots">
-                        <span class="dot1">.</span>
-                        <span class="dot2">.</span>
-                        <span class="dot3">.</span>
-                      </span>
-                    </span>
-                  </button>
-                </div>
-
-                <div class="mb-3">
-                  <label for="unpaid-message" class="form-label">Message</label>
-                  <textarea id="unpaid-message" class="form-control" rows="4" placeholder="🔔 Dear Valued Customer,
+              <div class="mb-4">
+                <label for="unpaid-message" class="form-label fw-semibold">
+                  <i class="fas fa-bell me-2 text-muted"></i>Payment Reminder Message
+                </label>
+                <textarea id="unpaid-message" class="form-control modern-textarea" rows="4" placeholder="🔔 Dear Valued Customer,
 
 We hope you are enjoying our fresh desi cow milk! 🥛
 
@@ -137,77 +170,97 @@ We hope you are enjoying our fresh desi cow milk! 🥛
 🙏 Thank you for your understanding and continued support!
 
 🏠 Atma Nirbhar Farm, Bangalore"></textarea>
-                </div>
+              </div>
 
-                <button type="submit" class="btn btn-warning w-100" id="send-unpaid-btn" disabled>
-                  <span class="btn-content">
-                    <i class="fab fa-whatsapp me-2"></i>
-                    Send to Unpaid Customers
+              <button type="submit" class="btn btn-warning btn-lg w-100 modern-btn" id="send-unpaid-btn" disabled>
+                <span class="btn-content">
+                  <i class="fab fa-whatsapp me-2"></i>
+                  Send Payment Reminders
+                </span>
+                <span class="btn-loader d-none">
+                  <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span class="loading-text">Sending...</span>
+                  <span class="loading-dots">
+                    <span class="dot1">.</span>
+                    <span class="dot2">.</span>
+                    <span class="dot3">.</span>
                   </span>
-                  <span class="btn-loader d-none">
-                    <div class="spinner-border spinner-border-sm me-2" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <span class="loading-text">Sending...</span>
-                    <span class="loading-dots">
-                      <span class="dot1">.</span>
-                      <span class="dot2">.</span>
-                      <span class="dot3">.</span>
-                    </span>
-                  </span>
-                </button>
-              </form>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Bulk & Promotional Messaging -->
+    <div class="col-xl-6 col-lg-12">
+      <div class="card border-0 shadow-lg h-100 modern-card">
+        <div class="card-header bg-gradient-success text-white border-0 py-4">
+          <div class="d-flex align-items-center">
+            <div class="bg-white bg-opacity-20 rounded-circle p-3 me-3">
+              <i class="fas fa-bullhorn fa-2x"></i>
+            </div>
+            <div>
+              <h3 class="mb-1 fw-bold">Bulk & Promotional</h3>
+              <p class="mb-0 opacity-75">Send festive wishes and promotional messages to all customers</p>
             </div>
           </div>
         </div>
+        <div class="card-body p-4">
 
-        <!-- 3. Send Wishes to All Customers -->
-        <div class="col-lg-4 col-md-12">
-          <div class="card h-100 shadow-sm">
-            <div class="card-header bg-success text-white">
-              <h5 class="card-title mb-0">
-                <i class="fas fa-heart me-2"></i>
-                Send Wishes to All Customers
-              </h5>
-            </div>
-            <div class="card-body">
-              <form id="wishes-message-form">
-                <div class="mb-3">
-                  <button type="button" class="btn btn-outline-success btn-sm w-100" id="check-total-customers-btn">
-                    <span class="btn-content">
-                      <i class="fas fa-users me-2"></i>
-                      Check Total Customers
-                    </span>
-                    <span class="btn-loader d-none">
-                      <div class="spinner-border spinner-border-sm me-2" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                      </div>
-                      <span class="loading-text">Counting...</span>
-                      <span class="loading-dots">
-                        <span class="dot1">.</span>
-                        <span class="dot2">.</span>
-                        <span class="dot3">.</span>
-                      </span>
-                    </span>
-                  </button>
+          <form id="wishes-message-form">
+            <div class="text-center mb-4">
+              <div class="d-flex align-items-center justify-content-center mb-3">
+                <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
+                  <i class="fas fa-users text-success fa-2x"></i>
                 </div>
+                <div>
+                  <h5 class="mb-0 text-success">Send to All Customers</h5>
+                  <small class="text-muted">Reach your entire customer base instantly</small>
+                </div>
+              </div>
 
-                <div id="total-customers-info" class="mb-3" style="display: none;">
-                  <div class="alert alert-success text-center">
-                    <div class="mb-2">
-                      <i class="fas fa-users text-success fa-2x mb-2"></i>
-                      <h5 class="mb-1">📢 Ready to Send Message</h5>
-                    </div>
-                    <div class="d-flex justify-content-center align-items-center mb-2">
-                      <span id="total-customers-count" class="badge bg-success fs-4 me-2">0</span>
-                      <span class="text-muted">active customers will receive this message</span>
-                    </div>
+              <button type="button" class="btn btn-outline-success btn-lg px-5 modern-btn" id="check-total-customers-btn">
+                <span class="btn-content">
+                  <i class="fas fa-users me-2"></i>
+                  Check Total Customers
+                  <small class="d-block mt-1 opacity-75">See how many customers will receive this message</small>
+                </span>
+                <span class="btn-loader d-none">
+                  <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
                   </div>
-                </div>
+                  <span class="loading-text">Counting...</span>
+                  <span class="loading-dots">
+                    <span class="dot1">.</span>
+                    <span class="dot2">.</span>
+                    <span class="dot3">.</span>
+                  </span>
+                </span>
+              </button>
+            </div>
 
-                <div class="mb-3">
-                  <label for="wishes-message" class="form-label">Festive/General Message</label>
-                  <textarea id="wishes-message" class="form-control" rows="6" placeholder="🎉 Happy Sankranti!
+            <div id="total-customers-info" class="mb-4" style="display: none;">
+              <div class="alert alert-success text-center modern-alert">
+                <div class="mb-2">
+                  <i class="fas fa-users text-success fa-3x mb-3 pulse-animation"></i>
+                  <h5 class="mb-1">Ready to Send! 📢</h5>
+                </div>
+                <div class="d-flex justify-content-center align-items-center">
+                  <span id="total-customers-count" class="badge bg-success fs-3 me-2 px-4 py-2">0</span>
+                  <span class="text-muted">active customers will receive your message</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="wishes-message" class="form-label fw-semibold">
+                <i class="fas fa-heart me-2 text-muted"></i>Festive/Promotional Message
+              </label>
+              <textarea id="wishes-message" class="form-control modern-textarea" rows="7" placeholder="🎉 Happy Sankranti!
 
 ✨ May this auspicious festival bring joy, prosperity, and good health to you and your family!
 
@@ -220,34 +273,96 @@ We hope you are enjoying our fresh desi cow milk! 🥛
 
 🏠 Atma Nirbhar Farm, Bangalore
 💚 Spreading joy with pure milk!"></textarea>
-                </div>
-
-                <div class="alert alert-info">
-                  <small><i class="fas fa-info-circle me-1"></i>This message will be sent to ALL active customers with valid phone numbers.</small>
-                </div>
-
-                <button type="submit" class="btn btn-success w-100" id="send-wishes-btn">
-                  <span class="btn-content">
-                    <i class="fab fa-whatsapp me-2"></i>
-                    Send to All Customers
-                  </span>
-                  <span class="btn-loader d-none">
-                    <div class="spinner-border spinner-border-sm me-2" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <span class="loading-text">Sending...</span>
-                    <span class="loading-dots">
-                      <span class="dot1">.</span>
-                      <span class="dot2">.</span>
-                      <span class="dot3">.</span>
-                    </span>
-                  </span>
-                </button>
-              </form>
             </div>
+
+            <div class="alert alert-info modern-alert mb-4">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-info-circle fa-2x me-3"></i>
+                <div>
+                  <strong>Bulk Message</strong><br>
+                  <small>This message will be sent to ALL active customers with valid phone numbers.</small>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg w-100 modern-btn" id="send-wishes-btn">
+              <span class="btn-content">
+                <i class="fab fa-whatsapp me-2"></i>
+                Send to All Customers
+              </span>
+              <span class="btn-loader d-none">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="loading-text">Sending...</span>
+                <span class="loading-dots">
+                  <span class="dot1">.</span>
+                  <span class="dot2">.</span>
+                  <span class="dot3">.</span>
+                </span>
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Total Customers Modal -->
+<div class="modal fade" id="totalCustomersModal" tabindex="-1" aria-labelledby="totalCustomersModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content modern-modal">
+      <div class="modal-header bg-gradient-success text-white border-0">
+        <div class="d-flex align-items-center">
+          <div class="bg-white bg-opacity-20 rounded-circle p-2 me-3">
+            <i class="fas fa-users fa-lg"></i>
+          </div>
+          <div>
+            <h5 class="modal-title mb-0 fw-bold" id="totalCustomersModalLabel">
+              All Active Customers
+            </h5>
+            <small class="opacity-75">Ready to receive your message</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center">
+            <span class="badge bg-success fs-6 me-2" id="modal-total-count">0</span>
+            <span class="text-muted">active customers with valid phone numbers</span>
           </div>
         </div>
 
+        <div id="modal-total-customers-list" class="list-group">
+          <!-- Customers will be loaded here -->
+        </div>
+
+        <div id="modal-total-loading" class="text-center py-4" style="display: none;">
+          <div class="spinner-border text-success" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="mt-2">Loading customer details...</div>
+        </div>
+
+        <div id="modal-no-total-customers" class="text-center py-4" style="display: none;">
+          <i class="fas fa-users text-muted fa-3x mb-3"></i>
+          <h5 class="text-muted">No Active Customers</h5>
+          <p class="text-muted">No customers found with valid phone numbers.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>
+          Close
+        </button>
+        <button type="button" class="btn btn-success" id="modal-send-wishes-btn">
+          <i class="fab fa-whatsapp me-1"></i>
+          Send Message to All
+        </button>
       </div>
     </div>
   </div>
@@ -256,13 +371,20 @@ We hope you are enjoying our fresh desi cow milk! 🥛
 <!-- Unpaid Customers Modal -->
 <div class="modal fade" id="unpaidCustomersModal" tabindex="-1" aria-labelledby="unpaidCustomersModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header bg-warning text-dark">
-        <h5 class="modal-title" id="unpaidCustomersModalLabel">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          Unpaid Customers - <span id="modal-month-year"></span>
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-content modern-modal">
+      <div class="modal-header bg-gradient-warning text-dark border-0">
+        <div class="d-flex align-items-center">
+          <div class="bg-white bg-opacity-20 rounded-circle p-2 me-3">
+            <i class="fas fa-exclamation-triangle fa-lg"></i>
+          </div>
+          <div>
+            <h5 class="modal-title mb-0 fw-bold" id="unpaidCustomersModalLabel">
+              Payment Reminders - <span id="modal-month-year"></span>
+            </h5>
+            <small class="opacity-75">Manage unpaid customer invoices</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -318,46 +440,229 @@ We hope you are enjoying our fresh desi cow milk! 🥛
 </div>
 
 <style>
-.card {
-  transition: transform 0.2s ease-in-out;
-  border: 0;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+/* Modern WhatsApp UI Styling */
+:root {
+  --whatsapp-green: #25d366;
+  --whatsapp-dark: #128c7e;
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-success: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  --gradient-warning: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+  --shadow-modern: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.15);
+  --border-radius: 16px;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+/* Modern Card Styling */
+.modern-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--border-radius) !important;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
 }
 
-.card-header {
-  border-bottom: 0;
-  border-radius: 0.5rem 0.5rem 0 0 !important;
+.modern-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hover);
 }
 
-.btn {
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  font-weight: 500;
+.modern-card .card-header {
+  border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+  position: relative;
+  overflow: hidden;
 }
 
-.form-control, .form-select {
-  border-radius: 0.5rem;
-  border: 2px solid #e9ecef;
-  padding: 0.75rem 1rem;
+.modern-card .card-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
 }
 
-.form-control:focus, .form-select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+/* Background Gradients */
+.bg-gradient-primary {
+  background: var(--gradient-primary) !important;
 }
 
-#unpaid-list {
-  max-height: 150px;
-  overflow-y: auto;
+.bg-gradient-success {
+  background: var(--gradient-success) !important;
+}
+
+.bg-gradient-warning {
+  background: var(--gradient-warning) !important;
+}
+
+/* Modern Form Elements */
+.modern-select, .modern-textarea {
+  border-radius: 12px !important;
+  border: 2px solid #e9ecef !important;
+  padding: 12px 16px !important;
+  transition: all 0.3s ease !important;
+  background: #ffffff !important;
+  font-size: 14px !important;
+}
+
+.modern-select:focus, .modern-textarea:focus {
+  border-color: var(--whatsapp-green) !important;
+  box-shadow: 0 0 0 0.2rem rgba(37, 211, 102, 0.25) !important;
+  transform: translateY(-2px) !important;
+}
+
+.modern-textarea {
+  resize: vertical !important;
+  min-height: 120px !important;
+}
+
+/* Modern Buttons */
+.modern-btn {
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.modern-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.modern-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* Modern Alert Styling */
+.modern-alert {
+  border-radius: 12px !important;
+  border: 0 !important;
+  padding: 20px !important;
+  box-shadow: var(--shadow-modern) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Header Animations */
+.bounce-animation {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Mobile Responsive Enhancements */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 8px !important;
+  }
+
+  .modern-card {
+    margin-bottom: 24px;
+  }
+
+  .modern-card .card-body {
+    padding: 20px !important;
+  }
+
+  .modern-btn {
+    padding: 14px 20px !important;
+    font-size: 16px !important;
+  }
+
+  .modern-textarea {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+
+  .display-5 {
+    font-size: 2rem !important;
+  }
+
+  .lead {
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .row.mb-3 .col-6 {
+    margin-bottom: 12px;
+  }
+
+  .modern-card .card-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .modern-card .card-header p {
+    font-size: 0.85rem;
+  }
 }
 
 .text-success {
-  color: #25d366 !important;
+  color: var(--whatsapp-green) !important;
+}
+
+/* Modern Modal Styling */
+.modern-modal {
+  border-radius: var(--border-radius) !important;
+  border: 0 !important;
+  box-shadow: var(--shadow-hover) !important;
+  overflow: hidden !important;
+}
+
+.modern-modal .modal-header {
+  border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+  padding: 1.5rem !important;
+  position: relative !important;
+}
+
+.modern-modal .modal-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+.modern-modal .modal-body {
+  padding: 1.5rem !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%) !important;
+}
+
+.modern-modal .modal-footer {
+  border-top: 0 !important;
+  padding: 1.5rem !important;
+  background: #f8f9fa !important;
 }
 
 /* Attractive Button Loader Styles */
@@ -556,32 +861,121 @@ We hope you are enjoying our fresh desi cow milk! 🥛
     box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
   }
 }
+
+/* Select2 Customer Search Styling */
+.select2-result-customer {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.select2-result-customer__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--whatsapp-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: white;
+  font-size: 14px;
+}
+
+.select2-result-customer__meta {
+  flex-grow: 1;
+}
+
+.select2-result-customer__name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.select2-result-customer__details {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* Override Select2 selected item styling */
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  color: #333 !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  border: 1px solid #ddd !important;
+}
+
+/* Selected customer in dropdown results */
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%) !important;
+  color: #333 !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--selected {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0fff0 100%) !important;
+  color: #333 !important;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize Select2 for customer search
-  $('#customer-search').select2({
-    theme: 'bootstrap-5',
-    placeholder: 'Search by name or phone number...',
-    allowClear: true,
-    ajax: {
-      url: '<%= search_customers_whatsapp_messages_path %>',
-      dataType: 'json',
-      delay: 250,
-      data: function (params) {
-        return {
-          term: params.term
-        };
-      },
-      processResults: function (data) {
-        return {
-          results: data.results
-        };
-      },
-      cache: true
+  // Initialize Select2 for customer search - wait for jQuery and Select2 to be available
+  function initializeCustomerSearch() {
+    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+      $('#customer-search').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search by name or phone number...',
+        allowClear: true,
+        minimumInputLength: 2,
+        ajax: {
+          url: '<%= search_customers_whatsapp_messages_path %>',
+          dataType: 'json',
+          delay: 250,
+          data: function (params) {
+            return {
+              term: params.term
+            };
+          },
+          processResults: function (data) {
+            return {
+              results: data.results
+            };
+          },
+          cache: true
+        },
+        templateResult: function(customer) {
+          if (customer.loading) return customer.text;
+
+          var $container = $(
+            '<div class="select2-result-customer">' +
+              '<div class="select2-result-customer__avatar">' +
+                '<i class="fas fa-user"></i>' +
+              '</div>' +
+              '<div class="select2-result-customer__meta">' +
+                '<div class="select2-result-customer__name"></div>' +
+                '<div class="select2-result-customer__details"></div>' +
+              '</div>' +
+            '</div>'
+          );
+
+          $container.find('.select2-result-customer__name').text(customer.name || customer.text);
+          $container.find('.select2-result-customer__details').text(customer.phone || '');
+
+          return $container;
+        },
+        templateSelection: function(customer) {
+          return customer.name || customer.text || 'Select a customer...';
+        }
+      });
+    } else {
+      // Fallback for if Select2 isn't available - retry after a short delay
+      setTimeout(initializeCustomerSearch, 100);
     }
-  });
+  }
+
+  // Initialize customer search
+  initializeCustomerSearch();
 
   // Show message function
   function showMessage(message, type = 'success') {
@@ -608,31 +1002,102 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // 3. Check total customers functionality
+  // 3. Check total customers functionality - Open modal with full customer list
   document.getElementById('check-total-customers-btn').addEventListener('click', function() {
+    // Open modal immediately and show loading
+    const modal = new bootstrap.Modal(document.getElementById('totalCustomersModal'));
+    const modalCount = document.getElementById('modal-total-count');
+    const modalCustomersList = document.getElementById('modal-total-customers-list');
+    const modalLoading = document.getElementById('modal-total-loading');
+    const modalNoCustomers = document.getElementById('modal-no-total-customers');
+
+    // Show loading initially
+    modalLoading.style.display = 'block';
+    modalCustomersList.style.display = 'none';
+    modalNoCustomers.style.display = 'none';
+    modalCount.textContent = '...';
+
+    modal.show();
+
+    // Start button loader
     toggleButtonLoader('check-total-customers-btn', true);
 
-    setTimeout(() => {
-      fetch('<%= total_customers_count_whatsapp_messages_path %>')
-      .then(response => response.json())
-      .then(data => {
-        toggleButtonLoader('check-total-customers-btn', false);
+    // Fetch total customers data
+    fetch('<%= total_customers_data_whatsapp_messages_path %>')
+    .then(response => response.json())
+    .then(data => {
+      toggleButtonLoader('check-total-customers-btn', false);
 
+      // Hide loading
+      modalLoading.style.display = 'none';
+
+      if (data.count > 0) {
+        // Animate count
+        animateNumber(modalCount, 0, data.count);
+
+        // Show customers list
+        modalCustomersList.style.display = 'block';
+
+        // Populate customers list
+        modalCustomersList.innerHTML = data.customers.map((customer, index) => {
+          return `
+            <div class="list-group-item customer-card" style="animation-delay: ${index * 0.05}s">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                      <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1 fw-bold">${customer.name}</h6>
+                      <small class="text-muted">
+                        <i class="fas fa-phone me-1"></i>${customer.phone_number}
+                      </small>
+                      ${customer.member_id ? `<div class="mt-1"><small class="badge bg-info">${customer.member_id}</small></div>` : ''}
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>Active
+                  </span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Add entrance animation to customer cards
+        setTimeout(() => {
+          modalCustomersList.querySelectorAll('.customer-card').forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+              card.style.transition = 'all 0.5s ease';
+              card.style.opacity = '1';
+              card.style.transform = 'translateY(0)';
+            }, index * 50);
+          });
+        }, 100);
+
+        // Also update the info section in main form
         const infoDiv = document.getElementById('total-customers-info');
         const countSpan = document.getElementById('total-customers-count');
-
-        // Animate the count
         countSpan.classList.add('number-counter');
-        animateNumber(countSpan, 0, data.total_customers);
-
+        animateNumber(countSpan, 0, data.count);
         infoDiv.style.display = 'block';
-      })
-      .catch(error => {
-        toggleButtonLoader('check-total-customers-btn', false);
-        showMessage('Error fetching customer count.', 'danger');
-        console.error('Error:', error);
-      });
-    }, 500);
+      } else {
+        // Show no customers message
+        modalNoCustomers.style.display = 'block';
+        modalCount.textContent = '0';
+      }
+    })
+    .catch(error => {
+      toggleButtonLoader('check-total-customers-btn', false);
+      modal.hide();
+      showMessage('Error fetching customer data.', 'danger');
+      console.error('Error:', error);
+    });
   });
 
   // 1. Individual Customer Message
@@ -736,7 +1201,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalSendBtn = document.getElementById('modal-send-reminder-btn');
 
     // Set modal header info
-    modalMonthYear.textContent = `${Date::MONTHNAMES[month]} ${year}`;
+    const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    modalMonthYear.textContent = `${monthNames[month]} ${year}`;
 
     // Show loading initially
     modalLoading.style.display = 'block';
@@ -956,7 +1422,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
 
-  // Only auto-check total customers on page load
-  document.getElementById('check-total-customers-btn').click();
+  // No auto-loading on page load - user must click buttons to load data
 });
 </script>
