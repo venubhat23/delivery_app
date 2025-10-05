@@ -1,0 +1,962 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+          <i class="fab fa-whatsapp text-success me-2"></i>
+          WhatsApp Message Center
+        </h1>
+      </div>
+
+      <!-- Success/Error Messages -->
+      <div id="message-container" class="mb-3" style="display: none;">
+        <div id="message-alert" class="alert" role="alert"></div>
+      </div>
+
+      <!-- Three Function Cards -->
+      <div class="row g-4">
+
+        <!-- 1. Send Message to Individual Customer -->
+        <div class="col-lg-4 col-md-12">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-user me-2"></i>
+                Send to Individual Customer
+              </h5>
+            </div>
+            <div class="card-body">
+              <form id="individual-message-form">
+                <div class="mb-3">
+                  <label for="customer-search" class="form-label">Search Customer</label>
+                  <select id="customer-search" class="form-select" style="width: 100%;">
+                    <option value="">Search by name or phone number...</option>
+                  </select>
+                  <small class="form-text text-muted">Type to search customers by name or phone number</small>
+                </div>
+
+                <div class="mb-3">
+                  <label for="individual-message" class="form-label">Message</label>
+                  <textarea id="individual-message" class="form-control" rows="4" placeholder="👋 Hello! Thank you for being a valued customer of Atma Nirbhar Farm!
+
+🥛 We hope you're enjoying our fresh, pure desi cow milk.
+
+📞 For any queries, feel free to contact us:
+📱 WhatsApp: +91 9972808044
+☎️ Call: +91 9008860329
+
+🙏 Thank you for your continued trust!
+
+🏠 Atma Nirbhar Farm, Bangalore"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" id="send-individual-btn">
+                  <span class="btn-content">
+                    <i class="fab fa-whatsapp me-2"></i>
+                    Send Message
+                  </span>
+                  <span class="btn-loader d-none">
+                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="loading-text">Sending...</span>
+                    <span class="loading-dots">
+                      <span class="dot1">.</span>
+                      <span class="dot2">.</span>
+                      <span class="dot3">.</span>
+                    </span>
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Send Message to Not Paid Customers -->
+        <div class="col-lg-4 col-md-12">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Send to Unpaid Customers
+              </h5>
+            </div>
+            <div class="card-body">
+              <form id="unpaid-message-form">
+                <div class="row mb-3">
+                  <div class="col-6">
+                    <label for="unpaid-month" class="form-label">Month</label>
+                    <select id="unpaid-month" class="form-select">
+                      <% Date::MONTHNAMES.compact.each_with_index do |month, index| %>
+                        <option value="<%= index + 1 %>" <%= 'selected' if index + 1 == Date.current.month %>><%= month %></option>
+                      <% end %>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label for="unpaid-year" class="form-label">Year</label>
+                    <select id="unpaid-year" class="form-select">
+                      <% (Date.current.year - 2..Date.current.year + 1).each do |year| %>
+                        <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>><%= year %></option>
+                      <% end %>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="text-center mb-3">
+                  <button type="button" class="btn btn-warning btn-lg" id="check-unpaid-btn">
+                    <span class="btn-content">
+                      <i class="fas fa-search me-2"></i>
+                      Check Unpaid Customers
+                      <small class="d-block mt-1 opacity-75">Click to view unpaid customers for this month</small>
+                    </span>
+                    <span class="btn-loader d-none">
+                      <div class="spinner-border spinner-border-sm me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <span class="loading-text">Checking...</span>
+                      <span class="loading-dots">
+                        <span class="dot1">.</span>
+                        <span class="dot2">.</span>
+                        <span class="dot3">.</span>
+                      </span>
+                    </span>
+                  </button>
+                </div>
+
+                <div class="mb-3">
+                  <label for="unpaid-message" class="form-label">Message</label>
+                  <textarea id="unpaid-message" class="form-control" rows="4" placeholder="🔔 Dear Valued Customer,
+
+We hope you are enjoying our fresh desi cow milk! 🥛
+
+💰 Your invoice is still pending. Please make the payment at the earliest to avoid any service interruptions.
+
+📱 For payment queries: +91 9972808044
+☎️ Call us: +91 9008860329
+
+🙏 Thank you for your understanding and continued support!
+
+🏠 Atma Nirbhar Farm, Bangalore"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-warning w-100" id="send-unpaid-btn" disabled>
+                  <span class="btn-content">
+                    <i class="fab fa-whatsapp me-2"></i>
+                    Send to Unpaid Customers
+                  </span>
+                  <span class="btn-loader d-none">
+                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="loading-text">Sending...</span>
+                    <span class="loading-dots">
+                      <span class="dot1">.</span>
+                      <span class="dot2">.</span>
+                      <span class="dot3">.</span>
+                    </span>
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Send Wishes to All Customers -->
+        <div class="col-lg-4 col-md-12">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-success text-white">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-heart me-2"></i>
+                Send Wishes to All Customers
+              </h5>
+            </div>
+            <div class="card-body">
+              <form id="wishes-message-form">
+                <div class="mb-3">
+                  <button type="button" class="btn btn-outline-success btn-sm w-100" id="check-total-customers-btn">
+                    <span class="btn-content">
+                      <i class="fas fa-users me-2"></i>
+                      Check Total Customers
+                    </span>
+                    <span class="btn-loader d-none">
+                      <div class="spinner-border spinner-border-sm me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <span class="loading-text">Counting...</span>
+                      <span class="loading-dots">
+                        <span class="dot1">.</span>
+                        <span class="dot2">.</span>
+                        <span class="dot3">.</span>
+                      </span>
+                    </span>
+                  </button>
+                </div>
+
+                <div id="total-customers-info" class="mb-3" style="display: none;">
+                  <div class="alert alert-success text-center">
+                    <div class="mb-2">
+                      <i class="fas fa-users text-success fa-2x mb-2"></i>
+                      <h5 class="mb-1">📢 Ready to Send Message</h5>
+                    </div>
+                    <div class="d-flex justify-content-center align-items-center mb-2">
+                      <span id="total-customers-count" class="badge bg-success fs-4 me-2">0</span>
+                      <span class="text-muted">active customers will receive this message</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="wishes-message" class="form-label">Festive/General Message</label>
+                  <textarea id="wishes-message" class="form-control" rows="6" placeholder="🎉 Happy Sankranti!
+
+✨ May this auspicious festival bring joy, prosperity, and good health to you and your family!
+
+🥛 Thank you for being a valued customer and trusting Atma Nirbhar Farm for your daily milk needs.
+
+🙏 We wish you a year filled with happiness and success!
+
+📱 WhatsApp: +91 9972808044
+☎️ Call: +91 9008860329
+
+🏠 Atma Nirbhar Farm, Bangalore
+💚 Spreading joy with pure milk!"></textarea>
+                </div>
+
+                <div class="alert alert-info">
+                  <small><i class="fas fa-info-circle me-1"></i>This message will be sent to ALL active customers with valid phone numbers.</small>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100" id="send-wishes-btn">
+                  <span class="btn-content">
+                    <i class="fab fa-whatsapp me-2"></i>
+                    Send to All Customers
+                  </span>
+                  <span class="btn-loader d-none">
+                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="loading-text">Sending...</span>
+                    <span class="loading-dots">
+                      <span class="dot1">.</span>
+                      <span class="dot2">.</span>
+                      <span class="dot3">.</span>
+                    </span>
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Unpaid Customers Modal -->
+<div class="modal fade" id="unpaidCustomersModal" tabindex="-1" aria-labelledby="unpaidCustomersModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="unpaidCustomersModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Unpaid Customers - <span id="modal-month-year"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center">
+            <span class="badge bg-warning text-dark fs-6 me-2" id="modal-unpaid-count">0</span>
+            <span class="text-muted">customers with pending payments</span>
+          </div>
+          <div class="text-end">
+            <small class="text-muted">Total Amount: </small>
+            <span class="fw-bold text-danger" id="modal-total-amount">₹0</span>
+          </div>
+        </div>
+
+        <div id="modal-customers-list" class="list-group">
+          <!-- Customers will be loaded here -->
+        </div>
+
+        <div id="modal-loading" class="text-center py-4" style="display: none;">
+          <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="mt-2">Loading customer details...</div>
+        </div>
+
+        <div id="modal-no-customers" class="text-center py-4" style="display: none;">
+          <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+          <h5 class="text-success">All Caught Up! 🎉</h5>
+          <p class="text-muted">No unpaid customers found for this month.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>
+          Close
+        </button>
+        <button type="button" class="btn btn-warning" id="modal-send-reminder-btn" style="display: none;">
+          <i class="fab fa-whatsapp me-1"></i>
+          Send Payment Reminders
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+  <div class="text-center text-white">
+    <div class="spinner-border text-light mb-3" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <div>Sending messages...</div>
+  </div>
+</div>
+
+<style>
+.card {
+  transition: transform 0.2s ease-in-out;
+  border: 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.card-header {
+  border-bottom: 0;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.btn {
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+}
+
+.form-control, .form-select {
+  border-radius: 0.5rem;
+  border: 2px solid #e9ecef;
+  padding: 0.75rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+#unpaid-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.text-success {
+  color: #25d366 !important;
+}
+
+/* Attractive Button Loader Styles */
+.btn-with-loader {
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Check buttons loading states */
+#check-unpaid-btn.loading {
+  pointer-events: none;
+  background: linear-gradient(-45deg, #fff3cd, #ffeaa7, #fff3cd, #ffeaa7);
+  background-size: 400% 400%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-color: #ffc107;
+}
+
+#check-total-customers-btn.loading {
+  pointer-events: none;
+  background: linear-gradient(-45deg, #d1e7dd, #a3d9b1, #d1e7dd, #a3d9b1);
+  background-size: 400% 400%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-color: #198754;
+}
+
+/* Send buttons loading states */
+#send-individual-btn.loading {
+  pointer-events: none;
+  background: linear-gradient(-45deg, #0d6efd, #6ea8fe, #0d6efd, #6ea8fe);
+  background-size: 400% 400%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-color: #0d6efd;
+}
+
+#send-unpaid-btn.loading {
+  pointer-events: none;
+  background: linear-gradient(-45deg, #ffc107, #ffda6a, #ffc107, #ffda6a);
+  background-size: 400% 400%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-color: #ffc107;
+}
+
+#send-wishes-btn.loading {
+  pointer-events: none;
+  background: linear-gradient(-45deg, #198754, #51c878, #198754, #51c878);
+  background-size: 400% 400%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-color: #198754;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.loading-dots {
+  display: inline-block;
+}
+
+.loading-dots span {
+  opacity: 0;
+  animation: dot-flashing 1.4s infinite;
+}
+
+.loading-dots .dot2 {
+  animation-delay: 0.2s;
+}
+
+.loading-dots .dot3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-flashing {
+  0%, 80%, 100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* Number Counter Animation */
+.number-counter {
+  display: inline-block;
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #ff6b35;
+  animation: countUp 0.8s ease-out;
+}
+
+@keyframes countUp {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Modal Enhancements */
+.modal-content {
+  border: 0;
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+  border-radius: 15px 15px 0 0;
+  border-bottom: 0;
+  padding: 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.list-group-item {
+  border: 0;
+  border-radius: 10px !important;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.list-group-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.customer-card {
+  background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+  border-left: 4px solid #ffc107;
+}
+
+.customer-card.high-amount {
+  border-left-color: #dc3545;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+}
+
+.amount-badge {
+  background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+  color: #000;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.amount-badge.high {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Unpaid Preview Styles */
+#unpaid-preview .preview-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid #ffc107;
+  transition: all 0.3s ease;
+}
+
+#unpaid-preview .preview-item:hover {
+  background: #e9ecef;
+  transform: translateX(5px);
+}
+
+/* Button pulse animation */
+.btn-pulse {
+  animation: pulse-highlight 1s ease-in-out infinite;
+}
+
+@keyframes pulse-highlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Select2 for customer search
+  $('#customer-search').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search by name or phone number...',
+    allowClear: true,
+    ajax: {
+      url: '<%= search_customers_whatsapp_messages_path %>',
+      dataType: 'json',
+      delay: 250,
+      data: function (params) {
+        return {
+          term: params.term
+        };
+      },
+      processResults: function (data) {
+        return {
+          results: data.results
+        };
+      },
+      cache: true
+    }
+  });
+
+  // Show message function
+  function showMessage(message, type = 'success') {
+    const container = document.getElementById('message-container');
+    const alert = document.getElementById('message-alert');
+
+    alert.className = `alert alert-${type}`;
+    alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>${message}`;
+    container.style.display = 'block';
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      container.style.display = 'none';
+    }, 5000);
+  }
+
+  // Show/hide loading overlay
+  function toggleLoading(show) {
+    const overlay = document.getElementById('loading-overlay');
+    if (show) {
+      overlay.classList.remove('d-none');
+    } else {
+      overlay.classList.add('d-none');
+    }
+  }
+
+  // 3. Check total customers functionality
+  document.getElementById('check-total-customers-btn').addEventListener('click', function() {
+    toggleButtonLoader('check-total-customers-btn', true);
+
+    setTimeout(() => {
+      fetch('<%= total_customers_count_whatsapp_messages_path %>')
+      .then(response => response.json())
+      .then(data => {
+        toggleButtonLoader('check-total-customers-btn', false);
+
+        const infoDiv = document.getElementById('total-customers-info');
+        const countSpan = document.getElementById('total-customers-count');
+
+        // Animate the count
+        countSpan.classList.add('number-counter');
+        animateNumber(countSpan, 0, data.total_customers);
+
+        infoDiv.style.display = 'block';
+      })
+      .catch(error => {
+        toggleButtonLoader('check-total-customers-btn', false);
+        showMessage('Error fetching customer count.', 'danger');
+        console.error('Error:', error);
+      });
+    }, 500);
+  });
+
+  // 1. Individual Customer Message
+  document.getElementById('individual-message-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const customerId = $('#customer-search').val();
+    const message = document.getElementById('individual-message').value.trim();
+
+    if (!customerId) {
+      showMessage('Please select a customer.', 'danger');
+      return;
+    }
+
+    if (!message) {
+      showMessage('Please enter a message.', 'danger');
+      return;
+    }
+
+    toggleButtonLoader('send-individual-btn', true);
+
+    fetch('<%= send_individual_message_whatsapp_messages_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        customer_id: customerId,
+        message: message
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      toggleButtonLoader('send-individual-btn', false);
+      if (data.success) {
+        showMessage(data.message, 'success');
+        // Reset form
+        $('#customer-search').val(null).trigger('change');
+        document.getElementById('individual-message').value = document.getElementById('individual-message').placeholder;
+      } else {
+        showMessage(data.error, 'danger');
+      }
+    })
+    .catch(error => {
+      toggleButtonLoader('send-individual-btn', false);
+      showMessage('Error sending message. Please try again.', 'danger');
+      console.error('Error:', error);
+    });
+  });
+
+  // Store current unpaid customers data
+  let currentUnpaidData = null;
+
+  // Function to animate number counter
+  function animateNumber(element, start, end, duration = 800) {
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+        current = end;
+        clearInterval(timer);
+      }
+      element.textContent = Math.floor(current);
+    }, 16);
+  }
+
+  // Enhanced button loader function
+  function toggleButtonLoader(buttonId, loading) {
+    const btn = document.getElementById(buttonId);
+    const btnContent = btn.querySelector('.btn-content');
+    const btnLoader = btn.querySelector('.btn-loader');
+
+    if (loading) {
+      btn.classList.add('loading');
+      btnContent.classList.add('d-none');
+      btnLoader.classList.remove('d-none');
+    } else {
+      btn.classList.remove('loading');
+      btnContent.classList.remove('d-none');
+      btnLoader.classList.add('d-none');
+    }
+  }
+
+  // 2. Check unpaid customers - Direct modal opening
+  document.getElementById('check-unpaid-btn').addEventListener('click', function() {
+    const month = document.getElementById('unpaid-month').value;
+    const year = document.getElementById('unpaid-year').value;
+
+    // Open modal immediately and show loading
+    const modal = new bootstrap.Modal(document.getElementById('unpaidCustomersModal'));
+    const modalMonthYear = document.getElementById('modal-month-year');
+    const modalCount = document.getElementById('modal-unpaid-count');
+    const modalTotalAmount = document.getElementById('modal-total-amount');
+    const modalCustomersList = document.getElementById('modal-customers-list');
+    const modalLoading = document.getElementById('modal-loading');
+    const modalNoCustomers = document.getElementById('modal-no-customers');
+    const modalSendBtn = document.getElementById('modal-send-reminder-btn');
+
+    // Set modal header info
+    modalMonthYear.textContent = `${Date::MONTHNAMES[month]} ${year}`;
+
+    // Show loading initially
+    modalLoading.style.display = 'block';
+    modalCustomersList.style.display = 'none';
+    modalNoCustomers.style.display = 'none';
+    modalCount.textContent = '...';
+    modalTotalAmount.textContent = '...';
+
+    modal.show();
+
+    // Start button loader
+    toggleButtonLoader('check-unpaid-btn', true);
+
+    // Fetch data
+    fetch(`<%= unpaid_customers_data_whatsapp_messages_path %>?month=${month}&year=${year}`)
+    .then(response => response.json())
+    .then(data => {
+      toggleButtonLoader('check-unpaid-btn', false);
+      currentUnpaidData = data; // Store for later use
+
+      // Hide loading
+      modalLoading.style.display = 'none';
+
+      if (data.count > 0) {
+        // Calculate total amount
+        const totalAmount = data.customers.reduce((sum, customer) => sum + customer.unpaid_amount, 0);
+
+        // Animate counts
+        animateNumber(modalCount, 0, data.count);
+        modalTotalAmount.textContent = `₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+
+        // Show customers list
+        modalCustomersList.style.display = 'block';
+        modalSendBtn.style.display = 'inline-block';
+
+        // Populate customers list
+        modalCustomersList.innerHTML = data.customers.map((customer, index) => {
+          const isHighAmount = customer.unpaid_amount > 1000;
+          return `
+            <div class="list-group-item customer-card ${isHighAmount ? 'high-amount' : ''}" style="animation-delay: ${index * 0.1}s">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-2">
+                    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                      <i class="fas fa-user text-dark"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1 fw-bold">${customer.name}</h6>
+                      <small class="text-muted">
+                        <i class="fas fa-phone me-1"></i>${customer.phone_number}
+                      </small>
+                    </div>
+                  </div>
+                  <div class="small text-muted">
+                    <i class="fas fa-file-invoice me-1"></i>
+                    ${customer.invoice_count} unpaid invoice${customer.invoice_count > 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="amount-badge ${isHighAmount ? 'high' : ''}">
+                    ₹${customer.unpaid_amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                  </span>
+                  <div class="mt-1">
+                    <small class="text-muted">
+                      ${isHighAmount ? '🔴 High Priority' : '⚠️ Pending'}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Add entrance animation to customer cards
+        setTimeout(() => {
+          modalCustomersList.querySelectorAll('.customer-card').forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+              card.style.transition = 'all 0.5s ease';
+              card.style.opacity = '1';
+              card.style.transform = 'translateY(0)';
+            }, index * 100);
+          });
+        }, 100);
+
+        // Enable send button in the main form
+        document.getElementById('send-unpaid-btn').disabled = false;
+      } else {
+        // Show no customers message
+        modalNoCustomers.style.display = 'block';
+        modalSendBtn.style.display = 'none';
+        modalCount.textContent = '0';
+        modalTotalAmount.textContent = '₹0';
+
+        // Disable send button in the main form
+        document.getElementById('send-unpaid-btn').disabled = true;
+      }
+    })
+    .catch(error => {
+      toggleButtonLoader('check-unpaid-btn', false);
+      modal.hide();
+      showMessage('Error fetching unpaid customers.', 'danger');
+      console.error('Error:', error);
+    });
+  });
+
+  // 2. Send message to unpaid customers
+  document.getElementById('unpaid-message-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const month = document.getElementById('unpaid-month').value;
+    const year = document.getElementById('unpaid-year').value;
+    const message = document.getElementById('unpaid-message').value.trim();
+
+    if (!message) {
+      showMessage('Please enter a message.', 'danger');
+      return;
+    }
+
+    if (confirm('Are you sure you want to send this message to all unpaid customers?')) {
+      toggleButtonLoader('send-unpaid-btn', true);
+
+      fetch('<%= send_unpaid_customers_message_whatsapp_messages_path %>', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          month: month,
+          year: year,
+          message: message
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        toggleButtonLoader('send-unpaid-btn', false);
+        if (data.success) {
+          showMessage(data.message, 'success');
+        } else {
+          showMessage(data.error, 'danger');
+        }
+      })
+      .catch(error => {
+        toggleButtonLoader('send-unpaid-btn', false);
+        showMessage('Error sending messages. Please try again.', 'danger');
+        console.error('Error:', error);
+      });
+    }
+  });
+
+  // 3. Send wishes to all customers
+  document.getElementById('wishes-message-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const message = document.getElementById('wishes-message').value.trim();
+
+    if (!message) {
+      showMessage('Please enter a message.', 'danger');
+      return;
+    }
+
+    if (confirm('Are you sure you want to send this message to ALL customers? This action cannot be undone.')) {
+      toggleButtonLoader('send-wishes-btn', true);
+
+      fetch('<%= send_wishes_to_all_whatsapp_messages_path %>', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          message: message
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        toggleButtonLoader('send-wishes-btn', false);
+        if (data.success) {
+          showMessage(data.message, 'success');
+        } else {
+          showMessage(data.error, 'danger');
+        }
+      })
+      .catch(error => {
+        toggleButtonLoader('send-wishes-btn', false);
+        showMessage('Error sending messages. Please try again.', 'danger');
+        console.error('Error:', error);
+      });
+    }
+  });
+
+  // Month/year change handlers - no auto-loading
+  document.getElementById('unpaid-month').addEventListener('change', function() {
+    // Just update the button text to reflect the change
+    // User needs to click the button to actually load data
+  });
+
+  document.getElementById('unpaid-year').addEventListener('change', function() {
+    // Just update the button text to reflect the change
+    // User needs to click the button to actually load data
+  });
+
+  // Modal send reminder functionality
+  document.getElementById('modal-send-reminder-btn').addEventListener('click', function() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('unpaidCustomersModal'));
+    modal.hide();
+
+    // Scroll to unpaid customers section and trigger send
+    document.querySelector('#unpaid-message-form').scrollIntoView({ behavior: 'smooth' });
+
+    // Highlight the send button
+    const sendBtn = document.getElementById('send-unpaid-btn');
+    sendBtn.classList.add('btn-pulse');
+    setTimeout(() => sendBtn.classList.remove('btn-pulse'), 2000);
+  });
+
+
+  // Only auto-check total customers on page load
+  document.getElementById('check-total-customers-btn').click();
+});
+</script>

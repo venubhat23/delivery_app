@@ -435,6 +435,271 @@
       transform: translateY(-2px);
     }
 
+    .action-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+      cursor: pointer;
+      margin: 5px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .complete-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20a02c 100%);
+      color: white;
+    }
+
+    .complete-btn:hover {
+      background: linear-gradient(135deg, #20a02c 0%, #198754 100%);
+      transform: translateY(-2px);
+    }
+
+    .delete-btn {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+      transform: translateY(-2px);
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header.success {
+      background: linear-gradient(135deg, #28a745 0%, #20a02c 100%);
+      color: white;
+    }
+
+    .modal-header.danger {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+
+    .close-btn:hover {
+      opacity: 1;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .alert-danger {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .invoice-details-card {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+
+    .form-control.is-valid {
+      border-color: #28a745;
+      background-color: #d4edda;
+    }
+
+    .form-control.is-invalid {
+      border-color: #dc3545;
+      background-color: #f8d7da;
+    }
+
+    .form-text {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 5px;
+    }
+
+    .success-message {
+      text-align: center;
+      padding: 30px;
+    }
+
+    .success-icon {
+      font-size: 48px;
+      color: #28a745;
+      margin-bottom: 15px;
+    }
+
+    .success-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #28a745;
+      margin-bottom: 10px;
+    }
+
+    .success-text {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
     /* Mobile Optimizations */
     @media screen and (max-width: 768px) {
       body {
@@ -584,6 +849,42 @@
       .signature-box {
         height: 60px;
         max-width: 150px;
+      }
+
+      .download-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .action-btn {
+        width: 100%;
+        max-width: 300px;
+        padding: 15px;
+        font-size: 16px;
+      }
+
+      .modal-content {
+        margin: 10px;
+        width: calc(100% - 20px);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-body {
+        padding: 15px;
+      }
+
+      .modal-footer {
+        padding: 15px;
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
       }
     }
 
@@ -844,8 +1145,10 @@
     }
 
     .status-completed {
-      background: #28a745;
-      color: white;
+      background: none;
+      color: #333;
+      border: none;
+      padding: 0;
     }
 
     .summary-stats-section {
@@ -1115,9 +1418,17 @@
     final_total = taxable_amount + total_tax
   %>
 
-  <!-- Download Button -->
+  <!-- Action Buttons -->
   <div class="download-section">
     <a href="<%= public_invoice_download_path(@invoice.share_token, format: :pdf) %>" class="download-btn">📄 Download PDF</a>
+    <% if @invoice.status == 'pending' %>
+      <button type="button" class="action-btn complete-btn" onclick="openCompleteModal()">
+        ✅ Mark as Completed
+      </button>
+    <% end %>
+    <button type="button" class="action-btn delete-btn" onclick="openDeleteModal()">
+      🗑️ Delete Invoice
+    </button>
   </div>
 
   <!-- First Page: Bill of Supply / Tax Invoice -->
@@ -1607,7 +1918,7 @@
                 <td class="text-center" data-label="STATUS">
                   <% case assignment.status %>
                   <% when 'completed' %>
-                    <span class="status-badge status-completed">✅ Completed</span>
+                    <span class="status-completed">✓ Completed</span>
                   <% when 'pending' %>
                     <span class="status-badge" style="background: #ffc107; color: #212529;">⏰ Pending</span>
                   <% when 'cancelled' %>
@@ -1658,5 +1969,293 @@
       </div>
     </div>
   </div>
+
+  <!-- Mark as Completed Modal -->
+  <div id="completeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header success">
+        <h2 class="modal-title">✅ Mark Invoice as Completed</h2>
+        <button class="close-btn" onclick="closeCompleteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <strong>📋 Confirm Payment Completion</strong>
+        </div>
+
+        <div class="invoice-details-card">
+          <h4>Invoice Details:</h4>
+          <p><strong>Invoice Number:</strong> <%= @invoice.formatted_number || @invoice.invoice_number %></p>
+          <p><strong>Customer:</strong> <%= @invoice.customer&.name %></p>
+          <p><strong>Amount:</strong> ₹<%= number_with_delimiter(@invoice.total_amount, delimiter: ',') %></p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <input type="checkbox" id="paymentConfirmation" required style="margin-right: 8px;">
+            <strong>Yes, I confirm that the customer has paid for this invoice</strong>
+          </label>
+        </div>
+
+        <div class="alert alert-warning">
+          <small>⚠️ This action will mark the invoice as completed. This action cannot be undone.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeCompleteModal()">Cancel</button>
+        <button type="button" class="btn btn-success" id="confirmComplete" disabled>Mark as Completed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Invoice Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header danger">
+        <h2 class="modal-title">🗑️ Delete Invoice</h2>
+        <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <strong>⚠️ PERMANENT DELETION WARNING</strong>
+        </div>
+
+        <p style="color: #dc3545; font-weight: bold; margin-bottom: 15px;">
+          This action will permanently delete the invoice and cannot be undone!
+        </p>
+
+        <div class="invoice-details-card">
+          <h4>Invoice to be deleted:</h4>
+          <p><strong>Invoice Number:</strong> <%= @invoice.formatted_number || @invoice.invoice_number %></p>
+          <p><strong>Customer:</strong> <%= @invoice.customer&.name %></p>
+          <p><strong>Amount:</strong> ₹<%= number_with_delimiter(@invoice.total_amount, delimiter: ',') %></p>
+        </div>
+
+        <div class="alert alert-warning">
+          <p><strong>This will also delete:</strong></p>
+          <ul>
+            <li>All invoice items associated with this invoice</li>
+            <li>All related data and records</li>
+          </ul>
+        </div>
+
+        <div class="form-group">
+          <label for="deleteConfirmation" class="form-label">
+            <strong>To confirm deletion, type "delete" below:</strong>
+          </label>
+          <input type="text"
+                 class="form-control"
+                 id="deleteConfirmation"
+                 placeholder="Type 'delete' to confirm"
+                 autocomplete="off">
+          <div class="form-text">This confirmation is required to prevent accidental deletions.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete" disabled>Delete Invoice</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div id="successModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header success">
+        <h2 class="modal-title">✅ Success</h2>
+        <button class="close-btn" onclick="closeSuccessModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="success-message">
+          <div class="success-icon">✅</div>
+          <div class="success-title" id="successTitle">Action Completed!</div>
+          <div class="success-text" id="successText">The operation was completed successfully.</div>
+          <button class="btn btn-success" onclick="closeSuccessModal()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    const invoiceId = '<%= @invoice.id %>';
+    const invoiceToken = '<%= @invoice.share_token %>';
+
+    // Complete Invoice Modal
+    function openCompleteModal() {
+      document.getElementById('completeModal').style.display = 'block';
+      document.getElementById('paymentConfirmation').checked = false;
+      document.getElementById('confirmComplete').disabled = true;
+    }
+
+    function closeCompleteModal() {
+      document.getElementById('completeModal').style.display = 'none';
+    }
+
+    // Delete Invoice Modal
+    function openDeleteModal() {
+      document.getElementById('deleteModal').style.display = 'block';
+      document.getElementById('deleteConfirmation').value = '';
+      document.getElementById('confirmDelete').disabled = true;
+      document.getElementById('deleteConfirmation').classList.remove('is-valid', 'is-invalid');
+
+      // Focus on input field
+      setTimeout(() => {
+        document.getElementById('deleteConfirmation').focus();
+      }, 300);
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    // Success Modal
+    function showSuccessModal(title, text) {
+      document.getElementById('successTitle').textContent = title;
+      document.getElementById('successText').textContent = text;
+      document.getElementById('successModal').style.display = 'block';
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('successModal').style.display = 'none';
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+      const completeModal = document.getElementById('completeModal');
+      const deleteModal = document.getElementById('deleteModal');
+      const successModal = document.getElementById('successModal');
+
+      if (event.target === completeModal) {
+        closeCompleteModal();
+      }
+      if (event.target === deleteModal) {
+        closeDeleteModal();
+      }
+      if (event.target === successModal) {
+        closeSuccessModal();
+      }
+    }
+
+    // Enable/disable complete button based on checkbox
+    document.getElementById('paymentConfirmation').addEventListener('change', function() {
+      document.getElementById('confirmComplete').disabled = !this.checked;
+    });
+
+    // Enable/disable delete button based on input
+    document.getElementById('deleteConfirmation').addEventListener('input', function() {
+      const confirmBtn = document.getElementById('confirmDelete');
+      const inputValue = this.value.toLowerCase().trim();
+
+      if (inputValue === 'delete') {
+        confirmBtn.disabled = false;
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+      } else {
+        confirmBtn.disabled = true;
+        this.classList.remove('is-valid');
+        if (inputValue.length > 0) {
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
+        }
+      }
+    });
+
+    // Handle complete action
+    document.getElementById('confirmComplete').addEventListener('click', function() {
+      const confirmBtn = this;
+      const originalText = confirmBtn.textContent;
+
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Processing...';
+
+      // Use fetch API to handle JSON response
+      fetch(`/invoices_public/${invoiceId}/complete`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<%= form_authenticity_token %>',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({})
+      })
+      .then(response => response.json())
+      .then(data => {
+        closeCompleteModal();
+
+        if (data.success) {
+          showSuccessModal('Invoice Completed!', data.message || 'The invoice has been successfully marked as completed.');
+
+          // Hide the complete button since invoice is now completed
+          const completeBtn = document.querySelector('.complete-btn');
+          if (completeBtn) {
+            completeBtn.style.display = 'none';
+          }
+        } else {
+          showSuccessModal('Error', data.message || 'Failed to mark invoice as completed.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        closeCompleteModal();
+        showSuccessModal('Error', 'An error occurred while completing the invoice.');
+      })
+      .finally(() => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
+      });
+    });
+
+    // Handle delete action
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+      const confirmBtn = this;
+      const originalText = confirmBtn.textContent;
+
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Deleting...';
+
+      // Use fetch API to handle JSON response
+      fetch(`/invoices_public/${invoiceId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<%= form_authenticity_token %>',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        closeDeleteModal();
+
+        if (data.success) {
+          showSuccessModal('Invoice Deleted!', data.message || 'The invoice and all related data have been successfully deleted.');
+
+          // Redirect after a delay
+          setTimeout(() => {
+            window.location.href = '/invoices_public';
+          }, 2000);
+        } else {
+          showSuccessModal('Error', data.message || 'Failed to delete invoice.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        closeDeleteModal();
+        showSuccessModal('Error', 'An error occurred while deleting the invoice.');
+      })
+      .finally(() => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
+      });
+    });
+
+    // Add CSRF token to head if not present
+    if (!document.querySelector('meta[name="csrf-token"]')) {
+      const csrfMeta = document.createElement('meta');
+      csrfMeta.name = 'csrf-token';
+      csrfMeta.content = '<%= form_authenticity_token %>';
+      document.head.appendChild(csrfMeta);
+    }
+  </script>
 </body>
 </html>

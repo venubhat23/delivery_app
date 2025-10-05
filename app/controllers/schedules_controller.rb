@@ -231,7 +231,7 @@ class SchedulesController < ApplicationController
     source_month = params[:month].to_i
     source_year = params[:year].to_i
     current_date = Date.current
-    
+
     # Validate input
     if source_month < 1 || source_month > 12 || source_year < 2020 || source_year > 2030
       render json: { error: 'Invalid month or year selected' }, status: :bad_request
@@ -241,7 +241,7 @@ class SchedulesController < ApplicationController
     # Get source date range
     source_start_date = Date.new(source_year, source_month, 1).beginning_of_month
     source_end_date = source_start_date.end_of_month
-    
+
     # Get current month date range
     current_start_date = current_date.beginning_of_month
     current_end_date = current_date.end_of_month
@@ -252,8 +252,8 @@ class SchedulesController < ApplicationController
                                           .order(:scheduled_date)
 
     if source_assignments.empty?
-      render json: { 
-        error: "No delivery assignments found for #{source_start_date.strftime('%B %Y')}. Please ensure there are assignments to import." 
+      render json: {
+        error: "No delivery assignments found for #{source_start_date.strftime('%B %Y')}. Please ensure there are assignments to import."
       }, status: :not_found
       return
     end
@@ -261,63 +261,74 @@ class SchedulesController < ApplicationController
     created_assignments_count = 0
     customers_affected = Set.new
     errors = []
-    
-    # Group assignments by customer and day for proper handling
-    assignments_by_customer_and_day = source_assignments.group_by { |a| [a.customer_id, a.scheduled_date.day] }
+
+    # Pre-group assignments by day for efficient processing (this fixes the infinite loop issue)
+    assignments_by_day = source_assignments.group_by { |a| a.scheduled_date.day }
 
     ActiveRecord::Base.transaction do
       # Handle date mapping for different month lengths
       source_month_days = source_end_date.day
       target_month_days = current_end_date.day
-      
-      # First, process all existing days (1 to min(source_days, target_days))
+
+      # Pre-fetch existing assignments for the entire current month to reduce queries
+      existing_assignments_set = Set.new
+      DeliveryAssignment.where(scheduled_date: current_start_date..current_end_date)
+                       .select(:customer_id, :user_id, :product_id, :scheduled_date)
+                       .find_each do |assignment|
+        key = "#{assignment.customer_id}-#{assignment.user_id}-#{assignment.product_id}-#{assignment.scheduled_date}"
+        existing_assignments_set.add(key)
+      end
+
+      # Process each target day once (this prevents the infinite loop)
       (1..target_month_days).each do |target_day|
         begin
           source_day = target_day
-          
+
           # If target month has more days than source month, use the last day of source month for extra days
           if target_day > source_month_days
             source_day = source_month_days
           end
-          
-          # Find assignments for this source day
-          day_assignments = source_assignments.select { |a| a.scheduled_date.day == source_day }
-          
+
+          # Get assignments for this source day using pre-grouped hash (O(1) lookup instead of O(n) search)
+          day_assignments = assignments_by_day[source_day] || []
+
           # Skip if no assignments for this day
           next if day_assignments.empty?
-          
+
           target_date = Date.new(current_date.year, current_date.month, target_day)
-          
+
           # Skip if target date couldn't be calculated
           next if target_date.nil?
-          
+
+          # Process assignments for this day
           day_assignments.each do |source_assignment|
-            # Check if assignment already exists for this date
-            existing_assignment = DeliveryAssignment.where(
-              customer_id: source_assignment.customer_id,
-              user_id: source_assignment.user_id,
-              product_id: source_assignment.product_id,
-              scheduled_date: target_date
-            ).first
-            
-            if existing_assignment
-              next # Skip this assignment as it already exists
-            end
-            
-            # Create new assignment
-            new_assignment = source_assignment.dup
-            new_assignment.scheduled_date = target_date
-            new_assignment.delivery_schedule_id = nil # Remove schedule association for now
-            new_assignment.status = 'pending'
-            new_assignment.completed_at = nil
-            new_assignment.invoice_generated = false
-            new_assignment.invoice_id = nil
-            
-            if new_assignment.save
-              created_assignments_count += 1
-              customers_affected.add(source_assignment.customer_id)
-            else
-              errors << "Failed to create assignment for customer #{source_assignment.customer.name} on #{target_date.strftime('%B %d, %Y')}: #{new_assignment.errors.full_messages.join(', ')}"
+            begin
+              # Check if assignment already exists using in-memory set (much faster than DB query)
+              assignment_key = "#{source_assignment.customer_id}-#{source_assignment.user_id}-#{source_assignment.product_id}-#{target_date}"
+
+              if existing_assignments_set.include?(assignment_key)
+                next # Skip this assignment as it already exists
+              end
+
+              # Create new assignment
+              new_assignment = source_assignment.dup
+              new_assignment.scheduled_date = target_date
+              new_assignment.delivery_schedule_id = nil # Remove schedule association for now
+              new_assignment.status = 'pending'
+              new_assignment.completed_at = nil
+              new_assignment.invoice_generated = false
+              new_assignment.invoice_id = nil
+
+              if new_assignment.save
+                created_assignments_count += 1
+                customers_affected.add(source_assignment.customer_id)
+                # Add to our existing set to prevent duplicate creation within this transaction
+                existing_assignments_set.add(assignment_key)
+              else
+                errors << "Failed to create assignment for customer #{source_assignment.customer.name} on #{target_date.strftime('%B %d, %Y')}: #{new_assignment.errors.full_messages.join(', ')}"
+              end
+            rescue => e
+              errors << "Error processing assignment for customer #{source_assignment.customer&.name || 'Unknown'} on #{target_date.strftime('%B %d, %Y')}: #{e.message}"
             end
           end
         rescue => e
@@ -337,9 +348,9 @@ class SchedulesController < ApplicationController
         target_month: current_date.strftime("%B %Y")
       }
     }
-    
+
     response_data[:errors] = errors if errors.any?
-    
+
     render json: response_data
   end
 

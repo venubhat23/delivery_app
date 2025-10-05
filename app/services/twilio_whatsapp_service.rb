@@ -69,6 +69,24 @@ class TwilioWhatsappService
     false
   end
 
+  def send_custom_message(phone_number, message_body)
+    # Format phone number for WhatsApp
+    phone_number = format_phone_number(phone_number)
+
+    # Send WhatsApp message
+    message = @client.messages.create(
+      body: message_body,
+      to: "whatsapp:#{phone_number}",
+      from: @from_number
+    )
+
+    Rails.logger.info "Custom WhatsApp message sent successfully. SID: #{message.sid}"
+    true
+  rescue => e
+    Rails.logger.error "Twilio WhatsApp error: #{e.message}"
+    false
+  end
+
   private
 
   def build_enhanced_whatsapp_message(invoice, public_url)

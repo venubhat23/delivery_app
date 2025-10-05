@@ -295,6 +295,7 @@ Rails.application.routes.draw do
   resources :invoices do
     member do
       patch :mark_as_paid
+      patch :mark_as_completed
       patch :convert_to_completed
       post :share_whatsapp
       get :download_pdf
@@ -321,6 +322,8 @@ Rails.application.routes.draw do
 
   # Public invoices list (no authentication required)
   get '/invoices_public', to: 'public_invoices#index', as: 'public_invoices'
+  patch '/invoices_public/:id/complete', to: 'public_invoices#complete', as: 'public_invoice_complete'
+  delete '/invoices_public/:id', to: 'public_invoices#destroy', as: 'public_invoice_delete'
 
   # Public PDF serving for WhatsApp (no authentication required)
   get '/invoices/pdf/:filename', to: 'invoices#serve_pdf', as: 'serve_invoice_pdf'
@@ -622,5 +625,17 @@ Rails.application.routes.draw do
   # Nested customer addresses
   resources :customers do
     resources :customer_addresses, path: 'addresses', except: [:show]
+  end
+
+  # WhatsApp Messaging
+  resources :whatsapp_messages, path: 'whatsapp-messages', only: [:index] do
+    collection do
+      get :search_customers
+      post :send_individual_message
+      get :unpaid_customers_data
+      post :send_unpaid_customers_message
+      get :total_customers_count
+      post :send_wishes_to_all
+    end
   end
 end

@@ -1596,15 +1596,25 @@
               </li>
               
               <li class="nav-item" role="none">
-                <%= link_to reports_path, 
-                    class: "nav-link #{'active' if controller_name == 'reports'}", 
+                <%= link_to reports_path,
+                    class: "nav-link #{'active' if controller_name == 'reports'}",
                     role: "menuitem",
                     "aria-current": controller_name == 'reports' ? "page" : nil do %>
                   <i class="fas fa-chart-bar nav-icon" aria-hidden="true"></i>
                   <span class="nav-text">Reports</span>
                 <% end %>
               </li>
-              
+
+              <li class="nav-item" role="none">
+                <%= link_to whatsapp_messages_path,
+                    class: "nav-link #{'active' if controller_name == 'whatsapp_messages'}",
+                    role: "menuitem",
+                    "aria-current": controller_name == 'whatsapp_messages' ? "page" : nil do %>
+                  <i class="fab fa-whatsapp nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">WhatsApp Message</span>
+                <% end %>
+              </li>
+
               <li class="nav-item" role="none">
                 <%= link_to admin_settings_path, 
                     class: "nav-link #{'active' if controller_name == 'admin_settings'}", 

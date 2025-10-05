@@ -75,6 +75,10 @@ class Invoice < ApplicationRecord
   def mark_as_overdue!
     update!(status: 'overdue')
   end
+
+  def mark_as_completed!
+    update!(status: 'completed', paid_at: Time.current)
+  end
   
   def send_reminder!
     # Logic to send reminder email/SMS
@@ -83,7 +87,7 @@ class Invoice < ApplicationRecord
   end
   
   def overdue?
-    due_date < Date.current && status != 'paid'
+    due_date < Date.current && status != 'paid' && status != 'completed'
   end
   
   def days_overdue
@@ -185,7 +189,7 @@ class Invoice < ApplicationRecord
     nil
   end
   
-  validates :status, presence: true, inclusion: { in: %w[pending paid overdue] }
+  validates :status, presence: true, inclusion: { in: %w[pending paid overdue completed] }
   validates :total_amount, presence: true, numericality: { greater_than: 0 }
   validates :invoice_number, presence: true, uniqueness: true
   
@@ -193,7 +197,8 @@ class Invoice < ApplicationRecord
   scope :pending, -> { where(status: 'pending') }
   scope :paid, -> { where(status: 'paid') }
   scope :overdue, -> { where(status: 'overdue') }
-  scope :overdue_invoices, -> { where('due_date < ? AND status != ?', Date.current, 'paid') }
+  scope :completed, -> { where(status: 'completed') }
+  scope :overdue_invoices, -> { where('due_date < ? AND status NOT IN (?)', Date.current, ['paid', 'completed']) }
   scope :due_for_reminder, -> { where('due_date = ? AND status = ?', Date.current + 3.days, 'pending') }
   scope :by_customer, ->(customer_id) { where(customer_id: customer_id) if customer_id.present? }
   scope :by_month, ->(month, year) {

@@ -80,11 +80,12 @@
             </div>
           </div>
           <div class="col-md-2">
-            <%= form.select :status, 
+            <%= form.select :status,
                   options_for_select([
                     ['All Statuses', ''],
                     ['Pending', 'pending'],
                     ['Paid', 'paid'],
+                    ['Completed', 'completed'],
                     ['Overdue', 'overdue']
                   ], params[:status]),
                   {},
@@ -252,6 +253,10 @@
                     <span class="badge bg-success">
                       <i class="fas fa-check me-1"></i>Paid
                     </span>
+                  <% when 'completed' %>
+                    <span class="badge bg-primary">
+                      <i class="fas fa-check-double me-1"></i>Completed
+                    </span>
                   <% when 'overdue' %>
                     <span class="badge bg-danger">
                       <i class="fas fa-exclamation-triangle me-1"></i>Overdue
@@ -287,15 +292,27 @@
                             title="Share via WhatsApp">
                       <i class="fab fa-whatsapp"></i>
                     </button>
-                    <% if invoice.status != 'paid' %>
-                      <%= button_to convert_to_completed_invoice_path(invoice), 
-                            method: :patch, 
-                            class: 'btn btn-sm btn-outline-success', 
-                            data: { confirm: 'Are you sure you want to convert this invoice to completed?' }, 
-                            title: 'Convert to Completed' do %>
+                    <% if invoice.status == 'pending' %>
+                      <button type="button"
+                              class="btn btn-sm btn-outline-success mark-completed-btn"
+                              data-invoice-id="<%= invoice.id %>"
+                              data-invoice-number="<%= invoice.formatted_number %>"
+                              data-customer-name="<%= invoice.customer.name %>"
+                              onclick="openCompletedModal(this)"
+                              title="Mark as Completed">
                         <i class="fas fa-check-double"></i>
-                      <% end %>
+                      </button>
                     <% end %>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger delete-invoice-btn"
+                            data-invoice-id="<%= invoice.id %>"
+                            data-invoice-number="<%= invoice.formatted_number %>"
+                            data-customer-name="<%= invoice.customer.name %>"
+                            data-total-amount="<%= invoice.total_amount %>"
+                            onclick="openDeleteModal(this)"
+                            title="Delete Invoice">
+                      <i class="fas fa-trash"></i>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -326,6 +343,8 @@
                       <span class="badge bg-warning">Pending</span>
                     <% when 'paid' %>
                       <span class="badge bg-success">Paid</span>
+                    <% when 'completed' %>
+                      <span class="badge bg-primary">Completed</span>
                     <% when 'overdue' %>
                       <span class="badge bg-danger">Overdue</span>
                     <% end %>
@@ -4747,6 +4766,524 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+<!-- Mark as Completed Confirmation Modal -->
+<div id="markCompletedModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="markCompletedModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="markCompletedModalLabel">
+          <i class="fas fa-check-double me-2 text-success"></i>Mark Invoice as Completed
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Confirm Payment Completion</strong>
+          </div>
+        </div>
+
+        <div class="invoice-completion-details">
+          <h6 class="mb-3">Invoice Details:</h6>
+          <div class="row">
+            <div class="col-6">
+              <strong>Invoice Number:</strong>
+            </div>
+            <div class="col-6" id="modalInvoiceNumber">
+              -
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <strong>Customer:</strong>
+            </div>
+            <div class="col-6" id="modalCustomerName">
+              -
+            </div>
+          </div>
+        </div>
+
+        <div class="completion-confirmation mt-4">
+          <div class="form-check d-flex align-items-center">
+            <input class="form-check-input me-3" type="checkbox" id="paymentConfirmation" required>
+            <label class="form-check-label flex-grow-1" for="paymentConfirmation">
+              <strong>Yes, I confirm that the customer has paid for this invoice</strong>
+            </label>
+          </div>
+        </div>
+
+        <div class="alert alert-warning mt-3 mb-0">
+          <small>
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            This action will mark the invoice as completed. This action cannot be undone.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-success" id="confirmMarkCompleted" disabled>
+          <i class="fas fa-check-double me-1"></i>Mark as Completed
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Invoice Confirmation Modal -->
+<div id="deleteInvoiceModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deleteInvoiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteInvoiceModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Delete Invoice
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <div class="alert alert-danger">
+            <i class="fas fa-trash me-2"></i>
+            <strong>⚠️ PERMANENT DELETION WARNING</strong>
+          </div>
+        </div>
+
+        <div class="delete-warning-content">
+          <p class="text-danger fw-bold mb-3">
+            This action will permanently delete the invoice and cannot be undone!
+          </p>
+
+          <div class="invoice-delete-details mb-4">
+            <h6 class="mb-3">Invoice to be deleted:</h6>
+            <div class="card border-danger">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-5">
+                    <strong>Invoice Number:</strong>
+                  </div>
+                  <div class="col-7" id="deleteModalInvoiceNumber">
+                    -
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-5">
+                    <strong>Customer:</strong>
+                  </div>
+                  <div class="col-7" id="deleteModalCustomerName">
+                    -
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-5">
+                    <strong>Amount:</strong>
+                  </div>
+                  <div class="col-7" id="deleteModalAmount">
+                    -
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="delete-confirmation-section">
+            <div class="alert alert-warning">
+              <p class="mb-2"><strong>This will also delete:</strong></p>
+              <ul class="mb-0">
+                <li>All invoice items associated with this invoice</li>
+                <li>All related data and records</li>
+              </ul>
+            </div>
+
+            <div class="confirmation-input mt-4">
+              <label for="deleteConfirmationInput" class="form-label">
+                <strong>To confirm deletion, type "delete" below:</strong>
+              </label>
+              <input type="text"
+                     class="form-control"
+                     id="deleteConfirmationInput"
+                     placeholder="Type 'delete' to confirm"
+                     autocomplete="off">
+              <div class="form-text text-muted">
+                This confirmation is required to prevent accidental deletions.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteInvoice" disabled>
+          <i class="fas fa-trash me-1"></i>Delete Invoice
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Mark as Completed Modal functionality
+let currentInvoiceId = null;
+
+function openCompletedModal(button) {
+  const invoiceId = button.getAttribute('data-invoice-id');
+  const invoiceNumber = button.getAttribute('data-invoice-number');
+  const customerName = button.getAttribute('data-customer-name');
+
+  currentInvoiceId = invoiceId;
+
+  // Update modal content
+  document.getElementById('modalInvoiceNumber').textContent = invoiceNumber;
+  document.getElementById('modalCustomerName').textContent = customerName;
+
+  // Reset checkbox
+  const checkbox = document.getElementById('paymentConfirmation');
+  checkbox.checked = false;
+  document.getElementById('confirmMarkCompleted').disabled = true;
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('markCompletedModal'));
+  modal.show();
+}
+
+// Enable/disable confirm button based on checkbox
+document.getElementById('paymentConfirmation').addEventListener('change', function() {
+  const confirmBtn = document.getElementById('confirmMarkCompleted');
+  confirmBtn.disabled = !this.checked;
+});
+
+// Handle form submission
+document.getElementById('confirmMarkCompleted').addEventListener('click', function() {
+  if (!currentInvoiceId) return;
+
+  const confirmBtn = this;
+  const originalText = confirmBtn.innerHTML;
+
+  // Show loading state
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+
+  // Create and submit form
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/invoices/${currentInvoiceId}/mark_as_completed`;
+
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+  }
+
+  // Add method override for PATCH
+  const methodInput = document.createElement('input');
+  methodInput.type = 'hidden';
+  methodInput.name = '_method';
+  methodInput.value = 'patch';
+  form.appendChild(methodInput);
+
+  document.body.appendChild(form);
+  form.submit();
+});
+
+// Mobile responsive adjustments for the modal
+function adjustModalForMobile() {
+  const modal = document.getElementById('markCompletedModal');
+  if (window.innerWidth < 768) {
+    modal.querySelector('.modal-dialog').classList.add('modal-fullscreen-sm-down');
+  } else {
+    modal.querySelector('.modal-dialog').classList.remove('modal-fullscreen-sm-down');
+  }
+}
+
+// Call on window resize
+window.addEventListener('resize', adjustModalForMobile);
+document.addEventListener('DOMContentLoaded', adjustModalForMobile);
+
+// Delete Invoice Modal functionality
+let currentDeleteInvoiceId = null;
+
+function openDeleteModal(button) {
+  const invoiceId = button.getAttribute('data-invoice-id');
+  const invoiceNumber = button.getAttribute('data-invoice-number');
+  const customerName = button.getAttribute('data-customer-name');
+  const totalAmount = button.getAttribute('data-total-amount');
+
+  currentDeleteInvoiceId = invoiceId;
+
+  // Update modal content
+  document.getElementById('deleteModalInvoiceNumber').textContent = invoiceNumber;
+  document.getElementById('deleteModalCustomerName').textContent = customerName;
+  document.getElementById('deleteModalAmount').textContent = '₹' + new Intl.NumberFormat('en-IN').format(totalAmount);
+
+  // Reset input field
+  const inputField = document.getElementById('deleteConfirmationInput');
+  inputField.value = '';
+  document.getElementById('confirmDeleteInvoice').disabled = true;
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('deleteInvoiceModal'));
+  modal.show();
+
+  // Focus on input field after modal is shown
+  setTimeout(() => {
+    inputField.focus();
+  }, 500);
+}
+
+// Enable/disable delete button based on input
+document.getElementById('deleteConfirmationInput').addEventListener('input', function() {
+  const confirmBtn = document.getElementById('confirmDeleteInvoice');
+  const inputValue = this.value.toLowerCase().trim();
+
+  if (inputValue === 'delete') {
+    confirmBtn.disabled = false;
+    confirmBtn.classList.remove('btn-danger');
+    confirmBtn.classList.add('btn-danger');
+    this.classList.remove('is-invalid');
+    this.classList.add('is-valid');
+  } else {
+    confirmBtn.disabled = true;
+    this.classList.remove('is-valid');
+    if (inputValue.length > 0) {
+      this.classList.add('is-invalid');
+    } else {
+      this.classList.remove('is-invalid');
+    }
+  }
+});
+
+// Handle delete form submission
+document.getElementById('confirmDeleteInvoice').addEventListener('click', function() {
+  if (!currentDeleteInvoiceId) return;
+
+  const confirmBtn = this;
+  const originalText = confirmBtn.innerHTML;
+
+  // Show loading state
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+
+  // Create and submit form
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/invoices/${currentDeleteInvoiceId}`;
+
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+  }
+
+  // Add method override for DELETE
+  const methodInput = document.createElement('input');
+  methodInput.type = 'hidden';
+  methodInput.name = '_method';
+  methodInput.value = 'delete';
+  form.appendChild(methodInput);
+
+  document.body.appendChild(form);
+  form.submit();
+});
+
+// Mobile responsive adjustments for delete modal
+function adjustDeleteModalForMobile() {
+  const modal = document.getElementById('deleteInvoiceModal');
+  if (window.innerWidth < 768) {
+    modal.querySelector('.modal-dialog').classList.add('modal-fullscreen-sm-down');
+  } else {
+    modal.querySelector('.modal-dialog').classList.remove('modal-fullscreen-sm-down');
+  }
+}
+
+// Call on window resize for delete modal
+window.addEventListener('resize', adjustDeleteModalForMobile);
+document.addEventListener('DOMContentLoaded', adjustDeleteModalForMobile);
+
+// Reset delete modal when closed
+document.getElementById('deleteInvoiceModal').addEventListener('hidden.bs.modal', function() {
+  document.getElementById('deleteConfirmationInput').value = '';
+  document.getElementById('deleteConfirmationInput').classList.remove('is-valid', 'is-invalid');
+  document.getElementById('confirmDeleteInvoice').disabled = true;
+  currentDeleteInvoiceId = null;
+});
+</script>
+
+<style>
+/* Mobile responsive styles for the completion modal */
+@media (max-width: 767.98px) {
+  #markCompletedModal .modal-dialog {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+
+  #markCompletedModal .modal-content {
+    height: 100%;
+    border-radius: 0;
+  }
+
+  #markCompletedModal .modal-body {
+    padding: 1.5rem 1rem;
+  }
+
+  .invoice-completion-details {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+  }
+
+  .completion-confirmation {
+    background: #fff3cd;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid #ffeaa7;
+  }
+}
+
+/* Enhanced button styles */
+.mark-completed-btn {
+  transition: all 0.2s ease;
+}
+
+.mark-completed-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Status badge enhancements */
+.badge.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+/* Checkbox styling */
+.form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+/* Alert styling for better visual hierarchy */
+.invoice-completion-details .row {
+  margin-bottom: 0.5rem;
+}
+
+.invoice-completion-details .row:last-child {
+  margin-bottom: 0;
+}
+
+/* Delete Modal Styles */
+.delete-invoice-btn {
+  transition: all 0.2s ease;
+}
+
+.delete-invoice-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Delete modal specific styles */
+#deleteInvoiceModal .modal-header {
+  border-bottom: 2px solid #dc3545;
+}
+
+#deleteInvoiceModal .card.border-danger {
+  background-color: #f8d7da;
+  border-color: #dc3545 !important;
+}
+
+#deleteInvoiceModal .invoice-delete-details .row {
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+#deleteInvoiceModal .invoice-delete-details .row:last-child {
+  margin-bottom: 0;
+}
+
+/* Confirmation input styling */
+#deleteConfirmationInput.is-valid {
+  border-color: #198754;
+  background-color: #d1e7dd;
+}
+
+#deleteConfirmationInput.is-invalid {
+  border-color: #dc3545;
+  background-color: #f8d7da;
+}
+
+/* Mobile responsive styles for delete modal */
+@media (max-width: 767.98px) {
+  #deleteInvoiceModal .modal-dialog {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+
+  #deleteInvoiceModal .modal-content {
+    height: 100%;
+    border-radius: 0;
+  }
+
+  #deleteInvoiceModal .modal-body {
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+  }
+
+  #deleteInvoiceModal .delete-warning-content {
+    padding: 0.5rem;
+  }
+
+  #deleteInvoiceModal .invoice-delete-details {
+    margin-bottom: 1.5rem;
+  }
+
+  #deleteInvoiceModal .confirmation-input {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Enhanced warning styling */
+.delete-warning-content .text-danger {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Button enhancements */
+#confirmDeleteInvoice:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#confirmDeleteInvoice:not(:disabled) {
+  animation: pulse-danger 2s infinite;
+}
+
+@keyframes pulse-danger {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+</style>
 
     </div>
   </div>

@@ -1,6 +1,6 @@
 # app/controllers/invoices_controller.rb
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :convert_to_completed, :share_whatsapp, :download_pdf]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :mark_as_completed, :convert_to_completed, :share_whatsapp, :download_pdf]
   before_action :set_customers, only: [:index, :new, :create, :generate]
   skip_before_action :require_login, only: [:public_view, :public_download_pdf, :serve_pdf]
   
@@ -10,7 +10,13 @@ class InvoicesController < ApplicationController
     
     # Apply filters
     @invoices = @invoices.by_customer(params[:customer_id]) if params[:customer_id].present?
-    @invoices = @invoices.where(status: params[:status]) if params[:status].present?
+
+    # Default to pending invoices if no status filter is specified
+    if params[:status].present?
+      @invoices = @invoices.where(status: params[:status])
+    else
+      @invoices = @invoices.where(status: 'pending')
+    end
     
     # Date filter
     if params[:from_date].present? || params[:to_date].present?
@@ -415,6 +421,13 @@ end
     @invoice = Invoice.find(params[:id])
     @invoice.update(status: 'paid', paid_at: Time.current)
     redirect_to invoices_path, notice: 'Invoice marked as paid.'
+  end
+
+  def mark_as_completed
+    @invoice.mark_as_completed!
+    redirect_to invoices_path, notice: 'Invoice marked as completed successfully.'
+  rescue => e
+    redirect_to invoices_path, alert: "Failed to mark invoice as completed: #{e.message}"
   end
   
   def convert_to_completed
