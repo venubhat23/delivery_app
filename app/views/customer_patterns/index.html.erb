@@ -270,74 +270,44 @@
 
 <div class="container-fluid">
 
-  <!-- Modern Header with Gradient Stats -->
-  <div class="row mb-4">
+  <!-- Compact Header with Stats -->
+  <div class="row mb-3">
     <div class="col-12">
       <div class="card gradient-header border-0">
-        <div class="card-body p-4">
+        <div class="card-body p-3">
           <div class="row align-items-center">
-            <div class="col-md-4">
-              <h3 class="mb-2 text-white floating-animation" style="font-weight: 700;">
-                <i class="fas fa-chart-line me-3"></i>Customer Patterns
-              </h3>
-              <p class="text-white-50 mb-0">Analytics for <%= @month_name %></p>
+            <div class="col-md-3">
+              <h4 class="mb-1 text-white floating-animation" style="font-weight: 700;">
+                <i class="fas fa-chart-line me-2"></i>Customer Patterns
+              </h4>
+              <small class="text-white-50">Analytics for <%= @month_name %></small>
             </div>
-            <div class="col-md-8">
-              <div class="row g-3">
-                <div class="col-md-3">
-                  <div class="stats-card text-center p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div class="text-start">
-                        <div class="text-muted small fw-semibold text-uppercase">Total</div>
-                        <div class="h2 fw-bold text-dark mb-0" id="total-customers-stat"><%= @total_customers %></div>
-                      </div>
-                      <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-users text-white" style="font-size: 16px;"></i>
-                      </div>
-                    </div>
-                    <div class="text-muted small">All Customers</div>
+            <div class="col-md-9">
+              <div class="row g-2">
+                <div class="col-3">
+                  <div class="text-center p-2" style="background: rgba(255, 255, 255, 0.15); border-radius: 12px;">
+                    <div class="text-white fw-bold h5 mb-0" id="total-customers-stat"><%= @total_customers %></div>
+                    <small class="text-white-50">All Customers</small>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="stats-card text-center p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div class="text-start">
-                        <div class="text-muted small fw-semibold text-uppercase">Regular</div>
-                        <div class="h2 fw-bold mb-0" style="color: #10b981;" id="regular-customers-stat"><%= @regular_count %></div>
-                      </div>
-                      <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #10b981, #059669); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-check-circle text-white" style="font-size: 16px;"></i>
-                      </div>
-                    </div>
-                    <div class="text-muted small">Consistent Patterns</div>
+                <div class="col-3">
+                  <div class="text-center p-2" style="background: rgba(255, 255, 255, 0.15); border-radius: 12px;">
+                    <div class="text-white fw-bold h5 mb-0" id="regular-customers-stat"><%= @regular_count %></div>
+                    <small class="text-white-50">Regular</small>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="stats-card text-center p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div class="text-start">
-                        <div class="text-muted small fw-semibold text-uppercase">Irregular</div>
-                        <div class="h2 fw-bold mb-0" style="color: #f59e0b;" id="irregular-customers-stat"><%= @irregular_count %></div>
-                      </div>
-                      <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #f59e0b, #d97706); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-chart-line text-white" style="font-size: 16px;"></i>
-                      </div>
-                    </div>
-                    <div class="text-muted small">Variable Patterns</div>
+                <div class="col-3">
+                  <div class="text-center p-2" style="background: rgba(255, 255, 255, 0.15); border-radius: 12px;">
+                    <div class="text-white fw-bold h5 mb-0" id="irregular-customers-stat"><%= @irregular_count %></div>
+                    <small class="text-white-50">Irregular</small>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="stats-card text-center p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div class="text-start">
-                        <div class="text-muted small fw-semibold text-uppercase">Amount</div>
-                        <div class="h2 fw-bold mb-0" style="color: #11998e;" id="total-amount-stat">₹<%= number_with_precision(@total_amount || 0, precision: 0) %></div>
-                      </div>
-                      <div class="p-2 rounded-circle" style="background: linear-gradient(135deg, #11998e, #38ef7d); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-rupee-sign text-white" style="font-size: 16px;"></i>
-                      </div>
-                    </div>
-                    <div class="text-muted small">Total Revenue</div>
+                <div class="col-3">
+                  <div class="text-center p-2" style="background: rgba(255, 255, 255, 0.2); border-radius: 12px; cursor: pointer; transition: all 0.3s ease;" onclick="openRevenueBreakdownModal()" title="Click for detailed revenue breakdown">
+                    <div class="text-white fw-bold h5 mb-0" id="total-amount-stat">₹<%= number_with_precision(@total_amount || 0, precision: 0) %></div>
+                    <small class="text-white-50">
+                      Revenue <i class="fas fa-external-link-alt ms-1" style="font-size: 8px;"></i>
+                    </small>
                   </div>
                 </div>
               </div>
@@ -348,98 +318,155 @@
     </div>
   </div>
 
-  <!-- Modern Filter Tabs -->
+  <!-- Compact Combined Control Panel -->
   <div class="row mb-3">
     <div class="col-12">
-      <nav class="nav nav-pills nav-pills-modern justify-content-center">
-        <%= link_to customer_patterns_path(month: @current_month, year: @current_year, delivery_person_id: @delivery_person_id, customer_id: @customer_id, customer_name: @customer_name),
-            class: "nav-link #{'active' if params[:pattern].blank?}" do %>
-          <i class="fas fa-users me-2"></i>All (<%= @total_customers %>)
-        <% end %>
+      <div class="card border-0 shadow-sm" style="border-radius: 15px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+        <div class="card-body p-3">
 
-        <%= link_to customer_patterns_path(month: @current_month, year: @current_year, delivery_person_id: @delivery_person_id, customer_id: @customer_id, customer_name: @customer_name, pattern: 'regular'),
-            class: "nav-link #{'active' if params[:pattern] == 'regular'}" do %>
-          <i class="fas fa-check-circle me-2"></i>Regular (<%= @regular_count %>)
-        <% end %>
+          <!-- Pattern Tabs Row -->
+          <div class="row align-items-center mb-2">
+            <div class="col-md-6">
+              <nav class="nav nav-pills nav-pills-modern">
+                <%= link_to customer_patterns_path(month: @current_month, year: @current_year, delivery_person_id: @delivery_person_id, customer_id: @customer_id, customer_name: @customer_name),
+                    class: "nav-link #{'active' if params[:pattern].blank?}" do %>
+                  <i class="fas fa-users me-2"></i>All (<%= @total_customers %>)
+                <% end %>
+                <%= link_to customer_patterns_path(month: @current_month, year: @current_year, delivery_person_id: @delivery_person_id, customer_id: @customer_id, customer_name: @customer_name, pattern: 'regular'),
+                    class: "nav-link #{'active' if params[:pattern] == 'regular'}" do %>
+                  <i class="fas fa-check-circle me-2"></i>Regular (<%= @regular_count %>)
+                <% end %>
+                <%= link_to customer_patterns_path(month: @current_month, year: @current_year, delivery_person_id: @delivery_person_id, customer_id: @customer_id, customer_name: @customer_name, pattern: 'irregular'),
+                    class: "nav-link #{'active' if params[:pattern] == 'irregular'}" do %>
+                  <i class="fas fa-chart-line me-2"></i>Irregular (<%= @irregular_count %>)
+                <% end %>
+              </nav>
+            </div>
 
-        <%= link_to customer_patterns_path(month: @current_month, year: @current_year, delivery_person_id: @delivery_person_id, customer_id: @customer_id, customer_name: @customer_name, pattern: 'irregular'),
-            class: "nav-link #{'active' if params[:pattern] == 'irregular'}" do %>
-          <i class="fas fa-chart-line me-2"></i>Irregular (<%= @irregular_count %>)
-        <% end %>
-      </nav>
+            <!-- Complete Buttons Row -->
+            <div class="col-md-6 text-end">
+              <% if @pending_assignments_count > 0 %>
+                <div class="d-flex gap-2 justify-content-end align-items-center">
+                  <div class="me-3">
+                    <div class="badge bg-warning text-dark fs-6 px-3 py-2" style="border-radius: 12px;">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      <strong><%= @pending_assignments_count %></strong> pending
+                      <% if @pending_assignments_till_today_count > 0 %>
+                        (<strong><%= @pending_assignments_till_today_count %></strong> overdue)
+                      <% end %>
+                    </div>
+                  </div>
+                  <% if @pending_assignments_till_today_count > 0 %>
+                    <button class="btn btn-danger btn-sm shadow-sm"
+                            id="complete-till-today-btn"
+                            onclick="completeAllPendingTillToday()"
+                            style="border-radius: 15px; padding: 8px 16px; font-weight: 600;">
+                      <i class="fas fa-clock me-1"></i>Till Today (<%= @pending_assignments_till_today_count %>)
+                    </button>
+                  <% end %>
+                  <button class="btn btn-warning btn-sm shadow-sm"
+                          id="complete-all-pending-btn"
+                          onclick="completeAllPending()"
+                          style="border-radius: 15px; padding: 8px 16px; font-weight: 600;">
+                    <i class="fas fa-rocket me-1"></i>Complete All (<%= @pending_assignments_count %>)
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Filters Row -->
+          <div class="border-top pt-2">
+            <%= form_with url: customer_patterns_path, method: :get, local: true, class: "row g-3 align-items-end", id: "patterns-filter-form" do |form| %>
+              <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">👤 Customer</label>
+                <%= form.select :customer_id,
+                    options_for_select([["All Customers", ""]] + @customers.map { |c| [c.name, c.id, { 'data-phone' => c.phone_number, 'data-member' => c.member_id }] }, @customer_id),
+                    {},
+                    {
+                      class: "form-select form-select-sm form-select-enhanced",
+                      onchange: "this.form.submit();"
+                    } %>
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">🚚 Delivery Person</label>
+                <%= form.select :delivery_person_id,
+                    options_from_collection_for_select(@delivery_people, :id, :name, @delivery_person_id),
+                    { prompt: "All Staff" },
+                    { class: "form-select form-select-sm" } %>
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">📅 Month</label>
+                <%= form.select :month,
+                    options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, @current_month),
+                    { prompt: "Select Month" },
+                    { class: "form-select form-select-sm" } %>
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">🗓️ Year</label>
+                <%= form.select :year,
+                    options_for_select((2023..Date.current.year+1).map { |y| [y, y] }, @current_year),
+                    { prompt: "Select Year" },
+                    { class: "form-select form-select-sm" } %>
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">📄 Invoice Status</label>
+                <%= form.select :invoice_status,
+                    options_for_select([
+                      ["All", ""],
+                      ["Created & Sent", "created_and_sent"],
+                      ["Created Only", "created_only"],
+                      ["Sent Only", "sent_only"],
+                      ["Not Created", "not_created"],
+                      ["Not Sent", "not_sent"],
+                      ["No Activity", "no_activity"]
+                    ], params[:invoice_status]),
+                    {},
+                    { class: "form-select form-select-sm" } %>
+              </div>
+
+              <div class="col-md-2">
+                <div class="d-flex gap-2">
+                  <%= form.submit "🔍 Apply",
+                      class: "btn btn-primary btn-sm flex-fill",
+                      style: "border-radius: 12px; font-weight: 600;" %>
+                  <%= link_to customer_patterns_path,
+                      class: "btn btn-outline-secondary btn-sm",
+                      style: "border-radius: 12px; padding: 8px 12px;",
+                      title: "Clear Filters" do %>
+                    <i class="fas fa-times"></i>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Modern Filters -->
-  <div class="row mb-3">
-    <div class="col-12">
-      <div class="card filter-card border-0">
-        <div class="card-body p-3">
-          <%= form_with url: customer_patterns_path, method: :get, local: true, class: "row g-4", id: "patterns-filter-form" do |form| %>
-            <div class="col-md-2">
-              <label class="form-label fw-semibold">👤 Customer Name</label>
-              <%= form.select :customer_id,
-                  options_for_select([["All Customers", ""]] + @customers.map { |c| [c.name, c.id, { 'data-phone' => c.phone_number, 'data-member' => c.member_id }] }, @customer_id),
-                  {},
-                  {
-                    class: "form-select form-select-enhanced",
-                    onchange: "this.form.submit();"
-                  } %>
-            </div>
-
-            <div class="col-md-2">
-              <label class="form-label fw-bold text-dark mb-3">Delivery Person</label>
-              <%= form.select :delivery_person_id,
-                  options_from_collection_for_select(@delivery_people, :id, :name, @delivery_person_id),
-                  { prompt: "🚚 All Delivery Staff" },
-                  { class: "form-select form-control-modern" } %>
-            </div>
-
-            <div class="col-md-2">
-              <label class="form-label fw-bold text-dark mb-3">Month</label>
-              <%= form.select :month,
-                  options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, @current_month),
-                  { prompt: "📅 Select Month" },
-                  { class: "form-select form-control-modern" } %>
-            </div>
-
-            <div class="col-md-2">
-              <label class="form-label fw-bold text-dark mb-3">Year</label>
-              <%= form.select :year,
-                  options_for_select((2023..Date.current.year+1).map { |y| [y, y] }, @current_year),
-                  { prompt: "🗓️ Select Year" },
-                  { class: "form-select form-control-modern" } %>
-            </div>
-
-            <div class="col-md-2">
-              <label class="form-label fw-bold text-dark mb-3">Invoice Status</label>
-              <%= form.select :invoice_status,
-                  options_for_select([
-                    ["📄 All", ""],
-                    ["✅ Invoice Created & Sent", "created_and_sent"],
-                    ["📝 Invoice Created Only", "created_only"],
-                    ["📧 Invoice Sent Only", "sent_only"],
-                    ["⏳ Invoice Not Created", "not_created"],
-                    ["❌ Invoice Not Sent", "not_sent"],
-                    ["🚫 No Invoice Activity", "no_activity"]
-                  ], params[:invoice_status]),
-                  {},
-                  { class: "form-select form-control-modern" } %>
-            </div>
-
-            <div class="col-md-2 d-flex align-items-end">
-              <div class="d-flex gap-3 w-100">
-                <%= form.submit "🔍 Apply Filters",
-                    class: "btn btn-modern flex-fill" %>
-                <%= link_to customer_patterns_path,
-                    class: "btn btn-outline-danger",
-                    style: "border-radius: 25px; padding: 10px 20px;",
-                    title: "Clear Filters" do %>
-                  <i class="fas fa-times me-2"></i>Clear
-                <% end %>
-              </div>
-            </div>
-          <% end %>
+  <!-- Revenue Breakdown Modal -->
+  <div id="revenueBreakdownModal" class="custom-modal" style="display: none;">
+    <div class="custom-modal-backdrop" onclick="closeRevenueBreakdownModal()"></div>
+    <div class="custom-modal-content">
+      <div class="custom-modal-header">
+        <h5 class="custom-modal-title">
+          <i class="fas fa-chart-pie me-2"></i>
+          <span id="revenueModalTitle">Revenue Breakdown - <%= @month_name %></span>
+        </h5>
+        <button type="button" class="custom-close-btn" onclick="closeRevenueBreakdownModal()">×</button>
+      </div>
+      <div class="custom-modal-body" id="revenueBreakdownContent">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3 text-muted">Loading revenue breakdown...</p>
         </div>
       </div>
     </div>
@@ -6498,8 +6525,8 @@ function updateStatsFromVisibleRows() {
 
 // Update stats when page loads and when filters change
 document.addEventListener('DOMContentLoaded', function() {
-  // Initial update after a brief delay to let content load
-  setTimeout(updateStatsFromVisibleRows, 500);
+  // DISABLED: Don't override server-calculated stats with client-side counting
+  // setTimeout(updateStatsFromVisibleRows, 500);
 
   // Update stats when filters change via form submission
   const filterForm = document.getElementById('patterns-filter-form');
@@ -6508,8 +6535,8 @@ document.addEventListener('DOMContentLoaded', function() {
     filterInputs.forEach(input => {
       input.addEventListener('change', function() {
         // Since forms auto-submit, stats will update with the page reload
-        // This is just for any client-side filtering that might occur
-        setTimeout(updateStatsFromVisibleRows, 500);
+        // DISABLED: Don't override server-calculated stats
+        // setTimeout(updateStatsFromVisibleRows, 500);
       });
     });
   }
@@ -6528,7 +6555,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     if (shouldUpdate) {
-      setTimeout(updateStatsFromVisibleRows, 100);
+      // DISABLED: Don't override server-calculated stats
+      // setTimeout(updateStatsFromVisibleRows, 100);
     }
   });
 
@@ -6542,5 +6570,324 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Complete All Pending Till Today Function with Enhanced Loader
+function completeAllPendingTillToday() {
+  if (!confirm('⚠️ This will mark ALL pending delivery assignments TILL TODAY as completed for all customers. Are you sure?')) {
+    return;
+  }
+
+  const button = document.getElementById('complete-till-today-btn');
+  if (!button) return;
+
+  const originalHTML = button.innerHTML;
+
+  // Show enhanced loader
+  const loader = createSuperAttractiveLoader('fastLoadingOverlay');
+  loader.show(0, 3000); // No delay, 3 second estimated duration
+  loader.updateText('Completing Assignments Till Today...');
+
+  // Update button state
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+  button.disabled = true;
+  button.classList.add('btn-secondary');
+  button.classList.remove('btn-danger');
+
+  // Make the API call
+  fetch('/customer-patterns/complete_all_pending_till_today', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({
+      month: <%= @current_month %>,
+      year: <%= @current_year %>
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Hide loader first
+    loader.hide();
+
+    if (data.success) {
+      // Success toast with enhanced styling
+      showSimpleToast('✅ Success! All pending assignments till today have been completed successfully.', 'success');
+
+      // Reload page after delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      // Error handling
+      showSimpleToast('❌ Error: ' + (data.message || 'Failed to complete assignments till today'), 'error');
+
+      // Reset button
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+      button.classList.remove('btn-secondary');
+      button.classList.add('btn-danger');
+    }
+  })
+  .catch(error => {
+    console.error('Error completing assignments till today:', error);
+
+    // Hide loader
+    loader.hide();
+
+    // Show error
+    showSimpleToast('❌ Network error occurred while completing assignments till today', 'error');
+
+    // Reset button
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+    button.classList.remove('btn-secondary');
+    button.classList.add('btn-danger');
+  });
+}
+
+// Complete All Pending Function with Enhanced Loader
+function completeAllPending() {
+  if (!confirm('⚠️ This will mark ALL pending delivery assignments as completed for all customers in this month. Are you sure?')) {
+    return;
+  }
+
+  const button = document.getElementById('complete-all-pending-btn');
+  if (!button) return;
+
+  const originalHTML = button.innerHTML;
+
+  // Show enhanced loader
+  const loader = createSuperAttractiveLoader('fastLoadingOverlay');
+  loader.show(0, 3000); // No delay, 3 second estimated duration
+  loader.updateText('Completing All Assignments...');
+
+  // Update button state
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+  button.disabled = true;
+  button.classList.add('btn-secondary');
+  button.classList.remove('btn-warning');
+
+  // Make the API call
+  fetch('/customer-patterns/complete_all_pending', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({
+      month: <%= @current_month %>,
+      year: <%= @current_year %>
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Hide loader first
+    loader.hide();
+
+    if (data.success) {
+      // Success toast with enhanced styling
+      showSimpleToast('✅ Success! All pending assignments have been completed successfully.', 'success');
+
+      // Reload page after delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      // Error handling
+      showSimpleToast('❌ Error: ' + (data.message || 'Failed to complete assignments'), 'error');
+
+      // Reset button
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+      button.classList.remove('btn-secondary');
+      button.classList.add('btn-warning');
+    }
+  })
+  .catch(error => {
+    console.error('Error completing assignments:', error);
+
+    // Hide loader
+    loader.hide();
+
+    // Show error
+    showSimpleToast('❌ Network error occurred while completing assignments', 'error');
+
+    // Reset button
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+    button.classList.remove('btn-secondary');
+    button.classList.add('btn-warning');
+  });
+}
+
+// Revenue Breakdown Modal Function
+function openRevenueBreakdownModal() {
+  console.log('💰 Opening revenue breakdown modal');
+  const modal = document.getElementById('revenueBreakdownModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
+
+    // Load content via AJAX
+    loadRevenueBreakdownContent();
+  }
+}
+
+function closeRevenueBreakdownModal() {
+  console.log('🔒 Closing revenue breakdown modal');
+  const modal = document.getElementById('revenueBreakdownModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+  }
+}
+
+function loadRevenueBreakdownContent() {
+  const contentDiv = document.getElementById('revenueBreakdownContent');
+
+  // Reset content to loading state
+  contentDiv.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3 text-muted">Loading revenue breakdown...</p>
+    </div>
+  `;
+
+  // Fetch revenue breakdown data
+  fetch('/customer-patterns/revenue_breakdown?' + new URLSearchParams({
+    month: <%= @current_month %>,
+    year: <%= @current_year %>,
+    delivery_person_id: '<%= @delivery_person_id %>',
+    customer_id: '<%= @customer_id %>',
+    pattern: '<%= @pattern_filter %>',
+    customer_name: '<%= @customer_name %>'
+  }), {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      contentDiv.innerHTML = data.html;
+    } else {
+      contentDiv.innerHTML = `
+        <div class="text-center py-5">
+          <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+          <h5 class="mt-3">Error Loading Data</h5>
+          <p class="text-muted">${data.message || 'Failed to load revenue breakdown'}</p>
+          <button class="btn btn-primary" onclick="loadRevenueBreakdownContent()">
+            <i class="fas fa-redo me-1"></i>Try Again
+          </button>
+        </div>
+      `;
+    }
+  })
+  .catch(error => {
+    console.error('Error loading revenue breakdown:', error);
+    contentDiv.innerHTML = `
+      <div class="text-center py-5">
+        <i class="fas fa-wifi text-danger" style="font-size: 3rem;"></i>
+        <h5 class="mt-3">Connection Error</h5>
+        <p class="text-muted">Failed to load revenue breakdown. Please check your connection.</p>
+        <button class="btn btn-primary" onclick="loadRevenueBreakdownContent()">
+          <i class="fas fa-redo me-1"></i>Try Again
+        </button>
+      </div>
+    `;
+  });
+}
+
+// Revenue Modal Action Functions
+function viewCustomerDetails(customerId) {
+  // Open customer deliveries modal for the specific customer
+  loadModalContent(customerId, '<%= @current_month %>', '<%= @current_year %>');
+}
+
+function viewDeliveries(customerId) {
+  // Filter the main table to show only this customer
+  const customerSelect = document.querySelector('select[name="customer_id"]');
+  if (customerSelect) {
+    customerSelect.value = customerId;
+    customerSelect.form.submit();
+  }
+
+  // Close the revenue modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('revenueBreakdownModal'));
+  if (modal) {
+    modal.hide();
+  }
+}
+
+function exportRevenueData() {
+  // Create CSV export of the revenue breakdown data
+  const table = document.querySelector('#revenueBreakdownContent table');
+  if (!table) return;
+
+  let csv = [];
+  const rows = table.querySelectorAll('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = [], cols = rows[i].querySelectorAll('td, th');
+
+    for (let j = 0; j < cols.length - 1; j++) { // Exclude actions column
+      let cellText = cols[j].innerText.replace(/"/g, '""');
+      row.push('"' + cellText + '"');
+    }
+
+    csv.push(row.join(','));
+  }
+
+  const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+  const downloadLink = document.createElement('a');
+  downloadLink.download = 'revenue_breakdown_<%= @month_name.gsub(" ", "_") %>.csv';
+  downloadLink.href = window.URL.createObjectURL(csvFile);
+  downloadLink.style.display = 'none';
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+
+  showSimpleToast('✅ Revenue breakdown exported successfully!', 'success');
+}
+
+function printRevenueData() {
+  // Print the revenue breakdown
+  const printContent = document.getElementById('revenueBreakdownContent').innerHTML;
+  const originalContent = document.body.innerHTML;
+
+  document.body.innerHTML = `
+    <html>
+      <head>
+        <title>Revenue Breakdown - <%= @month_name %></title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .btn-group { display: none; }
+          @media print { .btn { display: none; } }
+        </style>
+      </head>
+      <body>
+        <h2>Revenue Breakdown - <%= @month_name %></h2>
+        ${printContent}
+      </body>
+    </html>
+  `;
+
+  window.print();
+  document.body.innerHTML = originalContent;
+
+  // Reinitialize any event listeners if needed
+  setTimeout(() => {
+    location.reload();
+  }, 100);
+}
 
 </script>

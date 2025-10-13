@@ -1,0 +1,653 @@
+<!-- Enhanced Pending Payments Index Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">
+              <i class="fas fa-hourglass-half me-3"></i>💰 Pending Payments
+            </h1>
+            <p class="text-muted mb-0">Track and manage monthly pending payments from customers</p>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" onclick="openPendingPaymentModal()">
+              <i class="fas fa-plus me-2"></i>Add Pending Payment
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Stats Cards -->
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="stats-card stats-card-warning">
+            <div class="stats-icon">
+              <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="stats-number">₹<%= number_with_delimiter(@total_pending_amount || 0) %></div>
+            <div class="stats-label">Total Pending Amount</div>
+            <div class="stats-sublabel">Awaiting Payment</div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="stats-card stats-card-success">
+            <div class="stats-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stats-number">₹<%= number_with_delimiter(@total_paid_amount || 0) %></div>
+            <div class="stats-label">Total Paid Amount</div>
+            <div class="stats-sublabel">Received</div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="stats-card stats-card-info">
+            <div class="stats-icon">
+              <i class="fas fa-list"></i>
+            </div>
+            <div class="stats-number"><%= @pending_payments.total_count %></div>
+            <div class="stats-label">Total Records</div>
+            <div class="stats-sublabel">All Status</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <%= form_with url: pending_payments_path, method: :get, local: true, class: 'row g-3' do |form| %>
+                <div class="col-md-4">
+                  <%= form.text_field :search,
+                        placeholder: 'Search by customer name or month...',
+                        value: params[:search],
+                        class: 'form-control' %>
+                </div>
+                <div class="col-md-3">
+                  <%= form.select :status,
+                        options_for_select([
+                          ['All Status', ''],
+                          ['Pending', 'pending'],
+                          ['Paid', 'paid']
+                        ], params[:status]),
+                        {},
+                        { class: 'form-select' } %>
+                </div>
+                <div class="col-md-3">
+                  <%= form.submit 'Filter', class: 'btn btn-outline-primary' %>
+                  <%= link_to 'Clear', pending_payments_path, class: 'btn btn-outline-secondary ms-2' %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Payments Table -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-table me-2"></i>Pending Payments List
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @pending_payments.any? %>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                  <tr>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Month/Year</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Notes</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @pending_payments.each do |payment| %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-sm me-2">
+                            <%= payment.customer.initials %>
+                          </div>
+                          <div>
+                            <div class="fw-bold"><%= payment.customer.name %></div>
+                            <small class="text-muted"><%= payment.customer.address.truncate(30) if payment.customer.address %></small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><%= payment.customer.phone_number %></td>
+                      <td>
+                        <span class="badge bg-info"><%= payment.month_year_display %></span>
+                      </td>
+                      <td>
+                        <span class="fw-bold text-success">₹<%= number_with_delimiter(payment.amount) %></span>
+                      </td>
+                      <td>
+                        <% if payment.pending? %>
+                          <span class="badge bg-warning text-dark">Pending</span>
+                        <% else %>
+                          <span class="badge bg-success">Paid</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= payment.notes.present? ? payment.notes.truncate(50) : '-' %>
+                      </td>
+                      <td>
+                        <%= payment.created_at.strftime("%d %b %Y") %>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <% if payment.pending? %>
+                            <%= link_to mark_as_paid_pending_payment_path(payment),
+                                  method: :patch,
+                                  class: 'btn btn-success btn-sm',
+                                  data: { confirm: 'Mark this payment as paid?' },
+                                  title: 'Mark as Paid' do %>
+                              <i class="fas fa-check"></i>
+                            <% end %>
+                          <% else %>
+                            <%= link_to mark_as_pending_pending_payment_path(payment),
+                                  method: :patch,
+                                  class: 'btn btn-warning btn-sm',
+                                  data: { confirm: 'Mark this payment as pending?' },
+                                  title: 'Mark as Pending' do %>
+                              <i class="fas fa-undo"></i>
+                            <% end %>
+                          <% end %>
+
+                          <%= link_to edit_pending_payment_path(payment),
+                                class: 'btn btn-primary btn-sm',
+                                title: 'Edit' do %>
+                            <i class="fas fa-edit"></i>
+                          <% end %>
+
+                          <%= link_to pending_payment_path(payment),
+                                method: :delete,
+                                class: 'btn btn-danger btn-sm',
+                                data: { confirm: 'Are you sure you want to delete this pending payment?' },
+                                title: 'Delete' do %>
+                            <i class="fas fa-trash"></i>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+              <%= paginate @pending_payments %>
+            </div>
+          <% else %>
+            <div class="text-center py-5">
+              <i class="fas fa-hourglass-half fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No Pending Payments Found</h5>
+              <p class="text-muted">Start by adding your first pending payment record.</p>
+              <button type="button" class="btn btn-primary" onclick="openPendingPaymentModal()">
+                <i class="fas fa-plus me-2"></i>Add Pending Payment
+              </button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Select2 CSS and JS for customer dropdown -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Add Pending Payment Modal -->
+<div id="addPendingPaymentModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closePendingPaymentModal()"></div>
+  <div class="custom-modal-content" style="width: 100%; max-width: 900px;">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-plus me-2"></i>
+        <span>Add Pending Payment</span>
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closePendingPaymentModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <%= form_with model: PendingPayment.new, url: pending_payments_path, method: :post, local: true, id: 'addPendingPaymentForm' do |form| %>
+        <div class="p-4">
+          <div class="row g-3">
+            <div class="col-lg-6 col-md-12 mb-3">
+              <div class="form-floating">
+                <select name="pending_payment[customer_id]" class="form-select" required data-controller="searchable-select" id="customerSelect">
+                  <option value="">Select Customer...</option>
+                </select>
+                <%= form.label :customer_id, 'Customer', class: 'form-label', for: 'customerSelect' %>
+              </div>
+              <div class="form-text">
+                <i class="fas fa-search me-1"></i>Search and select customer
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+              <div class="form-floating">
+                <%= form.select :month,
+                      options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], Date::MONTHNAMES[m]] }),
+                      { prompt: 'Select Month' },
+                      { class: 'form-select', required: true, id: 'monthSelect' } %>
+                <%= form.label :month, 'Month', class: 'form-label', for: 'monthSelect' %>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+              <div class="form-floating">
+                <%= form.select :year,
+                      options_for_select((Date.current.year-2..Date.current.year+1).map { |y| [y, y] }, Date.current.year),
+                      { prompt: 'Select Year' },
+                      { class: 'form-select', required: true, id: 'yearSelect' } %>
+                <%= form.label :year, 'Year', class: 'form-label', for: 'yearSelect' %>
+              </div>
+            </div>
+
+            <div class="col-lg-6 col-md-6 mb-3">
+              <div class="form-floating">
+                <%= form.number_field :amount,
+                      step: 0.01,
+                      min: 0,
+                      placeholder: 'Enter amount',
+                      class: 'form-control',
+                      required: true,
+                      id: 'amountField' %>
+                <%= form.label :amount, 'Amount (₹)', class: 'form-label', for: 'amountField' %>
+              </div>
+            </div>
+
+            <div class="col-lg-6 col-md-6 mb-3">
+              <div class="form-floating">
+                <%= form.select :status,
+                      options_for_select([['Pending', 'pending'], ['Paid', 'paid']], 'pending'),
+                      {},
+                      { class: 'form-select', required: true, id: 'statusSelect' } %>
+                <%= form.label :status, 'Status', class: 'form-label', for: 'statusSelect' %>
+              </div>
+            </div>
+
+            <div class="col-12 mb-3">
+              <div class="form-floating">
+                <%= form.text_area :notes,
+                      rows: 3,
+                      placeholder: 'Add any additional notes...',
+                      class: 'form-control',
+                      id: 'notesField',
+                      style: 'height: 100px;' %>
+                <%= form.label :notes, 'Notes (Optional)', class: 'form-label', for: 'notesField' %>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-4 pt-3" style="border-top: 1px solid rgba(0,0,0,0.1);">
+            <button type="button" class="btn btn-outline-secondary" onclick="closePendingPaymentModal()">
+              <i class="fas fa-times me-1"></i>Cancel
+            </button>
+            <%= form.submit 'Add Pending Payment', class: 'btn btn-primary px-4', style: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+// Custom Modal Functions for Pending Payments
+function openPendingPaymentModal() {
+  console.log('💰 Opening pending payment modal');
+
+  const modal = document.getElementById('addPendingPaymentModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
+
+    // Initialize Select2 after modal is shown
+    setTimeout(() => {
+      initializePendingPaymentSelect2();
+    }, 100);
+  } else {
+    console.error('❌ Pending payment modal element not found');
+  }
+}
+
+function closePendingPaymentModal() {
+  console.log('🔒 Closing pending payment modal');
+  const modal = document.getElementById('addPendingPaymentModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+
+    // Clean up Select2
+    const customerSelect = document.querySelector('select[name="pending_payment[customer_id]"]');
+    if (customerSelect && $(customerSelect).hasClass("select2-hidden-accessible")) {
+      $(customerSelect).select2('destroy');
+    }
+
+    // Reset form
+    document.getElementById('addPendingPaymentForm').reset();
+
+    // Ensure body returns to normal state
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+  }
+}
+
+function initializePendingPaymentSelect2() {
+  const customerSelect = document.querySelector('select[name="pending_payment[customer_id]"]');
+
+  if (customerSelect) {
+    // Destroy existing Select2 if it exists
+    if ($(customerSelect).hasClass("select2-hidden-accessible")) {
+      $(customerSelect).select2('destroy');
+    }
+
+    // Initialize Select2 with updated configuration
+    $(customerSelect).select2({
+      ajax: {
+        url: '<%= search_customers_pending_payments_path %>',
+        dataType: 'json',
+        delay: 300,
+        data: function (params) {
+          console.log('🔍 Select2 sending search term:', params.term);
+          var requestData = {
+            q: params.term,
+            page: params.page || 1,
+            timestamp: Date.now() // Cache busting
+          };
+          console.log('🚀 Request data:', requestData);
+          return requestData;
+        },
+        processResults: function (data, params) {
+          console.log('📥 Received data:', data);
+          return {
+            results: data,
+            pagination: {
+              more: (params.page * 10) < 100 // Assume max 100 customers
+            }
+          };
+        },
+        cache: false // Disable caching for debugging
+      },
+      placeholder: 'Search customers...',
+      minimumInputLength: 1,
+      theme: 'bootstrap-5',
+      dropdownParent: $('#addPendingPaymentModal'),
+      width: '100%',
+      escapeMarkup: function (markup) {
+        return markup; // Let our markup intact
+      }
+    });
+  }
+}
+
+// Make functions globally available
+window.openPendingPaymentModal = openPendingPaymentModal;
+window.closePendingPaymentModal = closePendingPaymentModal;
+window.initializePendingPaymentSelect2 = initializePendingPaymentSelect2;
+</script>
+
+<style>
+/* Custom Modal Styles */
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0 20px 280px; /* Top padding for nav bar, left padding for sidebar */
+}
+
+.custom-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+
+.custom-modal-content {
+  position: relative;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 900px;
+  max-height: 85%;
+  overflow: hidden;
+  z-index: 10001;
+  animation: modalFadeIn 0.3s ease-out;
+  margin: 0 20px; /* Add some margin from screen edges */
+}
+
+.custom-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.custom-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.custom-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0.8;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.custom-close-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-modal-body {
+  padding: 0;
+  overflow-y: auto;
+  max-height: calc(85vh - 140px);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive adjustments for modal positioning */
+@media (max-width: 1200px) {
+  .custom-modal {
+    padding: 60px 0 20px 200px; /* Smaller sidebar on medium screens */
+  }
+}
+
+@media (max-width: 992px) {
+  .custom-modal {
+    padding: 60px 20px 20px 20px; /* No sidebar on smaller screens */
+  }
+
+  .custom-modal-content {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .custom-modal {
+    padding: 80px 10px 20px 10px; /* Mobile spacing */
+  }
+
+  .custom-modal-content {
+    max-width: 98%;
+    margin: 0 10px;
+  }
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #6c5ce7;
+  transition: transform 0.2s;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.stats-card-success {
+  border-left-color: #00b894;
+}
+
+.stats-card-warning {
+  border-left-color: #fdcb6e;
+}
+
+.stats-card-danger {
+  border-left-color: #e17055;
+}
+
+.stats-card-info {
+  border-left-color: #74b9ff;
+}
+
+.stats-icon {
+  color: #6c5ce7;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.stats-card-success .stats-icon {
+  color: #00b894;
+}
+
+.stats-card-warning .stats-icon {
+  color: #fdcb6e;
+}
+
+.stats-card-danger .stats-icon {
+  color: #e17055;
+}
+
+.stats-card-info .stats-icon {
+  color: #74b9ff;
+}
+
+.stats-number {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2d3436;
+  margin-bottom: 0.25rem;
+}
+
+.stats-label {
+  font-size: 0.9rem;
+  color: #636e72;
+  font-weight: 500;
+}
+
+.stats-sublabel {
+  font-size: 0.8rem;
+  color: #b2bec3;
+}
+
+
+
+/* Fix Select2 dropdown z-index issues in modal */
+.select2-container {
+  z-index: 10060 !important;
+}
+
+.select2-dropdown {
+  z-index: 10060 !important;
+}
+
+/* Select2 responsive styling */
+#addPendingPaymentModal .select2-container .select2-selection--single {
+  height: calc(3.5rem + 2px);
+  padding: 1rem 0.75rem 0.25rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+}
+
+#addPendingPaymentModal .select2-container .select2-selection--single .select2-selection__rendered {
+  padding-left: 0;
+  padding-right: 0;
+  color: #495057;
+  line-height: 1.25;
+}
+
+#addPendingPaymentModal .select2-container .select2-selection--single .select2-selection__arrow {
+  height: calc(3.5rem + 2px);
+  right: 10px;
+}
+
+/* Style the Select2 to match Bootstrap 5 */
+.select2-container--bootstrap-5 .select2-selection {
+  border-radius: 0.375rem;
+  border: 1px solid #ced4da;
+  min-height: calc(1.5em + 0.75rem + 2px);
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>

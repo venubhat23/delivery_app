@@ -31,6 +31,8 @@ class CustomerPatternsController < ApplicationController
       @has_prev_page = cached_data[:has_prev_page]
       @total_amount = cached_data[:total_amount]
       @month_name = cached_data[:month_name]
+      @pending_assignments_count = cached_data[:pending_assignments_count] || 0
+      @pending_assignments_till_today_count = cached_data[:pending_assignments_till_today_count] || 0
       return
     end
 
@@ -61,6 +63,18 @@ class CustomerPatternsController < ApplicationController
     @total_amount = result[:total_amount]
     @month_name = Date.new(@current_year, @current_month, 1).strftime("%B %Y")
 
+    # Calculate pending assignments count for the current month
+    @pending_assignments_count = DeliveryAssignment.where(
+      scheduled_date: start_date..end_date,
+      status: 'pending'
+    ).count
+
+    # Calculate pending assignments count till today
+    @pending_assignments_till_today_count = DeliveryAssignment.where(
+      scheduled_date: start_date..Date.current,
+      status: 'pending'
+    ).count
+
     # Cache the results for 30 seconds to ensure near real-time updates
     cache_data = {
       delivery_people: @delivery_people,
@@ -74,7 +88,9 @@ class CustomerPatternsController < ApplicationController
       has_next_page: @has_next_page,
       has_prev_page: @has_prev_page,
       total_amount: @total_amount,
-      month_name: @month_name
+      month_name: @month_name,
+      pending_assignments_count: @pending_assignments_count,
+      pending_assignments_till_today_count: @pending_assignments_till_today_count
     }
     Rails.cache.write(cache_key, cache_data, expires_in: 30.seconds)
   end
@@ -742,6 +758,259 @@ class CustomerPatternsController < ApplicationController
           message: "❌ Error updating pattern: #{e.message}",
           errors: errors
         }, status: 500
+      }
+    end
+  end
+
+  def complete_all_pending_till_today
+    Rails.logger.info "🎯 COMPLETE_ALL_PENDING_TILL_TODAY called with params: #{params.inspect}"
+
+    month = params[:month]&.to_i || Date.current.month
+    year = params[:year]&.to_i || Date.current.year
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+
+    Rails.logger.info "🗓️ Date range: #{start_date} to #{Date.current} (till today)"
+
+    # Find ALL pending assignments from start of month till today (all customers)
+    assignments_to_complete = DeliveryAssignment
+      .where(scheduled_date: start_date..Date.current)
+      .where(status: 'pending')
+
+    Rails.logger.info "📋 Found #{assignments_to_complete.count} pending assignments to complete till today"
+
+    if assignments_to_complete.count == 0
+      return respond_to do |format|
+        format.json {
+          render json: {
+            success: false,
+            message: "❌ No pending assignments found till today for #{Date.new(year, month, 1).strftime('%B %Y')}"
+          }
+        }
+      end
+    end
+
+    completed_count = 0
+    assignments_to_complete.each do |assignment|
+      if assignment.update(status: 'completed', completed_at: Time.current, booked_by: 0)
+        completed_count += 1
+      end
+    end
+
+    clear_customer_patterns_cache if completed_count > 0
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: true,
+          message: "✅ #{completed_count} assignments till today marked as completed for #{Date.new(year, month, 1).strftime('%B %Y')}",
+          completed_count: completed_count
+        }
+      }
+    end
+  rescue => e
+    Rails.logger.error "❌ Error completing pending assignments till today: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: false,
+          message: "❌ Error completing assignments till today: #{e.message}"
+        }
+      }
+    end
+  end
+
+  def revenue_breakdown
+    Rails.logger.info "🎯 REVENUE_BREAKDOWN called with params: #{params.inspect}"
+
+    @current_month = params[:month]&.to_i || Date.current.month
+    @current_year = params[:year]&.to_i || Date.current.year
+    @delivery_person_id = params[:delivery_person_id].presence
+    @customer_id = params[:customer_id].presence
+    @pattern_filter = params[:pattern].presence
+    @customer_name = params[:customer_name].presence
+
+    start_date = Date.new(@current_year, @current_month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    # Get revenue breakdown by customer, delivery person, and product
+    revenue_query = <<~SQL
+      SELECT
+        c.name as customer_name,
+        c.id as customer_id,
+        u.name as delivery_person_name,
+        p.name as product_name,
+        p.unit_type,
+        COUNT(da.id) as total_assignments,
+        SUM(da.quantity) as total_quantity,
+        SUM(da.final_amount_after_discount) as total_amount,
+        AVG(da.final_amount_after_discount) as avg_amount,
+        MIN(da.scheduled_date) as first_delivery,
+        MAX(da.scheduled_date) as last_delivery
+      FROM delivery_assignments da
+      JOIN customers c ON c.id = da.customer_id
+      JOIN users u ON u.id = c.delivery_person_id
+      JOIN products p ON p.id = da.product_id
+      WHERE da.scheduled_date BETWEEN $1 AND $2
+    SQL
+
+    # Add filters
+    sql_params = [start_date, end_date]
+    param_index = 3
+
+    if @delivery_person_id.present?
+      revenue_query += " AND c.delivery_person_id = $#{param_index}"
+      sql_params << @delivery_person_id
+      param_index += 1
+    end
+
+    if @customer_id.present?
+      revenue_query += " AND da.customer_id = $#{param_index}"
+      sql_params << @customer_id
+      param_index += 1
+    end
+
+    if @customer_name.present?
+      revenue_query += " AND LOWER(c.name) LIKE LOWER($#{param_index})"
+      sql_params << "%#{@customer_name}%"
+      param_index += 1
+    end
+
+    revenue_query += <<~SQL
+      GROUP BY c.id, c.name, u.name, p.id, p.name, p.unit_type
+      ORDER BY total_amount DESC
+    SQL
+
+    @revenue_breakdown = ActiveRecord::Base.connection.exec_query(revenue_query, 'revenue_breakdown', sql_params)
+
+    # Get accurate summary stats from actual database totals
+    summary_query = <<~SQL
+      SELECT
+        COUNT(DISTINCT da.customer_id) as total_customers,
+        COUNT(DISTINCT c.delivery_person_id) as total_delivery_people,
+        COUNT(da.id) as total_assignments,
+        SUM(da.quantity) as total_quantity,
+        SUM(da.final_amount_after_discount) as total_revenue
+      FROM delivery_assignments da
+      JOIN customers c ON c.id = da.customer_id
+      JOIN users u ON u.id = c.delivery_person_id
+      JOIN products p ON p.id = da.product_id
+      WHERE da.scheduled_date BETWEEN $1 AND $2
+    SQL
+
+    # Add same filters for summary
+    summary_params = [start_date, end_date]
+    summary_param_index = 3
+    if @delivery_person_id.present?
+      summary_query += " AND c.delivery_person_id = $#{summary_param_index}"
+      summary_params << @delivery_person_id
+      summary_param_index += 1
+    end
+    if @customer_id.present?
+      summary_query += " AND da.customer_id = $#{summary_param_index}"
+      summary_params << @customer_id
+      summary_param_index += 1
+    end
+    if @customer_name.present?
+      summary_query += " AND LOWER(c.name) LIKE LOWER($#{summary_param_index})"
+      summary_params << "%#{@customer_name}%"
+      summary_param_index += 1
+    end
+
+    summary_result = ActiveRecord::Base.connection.exec_query(summary_query, 'summary_stats', summary_params).first
+
+    @summary_stats = {
+      total_revenue: summary_result['total_revenue'] || 0,
+      total_customers: summary_result['total_customers'] || 0,
+      total_delivery_people: summary_result['total_delivery_people'] || 0,
+      total_assignments: summary_result['total_assignments'] || 0,
+      total_quantity: summary_result['total_quantity'] || 0,
+      total_records: @revenue_breakdown.count
+    }
+
+    @month_name = Date.new(@current_year, @current_month, 1).strftime("%B %Y")
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: true,
+          html: render_to_string(partial: 'revenue_breakdown_modal', layout: false, formats: [:html])
+        }
+      }
+    end
+  rescue => e
+    Rails.logger.error "❌ Error loading revenue breakdown: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: false,
+          message: "❌ Error loading revenue breakdown: #{e.message}"
+        }
+      }
+    end
+  end
+
+  def complete_all_pending
+    Rails.logger.info "🎯 COMPLETE_ALL_PENDING called with params: #{params.inspect}"
+
+    month = params[:month]&.to_i || Date.current.month
+    year = params[:year]&.to_i || Date.current.year
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    Rails.logger.info "🗓️ Date range: #{start_date} to #{end_date}"
+
+    # Find ALL pending assignments for the month (all customers)
+    assignments_to_complete = DeliveryAssignment
+      .where(scheduled_date: start_date..end_date)
+      .where(status: 'pending')
+
+    Rails.logger.info "📋 Found #{assignments_to_complete.count} pending assignments to complete"
+
+    if assignments_to_complete.count == 0
+      return respond_to do |format|
+        format.json {
+          render json: {
+            success: false,
+            message: "❌ No pending assignments found for #{Date.new(year, month, 1).strftime('%B %Y')}"
+          }
+        }
+      end
+    end
+
+    completed_count = 0
+    assignments_to_complete.each do |assignment|
+      if assignment.update(status: 'completed', completed_at: Time.current, booked_by: 0)
+        completed_count += 1
+      end
+    end
+
+    clear_customer_patterns_cache if completed_count > 0
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: true,
+          message: "✅ #{completed_count} assignments marked as completed for #{Date.new(year, month, 1).strftime('%B %Y')}",
+          completed_count: completed_count
+        }
+      }
+    end
+  rescue => e
+    Rails.logger.error "❌ Error completing all pending assignments: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+
+    respond_to do |format|
+      format.json {
+        render json: {
+          success: false,
+          message: "❌ Error completing assignments: #{e.message}"
+        }
       }
     end
   end

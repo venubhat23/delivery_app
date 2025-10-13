@@ -18,6 +18,10 @@ class User < ApplicationRecord
   # New associations for delivery person functionality
   has_many :assigned_customers, class_name: 'Customer', foreign_key: 'delivery_person_id', dependent: :nullify
   has_many :deliveries, foreign_key: 'delivery_person_id', dependent: :destroy
+
+  # User's own customers and pending payments
+  has_many :customers, dependent: :destroy
+  has_many :pending_payments, dependent: :destroy
   
   # Validations
   validates :name, presence: true

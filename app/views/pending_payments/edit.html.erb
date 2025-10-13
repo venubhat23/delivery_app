@@ -1,0 +1,106 @@
+<!-- Edit Pending Payment Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">
+              <i class="fas fa-edit me-3"></i>Edit Pending Payment
+            </h1>
+            <p class="text-muted mb-0">Update pending payment information</p>
+          </div>
+          <div>
+            <%= link_to pending_payments_path, class: 'btn btn-secondary' do %>
+              <i class="fas fa-arrow-left me-2"></i>Back to List
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Form -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-form me-2"></i>Payment Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @pending_payment, url: pending_payment_path(@pending_payment), method: :patch, local: true do |form| %>
+            <% if @pending_payment.errors.any? %>
+              <div class="alert alert-danger" role="alert">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                <ul class="mb-0">
+                  <% @pending_payment.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :customer_id, 'Customer', class: 'form-label' %>
+                <%= form.select :customer_id,
+                      options_from_collection_for_select(@customers, :id, :name, @pending_payment.customer_id),
+                      { prompt: 'Select Customer' },
+                      { class: 'form-select', required: true } %>
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <%= form.label :month, 'Month', class: 'form-label' %>
+                <%= form.select :month,
+                      options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], Date::MONTHNAMES[m]] }, @pending_payment.month),
+                      { prompt: 'Select Month' },
+                      { class: 'form-select', required: true } %>
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <%= form.label :year, 'Year', class: 'form-label' %>
+                <%= form.select :year,
+                      options_for_select((Date.current.year-2..Date.current.year+1).map { |y| [y, y] }, @pending_payment.year),
+                      { prompt: 'Select Year' },
+                      { class: 'form-select', required: true } %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :amount, 'Amount (₹)', class: 'form-label' %>
+                <%= form.number_field :amount,
+                      step: 0.01,
+                      min: 0,
+                      placeholder: 'Enter amount',
+                      class: 'form-control',
+                      required: true %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :status, 'Status', class: 'form-label' %>
+                <%= form.select :status,
+                      options_for_select([['Pending', 'pending'], ['Paid', 'paid']], @pending_payment.status),
+                      {},
+                      { class: 'form-select', required: true } %>
+              </div>
+
+              <div class="col-12 mb-3">
+                <%= form.label :notes, 'Notes (Optional)', class: 'form-label' %>
+                <%= form.text_area :notes,
+                      rows: 4,
+                      placeholder: 'Add any additional notes...',
+                      class: 'form-control' %>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <%= link_to pending_payments_path, class: 'btn btn-secondary' do %>
+                <i class="fas fa-times me-2"></i>Cancel
+              <% end %>
+              <%= form.submit 'Update Pending Payment', class: 'btn btn-primary' do %>
+                <i class="fas fa-save me-2"></i>Update
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

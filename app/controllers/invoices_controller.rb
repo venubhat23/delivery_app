@@ -920,15 +920,45 @@ end
   # Mark invoice as sent via WhatsApp
   def mark_whatsapp_sent
     @invoice = Invoice.find(params[:id])
-    
+
     @invoice.update!(
       shared_at: Time.current,
       whatsapp_sent_at: Time.current
     )
-    
+
     render json: { success: true, message: 'Invoice marked as sent via WhatsApp' }
   rescue ActiveRecord::RecordNotFound
     render json: { success: false, error: 'Invoice not found' }, status: 404
+  end
+
+  # Send invoice via email
+  def send_email
+    email = params[:email]
+
+    # Validate email
+    if email.blank?
+      render json: { error: 'Email address is required' }, status: 400
+      return
+    end
+
+    # Validate email format
+    unless email.match?(/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i)
+      render json: { error: 'Invalid email format' }, status: 400
+      return
+    end
+
+    begin
+      # Send email with PDF attachment
+      InvoiceMailer.send_invoice_pdf(@invoice, email).deliver_now
+
+      render json: {
+        success: true,
+        message: 'Invoice sent via email successfully'
+      }
+    rescue => e
+      Rails.logger.error "Email sending error: #{e.message}"
+      render json: { error: 'Failed to send email' }, status: 500
+    end
   end
 
   # Enhanced message for invoice with better formatting

@@ -80,7 +80,7 @@
             <div class="text-center">
               <button type="button" class="btn btn-success btn-lg px-5" id="importLastMonthBtn" data-bs-toggle="modal" data-bs-target="#importDeliveriesModal">
                 <i class="fas fa-download me-2"></i>
-                Import Last Month Deliveries
+                Import Deliveries from Previous Month
               </button>
               <p class="text-muted mt-2 mb-0">
                 <small>Import delivery schedules and assignments from any previous month</small>
@@ -185,6 +185,29 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
+          <!-- Quick Import Last Month -->
+          <div class="alert alert-primary border-0 shadow-sm mb-4">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h6 class="mb-1">
+                  <i class="fas fa-bolt me-2"></i>
+                  Quick Import: Last Month (<%= (Date.current - 1.month).strftime("%B %Y") %>)
+                </h6>
+                <small class="text-muted">Import all deliveries from <%= (Date.current - 1.month).strftime("%B %Y") %> with one click</small>
+              </div>
+              <div class="col-md-4 text-end">
+                <button type="button" class="btn btn-primary btn-sm" id="quickImportLastMonthBtn">
+                  <i class="fas fa-lightning-bolt me-1"></i>
+                  Quick Import
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center mb-3">
+            <span class="text-muted small">OR</span>
+          </div>
+
           <form id="importForm">
             <div class="row mb-3">
               <div class="col-md-6">
@@ -476,31 +499,35 @@ document.addEventListener('DOMContentLoaded', function() {
     warningsSection.style.display = 'block';
   }
 
-  // Import Last Month's Deliveries functionality
-  const importLastMonthBtn = document.getElementById('importLastMonthBtn');
-  const importLoadingState = document.getElementById('importLoadingState');
-  
-  importLastMonthBtn.addEventListener('click', function() {
+  // Quick Import Last Month functionality
+  const quickImportLastMonthBtn = document.getElementById('quickImportLastMonthBtn');
+  const importModal = document.getElementById('importDeliveriesModal');
+
+  quickImportLastMonthBtn.addEventListener('click', function() {
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(importModal);
+    modal.hide();
+
     // Hide previous results
     hideAllSections();
-    
+
     // Show loading state
+    const importLoadingState = document.getElementById('importLoadingState');
     importLoadingState.style.display = 'block';
-    importLastMonthBtn.disabled = true;
-    
+
     // Make API call to import last month's deliveries
     fetch('<%= import_last_month_schedules_path %>', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json'
       }
     })
     .then(response => response.json())
     .then(data => {
       importLoadingState.style.display = 'none';
-      importLastMonthBtn.disabled = false;
-      
+
       if (data.success) {
         showSummary(data.summary);
         if (data.errors && data.errors.length > 0) {
@@ -512,14 +539,12 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch(error => {
       importLoadingState.style.display = 'none';
-      importLastMonthBtn.disabled = false;
       showError('Network error: ' + error.message);
     });
   });
 
   // Modal import functionality
   const importBtn = document.getElementById('importBtn');
-  const importModal = document.getElementById('importDeliveriesModal');
   
   importBtn.addEventListener('click', function() {
     const importMonth = document.getElementById('importMonth').value;

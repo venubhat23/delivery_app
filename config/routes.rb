@@ -32,6 +32,8 @@ Rails.application.routes.draw do
       get :customer_deliveries
       post :complete_till_today
       post :complete_all
+      post :complete_all_pending
+      post :complete_all_pending_till_today
       get :get_pending_count
       post :complete_all_till_today
       post :remove_all_assignments
@@ -41,6 +43,7 @@ Rails.application.routes.draw do
       get :get_assignment_summary
       get :search_customers
       post :bulk_edit_assignments
+      get :revenue_breakdown
     end
 
     member do
@@ -315,7 +318,22 @@ Rails.application.routes.draw do
       get :download_customer_list
     end
   end
-  
+
+  # Pending Payments Management
+  resources :pending_payments, path: 'pending-payments' do
+    member do
+      patch :mark_as_paid
+      get :mark_as_paid
+      patch :mark_as_pending
+      get :mark_as_pending
+    end
+
+    collection do
+      get :search_customers
+      get :total_pending_amount
+    end
+  end
+
   # Public invoice view (no authentication required)
   get '/invoice/:token', to: 'invoices#public_view', as: 'public_invoice'
   get '/invoice/:token/download', to: 'invoices#public_download_pdf', as: 'public_invoice_download', defaults: { format: :pdf }
