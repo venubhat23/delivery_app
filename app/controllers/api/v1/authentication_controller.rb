@@ -277,6 +277,16 @@ module Api
           permitted_params[:phone_number] = permitted_params[:phone]
         end
 
+        # If address is missing but city is provided, use city as address
+        if permitted_params[:address].blank? && permitted_params[:city].present?
+          permitted_params[:address] = permitted_params[:city]
+        end
+
+        # If address is still blank, provide a default
+        if permitted_params[:address].blank?
+          permitted_params[:address] = "Address not provided"
+        end
+
         permitted_params.except(:phone)
       end
 
@@ -291,6 +301,16 @@ module Api
         # Map phone to phone_number if phone is provided but phone_number is not
         if permitted_params[:phone].present? && permitted_params[:phone_number].blank?
           permitted_params[:phone_number] = permitted_params[:phone]
+        end
+
+        # If address is missing but city is provided, use city as address
+        if permitted_params[:address].blank? && permitted_params[:city].present?
+          permitted_params[:address] = permitted_params[:city]
+        end
+
+        # If address is still blank, provide a default
+        if permitted_params[:address].blank?
+          permitted_params[:address] = "Address not provided"
         end
 
         permitted_params.except(:phone)
