@@ -114,6 +114,8 @@ module Api
             }, status: :created
           end
         else
+          Rails.logger.error "Customer signup validation failed: #{@user.errors.full_messages.join(', ')}"
+          Rails.logger.error "Customer params: #{customer_params.inspect}"
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_content
         end
       end
@@ -147,6 +149,8 @@ module Api
             }
           }, status: :created
         else
+          Rails.logger.error "Customer signup validation failed: #{@customer.errors.full_messages.join(', ')}"
+          Rails.logger.error "Customer signup params: #{customer_signup_params.inspect}"
           render json: { errors: @customer.errors.full_messages }, status: :unprocessable_content
         end
       end
@@ -261,15 +265,35 @@ module Api
       end
 
       def customer_params
-        params.permit(:name, :password, :address, :phone_number, :email, :latitude, :longitude,
-                     :preferred_language, :delivery_time_preference, :notification_method,
-                     :address_type, :address_landmark, :alt_phone_number, :city)
+        # Handle both nested and flat parameter structures
+        auth_params = params[:authentication].present? ? params[:authentication] : params
+
+        permitted_params = auth_params.permit(:name, :password, :address, :phone, :phone_number, :email, :latitude, :longitude,
+                                            :preferred_language, :delivery_time_preference, :notification_method,
+                                            :address_type, :address_landmark, :alt_phone_number, :city)
+
+        # Map phone to phone_number if phone is provided but phone_number is not
+        if permitted_params[:phone].present? && permitted_params[:phone_number].blank?
+          permitted_params[:phone_number] = permitted_params[:phone]
+        end
+
+        permitted_params.except(:phone)
       end
 
       def customer_signup_params
-        params.permit(:name, :email, :phone_number, :password, :password_confirmation, :address,
-                     :latitude, :longitude, :preferred_language, :delivery_time_preference,
-                     :notification_method, :address_type, :address_landmark, :alt_phone_number, :city)
+        # Handle both nested and flat parameter structures
+        auth_params = params[:authentication].present? ? params[:authentication] : params
+
+        permitted_params = auth_params.permit(:name, :email, :phone, :phone_number, :password, :password_confirmation, :address,
+                                            :latitude, :longitude, :preferred_language, :delivery_time_preference,
+                                            :notification_method, :address_type, :address_landmark, :alt_phone_number, :city)
+
+        # Map phone to phone_number if phone is provided but phone_number is not
+        if permitted_params[:phone].present? && permitted_params[:phone_number].blank?
+          permitted_params[:phone_number] = permitted_params[:phone]
+        end
+
+        permitted_params.except(:phone)
       end
     end
   end
