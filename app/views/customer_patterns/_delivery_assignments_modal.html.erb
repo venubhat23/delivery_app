@@ -245,8 +245,22 @@ console.log('✅ Assignment functions loaded:', {
 
 <% if @delivery_assignments.any? %>
   <!-- Action Buttons at Top -->
-  <% if @pending_till_today_count > 0 || @pending_till_month_end_count > 0 %>
-    <div class="mb-4">
+  <div class="mb-4">
+    <!-- Always show bulk delete button when there are assignments -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">
+        <i class="fas fa-list me-2 text-primary"></i>
+        <%= @customer.name %> - Deliveries (<%= @delivery_assignments.count %> assignments)
+      </h5>
+      <!-- Bulk Delete Button - Always visible -->
+      <button class="btn btn-danger btn-lg shadow" id="bulkDeleteBtn" onclick="bulkDeleteAssignments()" style="display: inline-block; opacity: 0.5; cursor: not-allowed;" disabled>
+        <i class="fas fa-trash me-2"></i>
+        Delete Selected (<span id="selectedCount">0</span>)
+      </button>
+    </div>
+
+    <!-- Pending assignments alert and action buttons -->
+    <% if @pending_till_today_count > 0 || @pending_till_month_end_count > 0 %>
       <div class="alert alert-warning d-flex align-items-center">
         <i class="fas fa-exclamation-triangle me-3 fa-2x text-warning"></i>
         <div class="flex-grow-1">
@@ -330,21 +344,18 @@ console.log('✅ Assignment functions loaded:', {
           <% end %>
         </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 
     <!-- Attractive Table -->
     <div class="card">
-      <div class="card-header bg-light">
-        <h6 class="mb-0">
-          <i class="fas fa-list me-2"></i>
-          Assignment Details (<%= @delivery_assignments.count %> items)
-        </h6>
-      </div>
       <div class="table-responsive">
         <table class="table table-hover mb-0">
           <thead class="table-dark">
             <tr>
+              <th style="width: 50px;">
+                <input type="checkbox" id="selectAllCheckbox" class="form-check-input" onclick="window.toggleAll(this)" title="Select/Deselect All">
+              </th>
               <th><i class="fas fa-calendar me-1"></i>Date</th>
               <th><i class="fas fa-cube me-1"></i>Product</th>
               <th><i class="fas fa-weight me-1"></i>Quantity</th>
@@ -357,6 +368,10 @@ console.log('✅ Assignment functions loaded:', {
           <tbody>
             <% @delivery_assignments.each_with_index do |assignment, index| %>
               <tr class="<%= 'table-light' if index.even? %>">
+                <td>
+                  <input type="checkbox" class="form-check-input assignment-checkbox"
+                         data-assignment-id="<%= assignment.id %>" onclick="window.updateDeleteButton()">
+                </td>
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="date-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; font-size: 12px; font-weight: bold;">
@@ -438,7 +453,7 @@ console.log('✅ Assignment functions loaded:', {
           </tbody>
           <tfoot class="table-light">
             <tr>
-              <th colspan="5" class="text-end">Total:</th>
+              <th colspan="6" class="text-end">Total:</th>
               <th>
                 <div class="text-success fw-bold">
                   ₹<%= number_with_precision(@delivery_assignments.sum(&:final_amount), precision: 2) %>
@@ -467,3 +482,100 @@ console.log('✅ Assignment functions loaded:', {
     </a>
   </div>
 <% end %>
+
+<script>
+console.log('📝 Modal loaded - bulk delete functions are defined in main page');
+
+// Initialize delete button when modal loads
+setTimeout(function() {
+  console.log('📦 Modal initialization - calling updateDeleteButton...');
+  if (typeof window.updateDeleteButton === 'function') {
+    window.updateDeleteButton();
+  } else {
+    console.error('❌ updateDeleteButton not available in modal');
+  }
+}, 100);
+</script>
+
+<style>
+/* Bulk Delete Button Styling */
+#bulkDeleteBtn {
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+#bulkDeleteBtn:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(220, 53, 69, 0.4);
+}
+
+/* Checkbox Styling */
+.assignment-checkbox {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+#selectAllCheckbox {
+  transform: scale(1.3);
+  cursor: pointer;
+}
+
+/* Selected Row Highlighting */
+.assignment-checkbox:checked {
+  accent-color: #dc3545;
+}
+
+.row-selected {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  border-left: 3px solid #dc3545;
+}
+
+/* Table Header Checkbox Column */
+th:first-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
+td:first-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Better button group spacing */
+.btn-group .btn {
+  margin-right: 8px;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Smooth transitions for row states */
+tbody tr {
+  transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.deleting-row {
+  opacity: 0.5;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+
+/* Success message animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.success-message {
+  animation: slideInRight 0.5s ease-out;
+}
+</style>

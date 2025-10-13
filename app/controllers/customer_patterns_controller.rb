@@ -1015,6 +1015,71 @@ class CustomerPatternsController < ApplicationController
     end
   end
 
+  def bulk_delete_assignments
+    Rails.logger.info "🗑️ BULK_DELETE_ASSIGNMENTS called with params: #{params.inspect}"
+
+    assignment_ids = params[:assignment_ids]
+
+    if assignment_ids.blank? || !assignment_ids.is_a?(Array)
+      return respond_to do |format|
+        format.json {
+          render json: {
+            success: false,
+            message: "❌ No assignment IDs provided"
+          }
+        }
+      end
+    end
+
+    Rails.logger.info "📋 Attempting to delete #{assignment_ids.count} assignments: #{assignment_ids.inspect}"
+
+    begin
+      # Find assignments to delete
+      assignments_to_delete = DeliveryAssignment.where(id: assignment_ids)
+
+      if assignments_to_delete.count == 0
+        return respond_to do |format|
+          format.json {
+            render json: {
+              success: false,
+              message: "❌ No valid assignments found to delete"
+            }
+          }
+        end
+      end
+
+      deleted_count = assignments_to_delete.count
+      assignments_to_delete.destroy_all
+
+      clear_customer_patterns_cache
+
+      Rails.logger.info "✅ Successfully deleted #{deleted_count} assignments"
+
+      respond_to do |format|
+        format.json {
+          render json: {
+            success: true,
+            message: "✅ Successfully deleted #{deleted_count} assignment(s)",
+            deleted_count: deleted_count
+          }
+        }
+      end
+
+    rescue => e
+      Rails.logger.error "❌ Error deleting assignments: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+
+      respond_to do |format|
+        format.json {
+          render json: {
+            success: false,
+            message: "❌ Error deleting assignments: #{e.message}"
+          }
+        }
+      end
+    end
+  end
+
   private
 
   def assignment_params

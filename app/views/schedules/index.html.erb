@@ -503,10 +503,22 @@ document.addEventListener('DOMContentLoaded', function() {
   const quickImportLastMonthBtn = document.getElementById('quickImportLastMonthBtn');
   const importModal = document.getElementById('importDeliveriesModal');
 
-  quickImportLastMonthBtn.addEventListener('click', function() {
-    // Hide modal
-    const modal = bootstrap.Modal.getInstance(importModal);
-    modal.hide();
+  if (quickImportLastMonthBtn && importModal) {
+    quickImportLastMonthBtn.addEventListener('click', function() {
+      console.log('Quick import button clicked');
+
+      try {
+        // Hide modal safely
+        const modal = bootstrap.Modal.getInstance(importModal) || new bootstrap.Modal(importModal);
+        modal.hide();
+      } catch (error) {
+        console.error('Error hiding modal:', error);
+        // Fallback: try to close modal with data attribute
+        importModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+      }
 
     // Hide previous results
     hideAllSections();
@@ -541,23 +553,35 @@ document.addEventListener('DOMContentLoaded', function() {
       importLoadingState.style.display = 'none';
       showError('Network error: ' + error.message);
     });
-  });
+  } else {
+    console.error('Quick import button or modal not found');
+  }
 
   // Modal import functionality
   const importBtn = document.getElementById('importBtn');
-  
-  importBtn.addEventListener('click', function() {
-    const importMonth = document.getElementById('importMonth').value;
-    const importYear = document.getElementById('importYear').value;
-    
-    if (!importMonth || !importYear) {
-      alert('Please select both month and year');
-      return;
-    }
-    
-    // Hide modal
-    const modal = bootstrap.Modal.getInstance(importModal);
-    modal.hide();
+
+  if (importBtn && importModal) {
+    importBtn.addEventListener('click', function() {
+      const importMonth = document.getElementById('importMonth').value;
+      const importYear = document.getElementById('importYear').value;
+
+      if (!importMonth || !importYear) {
+        alert('Please select both month and year');
+        return;
+      }
+
+      try {
+        // Hide modal safely
+        const modal = bootstrap.Modal.getInstance(importModal) || new bootstrap.Modal(importModal);
+        modal.hide();
+      } catch (error) {
+        console.error('Error hiding modal:', error);
+        // Fallback: try to close modal manually
+        importModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+      }
     
     // Hide previous results
     hideAllSections();
@@ -594,6 +618,9 @@ document.addEventListener('DOMContentLoaded', function() {
       importLoadingState.style.display = 'none';
       showError('Network error: ' + error.message);
     });
-  });
+    });
+  } else {
+    console.error('Import button or modal not found');
+  }
 });
 </script>

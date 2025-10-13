@@ -3844,6 +3844,9 @@ function initializeModalButtonHandlers() {
 
   console.log('✅ Modal button handlers initialized successfully');
 
+  // Simple bulk delete initialization - let modal handle its own events
+  console.log('✅ Modal loaded - bulk delete handled by modal scripts');
+
   // Add a test to verify the functions are working
   if (completeButtons.length > 0) {
     console.log('🧪 Testing first complete button...');
@@ -3862,11 +3865,14 @@ function initializeModalButtonHandlers() {
   }
 }
 
+// Modal bulk delete functions are now handled directly in the modal file
+
 // Make delivery modal functions globally available
 window.openDeliveryModal = openDeliveryModal;
 window.closeDeliveryModal = closeDeliveryModal;
 window.loadModalContent = loadModalContent;
 window.initializeModalButtonHandlers = initializeModalButtonHandlers;
+// Modal functions removed - handled by modal directly
 
 // Edit Pattern Modal Functions - COMMENTED OUT (duplicate - function defined at top of script)
 /* window.openEditPatternModal = function(customerId, customerName, scheduledQuantity, scheduledProduct, month, year) {
@@ -6889,5 +6895,155 @@ function printRevenueData() {
     location.reload();
   }, 100);
 }
+
+// GLOBAL BULK DELETE FUNCTIONS FOR MODAL
+window.updateDeleteButton = function() {
+  console.log('🔄 Global updateDeleteButton called');
+
+  const checkedBoxes = document.querySelectorAll('.assignment-checkbox:checked');
+  const allCheckboxes = document.querySelectorAll('.assignment-checkbox');
+  const deleteBtn = document.getElementById('bulkDeleteBtn');
+  const countSpan = document.getElementById('selectedCount');
+
+  console.log('📊 Found checkboxes:', {
+    total: allCheckboxes.length,
+    checked: checkedBoxes.length,
+    deleteBtn: !!deleteBtn,
+    countSpan: !!countSpan
+  });
+
+  if (deleteBtn && countSpan) {
+    // Update count first
+    countSpan.textContent = checkedBoxes.length;
+    console.log('📝 Updated count to:', checkedBoxes.length);
+
+    if (checkedBoxes.length > 0) {
+      // Enable button
+      deleteBtn.disabled = false;
+      deleteBtn.style.opacity = '1';
+      deleteBtn.style.cursor = 'pointer';
+      deleteBtn.classList.remove('btn-secondary');
+      deleteBtn.classList.add('btn-danger');
+      console.log('✅ Enabled delete button for', checkedBoxes.length, 'items');
+    } else {
+      // Disable button
+      deleteBtn.disabled = true;
+      deleteBtn.style.opacity = '0.5';
+      deleteBtn.style.cursor = 'not-allowed';
+      deleteBtn.classList.remove('btn-danger');
+      deleteBtn.classList.add('btn-secondary');
+      console.log('🔒 Disabled delete button');
+    }
+  } else {
+    console.error('❌ Elements not found:', {
+      deleteBtn: !!deleteBtn,
+      countSpan: !!countSpan
+    });
+  }
+};
+
+window.toggleAll = function(selectAllCheckbox) {
+  console.log('🔄 Global toggleAll called, checked:', selectAllCheckbox.checked);
+  const checkboxes = document.querySelectorAll('.assignment-checkbox');
+
+  console.log('📋 Found', checkboxes.length, 'checkboxes to toggle');
+
+  checkboxes.forEach((checkbox, index) => {
+    checkbox.checked = selectAllCheckbox.checked;
+    console.log(`📋 Set checkbox ${index + 1} to:`, checkbox.checked);
+  });
+
+  console.log('✅ All checkboxes toggled, updating button...');
+  window.updateDeleteButton();
+};
+
+window.bulkDeleteAssignments = function() {
+  console.log('🗑️ Global bulk delete function called');
+
+  const checkedBoxes = document.querySelectorAll('.assignment-checkbox:checked');
+
+  if (checkedBoxes.length === 0) {
+    alert('Please select assignments to delete');
+    return;
+  }
+
+  if (!confirm(`Delete ${checkedBoxes.length} selected assignment(s)?`)) {
+    return;
+  }
+
+  const assignmentIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-assignment-id'));
+  const button = document.getElementById('bulkDeleteBtn');
+
+  if (!button) {
+    console.error('Delete button not found!');
+    return;
+  }
+
+  // Show attractive loading (same as Complete All This Month)
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+  button.disabled = true;
+
+  // Add visual feedback - fade out selected rows
+  checkedBoxes.forEach(checkbox => {
+    const row = checkbox.closest('tr');
+    if (row) {
+      row.style.transition = 'all 0.3s ease';
+      row.style.opacity = '0.5';
+      row.style.transform = 'scale(0.98)';
+      row.style.pointerEvents = 'none';
+    }
+  });
+
+  fetch('/customer-patterns/bulk_delete_assignments', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({ assignment_ids: assignmentIds })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`✅ Successfully deleted ${data.deleted_count} assignment(s)!`);
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      alert('❌ Error: ' + (data.message || 'Unknown error'));
+      // Restore row visibility on error
+      checkedBoxes.forEach(checkbox => {
+        const row = checkbox.closest('tr');
+        if (row) {
+          row.style.opacity = '1';
+          row.style.transform = 'scale(1)';
+          row.style.pointerEvents = 'auto';
+        }
+      });
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('❌ Error deleting assignments');
+    // Restore row visibility on error
+    checkedBoxes.forEach(checkbox => {
+      const row = checkbox.closest('tr');
+      if (row) {
+        row.style.opacity = '1';
+        row.style.transform = 'scale(1)';
+        row.style.pointerEvents = 'auto';
+      }
+    });
+  })
+  .finally(() => {
+    button.innerHTML = originalText;
+    button.disabled = false;
+  });
+};
+
+console.log('🌐 Global bulk delete functions defined:', {
+  updateDeleteButton: typeof window.updateDeleteButton,
+  toggleAll: typeof window.toggleAll,
+  bulkDeleteAssignments: typeof window.bulkDeleteAssignments
+});
 
 </script>

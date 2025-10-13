@@ -73,6 +73,10 @@ module Api
           # If role is customer, create customer record
           if params[:role] == "customer"
               @customer = @user
+
+              # Send WhatsApp notification for successful signup
+              send_signup_notification(@customer)
+
               token = JsonWebToken.encode(customer_id: @user.id)
               refresh_token, refresh_record = issue_refresh_token(@customer)
 
@@ -110,7 +114,7 @@ module Api
             }, status: :created
           end
         else
-          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @user.errors.full_messages }, status: :unprocessable_content
         end
       end
 
@@ -119,6 +123,9 @@ module Api
         @customer = Customer.new(customer_signup_params)
 
         if @customer.save
+          # Send WhatsApp notification for successful signup
+          send_signup_notification(@customer)
+
           token = JsonWebToken.encode(customer_id: @customer.id)
           refresh_token, refresh_record = issue_refresh_token(@customer)
           render json: {
@@ -140,7 +147,7 @@ module Api
             }
           }, status: :created
         else
-          render json: { errors: @customer.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @customer.errors.full_messages }, status: :unprocessable_content
         end
       end
 
@@ -220,6 +227,30 @@ module Api
         RefreshToken.issue_for(entity, user_agent: user_agent, ip_address: ip_address)
       end
 
+      def send_signup_notification(customer)
+        begin
+          # Send WhatsApp message to admin number
+          admin_phone = "9632850982"
+
+          message = "🎉 New Customer Signup Alert!\n\n" \
+                   "👤 Name: #{customer.name}\n" \
+                   "📱 Phone: #{customer.phone_number}\n" \
+                   "📧 Email: #{customer.email || 'Not provided'}\n" \
+                   "🏠 Address: #{customer.address || 'Not provided'}\n" \
+                   "🏙️ City: #{customer.city || 'Not provided'}\n" \
+                   "⏰ Registered: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}\n\n" \
+                   "Welcome to Atma Nirbhar Farm! 🌾"
+
+          whatsapp_service = CustomWhatsappService.new
+          result = whatsapp_service.send_custom_message(admin_phone, message)
+
+          Rails.logger.info "Signup notification sent to admin: #{result ? 'Success' : 'Failed'}"
+        rescue => e
+          Rails.logger.error "Failed to send signup notification: #{e.message}"
+          # Don't fail the signup if notification fails
+        end
+      end
+
       def current_entity_from_token
         # BaseController#authenticate_request sets @current_user to User or Customer
         current_entity
@@ -230,15 +261,15 @@ module Api
       end
 
       def customer_params
-        params.permit(:name,:password, :address, :phone_number, :email, :latitude, :longitude,
+        params.permit(:name, :password, :address, :phone_number, :email, :latitude, :longitude,
                      :preferred_language, :delivery_time_preference, :notification_method,
-                     :address_type, :address_landmark, :alt_phone_number)
+                     :address_type, :address_landmark, :alt_phone_number, :city)
       end
 
       def customer_signup_params
         params.permit(:name, :email, :phone_number, :password, :password_confirmation, :address,
                      :latitude, :longitude, :preferred_language, :delivery_time_preference,
-                     :notification_method, :address_type, :address_landmark, :alt_phone_number)
+                     :notification_method, :address_type, :address_landmark, :alt_phone_number, :city)
       end
     end
   end

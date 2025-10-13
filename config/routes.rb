@@ -43,6 +43,7 @@ Rails.application.routes.draw do
       get :get_assignment_summary
       get :search_customers
       post :bulk_edit_assignments
+      delete :bulk_delete_assignments
       get :revenue_breakdown
     end
 

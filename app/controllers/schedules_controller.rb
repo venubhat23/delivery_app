@@ -273,7 +273,7 @@ class SchedulesController < ApplicationController
       # Pre-fetch existing assignments for the entire current month to reduce queries
       existing_assignments_set = Set.new
       DeliveryAssignment.where(scheduled_date: current_start_date..current_end_date)
-                       .select(:customer_id, :user_id, :product_id, :scheduled_date)
+                       .select(:id, :customer_id, :user_id, :product_id, :scheduled_date)
                        .find_each do |assignment|
         key = "#{assignment.customer_id}-#{assignment.user_id}-#{assignment.product_id}-#{assignment.scheduled_date}"
         existing_assignments_set.add(key)
