@@ -5,12 +5,15 @@ module Api
       # POST /api/v1/place_order
       def place_order
         ActiveRecord::Base.transaction do
-          @customer = Customer.find(params[:customer_id])
-          delivery_date = Date.parse(params[:delivery_date])
-          items = params[:items]
-          if params[:booking_done_by] == "customer"
+          # Handle nested parameters (like signup endpoint)
+          @order_params = params[:order].present? ? params[:order] : params
+
+          @customer = Customer.find(@order_params[:customer_id])
+          delivery_date = Date.parse(@order_params[:delivery_date])
+          items = @order_params[:items]
+          if @order_params[:booking_done_by] == "customer"
             booked_by = 1
-          elsif params[:booking_done_by] == "delivery_person"
+          elsif order_params[:booking_done_by] == "delivery_person"
             booked_by = 2
           else
             booked_by = 0
@@ -25,12 +28,14 @@ module Api
           delivery_schedule = DeliverySchedule.create!(
             customer: @customer,
             user_id: find_delivery_person_id(@customer),
+            product_id: items.first[:product_id], # Add product_id for the first item
             frequency: 'daily',
             start_date: delivery_date,
             end_date: delivery_date,
             status: 'active',
             default_quantity: items.first[:quantity] || 1,
             default_unit: items.first[:unit] || 'pieces',
+            cod: @order_params[:cod] || false,
             booked_by: booked_by
           )
           
@@ -40,7 +45,7 @@ module Api
             product = Product.find(item[:product_id])
             
             # Check product availability
-            unless product.in_stock?
+            if product.out_of_stock?
               raise ActiveRecord::Rollback, "Product #{product.name} is out of stock"
             end
             
@@ -49,6 +54,7 @@ module Api
               delivery_schedule: delivery_schedule,
               customer: @customer,
               user_id: delivery_schedule.user_id,
+              delivery_person_id: delivery_schedule.user_id,
               product: product,
               scheduled_date: delivery_date,
               quantity: item[:quantity],
@@ -70,17 +76,24 @@ module Api
             delivery_schedule_id: delivery_schedule.id,
             assignments_created: assignments_created,
             order_date: delivery_date,
-            customer_address: params[:customer_address],
-            delivery_slot: params[:delivery_slot]
+            customer_address: @order_params[:customer_address],
+            delivery_slot: @order_params[:delivery_slot]
           }, status: :created
           
         rescue ActiveRecord::RecordNotFound => e
+          Rails.logger.error "Order place_order - Record not found: #{e.message}"
           render json: { error: "Record not found: #{e.message}" }, status: :not_found
         rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error "Order place_order - Validation failed: #{e.message}"
+          Rails.logger.error "Order params: #{@order_params.inspect}"
           render json: { error: "Invalid data: #{e.message}" }, status: :unprocessable_entity
         rescue ActiveRecord::Rollback => e
+          Rails.logger.error "Order place_order - Rollback: #{e.message}"
           render json: { error: e.message }, status: :unprocessable_entity
         rescue StandardError => e
+          Rails.logger.error "Order place_order - Unexpected error: #{e.message}"
+          Rails.logger.error "Order params: #{@order_params.inspect}"
+          Rails.logger.error "Backtrace: #{e.backtrace.join('\n')}"
           render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
         end
       end
@@ -137,29 +150,33 @@ module Api
       end
 
       def send_owner_notifications_for_order(customer, delivery_schedule, items, assignments_created)
-        # Send SMS notification
-        sms_service = SmsService.new
-        sms_service.send_owner_notification(:order, customer.name, assignments_created)
-
-        # Send Email notification
-        delivery_person = User.find_by(id: delivery_schedule.user_id)
-        order_details = {
-          order_date: delivery_schedule.start_date,
-          items_count: assignments_created,
-          delivery_person: delivery_person&.name,
-          customer_address: params[:customer_address],
-          delivery_slot: params[:delivery_slot],
-          items: items.map do |item|
-            product = Product.find_by(id: item[:product_id])
-            {
-              product_name: product&.name,
-              quantity: item[:quantity],
-              unit: item[:unit]
-            }
-          end
-        }
+        begin
+          # Send SMS notification
+          sms_service = SmsService.new
+          sms_service.send_owner_notification(:order, customer.name, assignments_created)
+        rescue => e
+          Rails.logger.error "Failed to send SMS notification for order: #{e.message}"
+        end
 
         begin
+          # Send Email notification
+          delivery_person = User.find_by(id: delivery_schedule.user_id)
+          order_details = {
+            order_date: delivery_schedule.start_date,
+            items_count: assignments_created,
+            delivery_person: delivery_person&.name,
+            customer_address: @order_params[:customer_address],
+            delivery_slot: @order_params[:delivery_slot],
+            items: items.map do |item|
+              product = Product.find_by(id: item[:product_id])
+              {
+                product_name: product&.name,
+                quantity: item[:quantity],
+                unit: item[:unit]
+              }
+            end
+          }
+
           OwnerNotificationMailer.new_mobile_order(customer.name, order_details).deliver_now
         rescue => e
           Rails.logger.error "Failed to send owner email notification for order: #{e.message}"
