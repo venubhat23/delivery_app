@@ -6,7 +6,7 @@ class TwilioWhatsappService
   def initialize
     @account_sid = ENV['TWILIO_ACCOUNT_SID']
     @auth_token = ENV['TWILIO_AUTH_TOKEN']
-    @content_sid = 'HX6d6a076f9410bfa567222bbb68fb71b2'
+    @content_sid = 'HX8c42953f0e111b0b2be7fb5e4f632d3c'
     @from_number = 'whatsapp:+917619444966'
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
   end
@@ -72,12 +72,16 @@ class TwilioWhatsappService
   def send_custom_message(phone_number, message_body)
     # Format phone number for WhatsApp
     phone_number = format_phone_number(phone_number)
-
+    content_variables = {
+      '1' => message_body
+    }
     # Send WhatsApp message
     message = @client.messages.create(
+      content_sid: @content_sid,
       body: message_body,
       to: "whatsapp:#{phone_number}",
-      from: @from_number
+      from: @from_number,
+      content_variables: content_variables.to_json
     )
 
     Rails.logger.info "Custom WhatsApp message sent successfully. SID: #{message.sid}"
