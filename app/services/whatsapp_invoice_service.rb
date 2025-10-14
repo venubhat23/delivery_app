@@ -4,8 +4,8 @@ class WhatsappInvoiceService
 
   def initialize
     @client = Twilio::REST::Client.new(
-      "AC1c16e45dd041d5fb75f4c0b16e4b1e1e",
-      "ff5d397e5c7663075b1987e84284ee09"
+      ENV['TWILIO_ACCOUNT_SID'],
+      ENV['TWILIO_AUTH_TOKEN']
     )
     @from_number = 'whatsapp:+917619444966'
     @content_sid = 'HX6d6a076f9410bfa567222bbb68fb71b2'
