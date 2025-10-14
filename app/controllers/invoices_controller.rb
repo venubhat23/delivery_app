@@ -726,7 +726,7 @@ end
       twilio_success = false
       twilio_error = nil
       begin
-        twilio_service = TwilioWhatsappService.new
+        twilio_service = WhatsappInvoiceService.new
         twilio_success = twilio_service.send_invoice_notification(invoice, phone_number: params[:phone_number], public_url: public_url)
       rescue => e
         Rails.logger.error "Twilio WhatsApp sending failed: #{e.message}"
