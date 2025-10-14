@@ -413,9 +413,6 @@
               <td><%= index + 1 %></td>
               <td>
                 <div class="item-name"><%= item.product&.name || 'Product' %></div>
-                <% if item.product&.description.present? %>
-                  <div class="item-description"><%= item.product.description %></div>
-                <% end %>
               </td>
               <td>
                 <%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %>

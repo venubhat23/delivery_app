@@ -4,11 +4,11 @@ class WhatsappInvoiceService
 
   def initialize
     @client = Twilio::REST::Client.new(
-      Rails.application.credentials.dig(:twilio, :account_sid) || ENV['TWILIO_ACCOUNT_SID'],
-      Rails.application.credentials.dig(:twilio, :auth_token) || ENV['TWILIO_AUTH_TOKEN']
+      "AC1c16e45dd041d5fb75f4c0b16e4b1e1e",
+      "ff5d397e5c7663075b1987e84284ee09"
     )
     @from_number = 'whatsapp:+917619444966'
-    @content_sid = Rails.application.credentials.dig(:twilio, :content_sid) || ENV['TWILIO_CONTENT_SID']
+    @content_sid = 'HX6d6a076f9410bfa567222bbb68fb71b2'
   end
 
   def send_invoice_notification(invoice, phone_number: nil, public_url: nil)
