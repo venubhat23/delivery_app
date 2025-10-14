@@ -7,7 +7,7 @@ class WhatsappInvoiceService
       Rails.application.credentials.dig(:twilio, :account_sid) || ENV['TWILIO_ACCOUNT_SID'],
       Rails.application.credentials.dig(:twilio, :auth_token) || ENV['TWILIO_AUTH_TOKEN']
     )
-    @from_number = Rails.application.credentials.dig(:twilio, :phone_number) || ENV['TWILIO_PHONE_NUMBER']
+    @from_number = 'whatsapp:+917619444966'
     @content_sid = Rails.application.credentials.dig(:twilio, :content_sid) || ENV['TWILIO_CONTENT_SID']
   end
 
