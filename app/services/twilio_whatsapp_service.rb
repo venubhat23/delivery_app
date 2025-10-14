@@ -52,11 +52,17 @@ class TwilioWhatsappService
     message_body = build_enhanced_whatsapp_message(invoice, public_url)
 
     # Send direct WhatsApp message instead of using template
+
+    content_variables = {
+      '1' => message_body
+    }
+    # Send WhatsApp message
     message = @client.messages.create(
-      body: message_body,
       to: "whatsapp:#{phone_number}",
-      from: @from_number
+      from: @from_number,
+      content_variables: content_variables.to_json
     )
+
 
     Rails.logger.info "WhatsApp message sent successfully. SID: #{message.sid}"
 
@@ -78,7 +84,6 @@ class TwilioWhatsappService
     # Send WhatsApp message
     message = @client.messages.create(
       content_sid: @content_sid,
-      body: message_body,
       to: "whatsapp:#{phone_number}",
       from: @from_number,
       content_variables: content_variables.to_json
