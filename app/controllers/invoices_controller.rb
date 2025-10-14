@@ -674,7 +674,7 @@ end
       # Check if invoice already exists
       existing_invoice = Invoice.where(
         customer: customer,
-        invoice_date: start_date..end_date
+        invoice_date: start_date..end_date+10.days
       ).first
 
       if existing_invoice
