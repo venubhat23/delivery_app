@@ -296,8 +296,17 @@
                       </button>
                     </div>
 
-                    <!-- Second Line: Complete, Delete (2 icons) -->
+                    <!-- Second Line: Email, Complete, Delete (3 icons) -->
                     <div class="action-line">
+                      <button type="button"
+                              class="btn btn-sm btn-outline-secondary send-email-btn"
+                              data-invoice-id="<%= invoice.id %>"
+                              data-invoice-number="<%= invoice.formatted_number %>"
+                              data-customer-name="<%= invoice.customer.name %>"
+                              onclick="openEmailModal(this)"
+                              title="Send via Email">
+                        <i class="fas fa-envelope"></i>
+                      </button>
                       <% if invoice.status == 'pending' %>
                         <button type="button"
                                 class="btn btn-sm btn-outline-success mark-completed-btn"
@@ -400,7 +409,17 @@
                             data-customer-id="<%= invoice.customer.id %>"
                             data-amount="<%= invoice.total_amount %>"
                             onclick="openWhatsAppDirect(this)"
+                            title="Share via WhatsApp">
                       <i class="fab fa-whatsapp me-1"></i>WhatsApp
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary me-1 send-email-btn"
+                            data-invoice-id="<%= invoice.id %>"
+                            data-invoice-number="<%= invoice.formatted_number %>"
+                            data-customer-name="<%= invoice.customer.name %>"
+                            onclick="openEmailModal(this)"
+                            title="Send via Email">
+                      <i class="fas fa-envelope me-1"></i>Email
                     </button>
                     <% if invoice.status != 'paid' %>
                       <%= button_to convert_to_completed_invoice_path(invoice), 
@@ -2427,6 +2446,107 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.style.overflow = '';
     }
   };
+
+  // Email Modal functions
+  let currentEmailInvoiceData = null;
+
+  window.openEmailModal = function(button) {
+    console.log('🔓 Opening Email modal');
+
+    // Extract data from button
+    currentEmailInvoiceData = {
+      id: button.dataset.invoiceId,
+      number: button.dataset.invoiceNumber,
+      customerName: button.dataset.customerName
+    };
+
+    const modal = document.getElementById('sendEmailModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+
+      // Clear previous email input
+      const emailInput = document.getElementById('emailAddress');
+      if (emailInput) {
+        emailInput.value = '';
+        emailInput.focus();
+      }
+
+      // Update modal title with invoice info
+      const modalTitle = document.getElementById('emailModalTitle');
+      if (modalTitle) {
+        modalTitle.innerHTML = `<i class="fas fa-envelope me-2"></i>Send Invoice ${currentEmailInvoiceData.number} via Email`;
+      }
+    } else {
+      console.error('❌ Email modal element not found');
+    }
+  };
+
+  window.closeEmailModal = function() {
+    console.log('🔒 Closing Email modal');
+    const modal = document.getElementById('sendEmailModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
+    currentEmailInvoiceData = null;
+  };
+
+  window.sendInvoiceEmail = function() {
+    if (!currentEmailInvoiceData) return;
+
+    const emailInput = document.getElementById('emailAddress');
+    const email = emailInput.value.trim();
+
+    if (!email) {
+      alert('Please enter an email address');
+      emailInput.focus();
+      return;
+    }
+
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('Please enter a valid email address');
+      emailInput.focus();
+      return;
+    }
+
+    const sendButton = document.getElementById('sendEmailButton');
+    sendButton.disabled = true;
+    sendButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+
+    fetch(`/invoices/${currentEmailInvoiceData.id}/send_email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        email: email
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      sendButton.disabled = false;
+      sendButton.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Email';
+
+      if (data.success) {
+        closeEmailModal();
+        alert('✅ Invoice sent successfully via email!');
+      } else {
+        alert('❌ Failed to send email: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      sendButton.disabled = false;
+      sendButton.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Email';
+      alert('❌ Failed to send email. Please try again.');
+    });
+  };
 });
 </script>
 
@@ -2523,6 +2643,44 @@ document.addEventListener('DOMContentLoaded', function() {
       </button>
       <button type="button" class="btn btn-success" id="generateAndSendBtn" disabled>
         <i class="fab fa-whatsapp me-2"></i>Generate & Send via WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Send Email Modal -->
+<div id="sendEmailModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeEmailModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title" id="emailModalTitle">
+        <i class="fas fa-envelope me-2"></i>Send Invoice via Email
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeEmailModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="emailAddress" class="form-label">
+            <i class="fas fa-envelope me-2"></i>Email Address
+          </label>
+          <input type="email"
+                 class="form-control"
+                 id="emailAddress"
+                 placeholder="Enter recipient's email address"
+                 onkeypress="if(event.key === 'Enter') { sendInvoiceEmail(); }"
+                 required>
+          <div class="form-text">
+            <i class="fas fa-info-circle me-1"></i>
+            The invoice will be sent as a PDF attachment with detailed delivery information.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeEmailModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" id="sendEmailButton" onclick="sendInvoiceEmail()">
+        <i class="fas fa-paper-plane me-2"></i>Send Email
       </button>
     </div>
   </div>
@@ -3655,6 +3813,161 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: #e7f3ff;
     border-color: #b8daff;
     color: #004085;
+  }
+
+  /* Custom Modal Styles for Email Modal */
+  #sendEmailModal.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    padding: 80px 0 20px 280px;
+  }
+
+  #sendEmailModal .custom-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+  }
+
+  #sendEmailModal .custom-modal-content {
+    position: relative;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 100%;
+    max-height: 85%;
+    overflow: hidden;
+    z-index: 10001;
+    animation: modalFadeIn 0.3s ease-out;
+    margin: 0 20px;
+  }
+
+  #sendEmailModal .custom-modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 20px 20px 0 0;
+  }
+
+  #sendEmailModal .custom-modal-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+
+  #sendEmailModal .custom-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 300;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+
+  #sendEmailModal .custom-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  #sendEmailModal .custom-modal-body {
+    padding: 2rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  #sendEmailModal .custom-modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(0, 123, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0 0 20px 20px;
+  }
+
+  #sendEmailModal .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  #sendEmailModal .btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+  }
+
+  #sendEmailModal .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  /* Responsive adjustments for Email modal */
+  @media (max-width: 1200px) {
+    #sendEmailModal.custom-modal {
+      padding: 60px 0 20px 200px;
+    }
+  }
+
+  @media (max-width: 992px) {
+    #sendEmailModal.custom-modal {
+      padding: 60px 20px 20px 20px;
+    }
+
+    #sendEmailModal .custom-modal-content {
+      max-width: 95%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #sendEmailModal.custom-modal {
+      padding: 60px 10px 20px 10px;
+    }
+
+    #sendEmailModal .custom-modal-content {
+      max-width: 98%;
+      max-height: 95vh;
+      margin: 0 10px;
+    }
+
+    #sendEmailModal .custom-modal-body {
+      max-height: calc(95vh - 160px);
+      padding: 1.5rem;
+    }
+
+    #sendEmailModal .custom-modal-footer {
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+    }
+
+    #sendEmailModal .custom-modal-footer .btn {
+      width: 100%;
+      min-height: 44px;
+    }
   }
 
   /* Custom Modal Styles for WhatsApp Invoice Modal */

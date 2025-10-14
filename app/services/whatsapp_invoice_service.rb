@@ -66,9 +66,7 @@ class WhatsappInvoiceService
 
       # Update invoice with WhatsApp tracking info
       invoice.update(
-        whatsapp_sent_at: Time.current,
-        whatsapp_message_id: message.sid,
-        share_token_used_at: Time.current
+        shared_at: Time.current
       )
 
       { success: true, message_sid: message.sid, pdf_url: pdf_url }

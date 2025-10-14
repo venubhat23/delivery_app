@@ -1879,9 +1879,13 @@
           <tbody>
             <% @delivery_assignments_array.each_with_index do |assignment, index| %>
               <%
-                total_amount = assignment.quantity * (assignment.product.price || 0)
-                has_discount = assignment.discount_amount > 0
-                discount_percentage = has_discount && total_amount > 0 ? ((assignment.discount_amount / total_amount) * 100).round(1) : 0
+                # Safe calculations with nil checks
+                product_price = assignment.product&.price || 0
+                quantity = assignment.quantity || 0
+                total_amount = quantity * product_price
+                discount_amount = assignment.discount_amount || 0
+                has_discount = discount_amount > 0
+                discount_percentage = has_discount && total_amount > 0 ? ((discount_amount / total_amount) * 100).round(1) : 0
               %>
               <tr>
                 <td data-label="DATE">
@@ -1895,7 +1899,7 @@
                   <div class="product-name"><%= assignment.product.name %></div>
                   <% if has_discount %>
                     <br><small style="color: #f39c12; font-size: 10px;">
-                      💰 Discount: ₹<%= assignment.discount_amount %>
+                      💰 Discount: ₹<%= discount_amount %>
                       (<%= discount_percentage %>%)
                     </small>
                   <% end %>

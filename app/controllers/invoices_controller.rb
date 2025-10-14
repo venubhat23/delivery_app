@@ -1,6 +1,6 @@
 # app/controllers/invoices_controller.rb
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :mark_as_completed, :convert_to_completed, :share_whatsapp, :download_pdf]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :mark_as_completed, :convert_to_completed, :share_whatsapp, :send_email, :download_pdf]
   before_action :set_customers, only: [:index, :new, :create, :generate]
   skip_before_action :require_login, only: [:public_view, :public_download_pdf, :serve_pdf]
   
@@ -787,6 +787,36 @@ end
     )
   end
 
+  # Send invoice via email
+  def send_email
+    email = params[:email]
+
+    # Validate email
+    if email.blank?
+      render json: { error: 'Email address is required' }, status: 400
+      return
+    end
+
+    # Validate email format
+    unless email.match?(/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i)
+      render json: { error: 'Invalid email format' }, status: 400
+      return
+    end
+
+    begin
+      # Send email with PDF attachment
+      InvoiceMailer.send_invoice_pdf(@invoice, email).deliver_now
+
+      render json: {
+        success: true,
+        message: 'Invoice sent via email successfully'
+      }
+    rescue => e
+      Rails.logger.error "Email sending error: #{e.message}"
+      render json: { error: 'Failed to send email' }, status: 500
+    end
+  end
+
   private
 
   def set_invoice
@@ -922,8 +952,7 @@ end
     @invoice = Invoice.find(params[:id])
 
     @invoice.update!(
-      shared_at: Time.current,
-      whatsapp_sent_at: Time.current
+      shared_at: Time.current
     )
 
     render json: { success: true, message: 'Invoice marked as sent via WhatsApp' }
@@ -931,35 +960,6 @@ end
     render json: { success: false, error: 'Invoice not found' }, status: 404
   end
 
-  # Send invoice via email
-  def send_email
-    email = params[:email]
-
-    # Validate email
-    if email.blank?
-      render json: { error: 'Email address is required' }, status: 400
-      return
-    end
-
-    # Validate email format
-    unless email.match?(/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i)
-      render json: { error: 'Invalid email format' }, status: 400
-      return
-    end
-
-    begin
-      # Send email with PDF attachment
-      InvoiceMailer.send_invoice_pdf(@invoice, email).deliver_now
-
-      render json: {
-        success: true,
-        message: 'Invoice sent via email successfully'
-      }
-    rescue => e
-      Rails.logger.error "Email sending error: #{e.message}"
-      render json: { error: 'Failed to send email' }, status: 500
-    end
-  end
 
   # Enhanced message for invoice with better formatting
   def build_enhanced_invoice_message(invoice, public_url, pdf_url = nil)

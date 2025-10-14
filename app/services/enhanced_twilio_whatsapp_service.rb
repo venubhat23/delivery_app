@@ -75,9 +75,8 @@ class EnhancedTwilioWhatsappService
 
       # Update invoice tracking
       invoice.update!(
-        whatsapp_sent_at: Time.current,
-        whatsapp_message_id: message.sid
-      ) if invoice.respond_to?(:whatsapp_sent_at)
+        shared_at: Time.current
+      )
 
       true
 

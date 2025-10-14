@@ -43,7 +43,7 @@ class Invoice < ApplicationRecord
     # Log the result
     if result[:success]
       Rails.logger.info "Invoice #{invoice_number} sent via WhatsApp to #{customer.name}"
-      update(whatsapp_sent_at: Time.current, whatsapp_message_id: result[:data]['message_id'])
+      update(shared_at: Time.current)
     else
       Rails.logger.error "Failed to send invoice #{invoice_number} via WhatsApp: #{result[:error]}"
     end

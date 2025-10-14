@@ -302,6 +302,7 @@ Rails.application.routes.draw do
       patch :mark_as_completed
       patch :convert_to_completed
       post :share_whatsapp
+      post :send_email
       get :download_pdf
     end
 
