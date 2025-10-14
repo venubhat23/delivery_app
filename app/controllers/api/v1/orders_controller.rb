@@ -13,7 +13,7 @@ module Api
           items = @order_params[:items]
           if @order_params[:booking_done_by] == "customer"
             booked_by = 1
-          elsif order_params[:booking_done_by] == "delivery_person"
+          elsif @order_params[:booking_done_by] == "delivery_person"
             booked_by = 2
           else
             booked_by = 0
