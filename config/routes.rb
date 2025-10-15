@@ -659,4 +659,14 @@ Rails.application.routes.draw do
       post :send_wishes_to_all
     end
   end
+
+  # Webhook endpoints
+  namespace :webhooks do
+    post 'twilio/whatsapp', to: 'webhooks#twilio_whatsapp'
+    post 'twilio/status', to: 'webhooks#twilio_status'
+  end
+
+  # Alternative route structure (if above doesn't work)
+  post '/webhooks/twilio/whatsapp', to: 'webhooks#twilio_whatsapp'
+  post '/webhooks/twilio/status', to: 'webhooks#twilio_status'
 end
