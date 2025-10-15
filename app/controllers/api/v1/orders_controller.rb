@@ -68,7 +68,7 @@ module Api
           
           # Send notifications to owner if booked via mobile (booked_by == 1)
           if booked_by == 1
-            send_owner_notifications_for_order(@customer, delivery_schedule, items, assignments_created)
+            #send_owner_notifications_for_order(@customer, delivery_schedule, items, assignments_created)
 
             # Send WhatsApp notification to owner
             begin

@@ -236,14 +236,7 @@ module Api
           # Send WhatsApp message to admin number
           admin_phone = "90088 60329"
 
-          message = "🎉 New Customer Signup Alert!\n\n" \
-                   "👤 Name: #{customer.name}\n" \
-                   "📱 Phone: #{customer.phone_number}\n" \
-                   "📧 Email: #{customer.email || 'Not provided'}\n" \
-                   "🏠 Address: #{customer.address || 'Not provided'}\n" \
-                   "🏙️ City: #{customer.city || 'Not provided'}\n" \
-                   "⏰ Registered: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}\n\n" \
-                   "Welcome to Atma Nirbhar Farm! 🌾"
+          message = "New Customer Signup Alert! Name: #{customer.name}, Phone: #{customer.phone_number}, Email: #{customer.email || 'Not provided'}, Address: #{customer.address || 'Not provided'}, City: #{customer.city || 'Not provided'}, Registered: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}, Welcome to Atma Nirbhar Farm!"
 
           whatsapp_service = CustomWhatsappService.new
           result = whatsapp_service.send_custom_message(admin_phone, message)

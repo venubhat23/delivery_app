@@ -183,53 +183,13 @@ class TwilioWhatsappService
     "#{protocol}://#{host}/invoice/#{token}/download"
   end
 
-  def build_customer_signup_message(customer)
-    message = <<~MESSAGE.strip
-      🎉 NEW CUSTOMER SIGNUP! 🎉
+def build_customer_signup_message(customer)
+  "NEW CUSTOMER SIGNUP! Name: #{customer.name}, Phone: #{customer.phone_number}, Email: #{customer.email || 'Not provided'}, Address: #{customer.address || 'Not provided'}, Member ID: #{customer.member_id || 'Auto-generated'}, Signup Time: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}, Signed up via Mobile App, Atma Nirbhar Farm, +91 9972808044 | +91 9008860329"
+end
 
-      ───────────────────
-      👤 Name: #{customer.name}
-      📱 Phone: #{customer.phone_number}
-      📧 Email: #{customer.email || 'Not provided'}
-      🏠 Address: #{customer.address || 'Not provided'}
-      🆔 Member ID: #{customer.member_id || 'Auto-generated'}
-      📅 Signup Time: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}
-      ───────────────────
+def build_order_booking_message(customer, order_details)
+  "NEW ORDER BOOKED! Customer: #{customer.name}, Phone: #{customer.phone_number}, Product: #{order_details[:product_name]}, Quantity: #{order_details[:quantity]} #{order_details[:unit]}, Period: #{order_details[:start_date]} to #{order_details[:end_date]}, Delivery Days: #{order_details[:delivery_days]}, Estimated Amount: ₹#{order_details[:estimated_amount]}, Payment: #{order_details[:cod] ? 'COD' : 'Prepaid'}, Delivery Person: #{order_details[:delivery_person]}, Booking Time: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}, Booked via Mobile App"
+end
 
-      📱 Signed up via Mobile App
-
-      🏠 Atma Nirbhar Farm
-      📞 +91 9972808044 | +91 9008860329
-    MESSAGE
-
-    message
-  end
-
-  def build_order_booking_message(customer, order_details)
-    message = <<~MESSAGE.strip
-      📦 NEW ORDER BOOKED! 📦
-      👤 Customer: #{customer.name}
-      📱 Phone: #{customer.phone_number}
-      🥛 Product: #{order_details[:product_name]}
-      📦 Quantity: #{order_details[:quantity]} #{order_details[:unit]}
-      📅 Period: #{order_details[:start_date]} to #{order_details[:end_date]}
-      🚚 Delivery Days: #{order_details[:delivery_days]}
-      💰 Estimated Amount: ₹#{order_details[:estimated_amount]}
-      💳 Payment: #{order_details[:cod] ? 'COD' : 'Prepaid'}
-      👨‍🚚 Delivery Person: #{order_details[:delivery_person]}
-
-      📅 Booking Time: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}
-      ───────────────────
-
-      📱 Booked via Mobile App
-
-    MESSAGE
-
-    message
-  end
-
-  def build_order_booking_message(customer, order_details)
-    "NEW ORDER BOOKED! Customer: #{customer.name}, Phone: #{customer.phone_number}, Product: #{order_details[:product_name]}, Quantity: #{order_details[:quantity]} #{order_details[:unit]}, Period: #{order_details[:start_date]} to #{order_details[:end_date]}, Delivery Days: #{order_details[:delivery_days]}, Estimated Amount: ₹#{order_details[:estimated_amount]}, Payment: #{order_details[:cod] ? 'COD' : 'Prepaid'}"
-  end
 
 end
