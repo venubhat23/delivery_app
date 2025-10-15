@@ -6,7 +6,7 @@ class TwilioWhatsappService
   def initialize
     @account_sid = ENV['TWILIO_ACCOUNT_SID']
     @auth_token = ENV['TWILIO_AUTH_TOKEN']
-    @content_sid = 'HX8c42953f0e111b0b2be7fb5e4f632d3c'
+    @content_sid = 'HX6fc19923cd8eed844fc3092b42b4a522'
     @from_number = 'whatsapp:+917619444966'
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
   end
