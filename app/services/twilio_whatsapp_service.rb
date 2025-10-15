@@ -227,4 +227,9 @@ class TwilioWhatsappService
 
     message
   end
+
+  def build_order_booking_message(customer, order_details)
+    "NEW ORDER BOOKED! Customer: #{customer.name}, Phone: #{customer.phone_number}, Product: #{order_details[:product_name]}, Quantity: #{order_details[:quantity]} #{order_details[:unit]}, Period: #{order_details[:start_date]} to #{order_details[:end_date]}, Delivery Days: #{order_details[:delivery_days]}, Estimated Amount: ₹#{order_details[:estimated_amount]}, Payment: #{order_details[:cod] ? 'COD' : 'Prepaid'}"
+  end
+
 end
