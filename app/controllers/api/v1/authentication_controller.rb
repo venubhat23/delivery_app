@@ -234,7 +234,7 @@ module Api
       def send_signup_notification(customer)
         begin
           # Send WhatsApp message to admin number
-          admin_phone = "9632850872"
+          admin_phone = "99728 08044"
 
           message = "🎉 New Customer Signup Alert!\n\n" \
                    "👤 Name: #{customer.name}\n" \
