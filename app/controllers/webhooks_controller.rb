@@ -30,7 +30,7 @@ class WebhooksController < ApplicationController
       end
 
       # Forward message to specified number using TwilioWhatsappService
-      forward_number = '+9190088 60329'
+      forward_number = '+9199728 08044'
 
       # Create formatted message with sender info
       forwarded_message = build_forwarded_message(message_body, sender_phone, receiver_phone)
@@ -38,6 +38,7 @@ class WebhooksController < ApplicationController
       # Send message using existing TwilioWhatsappService
       whatsapp_service = TwilioWhatsappService.new
       success = whatsapp_service.send_custom_message(forward_number, forwarded_message)
+
 
       if success
         Rails.logger.info "Successfully forwarded WhatsApp message from #{sender_phone} to #{forward_number}"

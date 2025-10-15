@@ -234,9 +234,9 @@ module Api
       def send_signup_notification(customer)
         begin
           # Send WhatsApp message to admin number
-          admin_phone = "90088 60329"
+          admin_phone = "99728 08044"
 
-          message = "New Customer Signup Alert! Name: #{customer.name}, Phone: #{customer.phone_number}, Email: #{customer.email || 'Not provided'}, Address: #{customer.address || 'Not provided'}, City: #{customer.city || 'Not provided'}, Registered: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}, Welcome to Atma Nirbhar Farm!"
+          message = "New Customer Signup Alert, Name: #{customer.name}, Phone: #{customer.phone_number}, Email: #{customer.email || 'Not provided'}, Address: #{customer.address || 'Not provided'}, City: #{customer.city || 'Not provided'}, Registered: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}"
 
           whatsapp_service = TwilioWhatsappService.new
           result = whatsapp_service.send_custom_message(admin_phone, message)
