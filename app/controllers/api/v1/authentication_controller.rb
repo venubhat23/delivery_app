@@ -238,7 +238,7 @@ module Api
 
           message = "New Customer Signup Alert! Name: #{customer.name}, Phone: #{customer.phone_number}, Email: #{customer.email || 'Not provided'}, Address: #{customer.address || 'Not provided'}, City: #{customer.city || 'Not provided'}, Registered: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}, Welcome to Atma Nirbhar Farm!"
 
-          whatsapp_service = CustomWhatsappService.new
+          whatsapp_service = TwilioWhatsappService.new
           result = whatsapp_service.send_custom_message(admin_phone, message)
 
           Rails.logger.info "Signup notification sent to admin: #{result ? 'Success' : 'Failed'}"
