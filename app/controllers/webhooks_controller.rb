@@ -1,7 +1,6 @@
 # app/controllers/webhooks_controller.rb
 class WebhooksController < ApplicationController
-  # Skip ALL authentication and security checks for webhook endpoints
-  skip_before_action :verify_authenticity_token
+  # Skip authentication for webhook endpoints (CSRF already skipped globally)
   skip_before_action :require_login
 
   # No authentication or token verification - completely public endpoint
@@ -61,28 +60,10 @@ class WebhooksController < ApplicationController
 
   private
 
-  def build_forwarded_message(original_message, sender_phone, receiver_phone)
-    timestamp = Time.current.strftime('%d/%m/%Y %I:%M %p')
-
-    forwarded_message = <<~MESSAGE.strip
-      📱 INCOMING WHATSAPP MESSAGE 📱
-
-      ───────────────────
-      👤 From: #{sender_phone}
-      📞 To: #{receiver_phone}
-      🕐 Time: #{timestamp}
-      ───────────────────
-
-      💬 Message:
-      #{original_message}
-
-      ───────────────────
-      🤖 Auto-forwarded by Delivery System
-      🏠 Atma Nirbhar Farm
-    MESSAGE
-
-    forwarded_message
-  end
+def build_forwarded_message(original_message, sender_phone, _receiver_phone)
+  profile_name = params['ProfileName'] || 'Unknown Contact'
+  "Message from #{profile_name} (#{sender_phone}): #{original_message}"
+end
 
   def log_message_forward(original_message, sender_phone, forward_number, message_sid)
     begin

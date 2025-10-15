@@ -7,13 +7,17 @@ Rails.application.configure do
   config.hosts = [
     "atmanirbharfarmbangalore.com", # Allow requests from main domain
     /.*\.atmanirbharfarm\.work\.gd/, # Allow requests from subdomains
+    /.*\.ngrok-free\.app/,           # Allow all ngrok hosts for webhook testing
+    /.*\.ngrok\.io/,                 # Allow legacy ngrok hosts
     ENV['APP_HOST'],                 # Allow requests from environment-specific host
     "atmanirbharfarmbangalore.com",
     "13.232.153.224",                # Allow requests from the production server IP
     "atmanirbharfarmbangalore.com",
-    "delivery-app-ieu2.onrender.com"
+    "delivery-app-ieu2.onrender.com",
+    "cdc6cf4262c8.ngrok-free.app"    # Allow specific current ngrok host
   ].compact
     config.hosts << "localhost:3002"
+    config.hosts << "localhost:3001"
     config.hosts << "localhost:3000"
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
