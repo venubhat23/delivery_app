@@ -208,13 +208,8 @@ class TwilioWhatsappService
   def build_order_booking_message(customer, order_details)
     message = <<~MESSAGE.strip
       📦 NEW ORDER BOOKED! 📦
-
-      ───────────────────
       👤 Customer: #{customer.name}
       📱 Phone: #{customer.phone_number}
-      🏠 Address: #{customer.address}
-
-      📋 ORDER DETAILS:
       🥛 Product: #{order_details[:product_name]}
       📦 Quantity: #{order_details[:quantity]} #{order_details[:unit]}
       📅 Period: #{order_details[:start_date]} to #{order_details[:end_date]}
@@ -228,8 +223,6 @@ class TwilioWhatsappService
 
       📱 Booked via Mobile App
 
-      🏠 Atma Nirbhar Farm
-      📞 +91 9972808044 | +91 9008860329
     MESSAGE
 
     message
