@@ -27,7 +27,7 @@ module Api
           ifsc_code: @admin_setting.ifsc_code,
           upi_id: @admin_setting.upi_id,
           terms_and_conditions: @admin_setting.formatted_terms_and_conditions,
-          qr_code_url: "https://file-upload-2024-milk-delivery.s3.ap-south-1.amazonaws.com/uploads/upi_qr_1.svg"
+          qr_code_url: "https://file-upload-2024-milk-delivery-latest-1.s3.amazonaws.com/uploads/293b8aed-6c78-45d0-8195-9bd164886499_upi_qr_1.svg""
         }
 
         render json: { bank_details: bank_details }, status: :ok
