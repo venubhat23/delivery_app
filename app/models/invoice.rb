@@ -284,7 +284,7 @@ class Invoice < ApplicationRecord
     {
       pending: pending.count,
       paid: paid.count,
-      overdue: overdue.count,
+      overdue: overdue_invoices.count,
       total_pending_amount: pending.sum(:total_amount),
       total_paid_amount: paid.sum(:total_amount)
     }
