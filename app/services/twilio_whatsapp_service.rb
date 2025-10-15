@@ -60,7 +60,8 @@ class TwilioWhatsappService
     message = @client.messages.create(
       to: "whatsapp:#{phone_number}",
       from: @from_number,
-      content_variables: content_variables.to_json
+      content_variables: content_variables.to_json,
+      content_sid: @content_sid,
     )
 
 
