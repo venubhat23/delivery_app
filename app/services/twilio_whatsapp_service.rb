@@ -96,6 +96,22 @@ class TwilioWhatsappService
     false
   end
 
+  def send_customer_signup_notification(customer)
+    owner_phone = "+919972808044"
+
+    message_body = build_customer_signup_message(customer)
+
+    send_custom_message(owner_phone, message_body)
+  end
+
+  def send_order_booking_notification(customer, order_details)
+    owner_phone = "+919632850872"
+
+    message_body = build_order_booking_message(customer, order_details)
+
+    send_custom_message(owner_phone, message_body)
+  end
+
   private
 
   def build_enhanced_whatsapp_message(invoice, public_url)
@@ -165,5 +181,57 @@ class TwilioWhatsappService
     # Fallback URL using public route with token
     token = invoice.share_token || SecureRandom.urlsafe_base64(32)
     "#{protocol}://#{host}/invoice/#{token}/download"
+  end
+
+  def build_customer_signup_message(customer)
+    message = <<~MESSAGE.strip
+      🎉 NEW CUSTOMER SIGNUP! 🎉
+
+      ───────────────────
+      👤 Name: #{customer.name}
+      📱 Phone: #{customer.phone_number}
+      📧 Email: #{customer.email || 'Not provided'}
+      🏠 Address: #{customer.address || 'Not provided'}
+      🆔 Member ID: #{customer.member_id || 'Auto-generated'}
+      📅 Signup Time: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}
+      ───────────────────
+
+      📱 Signed up via Mobile App
+
+      🏠 Atma Nirbhar Farm
+      📞 +91 9972808044 | +91 9008860329
+    MESSAGE
+
+    message
+  end
+
+  def build_order_booking_message(customer, order_details)
+    message = <<~MESSAGE.strip
+      📦 NEW ORDER BOOKED! 📦
+
+      ───────────────────
+      👤 Customer: #{customer.name}
+      📱 Phone: #{customer.phone_number}
+      🏠 Address: #{customer.address}
+
+      📋 ORDER DETAILS:
+      🥛 Product: #{order_details[:product_name]}
+      📦 Quantity: #{order_details[:quantity]} #{order_details[:unit]}
+      📅 Period: #{order_details[:start_date]} to #{order_details[:end_date]}
+      🚚 Delivery Days: #{order_details[:delivery_days]}
+      💰 Estimated Amount: ₹#{order_details[:estimated_amount]}
+      💳 Payment: #{order_details[:cod] ? 'COD' : 'Prepaid'}
+      👨‍🚚 Delivery Person: #{order_details[:delivery_person]}
+
+      📅 Booking Time: #{Time.current.strftime('%d/%m/%Y %I:%M %p')}
+      ───────────────────
+
+      📱 Booked via Mobile App
+
+      🏠 Atma Nirbhar Farm
+      📞 +91 9972808044 | +91 9008860329
+    MESSAGE
+
+    message
   end
 end

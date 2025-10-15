@@ -1639,33 +1639,65 @@
   </div>
 </div>
 
-<!-- Customer Image Modal -->
-<div class="modal fade" id="customerImageModal" tabindex="-1" aria-labelledby="customerImageModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="customerImageModalLabel">
-          <i class="fas fa-user me-2"></i><span id="customerImageModalName">Customer</span>
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <div id="customerImageContainer">
-          <img id="customerImageDisplay" src="" alt="Customer Image" class="img-fluid rounded shadow" style="max-height: 400px; max-width: 100%;">
+<!-- Customer Details Modal - Same structure as customer patterns -->
+<div id="customerDetailsModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeCustomerDetailsModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-user me-2"></i>
+        <span id="modalCustomerName">Customer Details</span>
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeCustomerDetailsModal()">×</button>
+    </div>
+    <div class="custom-modal-body" id="modalContent">
+      <div class="row">
+        <!-- Customer Image Section -->
+        <div class="col-md-4 text-center mb-4">
+          <div id="customerImageContainer">
+            <img id="customerImageDisplay" src="" alt="Customer Image" class="img-fluid rounded-circle shadow" style="width: 150px; height: 150px; object-fit: cover;">
+          </div>
+          <div id="customerNoImage" class="d-none">
+            <div class="text-center">
+              <i class="fas fa-user-circle text-muted" style="font-size: 8rem;"></i>
+              <p class="mt-3 text-muted">No Image Available</p>
+            </div>
+          </div>
         </div>
-        <div id="customerNoImage" class="d-none">
-          <div class="text-center py-5">
-            <i class="fas fa-user-circle text-muted" style="font-size: 8rem;"></i>
-            <h5 class="mt-3 text-muted">No Image Available</h5>
-            <p class="text-muted">This customer doesn't have a profile image.</p>
+
+        <!-- Customer Details Section -->
+        <div class="col-md-8">
+          <div class="row mb-3">
+            <div class="col-6">
+              <strong>Name:</strong>
+              <div id="customerName">-</div>
+            </div>
+            <div class="col-6">
+              <strong>Phone:</strong>
+              <div id="customerPhone">-</div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <strong>Email:</strong>
+              <div id="customerEmail">-</div>
+            </div>
+            <div class="col-6">
+              <strong>Member ID:</strong>
+              <div id="customerMemberId">-</div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-12">
+              <strong>Address:</strong>
+              <div id="customerAddress">-</div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="fas fa-times me-2"></i>Close
-        </button>
-      </div>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeCustomerDetailsModal()">Close</button>
     </div>
   </div>
 </div>
@@ -1713,7 +1745,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize unassign modal functionality
   initializeUnassignModal();
   
-  // Initialize customer image modal functionality
+  // Initialize customer details modal functionality
+  initializeCustomerDetailsModal();
   initializeCustomerImageModal();
 });
 
@@ -1726,7 +1759,8 @@ document.addEventListener('turbo:load', function() {
   // Re-initialize unassign modal on Turbo navigation
   initializeUnassignModal();
   
-  // Re-initialize customer image modal on Turbo navigation
+  // Re-initialize customer details modal on Turbo navigation
+  initializeCustomerDetailsModal();
   initializeCustomerImageModal();
 });
 
@@ -1864,45 +1898,59 @@ function initializeUnassignModal() {
   }
 }
 
-function initializeCustomerImageModal() {
+function initializeCustomerDetailsModal() {
   const customerRows = document.querySelectorAll('.customer-clickable');
-  const modal = document.getElementById('customerImageModal');
-  const modalName = document.getElementById('customerImageModalName');
-  const imageContainer = document.getElementById('customerImageContainer');
-  const imageDisplay = document.getElementById('customerImageDisplay');
-  const noImageDiv = document.getElementById('customerNoImage');
-  
-  if (!modal) return;
-  
+
   customerRows.forEach(row => {
     row.addEventListener('click', function(e) {
       // Don't trigger modal if clicking on action buttons
       if (e.target.closest('.btn') || e.target.closest('.btn-group')) {
         return;
       }
-      
+
       const customerName = this.dataset.customerName;
       const customerImage = this.dataset.customerImage;
-      
-      // Set customer name in modal
-      modalName.textContent = customerName;
-      
-      // Show or hide image based on availability
-      if (customerImage && customerImage.trim() !== '') {
-        imageContainer.classList.remove('d-none');
-        noImageDiv.classList.add('d-none');
-        imageDisplay.src = customerImage;
-        imageDisplay.alt = `${customerName} Photo`;
-      } else {
-        imageContainer.classList.add('d-none');
-        noImageDiv.classList.remove('d-none');
-      }
-      
-      // Show the modal
-      const bootstrapModal = new bootstrap.Modal(modal);
-      bootstrapModal.show();
+
+      openCustomerDetailsModal(customerName, customerImage);
     });
   });
+}
+
+function openCustomerDetailsModal(customerName, customerImage) {
+  const modal = document.getElementById('customerDetailsModal');
+  const modalName = document.getElementById('modalCustomerName');
+  const imageContainer = document.getElementById('customerImageContainer');
+  const imageDisplay = document.getElementById('customerImageDisplay');
+  const noImageDiv = document.getElementById('customerNoImage');
+
+  // Set customer name in modal
+  modalName.textContent = customerName;
+  document.getElementById('customerName').textContent = customerName;
+
+  // Show or hide image based on availability
+  if (customerImage && customerImage.trim() !== '') {
+    imageContainer.classList.remove('d-none');
+    noImageDiv.classList.add('d-none');
+    imageDisplay.src = customerImage;
+    imageDisplay.alt = `${customerName} Photo`;
+  } else {
+    imageContainer.classList.add('d-none');
+    noImageDiv.classList.remove('d-none');
+  }
+
+  // Show the modal
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+}
+
+function closeCustomerDetailsModal() {
+  const modal = document.getElementById('customerDetailsModal');
+  modal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+}
+
+function initializeCustomerImageModal() {
+  // Keep for compatibility
 }
 </script>
     </div>
@@ -2007,5 +2055,155 @@ html {
 .col-12 {
   padding-left: 0;
   padding-right: 0;
+}
+
+/* Custom Modal Styles - Exact copy from customer patterns */
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0 20px 280px; /* Top padding for nav bar, left padding for sidebar */
+}
+
+.custom-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+
+.custom-modal-content {
+  position: relative;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 1400px;
+  max-height: 85%;
+  overflow: hidden;
+  z-index: 10001;
+  animation: modalFadeIn 0.3s ease-out;
+  margin: 0 20px; /* Add some margin from screen edges */
+}
+
+/* Responsive adjustments for modal positioning */
+@media (max-width: 1200px) {
+  .custom-modal {
+    padding: 60px 0 20px 200px; /* Smaller sidebar on medium screens */
+  }
+}
+
+@media (max-width: 992px) {
+  .custom-modal {
+    padding: 60px 20px 20px 20px; /* No sidebar on smaller screens */
+  }
+
+  .custom-modal-content {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .custom-modal {
+    padding: 80px 10px 20px 10px; /* Mobile spacing */
+  }
+
+  .custom-modal-content {
+    max-width: 98%;
+    margin: 0 10px;
+  }
+}
+
+.custom-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px 10px 0 0;
+}
+
+.custom-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.custom-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0.8;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.custom-close-btn:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.custom-modal-body {
+  padding: 24px;
+  max-height: calc(85vh - 140px);
+  overflow-y: auto;
+}
+
+.custom-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 0 0 10px 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Modal fixes for blank screen issue */
+.modal {
+  z-index: 1055;
+}
+
+.modal-backdrop {
+  z-index: 1050;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show .modal-dialog {
+  transform: none;
 }
 </style>

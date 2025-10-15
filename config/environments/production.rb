@@ -65,9 +65,18 @@ Rails.application.configure do
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
+  # Email configuration for Gmail SMTP in production
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address: 'smtp.gmail.com',
+    port: 587,
+    domain: 'gmail.com',
+    user_name: 'atmanirbharfarmbangalore@gmail.com',
+    password: ENV['GMAIL_APP_PASSWORD'],
+    authentication: 'plain',
+    enable_starttls_auto: true
+  }
 
   # Set host to be used by links generated in mailer templates.
   # Use environment variable if available, otherwise default to the main domain

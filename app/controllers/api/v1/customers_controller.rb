@@ -32,8 +32,16 @@ module Api
       # POST /api/v1/customers
       def create
         @customer = Customer.new(customer_params)
-        
+
         if @customer.save
+          # Send WhatsApp notification to owner about new customer signup
+          begin
+            whatsapp_service = TwilioWhatsappService.new
+            whatsapp_service.send_customer_signup_notification(@customer)
+          rescue => e
+            Rails.logger.error "Failed to send WhatsApp notification for customer signup: #{e.message}"
+          end
+
           render json: @customer, status: :created
         else
           render json: { errors: @customer.errors.full_messages }, status: :unprocessable_entity

@@ -72,10 +72,37 @@
       <p><strong>📅 Total Deliveries:</strong> <%= @delivery_assignments.count %> deliveries completed this month</p>
     <% end %>
 
-    <p>The detailed PDF invoice is attached to this email for your records. Please review the invoice and let us know if you have any questions.</p>
+    <% if @has_pdf_attachment %>
+      <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #28a745;">
+        <h4 style="margin: 0 0 10px 0; color: #155724;">📎 PDF Invoice Attached</h4>
+        <p style="margin: 0; color: #155724;">The detailed PDF invoice is attached to this email for your records and printing. This PDF can be opened on any device and includes all delivery details.</p>
+      </div>
+    <% elsif @has_html_attachment %>
+      <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #2196f3;">
+        <h4 style="margin: 0 0 10px 0; color: #1976d2;">📄 HTML Invoice Attached</h4>
+        <p style="margin: 0; color: #1976d2;">Your invoice is attached as an HTML file (can be opened in any browser). For the best experience, use the online link below.</p>
+      </div>
+    <% else %>
+      <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
+        <h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ Attachment Not Available</h4>
+        <p style="margin: 0; color: #856404;">Attachment could not be generated. Please use the online link below to view your invoice.</p>
+      </div>
+    <% end %>
 
-    <p><strong>Payment Instructions:</strong><br>
-    Please make your payment by the due date mentioned above. You can contact us for payment methods and details.</p>
+    <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border-left: 4px solid #2196f3;">
+      <h4 style="margin: 0 0 15px 0; color: #1976d2;">🌐 View Invoice Online</h4>
+      <p style="margin: 0 0 15px 0; color: #1976d2;">You can also view and download your invoice online anytime:</p>
+      <a href="<%= @public_url %>"
+         style="display: inline-block; background-color: #2196f3; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        📄 View Invoice Online
+      </a>
+      <p style="margin: 15px 0 0 0; font-size: 12px; color: #666;">
+        💡 This link works on any device and doesn't expire. Bookmark it for future reference!
+      </p>
+    </div>
+
+    <p><strong>💳 Payment Instructions:</strong><br>
+    Please make your payment by the due date mentioned above. You can scan the UPI QR code in the invoice or contact us for other payment methods.</p>
 
     <p>Thank you for choosing Atma Nirbhar Farm for your fresh milk delivery needs. We appreciate your continued trust in our services!</p>
 

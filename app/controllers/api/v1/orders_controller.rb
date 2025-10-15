@@ -69,6 +69,39 @@ module Api
           # Send notifications to owner if booked via mobile (booked_by == 1)
           if booked_by == 1
             send_owner_notifications_for_order(@customer, delivery_schedule, items, assignments_created)
+
+            # Send WhatsApp notification to owner
+            begin
+              whatsapp_service = TwilioWhatsappService.new
+              delivery_person = User.find_by(id: delivery_schedule.user_id)
+
+              # Build order details for single-day order
+              products_summary = items.map do |item|
+                product = Product.find_by(id: item[:product_id])
+                "#{product&.name}: #{item[:quantity]} #{item[:unit]}"
+              end.join(', ')
+
+              total_amount = items.sum do |item|
+                product = Product.find_by(id: item[:product_id])
+                (product&.price || 0) * item[:quantity].to_f
+              end
+
+              order_details = {
+                product_name: products_summary,
+                quantity: items.length,
+                unit: 'items',
+                start_date: delivery_date.strftime('%d/%m/%Y'),
+                end_date: delivery_date.strftime('%d/%m/%Y'),
+                delivery_days: 1,
+                estimated_amount: total_amount.to_i,
+                cod: @order_params[:cod] || false,
+                delivery_person: delivery_person&.name || 'Not assigned'
+              }
+
+              whatsapp_service.send_order_booking_notification(@customer, order_details)
+            rescue => e
+              Rails.logger.error "Failed to send WhatsApp notification for order booking: #{e.message}"
+            end
           end
 
           render json: {
