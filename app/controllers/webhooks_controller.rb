@@ -30,7 +30,7 @@ class WebhooksController < ApplicationController
       end
 
       # Forward message to specified number using TwilioWhatsappService
-      forward_number = '+919632850872'
+      forward_number = '+9199728 08044'
 
       # Create formatted message with sender info
       forwarded_message = build_forwarded_message(message_body, sender_phone, receiver_phone)

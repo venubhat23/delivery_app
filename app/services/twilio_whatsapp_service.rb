@@ -105,7 +105,7 @@ class TwilioWhatsappService
   end
 
   def send_order_booking_notification(customer, order_details)
-    owner_phone = "+919632850872"
+    owner_phone = "+9199728 08044"
 
     message_body = build_order_booking_message(customer, order_details)
 
