@@ -195,7 +195,7 @@ class Invoice < ApplicationRecord
   
   # Scopes
   scope :pending, -> { where(status: 'pending') }
-  scope :paid, -> { where(status: 'paid') }
+  scope :paid, -> { where(status: 'completed') }
   scope :overdue, -> { where(status: 'overdue') }
   scope :completed, -> { where(status: 'completed') }
   scope :overdue_invoices, -> { where('due_date < ? AND status NOT IN (?)', Date.current, ['paid', 'completed']) }
