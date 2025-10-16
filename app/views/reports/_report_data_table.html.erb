@@ -151,6 +151,10 @@
               <th>Invoice Date</th>
               <th>Assignments</th>
               <th>Total Amount</th>
+              <th>Total GST</th>
+              <th>CGST</th>
+              <th>SGST</th>
+              <th>IGST</th>
             </tr>
           </thead>
           <tbody>
@@ -170,17 +174,26 @@
                   <td class="small text-muted" style="max-width: 200px;">
                     <%= sale[:customer_address] %>
                   </td>
-                  <td><code><%= sale[:invoice_number] %></code></td>
+                  <td>
+                    <%= link_to invoice_path(sale[:invoice_id]), class: "text-decoration-none" do %>
+                      <code class="text-primary"><%= sale[:invoice_number] %></code>
+                      <i class="fas fa-external-link-alt ms-1 small"></i>
+                    <% end %>
+                  </td>
                   <td><%= sale[:invoice_date] %></td>
                   <td class="text-center">
                     <span class="badge bg-info"><%= sale[:assignment_count] %></span>
                   </td>
                   <td class="text-end fw-bold text-success">₹<%= number_with_delimiter(sale[:total_amount]) %></td>
+                  <td class="text-end fw-bold text-warning">₹<%= number_with_delimiter(sale[:total_gst]) %></td>
+                  <td class="text-end text-info">₹<%= number_with_delimiter(sale[:cgst]) %></td>
+                  <td class="text-end text-info">₹<%= number_with_delimiter(sale[:sgst]) %></td>
+                  <td class="text-end text-primary">₹<%= number_with_delimiter(sale[:igst]) %></td>
                 </tr>
               <% end %>
             <% else %>
               <tr>
-                <td colspan="7" class="text-center text-muted py-4">
+                <td colspan="11" class="text-center text-muted py-4">
                   <i class="fas fa-inbox fa-2x mb-3"></i><br>
                   No invoice data found for the selected period.
                 </td>
@@ -193,9 +206,13 @@
                 <td colspan="5" class="text-end"><strong>TOTAL SUMMARY:</strong></td>
                 <td class="text-center bg-info text-white"><strong><%= report_data[:summary][:total_assignments] %></strong></td>
                 <td class="text-end bg-success text-white"><strong>₹<%= number_with_delimiter(report_data[:summary][:total_invoice_amount]) %></strong></td>
+                <td class="text-end bg-warning text-white"><strong>₹<%= number_with_delimiter(report_data[:summary][:total_gst]) %></strong></td>
+                <td class="text-end bg-info text-white"><strong>₹<%= number_with_delimiter(report_data[:summary][:total_cgst]) %></strong></td>
+                <td class="text-end bg-info text-white"><strong>₹<%= number_with_delimiter(report_data[:summary][:total_sgst]) %></strong></td>
+                <td class="text-end bg-primary text-white"><strong>₹<%= number_with_delimiter(report_data[:summary][:total_igst]) %></strong></td>
               </tr>
               <tr>
-                <td colspan="7" class="text-center text-muted py-2">
+                <td colspan="11" class="text-center text-muted py-2">
                   <small>
                     <i class="fas fa-info-circle me-1"></i>
                     <strong><%= report_data[:summary][:report_month] %> <%= report_data[:summary][:report_year] %></strong> |

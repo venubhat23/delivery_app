@@ -1,6 +1,89 @@
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h1 class="h2">Edit Delivery Assignment #<%= @delivery_assignment.id %></h1>
-  <%= link_to "Back to Assignment", @delivery_assignment, class: "btn btn-secondary" %>
-</div>
+<% if request.xhr? %>
+  <!-- Modal Content for AJAX requests -->
+  <div class="modal-header bg-primary text-white">
+    <h5 class="modal-title d-flex align-items-center">
+      <i class="fas fa-edit me-2"></i>
+      Edit Assignment #<%= @delivery_assignment.id %>
+    </h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+  </div>
 
-<%= render 'form' %>
+  <div class="modal-body">
+    <!-- Customer and Date Info -->
+    <div class="alert alert-info d-flex align-items-center mb-4">
+      <i class="fas fa-user me-3 fa-2x"></i>
+      <div>
+        <h6 class="mb-1 fw-bold"><%= @delivery_assignment.customer.name %></h6>
+        <small class="text-muted">
+          <i class="fas fa-calendar me-1"></i>
+          <%= @delivery_assignment.scheduled_date.strftime("%d %B %Y") %>
+          (<%= @delivery_assignment.scheduled_date.strftime("%A") %>)
+        </small>
+      </div>
+    </div>
+
+    <%= form_with model: @delivery_assignment, local: false, id: "edit-assignment-form", data: { assignment_id: @delivery_assignment.id } do |form| %>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :quantity, "Quantity", class: "form-label fw-bold" %>
+            <%= form.number_field :quantity, class: "form-control form-control-lg", step: 0.1, min: 0, placeholder: "Enter quantity" %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :product_id, "Product", class: "form-label fw-bold" %>
+            <%= form.select :product_id,
+                  options_from_collection_for_select(@products, :id, :name, @delivery_assignment.product_id),
+                  { prompt: "Select product" },
+                  { class: "form-select form-select-lg" } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :status, "Status", class: "form-label fw-bold" %>
+            <%= form.select :status,
+                  options_for_select([
+                    ['Pending', 'pending'],
+                    ['Completed', 'completed'],
+                    ['Cancelled', 'cancelled']
+                  ], @delivery_assignment.status),
+                  {},
+                  { class: "form-select form-select-lg" } %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :delivery_person_name, "Delivery Person", class: "form-label fw-bold" %>
+            <%= form.text_field :delivery_person_name, class: "form-control form-control-lg", placeholder: "Delivery person name" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :special_instructions, "Special Instructions", class: "form-label fw-bold" %>
+        <%= form.text_area :special_instructions, class: "form-control", rows: 3, placeholder: "Any special delivery instructions..." %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      <i class="fas fa-times me-1"></i>Cancel
+    </button>
+    <button type="submit" class="btn btn-primary btn-lg" id="update-assignment-btn" data-assignment-id="<%= @delivery_assignment.id %>">
+      <i class="fas fa-save me-2"></i>Save Changes
+    </button>
+  </div>
+<% else %>
+  <!-- Full page view for non-AJAX requests -->
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Edit Delivery Assignment #<%= @delivery_assignment.id %></h1>
+    <%= link_to "Back to Assignment", @delivery_assignment, class: "btn btn-secondary" %>
+  </div>
+
+  <%= render 'form' %>
+<% end %>

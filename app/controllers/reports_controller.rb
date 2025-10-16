@@ -1249,8 +1249,8 @@ class ReportsController < ApplicationController
     report_month = from_date.month
     report_year = from_date.year
 
-    # Get all invoices with preloaded associations to avoid N+1 queries
-    invoices = Invoice.includes(:customer, :delivery_assignments)
+    # Get all invoices with preloaded associations including invoice items and products for tax calculation
+    invoices = Invoice.includes(:customer, :delivery_assignments, invoice_items: :product)
                      .where(month: report_month, year: report_year)
                      .order(:invoice_date)
 
@@ -1263,6 +1263,10 @@ class ReportsController < ApplicationController
     detailed_sales = []
     total_invoice_amount = 0
     total_assignment_count = 0
+    total_gst_amount = 0
+    total_cgst_amount = 0
+    total_sgst_amount = 0
+    total_igst_amount = 0
 
     invoices.each do |invoice|
       # Skip if no customer
@@ -1282,20 +1286,32 @@ class ReportsController < ApplicationController
       # Get invoice total amount
       invoice_total_amount = invoice.total_amount || 0
 
-      # Add to detailed sales array with all requested fields
+      # Calculate tax amounts for this invoice
+      tax_amounts = calculate_invoice_tax_amounts(invoice)
+
+      # Add to detailed sales array with all requested fields including tax details
       detailed_sales << {
         customer_name: customer_name,
         invoice_number: invoice.invoice_number,
+        invoice_id: invoice.id,
         total_amount: invoice_total_amount.round(2),
         assignment_count: assignment_count,
         invoice_date: invoice.invoice_date.strftime('%d/%m/%Y'),
         customer_number: customer_number,
-        customer_address: customer_address
+        customer_address: customer_address,
+        total_gst: tax_amounts[:total_gst].round(2),
+        cgst: tax_amounts[:cgst].round(2),
+        sgst: tax_amounts[:sgst].round(2),
+        igst: tax_amounts[:igst].round(2)
       }
 
       # Add to totals
       total_invoice_amount += invoice_total_amount
       total_assignment_count += assignment_count
+      total_gst_amount += tax_amounts[:total_gst]
+      total_cgst_amount += tax_amounts[:cgst]
+      total_sgst_amount += tax_amounts[:sgst]
+      total_igst_amount += tax_amounts[:igst]
     end
 
     # Sort by invoice date (newest first)
@@ -1310,7 +1326,11 @@ class ReportsController < ApplicationController
         average_invoice_value: detailed_sales.count > 0 ? (total_invoice_amount / detailed_sales.count).round(2) : 0,
         period: "#{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}",
         report_month: Date::MONTHNAMES[report_month],
-        report_year: report_year
+        report_year: report_year,
+        total_gst: total_gst_amount.round(2),
+        total_cgst: total_cgst_amount.round(2),
+        total_sgst: total_sgst_amount.round(2),
+        total_igst: total_igst_amount.round(2)
       }
     }
   end
@@ -1323,6 +1343,55 @@ class ReportsController < ApplicationController
     address_parts << customer.pincode if customer.respond_to?(:pincode) && customer.pincode.present?
 
     address_parts.any? ? address_parts.join(', ') : "Address not available"
+  end
+
+  def calculate_invoice_tax_amounts(invoice)
+    total_gst = 0
+    cgst = 0
+    sgst = 0
+    igst = 0
+
+    # Go through each invoice item to calculate tax based on the associated product
+    invoice.invoice_items.each do |item|
+      product = item.product
+      next unless product && product.is_gst_applicable
+
+      # Calculate the base amount for this item (quantity * unit_price)
+      item_base_amount = (item.quantity || 0) * (item.unit_price || 0)
+
+      # Calculate tax amounts based on product's GST settings
+      if product.total_cgst_percentage.present? && product.total_sgst_percentage.present?
+        # Domestic transaction (CGST + SGST)
+        item_cgst = item_base_amount * (product.total_cgst_percentage / 100.0)
+        item_sgst = item_base_amount * (product.total_sgst_percentage / 100.0)
+
+        cgst += item_cgst
+        sgst += item_sgst
+        total_gst += item_cgst + item_sgst
+      elsif product.total_igst_percentage.present?
+        # Interstate transaction (IGST)
+        item_igst = item_base_amount * (product.total_igst_percentage / 100.0)
+
+        igst += item_igst
+        total_gst += item_igst
+      elsif product.total_gst_percentage.present?
+        # Fallback: use total GST percentage (assume it's split equally between CGST and SGST)
+        total_item_gst = item_base_amount * (product.total_gst_percentage / 100.0)
+        item_cgst = total_item_gst / 2
+        item_sgst = total_item_gst / 2
+
+        cgst += item_cgst
+        sgst += item_sgst
+        total_gst += total_item_gst
+      end
+    end
+
+    {
+      total_gst: total_gst,
+      cgst: cgst,
+      sgst: sgst,
+      igst: igst
+    }
   end
 
   # Financial Report Data
