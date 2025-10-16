@@ -211,6 +211,40 @@ class ReportsController < ApplicationController
       }
     end
   end
+
+  def generate_enhanced_sales_report
+    from_date = params[:from_date]
+    to_date = params[:to_date]
+
+    if from_date.blank? || to_date.blank?
+      render json: {
+        success: false,
+        message: "Please select both from and to dates"
+      }
+      return
+    end
+
+    begin
+      report = create_report_record(from_date, to_date, 'enhanced_sales')
+
+      render json: {
+        success: true,
+        message: "Enhanced Sales Report generated successfully",
+        report: {
+          id: report.id,
+          name: report.name,
+          generated_at: report.created_at.strftime("%B %d, %Y at %I:%M %p"),
+          from_date: from_date,
+          to_date: to_date
+        }
+      }
+    rescue => e
+      render json: {
+        success: false,
+        message: "Failed to generate report: #{e.message}"
+      }
+    end
+  end
   
   def show
     @report = find_report
@@ -231,6 +265,8 @@ class ReportsController < ApplicationController
       @report_data = get_gst_report_data(from_date, to_date)
     when 'sales'
       @report_data = get_sales_report_data(from_date, to_date)
+    when 'enhanced_sales'
+      @report_data = get_enhanced_sales_report_data(from_date, to_date)
     when 'delivery'
       @report_data = get_delivery_report_data(from_date, to_date)
     when 'customer'
@@ -250,20 +286,36 @@ class ReportsController < ApplicationController
     respond_to do |format|
       format.html
       format.json { render json: @report_data }
+      format.csv { send_csv_report(@report_data, @report_type, @from_date, @to_date) }
     end
   end
 
   def download_pdf
     report = find_report
-    
+
     if report.nil?
       redirect_to reports_path, alert: "Report not found"
       return
     end
-    
-    # Generate PDF content
-    html_content = generate_gst_pdf_content(report)
-    
+
+    # Generate PDF content based on report type
+    html_content = case report.report_type
+                   when 'enhanced_sales'
+                     generate_enhanced_sales_pdf_content(report)
+                   when 'sales'
+                     generate_sales_pdf_content(report)
+                   when 'delivery'
+                     generate_delivery_pdf_content(report)
+                   when 'customer'
+                     generate_customer_pdf_content(report)
+                   when 'product'
+                     generate_product_pdf_content(report)
+                   when 'financial'
+                     generate_financial_pdf_content(report)
+                   else
+                     generate_gst_pdf_content(report)
+                   end
+
     respond_to do |format|
       format.pdf do
         render html: html_content.html_safe, layout: false
@@ -275,7 +327,172 @@ class ReportsController < ApplicationController
   end
   
   private
-  
+
+  def send_csv_report(report_data, report_type, from_date, to_date)
+    require 'csv'
+
+    filename = "#{report_type}_report_#{from_date.strftime('%Y%m%d')}_to_#{to_date.strftime('%Y%m%d')}.csv"
+
+    csv_data = case report_type
+    when 'enhanced_sales'
+      generate_enhanced_sales_csv(report_data)
+    when 'gst'
+      generate_gst_csv(report_data)
+    when 'sales'
+      generate_sales_csv(report_data)
+    when 'delivery'
+      generate_delivery_csv(report_data)
+    when 'customer'
+      generate_customer_csv(report_data)
+    when 'product'
+      generate_product_csv(report_data)
+    when 'financial'
+      generate_financial_csv(report_data)
+    else
+      generate_default_csv(report_data)
+    end
+
+    send_data csv_data, filename: filename, type: 'text/csv'
+  end
+
+  def generate_enhanced_sales_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      # Add header row
+      csv << ['Customer Name', 'Customer Number', 'Customer Address', 'Invoice Number', 'Invoice Date', 'Number of Assignments', 'Total Amount']
+
+      # Add data rows
+      report_data[:detailed_sales].each do |sale|
+        csv << [
+          sale[:customer_name],
+          sale[:customer_number],
+          sale[:customer_address],
+          sale[:invoice_number],
+          sale[:invoice_date],
+          sale[:assignment_count],
+          sale[:total_amount]
+        ]
+      end
+
+      # Add summary row
+      csv << []
+      csv << ['SUMMARY']
+      csv << ['Report Period', report_data[:summary][:period]]
+      csv << ['Report Month', "#{report_data[:summary][:report_month]} #{report_data[:summary][:report_year]}"]
+      csv << ['Total Invoices', report_data[:summary][:total_invoices]]
+      csv << ['Total Assignments', report_data[:summary][:total_assignments]]
+      csv << ['Total Invoice Amount', report_data[:summary][:total_invoice_amount]]
+      csv << ['Average Invoice Value', report_data[:summary][:average_invoice_value]]
+    end
+  end
+
+  def generate_gst_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Customer Name', 'State Code', 'State Name', 'Invoice Number', 'Invoice Date', 'Invoice Value', 'Tax Rate %', 'Taxable Value', 'Central Tax', 'State Tax', 'Integrated Tax', 'CESS', 'Total Tax']
+
+      report_data[:sales_transactions].each do |transaction|
+        csv << [
+          transaction[:customer_name],
+          transaction[:state_code],
+          transaction[:state_name],
+          transaction[:invoice_no],
+          transaction[:invoice_date],
+          transaction[:invoice_value],
+          transaction[:tax_rate],
+          transaction[:taxable_value],
+          transaction[:central_tax],
+          transaction[:state_tax],
+          transaction[:integrated_tax],
+          transaction[:cess],
+          transaction[:total_tax]
+        ]
+      end
+    end
+  end
+
+  def generate_sales_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Invoice Number', 'Customer Name', 'Date', 'Amount', 'Status']
+
+      report_data[:invoices].each do |invoice|
+        csv << [
+          invoice[:invoice_number],
+          invoice[:customer_name],
+          invoice[:date],
+          invoice[:amount],
+          invoice[:status]
+        ]
+      end
+    end
+  end
+
+  def generate_delivery_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Delivery Person', 'Total Assignments', 'Completed', 'Completion Rate %']
+
+      report_data[:delivery_people_performance].each do |person|
+        csv << [
+          person[:delivery_person],
+          person[:total_assignments],
+          person[:completed],
+          person[:completion_rate]
+        ]
+      end
+    end
+  end
+
+  def generate_customer_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Customer Name', 'Phone', 'Total Sales', 'Total Deliveries', 'Last Order Date']
+
+      report_data[:top_customers].each do |customer|
+        csv << [
+          customer[:name],
+          customer[:phone],
+          customer[:total_sales],
+          customer[:total_deliveries],
+          customer[:last_order_date]
+        ]
+      end
+    end
+  end
+
+  def generate_product_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Product Name', 'Quantity Sold', 'Total Revenue', 'Average Price']
+
+      report_data[:products].each do |product|
+        csv << [
+          product[:name],
+          product[:quantity_sold],
+          product[:total_revenue],
+          product[:average_price]
+        ]
+      end
+    end
+  end
+
+  def generate_financial_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Month', 'Sales', 'Purchases', 'Profit']
+
+      report_data[:monthly_breakdown].each do |month_data|
+        csv << [
+          month_data[:month],
+          month_data[:sales],
+          month_data[:purchases],
+          month_data[:profit]
+        ]
+      end
+    end
+  end
+
+  def generate_default_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Data']
+      csv << ['No specific CSV format defined for this report type']
+    end
+  end
+
   def number_with_delimiter(number)
     # Simple number formatting helper
     return "0.0" if number.nil? || number == 0
@@ -301,6 +518,7 @@ class ReportsController < ApplicationController
     report_names = {
       'gst' => 'GST Report',
       'sales' => 'Sales Report',
+      'enhanced_sales' => 'Enhanced Sales Report',
       'delivery' => 'Delivery Report',
       'customer' => 'Customer Report',
       'product' => 'Product Performance Report',
@@ -331,17 +549,186 @@ class ReportsController < ApplicationController
     end
   end
   
+  def generate_enhanced_sales_pdf_content(report)
+    # Generate Enhanced Sales report data
+    from_date = report.respond_to?(:from_date) ? report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
+    to_date = report.respond_to?(:to_date) ? report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
+    report_data = get_enhanced_sales_report_data(from_date, to_date)
+
+    # Generate HTML content for Enhanced Sales PDF
+    html_content = generate_enhanced_sales_pdf_html(report, report_data, from_date, to_date)
+
+    # Return HTML content that can be converted to PDF by the browser
+    html_content
+  end
+
   def generate_gst_pdf_content(report)
     # Generate GST report data
     from_date = report.respond_to?(:from_date) ? report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
     to_date = report.respond_to?(:to_date) ? report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
     gst_data = get_gst_report_data(from_date, to_date)
-    
+
     # Generate HTML content for PDF with proper table formatting
     html_content = generate_pdf_html_table(report, gst_data, from_date, to_date)
-    
+
     # Return HTML content that can be converted to PDF by the browser
     html_content
+  end
+
+  def generate_sales_pdf_content(report)
+    # Generate Sales report data
+    from_date = report.respond_to?(:from_date) ? report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
+    to_date = report.respond_to?(:to_date) ? report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
+    report_data = get_sales_report_data(from_date, to_date)
+
+    # For now, fallback to GST format - can be customized later
+    generate_pdf_html_table(report, report_data, from_date, to_date)
+  end
+
+  def generate_delivery_pdf_content(report)
+    # Generate Delivery report data
+    from_date = report.respond_to?(:from_date) ? report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
+    to_date = report.respond_to?(:to_date) ? report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
+    report_data = get_delivery_report_data(from_date, to_date)
+
+    # For now, fallback to GST format - can be customized later
+    generate_pdf_html_table(report, report_data, from_date, to_date)
+  end
+
+  def generate_customer_pdf_content(report)
+    # Generate Customer report data
+    from_date = report.respond_to?(:from_date) ? report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
+    to_date = report.respond_to?(:to_date) ? report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
+    report_data = get_customer_report_data(from_date, to_date)
+
+    # For now, fallback to GST format - can be customized later
+    generate_pdf_html_table(report, report_data, from_date, to_date)
+  end
+
+  def generate_product_pdf_content(report)
+    # Generate Product report data
+    from_date = report.respond_to?(:from_date) ? report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
+    to_date = report.respond_to?(:to_date) ? report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
+    report_data = get_product_report_data(from_date, to_date)
+
+    # For now, fallback to GST format - can be customized later
+    generate_pdf_html_table(report, report_data, from_date, to_date)
+  end
+
+  def generate_financial_pdf_content(report)
+    # Generate Financial report data
+    from_date = report.respond_to?(:from_date) ? report.from_date : Date.parse(params[:from_date] || 1.month.ago.to_s)
+    to_date = report.respond_to?(:to_date) ? report.to_date : Date.parse(params[:to_date] || Date.current.to_s)
+    report_data = get_financial_report_data(from_date, to_date)
+
+    # For now, fallback to GST format - can be customized later
+    generate_pdf_html_table(report, report_data, from_date, to_date)
+  end
+
+  def generate_enhanced_sales_pdf_html(report, report_data, from_date, to_date)
+    <<~HTML
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Enhanced Sales Report - Atma Nirbhar Farm</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .company-name { font-size: 24px; font-weight: bold; color: #333; }
+          .report-title { font-size: 18px; color: #666; margin: 10px 0; }
+          .report-details { font-size: 14px; color: #888; }
+          .summary { margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px; }
+          .summary h3 { margin: 0 0 10px 0; color: #333; }
+          .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+          .summary-item { text-align: center; }
+          .summary-value { font-size: 18px; font-weight: bold; color: #007bff; }
+          .summary-label { font-size: 12px; color: #666; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #343a40; color: white; padding: 12px 8px; text-align: left; font-size: 12px; }
+          td { padding: 10px 8px; border-bottom: 1px solid #dee2e6; font-size: 11px; }
+          .text-right { text-align: right; }
+          .text-center { text-align: center; }
+          .amount { font-weight: bold; color: #28a745; }
+          .customer-name { font-weight: bold; }
+          .address { color: #666; max-width: 150px; word-wrap: break-word; }
+          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+          .total-row { background-color: #f8f9fa; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-name">Enhanced Sales Report - Atma Nirbhar Farm</div>
+          <div class="report-title">Mobile: 9972808044</div>
+          <div class="report-details">
+            Date Range: #{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}<br>
+            Report Month: #{report_data[:summary][:report_month]} #{report_data[:summary][:report_year]}<br>
+            Generated On: #{Time.current.strftime('%d/%m/%Y at %I:%M %p')}
+          </div>
+        </div>
+
+        <div class="summary">
+          <h3>Summary</h3>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-value">#{report_data[:summary][:total_invoices]}</div>
+              <div class="summary-label">Total Invoices</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">#{report_data[:summary][:total_assignments]}</div>
+              <div class="summary-label">Total Assignments</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">₹#{number_with_delimiter(report_data[:summary][:total_invoice_amount])}</div>
+              <div class="summary-label">Total Amount</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">₹#{number_with_delimiter(report_data[:summary][:average_invoice_value])}</div>
+              <div class="summary-label">Average Invoice</div>
+            </div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Customer Number</th>
+              <th>Address</th>
+              <th>Invoice Number</th>
+              <th>Invoice Date</th>
+              <th class="text-center">Assignments</th>
+              <th class="text-right">Total Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            #{report_data[:detailed_sales].map do |sale|
+              <<~ROW
+                <tr>
+                  <td class="customer-name">#{sale[:customer_name]}</td>
+                  <td>#{sale[:customer_number]}</td>
+                  <td class="address">#{sale[:customer_address]}</td>
+                  <td>#{sale[:invoice_number]}</td>
+                  <td>#{sale[:invoice_date]}</td>
+                  <td class="text-center">#{sale[:assignment_count]}</td>
+                  <td class="text-right amount">₹#{number_with_delimiter(sale[:total_amount])}</td>
+                </tr>
+              ROW
+            end.join}
+            <tr class="total-row">
+              <td colspan="5"><strong>TOTAL</strong></td>
+              <td class="text-center"><strong>#{report_data[:summary][:total_assignments]}</strong></td>
+              <td class="text-right"><strong>₹#{number_with_delimiter(report_data[:summary][:total_invoice_amount])}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p>Enhanced Sales Report | #{report_data[:summary][:report_month]} #{report_data[:summary][:report_year]} | Total of #{report_data[:summary][:total_invoices]} invoices</p>
+        </div>
+      </body>
+      </html>
+    HTML
   end
   
   def generate_pdf_html_table(report, gst_data, from_date, to_date)
@@ -854,6 +1241,88 @@ class ReportsController < ApplicationController
       },
       products: product_data.sort_by { |p| p[:total_revenue] }.reverse
     }
+  end
+
+  # Enhanced Sales Report Data
+  def get_enhanced_sales_report_data(from_date, to_date)
+    # Determine month and year from the date range
+    report_month = from_date.month
+    report_year = from_date.year
+
+    # Get all invoices with preloaded associations to avoid N+1 queries
+    invoices = Invoice.includes(:customer, :delivery_assignments)
+                     .where(month: report_month, year: report_year)
+                     .order(:invoice_date)
+
+    # Preload assignment counts in memory to avoid N+1 queries
+    assignment_counts = {}
+    invoices.each do |invoice|
+      assignment_counts[invoice.id] = invoice.delivery_assignments.size
+    end
+
+    detailed_sales = []
+    total_invoice_amount = 0
+    total_assignment_count = 0
+
+    invoices.each do |invoice|
+      # Skip if no customer
+      next unless invoice.customer
+
+      # Get customer details
+      customer_name = invoice.customer.name || "Unknown Customer"
+      customer_number = invoice.customer.phone_number || invoice.customer.alt_phone_number || "N/A"
+      customer_address = build_customer_address(invoice.customer)
+
+      # Get assignment count from preloaded data
+      assignment_count = assignment_counts[invoice.id] || 0
+
+      # If no assignments linked, consider it as 1 manual invoice
+      assignment_count = 1 if assignment_count == 0
+
+      # Get invoice total amount
+      invoice_total_amount = invoice.total_amount || 0
+
+      # Add to detailed sales array with all requested fields
+      detailed_sales << {
+        customer_name: customer_name,
+        invoice_number: invoice.invoice_number,
+        total_amount: invoice_total_amount.round(2),
+        assignment_count: assignment_count,
+        invoice_date: invoice.invoice_date.strftime('%d/%m/%Y'),
+        customer_number: customer_number,
+        customer_address: customer_address
+      }
+
+      # Add to totals
+      total_invoice_amount += invoice_total_amount
+      total_assignment_count += assignment_count
+    end
+
+    # Sort by invoice date (newest first)
+    detailed_sales.sort! { |a, b| Date.parse(b[:invoice_date]) <=> Date.parse(a[:invoice_date]) }
+
+    {
+      detailed_sales: detailed_sales,
+      summary: {
+        total_invoices: detailed_sales.count,
+        total_assignments: total_assignment_count,
+        total_invoice_amount: total_invoice_amount.round(2),
+        average_invoice_value: detailed_sales.count > 0 ? (total_invoice_amount / detailed_sales.count).round(2) : 0,
+        period: "#{from_date.strftime('%d/%m/%Y')} to #{to_date.strftime('%d/%m/%Y')}",
+        report_month: Date::MONTHNAMES[report_month],
+        report_year: report_year
+      }
+    }
+  end
+
+  def build_customer_address(customer)
+    address_parts = []
+    address_parts << customer.address if customer.address.present?
+    address_parts << customer.city if customer.respond_to?(:city) && customer.city.present?
+    address_parts << customer.state if customer.respond_to?(:state) && customer.state.present?
+    address_parts << customer.pincode if customer.respond_to?(:pincode) && customer.pincode.present?
+
+    address_parts.any? ? address_parts.join(', ') : "Address not available"
   end
 
   # Financial Report Data

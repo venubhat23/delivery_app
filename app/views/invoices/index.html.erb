@@ -58,7 +58,7 @@
       <div class="stats-icon">
         <i class="fas fa-file-invoice"></i>
       </div>
-      <div class="stats-number"><%= @stats[:pending] + @stats[:paid] + @stats[:overdue] %></div>
+      <div class="stats-number"><%= @stats[:total] || (@stats[:pending] + @stats[:paid]) %></div>
       <div class="stats-label">Total Invoices</div>
       <div class="stats-sublabel">All Time</div>
     </div>
@@ -271,7 +271,7 @@
                 </td>
                 <td>
                   <div class="actions-two-lines">
-                    <!-- First Line: View, PDF, WhatsApp (3 icons) -->
+                    <!-- First Line: View, PDF, WhatsApp, Deliveries (4 icons) -->
                     <div class="action-line mb-1">
                       <%= link_to invoice, class: "btn btn-sm btn-outline-primary", title: "View Invoice" do %>
                         <i class="fas fa-eye"></i>
@@ -293,6 +293,15 @@
                               onclick="openWhatsAppDirect(this)"
                               title="Share via WhatsApp">
                         <i class="fab fa-whatsapp"></i>
+                      </button>
+                      <button type="button"
+                              class="btn btn-sm btn-outline-purple delivery-assignments-btn"
+                              data-invoice-id="<%= invoice.id %>"
+                              data-invoice-number="<%= invoice.formatted_number %>"
+                              data-customer-name="<%= invoice.customer.name %>"
+                              onclick="openDeliveryAssignmentsModal(this)"
+                              title="View Delivery Assignments">
+                        <i class="fas fa-truck"></i>
                       </button>
                     </div>
 
@@ -5350,6 +5359,174 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
+<!-- Delivery Assignments Modal -->
+<div id="deliveryAssignmentsModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeDeliveryAssignmentsModal()"></div>
+  <div class="custom-modal-content delivery-modal-large">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title" id="deliveryModalTitle">
+        <i class="fas fa-truck me-2"></i>Delivery Assignments
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeDeliveryAssignmentsModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <div class="delivery-assignments-container">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-0">Invoice Number:</h6>
+            <span id="modalInvoiceNumber" class="fw-bold"></span>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted mb-0">Customer:</h6>
+            <span id="modalCustomerName" class="fw-bold"></span>
+          </div>
+        </div>
+
+        <div class="delivery-assignments-table-container">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th><i class="fas fa-calendar me-1"></i>Date</th>
+                  <th><i class="fas fa-box me-1"></i>Product</th>
+                  <th><i class="fas fa-weight me-1"></i>Quantity</th>
+                  <th><i class="fas fa-user me-1"></i>Delivery Person</th>
+                  <th><i class="fas fa-check-circle me-1"></i>Status</th>
+                  <th><i class="fas fa-rupee-sign me-1"></i>Amount</th>
+                  <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="deliveryAssignmentsTableBody">
+                <!-- Delivery assignments will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="delivery-summary mt-3">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="summary-card">
+                <div class="summary-icon bg-primary">
+                  <i class="fas fa-list"></i>
+                </div>
+                <div class="summary-content">
+                  <h6>Total Deliveries</h6>
+                  <span id="totalDeliveries" class="fw-bold">0</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="summary-card">
+                <div class="summary-icon bg-success">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div class="summary-content">
+                  <h6>Completed</h6>
+                  <span id="completedDeliveries" class="fw-bold text-success">0</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="summary-card">
+                <div class="summary-icon bg-warning">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="summary-content">
+                  <h6>Pending</h6>
+                  <span id="pendingDeliveries" class="fw-bold text-warning">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDeliveryAssignmentsModal()">
+        <i class="fas fa-times me-1"></i>Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Delivery Assignment Modal -->
+<div id="editDeliveryAssignmentModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeEditDeliveryModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-edit me-2"></i>Edit Delivery Assignment
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeEditDeliveryModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <form id="editDeliveryAssignmentForm">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="editScheduledDate" class="form-label">
+              <i class="fas fa-calendar me-1"></i>Scheduled Date
+            </label>
+            <input type="date" class="form-control" id="editScheduledDate" name="scheduled_date" required>
+          </div>
+          <div class="col-md-6">
+            <label for="editStatus" class="form-label">
+              <i class="fas fa-check-circle me-1"></i>Status
+            </label>
+            <select class="form-select" id="editStatus" name="status" required>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="editQuantity" class="form-label">
+              <i class="fas fa-weight me-1"></i>Quantity
+            </label>
+            <input type="number" step="0.01" class="form-control" id="editQuantity" name="quantity" required>
+          </div>
+          <div class="col-md-6">
+            <label for="editUnit" class="form-label">
+              <i class="fas fa-ruler me-1"></i>Unit
+            </label>
+            <input type="text" class="form-control" id="editUnit" name="unit" required>
+          </div>
+          <div class="col-md-6">
+            <label for="editFinalAmount" class="form-label">
+              <i class="fas fa-rupee-sign me-1"></i>Final Amount
+            </label>
+            <input type="number" step="0.01" class="form-control" id="editFinalAmount" name="final_amount_after_discount">
+          </div>
+          <div class="col-md-6">
+            <label for="editDeliveryPerson" class="form-label">
+              <i class="fas fa-user me-1"></i>Delivery Person
+            </label>
+            <select class="form-select" id="editDeliveryPerson" name="delivery_person_id">
+              <option value="">Select Delivery Person</option>
+              <!-- Options will be loaded dynamically -->
+            </select>
+          </div>
+          <div class="col-12">
+            <label for="editSpecialInstructions" class="form-label">
+              <i class="fas fa-sticky-note me-1"></i>Special Instructions
+            </label>
+            <textarea class="form-control" id="editSpecialInstructions" name="special_instructions" rows="3"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeEditDeliveryModal()">
+        <i class="fas fa-times me-1"></i>Cancel
+      </button>
+      <button type="button" class="btn btn-primary" onclick="saveDeliveryAssignment()">
+        <i class="fas fa-save me-1"></i>Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 // Mark as Completed Modal functionality
 let currentInvoiceId = null;
@@ -5563,6 +5740,343 @@ document.getElementById('deleteInvoiceModal').addEventListener('hidden.bs.modal'
   document.getElementById('confirmDeleteInvoice').disabled = true;
   currentDeleteInvoiceId = null;
 });
+
+// Delivery Assignments Modal functionality
+function openDeliveryAssignmentsModal(button) {
+  const invoiceId = button.getAttribute('data-invoice-id');
+  const invoiceNumber = button.getAttribute('data-invoice-number');
+  const customerName = button.getAttribute('data-customer-name');
+
+  // Set modal title and info
+  document.getElementById('modalInvoiceNumber').textContent = invoiceNumber;
+  document.getElementById('modalCustomerName').textContent = customerName;
+
+  // Show modal
+  const modal = document.getElementById('deliveryAssignmentsModal');
+  modal.dataset.invoiceId = invoiceId; // Store invoice ID for later use
+  modal.style.display = 'flex';
+
+  // Load delivery assignments
+  loadDeliveryAssignments(invoiceId);
+}
+
+function closeDeliveryAssignmentsModal() {
+  const modal = document.getElementById('deliveryAssignmentsModal');
+  modal.style.display = 'none';
+
+  // Clear table
+  document.getElementById('deliveryAssignmentsTableBody').innerHTML = '';
+}
+
+function loadDeliveryAssignments(invoiceId) {
+  // Show loading state
+  const tableBody = document.getElementById('deliveryAssignmentsTableBody');
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Loading delivery assignments...</td></tr>';
+
+  // Fetch delivery assignments from server
+  fetch(`/invoices/${invoiceId}/delivery_assignments`)
+    .then(response => response.json())
+    .then(data => {
+      displayDeliveryAssignments(data.delivery_assignments);
+      updateDeliverySummary(data.delivery_assignments);
+    })
+    .catch(error => {
+      console.error('Error loading delivery assignments:', error);
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error loading delivery assignments</td></tr>';
+    });
+}
+
+function displayDeliveryAssignments(deliveryAssignments) {
+  const tableBody = document.getElementById('deliveryAssignmentsTableBody');
+
+  if (deliveryAssignments.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted"><i class="fas fa-info-circle me-2"></i>No delivery assignments found for this invoice</td></tr>';
+    return;
+  }
+
+  const rows = deliveryAssignments.map(delivery => {
+    const statusBadge = getStatusBadge(delivery.status);
+    const scheduledDate = new Date(delivery.scheduled_date).toLocaleDateString();
+    const amount = delivery.final_amount_after_discount ? `₹${parseFloat(delivery.final_amount_after_discount).toFixed(2)}` : '-';
+    const deliveryPerson = delivery.delivery_person_name || 'Not assigned';
+
+    return `
+      <tr data-delivery-id="${delivery.id}">
+        <td>${scheduledDate}</td>
+        <td>${delivery.product_name}</td>
+        <td>${delivery.quantity} ${delivery.unit}</td>
+        <td>${deliveryPerson}</td>
+        <td>${statusBadge}</td>
+        <td>${amount}</td>
+        <td>
+          <div class="btn-group" role="group">
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    onclick="editDeliveryAssignment(${delivery.id})"
+                    title="Edit Delivery Assignment">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    onclick="deleteDeliveryAssignment(${delivery.id})"
+                    title="Delete Delivery Assignment">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tableBody.innerHTML = rows;
+}
+
+function getStatusBadge(status) {
+  const statusMap = {
+    'pending': '<span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Pending</span>',
+    'completed': '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Completed</span>',
+    'cancelled': '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Cancelled</span>',
+    'in_progress': '<span class="badge bg-info"><i class="fas fa-truck me-1"></i>In Progress</span>'
+  };
+
+  return statusMap[status] || `<span class="badge bg-secondary">${status}</span>`;
+}
+
+function updateDeliverySummary(deliveryAssignments) {
+  const totalDeliveries = deliveryAssignments.length;
+  const completedDeliveries = deliveryAssignments.filter(d => d.status === 'completed').length;
+  const pendingDeliveries = deliveryAssignments.filter(d => d.status === 'pending' || d.status === 'in_progress').length;
+
+  document.getElementById('totalDeliveries').textContent = totalDeliveries;
+  document.getElementById('completedDeliveries').textContent = completedDeliveries;
+  document.getElementById('pendingDeliveries').textContent = pendingDeliveries;
+}
+
+// Edit delivery assignment function
+function editDeliveryAssignment(deliveryId) {
+  // Show edit modal (we'll create this next)
+  showEditDeliveryModal(deliveryId);
+}
+
+// Delete delivery assignment function
+function deleteDeliveryAssignment(deliveryId) {
+  if (!confirm('Are you sure you want to delete this delivery assignment? This action cannot be undone.')) {
+    return;
+  }
+
+  fetch(`/assign_deliveries/${deliveryId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Remove the row from the table
+      const row = document.querySelector(`tr[data-delivery-id="${deliveryId}"]`);
+      if (row) {
+        row.remove();
+      }
+
+      // Reload delivery assignments to update summary
+      const modal = document.getElementById('deliveryAssignmentsModal');
+      const invoiceId = modal.dataset.invoiceId;
+      if (invoiceId) {
+        loadDeliveryAssignments(invoiceId);
+        recalculateInvoice(invoiceId);
+      }
+
+      alert(data.message || 'Delivery assignment deleted successfully!');
+    } else {
+      alert('Error: ' + (data.message || 'Failed to delete delivery assignment'));
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting delivery assignment:', error);
+    alert('Error: Failed to delete delivery assignment');
+  });
+}
+
+// Function to recalculate invoice after changes
+function recalculateInvoice(invoiceId) {
+  fetch(`/invoices/${invoiceId}/recalculate`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('Invoice recalculated successfully:', data.total_amount);
+      // Optionally show a notification
+      showNotification('Invoice recalculated successfully!', 'success');
+    } else {
+      console.error('Failed to recalculate invoice:', data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error recalculating invoice:', error);
+  });
+}
+
+// Helper function to show notifications
+function showNotification(message, type = 'info') {
+  // Create a simple notification element
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 99999; max-width: 400px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Auto-remove after 3 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+
+// Global variable to store current delivery assignment ID being edited
+let currentEditingDeliveryId = null;
+
+// Function to show edit delivery modal
+function showEditDeliveryModal(deliveryId) {
+  currentEditingDeliveryId = deliveryId;
+
+  // Load delivery assignment data
+  fetch(`/assign_deliveries/${deliveryId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success !== false) {
+      // Populate form fields
+      populateEditForm(data);
+      // Load delivery people options
+      loadDeliveryPeople();
+      // Show modal
+      document.getElementById('editDeliveryAssignmentModal').style.display = 'flex';
+    } else {
+      alert('Error: Failed to load delivery assignment data');
+    }
+  })
+  .catch(error => {
+    console.error('Error loading delivery assignment:', error);
+    alert('Error: Failed to load delivery assignment data');
+  });
+}
+
+// Function to populate edit form
+function populateEditForm(delivery) {
+  document.getElementById('editScheduledDate').value = delivery.scheduled_date;
+  document.getElementById('editStatus').value = delivery.status;
+  document.getElementById('editQuantity').value = delivery.quantity;
+  document.getElementById('editUnit').value = delivery.unit;
+  document.getElementById('editFinalAmount').value = delivery.final_amount_after_discount || '';
+  document.getElementById('editSpecialInstructions').value = delivery.special_instructions || '';
+
+  // Set delivery person after options are loaded
+  setTimeout(() => {
+    document.getElementById('editDeliveryPerson').value = delivery.delivery_person_id || '';
+  }, 100);
+}
+
+// Function to load delivery people options
+function loadDeliveryPeople() {
+  fetch('/api/delivery_people/search', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const select = document.getElementById('editDeliveryPerson');
+    select.innerHTML = '<option value="">Select Delivery Person</option>';
+
+    data.forEach(person => {
+      const option = document.createElement('option');
+      option.value = person.id;
+      option.textContent = person.name;
+      select.appendChild(option);
+    });
+  })
+  .catch(error => {
+    console.error('Error loading delivery people:', error);
+  });
+}
+
+// Function to close edit modal
+function closeEditDeliveryModal() {
+  document.getElementById('editDeliveryAssignmentModal').style.display = 'none';
+  currentEditingDeliveryId = null;
+}
+
+// Function to save delivery assignment changes
+function saveDeliveryAssignment() {
+  if (!currentEditingDeliveryId) {
+    alert('Error: No delivery assignment selected for editing');
+    return;
+  }
+
+  const form = document.getElementById('editDeliveryAssignmentForm');
+  const formData = new FormData(form);
+
+  const data = {
+    delivery_assignment: {
+      scheduled_date: formData.get('scheduled_date'),
+      status: formData.get('status'),
+      quantity: parseFloat(formData.get('quantity')),
+      unit: formData.get('unit'),
+      final_amount_after_discount: formData.get('final_amount_after_discount') ? parseFloat(formData.get('final_amount_after_discount')) : null,
+      delivery_person_id: formData.get('delivery_person_id') || null,
+      special_instructions: formData.get('special_instructions')
+    }
+  };
+
+  fetch(`/assign_deliveries/${currentEditingDeliveryId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      closeEditDeliveryModal();
+
+      // Reload delivery assignments
+      const modal = document.getElementById('deliveryAssignmentsModal');
+      const invoiceId = modal.dataset.invoiceId;
+      if (invoiceId) {
+        loadDeliveryAssignments(invoiceId);
+        recalculateInvoice(invoiceId);
+      }
+
+      showNotification(result.message || 'Delivery assignment updated successfully!', 'success');
+    } else {
+      alert('Error: ' + (result.message || 'Failed to update delivery assignment'));
+    }
+  })
+  .catch(error => {
+    console.error('Error updating delivery assignment:', error);
+    alert('Error: Failed to update delivery assignment');
+  });
+}
 </script>
 
 <style>
@@ -5842,6 +6356,144 @@ document.getElementById('deleteInvoiceModal').addEventListener('hidden.bs.modal'
   background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 179, 0, 0.1) 100%);
   border: 1px solid rgba(255, 193, 7, 0.3);
   color: #664d03;
+}
+
+/* Purple Button for Delivery Assignments */
+.btn-outline-purple {
+  border: 2px solid #6f42c1;
+  color: #6f42c1;
+  background: transparent;
+}
+
+.btn-outline-purple:hover {
+  background: #6f42c1;
+  color: white;
+  border-color: #6f42c1;
+}
+
+/* Delivery Assignments Modal Styles */
+#deliveryAssignmentsModal .custom-modal-content.delivery-modal-large {
+  max-width: 1000px;
+  width: 95%;
+}
+
+#deliveryAssignmentsModal .custom-modal-header {
+  background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+  color: white;
+}
+
+#deliveryAssignmentsModal .delivery-assignments-container {
+  min-height: 300px;
+}
+
+#deliveryAssignmentsModal .delivery-assignments-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+#deliveryAssignmentsModal .table {
+  margin-bottom: 0;
+}
+
+#deliveryAssignmentsModal .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#deliveryAssignmentsModal .summary-card {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid #e9ecef;
+  transition: transform 0.2s ease;
+}
+
+#deliveryAssignmentsModal .summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#deliveryAssignmentsModal .summary-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  color: white;
+  font-size: 1.2em;
+}
+
+#deliveryAssignmentsModal .summary-content h6 {
+  margin-bottom: 5px;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+#deliveryAssignmentsModal .summary-content span {
+  font-size: 1.5rem;
+}
+
+/* Badge Styles for Status */
+.badge {
+  font-size: 0.8rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+}
+
+/* Edit Delivery Assignment Modal Styles */
+#editDeliveryAssignmentModal .custom-modal-header {
+  background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+  color: white;
+}
+
+#editDeliveryAssignmentModal .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+#editDeliveryAssignmentModal .form-control,
+#editDeliveryAssignmentModal .form-select {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#editDeliveryAssignmentModal .form-control:focus,
+#editDeliveryAssignmentModal .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+#editDeliveryAssignmentModal .btn-group .btn {
+  border-radius: 6px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Action buttons in table */
+#deliveryAssignmentsModal .btn-group .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+#deliveryAssignmentsModal .btn-outline-primary:hover {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+#deliveryAssignmentsModal .btn-outline-danger:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
 }
 
 /* Responsive Design */

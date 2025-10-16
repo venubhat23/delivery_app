@@ -94,6 +94,17 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def show
+    respond_to do |format|
+      format.html
+      format.json {
+        render json: @delivery_assignment.as_json(
+          include: {
+            product: { only: [:id, :name] },
+            delivery_person: { only: [:id, :name] }
+          }
+        )
+      }
+    end
   end
 
   def new

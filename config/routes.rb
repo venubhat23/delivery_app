@@ -255,6 +255,9 @@ Rails.application.routes.draw do
     member do
       patch :complete
       patch :cancel
+      get :show
+      patch :update
+      delete :destroy
     end
 
     collection do
@@ -304,6 +307,8 @@ Rails.application.routes.draw do
       post :share_whatsapp
       post :send_email
       get :download_pdf
+      get :delivery_assignments
+      patch :recalculate
     end
 
     collection do
@@ -367,6 +372,7 @@ Rails.application.routes.draw do
     collection do
       post :generate_gst_report
       post :generate_sales_report
+      post :generate_enhanced_sales_report
       post :generate_delivery_report
       post :generate_customer_report
       post :generate_product_report

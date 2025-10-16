@@ -198,10 +198,20 @@ class Invoice < ApplicationRecord
   scope :paid, -> { where(status: 'completed') }
   scope :overdue, -> { where(status: 'overdue') }
   scope :completed, -> { where(status: 'completed') }
-  scope :overdue_invoices, -> { where('due_date < ? AND status NOT IN (?)', Date.current, ['paid', 'completed']) }
+  scope :overdue_invoices, -> { where('due_date < ? AND status = ?', Date.current, 'pending') }
   scope :due_for_reminder, -> { where('due_date = ? AND status = ?', Date.current + 3.days, 'pending') }
   scope :by_customer, ->(customer_id) { where(customer_id: customer_id) if customer_id.present? }
   scope :by_month, ->(month, year) {
+    return all if month.blank? || year.blank?
+    where(month: month.to_i, year: year.to_i)
+  }
+
+  scope :by_month_year_columns, ->(month, year) {
+    return all if month.blank? || year.blank?
+    where(month: month.to_i, year: year.to_i)
+  }
+
+  scope :by_invoice_date_month, ->(month, year) {
     return all if month.blank? || year.blank?
     start_date = Date.new(year.to_i, month.to_i, 1).beginning_of_month
     end_date = start_date.end_of_month
@@ -238,6 +248,7 @@ class Invoice < ApplicationRecord
   # Callbacks
   before_create :generate_invoice_number
   before_create :generate_share_token
+  before_create :set_month_and_year
   before_save :calculate_total_amount
   after_create :mark_delivery_assignments_as_invoiced
   after_create :mark_customer_invoice_created
@@ -285,6 +296,7 @@ class Invoice < ApplicationRecord
       pending: pending.count,
       paid: paid.count,
       overdue: overdue_invoices.count,
+      total: pending.count + paid.count,
       total_pending_amount: pending.sum(:total_amount),
       total_paid_amount: paid.sum(:total_amount)
     }
@@ -397,6 +409,15 @@ class Invoice < ApplicationRecord
     if invoice_number.blank?
       self.invoice_number = self.class.generate_invoice_number(invoice_type)
       Rails.logger.info "Generated invoice number: #{self.invoice_number}"
+    end
+  end
+
+  def set_month_and_year
+    if month.blank? || year.blank?
+      date_to_use = invoice_date || Date.current
+      self.month = date_to_use.month
+      self.year = date_to_use.year
+      Rails.logger.info "Set month/year: #{month}/#{year} based on #{date_to_use}"
     end
   end
   

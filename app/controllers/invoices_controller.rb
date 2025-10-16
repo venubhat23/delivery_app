@@ -1,6 +1,6 @@
 # app/controllers/invoices_controller.rb
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :mark_as_completed, :convert_to_completed, :share_whatsapp, :send_email, :download_pdf]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :mark_as_paid, :mark_as_completed, :convert_to_completed, :share_whatsapp, :send_email, :download_pdf, :delivery_assignments, :recalculate]
   before_action :set_customers, only: [:index, :new, :create, :generate]
   skip_before_action :require_login, only: [:public_view, :public_download_pdf, :serve_pdf]
   
@@ -815,6 +815,82 @@ end
       Rails.logger.error "Email sending error: #{e.message}"
       render json: { error: 'Failed to send email' }, status: 500
     end
+  end
+
+  def delivery_assignments
+    delivery_assignments = @invoice.delivery_assignments.includes(:product, :delivery_person)
+
+    delivery_data = delivery_assignments.map do |assignment|
+      {
+        id: assignment.id,
+        scheduled_date: assignment.scheduled_date,
+        product_name: assignment.product&.name || 'Unknown Product',
+        quantity: assignment.quantity,
+        unit: assignment.unit,
+        status: assignment.status,
+        delivery_person_name: assignment.delivery_person&.name,
+        final_amount_after_discount: assignment.final_amount_after_discount,
+        special_instructions: assignment.special_instructions
+      }
+    end
+
+    render json: {
+      success: true,
+      delivery_assignments: delivery_data
+    }
+  rescue => e
+    Rails.logger.error "Error fetching delivery assignments: #{e.message}"
+    render json: {
+      success: false,
+      error: 'Failed to fetch delivery assignments'
+    }, status: 500
+  end
+
+  def recalculate
+    # Recalculate invoice based on current delivery assignments
+    delivery_assignments = @invoice.delivery_assignments.includes(:product)
+
+    # Clear existing invoice items
+    @invoice.invoice_items.destroy_all
+
+    # Group delivery assignments by product and sum quantities and amounts
+    grouped_assignments = delivery_assignments.group_by(&:product_id)
+
+    total_amount = 0
+
+    grouped_assignments.each do |product_id, assignments|
+      product = assignments.first.product
+      next unless product
+
+      total_quantity = assignments.sum(&:quantity)
+      total_product_amount = assignments.sum { |a| a.final_amount_after_discount || 0 }
+
+      # Create new invoice item
+      @invoice.invoice_items.create!(
+        product: product,
+        quantity: total_quantity,
+        unit_price: total_product_amount / total_quantity,
+        total_price: total_product_amount,
+        unit: assignments.first.unit
+      )
+
+      total_amount += total_product_amount
+    end
+
+    # Update invoice total
+    @invoice.update!(total_amount: total_amount)
+
+    render json: {
+      success: true,
+      message: 'Invoice recalculated successfully!',
+      total_amount: total_amount
+    }
+  rescue => e
+    Rails.logger.error "Error recalculating invoice: #{e.message}"
+    render json: {
+      success: false,
+      error: 'Failed to recalculate invoice'
+    }, status: 500
   end
 
   private

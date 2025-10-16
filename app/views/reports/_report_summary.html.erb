@@ -85,6 +85,44 @@
       </div>
     </div>
 
+  <% when 'enhanced_sales' %>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-primary">
+        <div class="stats-icon">
+          <i class="fas fa-rupee-sign"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:total_invoice_amount]) %></div>
+        <div class="stats-label">Total Invoice Amount</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-success">
+        <div class="stats-icon">
+          <i class="fas fa-file-invoice"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:total_invoices] %></div>
+        <div class="stats-label">Total Invoices</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-info">
+        <div class="stats-icon">
+          <i class="fas fa-truck"></i>
+        </div>
+        <div class="stats-number"><%= report_data[:summary][:total_assignments] %></div>
+        <div class="stats-label">Total Assignments</div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="stats-card stats-card-warning">
+        <div class="stats-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stats-number">₹<%= number_with_delimiter(report_data[:summary][:average_invoice_value]) %></div>
+        <div class="stats-label">Average Invoice Value</div>
+      </div>
+    </div>
+
   <% when 'delivery' %>
     <div class="col-md-3 mb-3">
       <div class="stats-card stats-card-primary">

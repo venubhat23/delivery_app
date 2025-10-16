@@ -3,6 +3,7 @@
   report_icons = {
     'gst' => 'fa-file-invoice',
     'sales' => 'fa-chart-line',
+    'enhanced_sales' => 'fa-chart-bar',
     'delivery' => 'fa-truck',
     'customer' => 'fa-users',
     'product' => 'fa-box',
@@ -12,6 +13,7 @@
   report_titles = {
     'gst' => 'GST Report Details',
     'sales' => 'Sales Report Details',
+    'enhanced_sales' => 'Enhanced Sales Report Details',
     'delivery' => 'Delivery Report Details',
     'customer' => 'Customer Report Details',
     'product' => 'Product Performance Report Details',
@@ -37,9 +39,15 @@
       <%= link_to reports_path, class: "btn btn-outline-secondary me-2" do %>
         <i class="fas fa-arrow-left me-2"></i>Back to Reports
       <% end %>
+      <%= link_to report_path(@report.respond_to?(:id) ? @report.id : 1, format: :csv),
+                  class: "btn btn-success me-2 download-csv-btn",
+                  data: { report_id: @report.respond_to?(:id) ? @report.id : 1, report_type: @report_type } do %>
+        <i class="fas fa-file-csv me-2"></i>Download CSV
+      <% end %>
       <%= link_to download_pdf_report_path(@report.respond_to?(:id) ? @report.id : 1),
-                  class: "btn btn-primary",
-                  target: "_blank" do %>
+                  class: "btn btn-primary download-pdf-btn",
+                  target: "_blank",
+                  data: { report_id: @report.respond_to?(:id) ? @report.id : 1, report_type: @report_type } do %>
         <i class="fas fa-download me-2"></i>Download PDF
       <% end %>
     </div>
@@ -103,6 +111,78 @@ document.addEventListener('DOMContentLoaded', function() {
       ]
     });
   }
+
+  // Add button loaders for CSV and PDF downloads
+  function addDownloadLoaders() {
+    // Handle CSV download button clicks
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.download-csv-btn')) {
+        const btn = e.target.closest('.download-csv-btn');
+        showDownloadLoader(btn, 'csv');
+      }
+    });
+
+    // Handle PDF download button clicks
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.download-pdf-btn')) {
+        const btn = e.target.closest('.download-pdf-btn');
+        showDownloadLoader(btn, 'pdf');
+      }
+    });
+  }
+
+  function showDownloadLoader(button, type) {
+    const originalContent = button.innerHTML;
+    const reportType = button.dataset.reportType;
+
+    // Store original content
+    button.dataset.originalContent = originalContent;
+
+    // Disable button and show loader
+    button.disabled = true;
+    button.style.pointerEvents = 'none';
+
+    if (type === 'csv') {
+      button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating CSV...';
+      button.className = 'btn btn-success me-2 download-csv-btn generating';
+
+      // Enhanced Sales Report takes longer, adjust timing
+      const timeout = reportType === 'enhanced_sales' ? 6000 : 3000;
+      setTimeout(() => {
+        resetDownloadLoader(button, 'csv');
+      }, timeout);
+
+    } else if (type === 'pdf') {
+      button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating PDF...';
+      button.className = 'btn btn-primary download-pdf-btn generating';
+
+      // Enhanced Sales Report PDF takes longer
+      const timeout = reportType === 'enhanced_sales' ? 8000 : 5000;
+      setTimeout(() => {
+        resetDownloadLoader(button, 'pdf');
+      }, timeout);
+    }
+  }
+
+  function resetDownloadLoader(button, type) {
+    if (button.dataset.originalContent) {
+      button.innerHTML = button.dataset.originalContent;
+      button.disabled = false;
+      button.style.pointerEvents = 'auto';
+
+      // Restore original classes
+      if (type === 'csv') {
+        button.className = 'btn btn-success me-2 download-csv-btn';
+      } else if (type === 'pdf') {
+        button.className = 'btn btn-primary download-pdf-btn';
+      }
+
+      delete button.dataset.originalContent;
+    }
+  }
+
+  // Initialize download loaders
+  addDownloadLoaders();
 });
 </script>
 
@@ -174,5 +254,28 @@ document.addEventListener('DOMContentLoaded', function() {
 .page-header .btn:hover {
   background-color: white;
   color: #667eea;
+}
+
+/* Download Button Loading States */
+.download-csv-btn.generating,
+.download-pdf-btn.generating {
+  opacity: 0.8;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.download-csv-btn.generating:hover,
+.download-pdf-btn.generating:hover {
+  transform: none !important;
+}
+
+.download-csv-btn .fa-spinner,
+.download-pdf-btn .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

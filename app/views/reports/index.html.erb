@@ -70,6 +70,7 @@
               options_for_select([
                 ['GST Report', 'gst'],
                 ['Sales Report', 'sales'],
+                ['Enhanced Sales Report', 'enhanced_sales'],
                 ['Delivery Report', 'delivery'],
                 ['Customer Report', 'customer'],
                 ['Product Performance Report', 'product'],
@@ -107,6 +108,31 @@
         <% end %>
       </div>
     <% end %>
+  </div>
+</div>
+
+<!-- Progress Loader for Enhanced Sales Report -->
+<div id="progressLoader" class="mb-4" style="display: none;">
+  <div class="card border-primary">
+    <div class="card-body text-center">
+      <h5 class="card-title text-primary">
+        <i class="fas fa-chart-bar me-2"></i>Generating Enhanced Sales Report
+      </h5>
+      <p class="card-text text-muted mb-3">Please wait while we process your report...</p>
+
+      <div class="progress mb-3" style="height: 30px; border-radius: 15px;">
+        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+             role="progressbar" style="width: 0%; border-radius: 15px; font-weight: bold;"
+             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+          <span id="progressText" style="line-height: 30px;">0%</span>
+        </div>
+      </div>
+
+      <div id="progressStatus" class="text-muted">
+        <i class="fas fa-spinner fa-spin me-1 text-primary"></i>
+        <span style="font-weight: 500;">Initializing...</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -161,6 +187,7 @@
                     report_configs = {
                       'gst' => { icon: 'fa-receipt', label: 'GST Report', class: 'bg-info' },
                       'sales' => { icon: 'fa-chart-line', label: 'Sales Report', class: 'bg-success' },
+                      'enhanced_sales' => { icon: 'fa-chart-bar', label: 'Enhanced Sales Report', class: 'bg-dark' },
                       'delivery' => { icon: 'fa-truck', label: 'Delivery Report', class: 'bg-warning' },
                       'customer' => { icon: 'fa-users', label: 'Customer Report', class: 'bg-primary' },
                       'product' => { icon: 'fa-box', label: 'Product Report', class: 'bg-secondary' },
@@ -203,15 +230,17 @@
                 </td>
                 <td>
                   <div class="btn-group" role="group">
-                    <%= link_to report_path(report.respond_to?(:id) ? report.id : 1), 
-                          class: "btn btn-sm btn-outline-primary", 
-                          title: "View Report" do %>
+                    <%= link_to report_path(report.respond_to?(:id) ? report.id : 1),
+                          class: "btn btn-sm btn-outline-primary view-report-btn",
+                          title: "View Report",
+                          data: { report_id: report.respond_to?(:id) ? report.id : 1 } do %>
                       <i class="fas fa-eye me-1"></i>View
                     <% end %>
-                    <%= link_to download_pdf_report_path(report.respond_to?(:id) ? report.id : 1, format: :pdf), 
-                          class: "btn btn-sm btn-outline-success", 
+                    <%= link_to download_pdf_report_path(report.respond_to?(:id) ? report.id : 1, format: :pdf),
+                          class: "btn btn-sm btn-outline-success download-report-btn",
                           title: "Download PDF",
-                          target: "_blank" do %>
+                          target: "_blank",
+                          data: { report_id: report.respond_to?(:id) ? report.id : 1 } do %>
                       <i class="fas fa-download me-1"></i>Download
                     <% end %>
                   </div>
@@ -690,19 +719,27 @@ document.addEventListener('DOMContentLoaded', function() {
     reportForm.addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // Show loading state
-      generateBtn.classList.add('loading');
-      generateBtn.disabled = true;
-      
       // Get form data
       const formData = new FormData(reportForm);
       const reportType = document.getElementById('report_type').value;
+
+      // Show loading state
+      generateBtn.classList.add('loading');
+      generateBtn.disabled = true;
+
+      // Show progress loader for Enhanced Sales Report
+      if (reportType === 'enhanced_sales') {
+        showProgressLoader();
+      }
 
       // Determine the correct endpoint based on report type
       let actionUrl = reportForm.action;
       switch(reportType) {
         case 'sales':
           actionUrl = '/reports/generate_sales_report';
+          break;
+        case 'enhanced_sales':
+          actionUrl = '/reports/generate_enhanced_sales_report';
           break;
         case 'delivery':
           actionUrl = '/reports/generate_delivery_report';
@@ -731,6 +768,11 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .then(response => response.json())
       .then(data => {
+        // Hide progress loader if it was shown
+        if (reportType === 'enhanced_sales') {
+          hideProgressLoader();
+        }
+
         // Remove loading state
         generateBtn.classList.remove('loading');
         generateBtn.disabled = false;
@@ -762,7 +804,12 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .catch(error => {
         console.error('Error:', error);
-        
+
+        // Hide progress loader if it was shown
+        if (reportType === 'enhanced_sales') {
+          hideProgressLoader();
+        }
+
         // Remove loading state
         generateBtn.classList.remove('loading');
         generateBtn.disabled = false;
@@ -819,7 +866,10 @@ document.addEventListener('DOMContentLoaded', function() {
       </td>
       <td>
         <div class="btn-group" role="group">
-          <a href="/reports/${report.id}/download_pdf.pdf" class="btn btn-sm btn-outline-success" title="Download PDF" target="_blank">
+          <a href="/reports/${report.id}" class="btn btn-sm btn-outline-primary view-report-btn" title="View Report" data-report-id="${report.id}">
+            <i class="fas fa-eye me-1"></i>View
+          </a>
+          <a href="/reports/${report.id}/download_pdf.pdf" class="btn btn-sm btn-outline-success download-report-btn" title="Download PDF" target="_blank" data-report-id="${report.id}">
             <i class="fas fa-download me-1"></i>Download
           </a>
         </div>
@@ -859,6 +909,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const icons = {
       'gst': 'fa-receipt',
       'sales': 'fa-chart-line',
+      'enhanced_sales': 'fa-chart-bar',
       'delivery': 'fa-truck',
       'customer': 'fa-users',
       'product': 'fa-box',
@@ -871,6 +922,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const labels = {
       'gst': 'GST Report',
       'sales': 'Sales Report',
+      'enhanced_sales': 'Enhanced Sales Report',
       'delivery': 'Delivery Report',
       'customer': 'Customer Report',
       'product': 'Product Report',
@@ -883,6 +935,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const classes = {
       'gst': 'bg-info',
       'sales': 'bg-success',
+      'enhanced_sales': 'bg-dark',
       'delivery': 'bg-warning',
       'customer': 'bg-primary',
       'product': 'bg-secondary',
@@ -890,6 +943,130 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     return classes[reportType] || 'bg-info';
   }
+
+  // Progress Loader Functions
+  function showProgressLoader() {
+    const progressLoader = document.getElementById('progressLoader');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressStatus = document.getElementById('progressStatus');
+
+    progressLoader.style.display = 'block';
+
+    // Simulate progress with realistic stages
+    const stages = [
+      { percent: 10, status: 'Loading invoice data...', delay: 500 },
+      { percent: 25, status: 'Processing customer information...', delay: 1000 },
+      { percent: 40, status: 'Calculating delivery assignments...', delay: 1500 },
+      { percent: 60, status: 'Generating report summary...', delay: 2000 },
+      { percent: 80, status: 'Formatting report data...', delay: 2500 },
+      { percent: 95, status: 'Finalizing report...', delay: 3000 }
+    ];
+
+    let currentStage = 0;
+
+    function updateProgress() {
+      if (currentStage < stages.length) {
+        const stage = stages[currentStage];
+
+        setTimeout(() => {
+          progressBar.style.width = stage.percent + '%';
+          progressBar.setAttribute('aria-valuenow', stage.percent);
+          progressText.textContent = stage.percent + '%';
+          progressStatus.innerHTML = '<i class="fas fa-spinner fa-spin me-1 text-primary"></i><span style="font-weight: 500;">' + stage.status + '</span>';
+
+          currentStage++;
+          updateProgress();
+        }, stage.delay);
+      }
+    }
+
+    updateProgress();
+  }
+
+  function hideProgressLoader() {
+    const progressLoader = document.getElementById('progressLoader');
+    progressLoader.style.display = 'none';
+
+    // Reset progress
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressStatus = document.getElementById('progressStatus');
+
+    progressBar.style.width = '0%';
+    progressBar.setAttribute('aria-valuenow', '0');
+    progressText.textContent = '0%';
+    progressStatus.innerHTML = '<i class="fas fa-spinner fa-spin me-1 text-primary"></i><span style="font-weight: 500;">Initializing...</span>';
+  }
+
+  // Add event listeners for View and Download buttons
+  function addButtonLoaders() {
+    // Handle View button clicks
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.view-report-btn')) {
+        const btn = e.target.closest('.view-report-btn');
+        showButtonLoader(btn, 'view');
+      }
+    });
+
+    // Handle Download button clicks
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.download-report-btn')) {
+        const btn = e.target.closest('.download-report-btn');
+        showButtonLoader(btn, 'download');
+      }
+    });
+  }
+
+  function showButtonLoader(button, type) {
+    const originalContent = button.innerHTML;
+    const reportId = button.dataset.reportId;
+
+    // Store original content
+    button.dataset.originalContent = originalContent;
+
+    // Disable button and show loader
+    button.disabled = true;
+    button.style.pointerEvents = 'none';
+
+    if (type === 'view') {
+      button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+      button.className = 'btn btn-sm btn-primary view-report-btn';
+
+      // Hide loader after 3 seconds (assuming page will redirect/load)
+      setTimeout(() => {
+        resetButtonLoader(button);
+      }, 3000);
+    } else if (type === 'download') {
+      button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Preparing...';
+      button.className = 'btn btn-sm btn-success download-report-btn';
+
+      // Hide loader after 5 seconds (PDF generation time)
+      setTimeout(() => {
+        resetButtonLoader(button);
+      }, 5000);
+    }
+  }
+
+  function resetButtonLoader(button) {
+    if (button.dataset.originalContent) {
+      button.innerHTML = button.dataset.originalContent;
+      button.disabled = false;
+      button.style.pointerEvents = 'auto';
+
+      // Restore original classes
+      if (button.classList.contains('view-report-btn')) {
+        button.className = 'btn btn-sm btn-outline-primary view-report-btn';
+      } else if (button.classList.contains('download-report-btn')) {
+        button.className = 'btn btn-sm btn-outline-success download-report-btn';
+      }
+
+      delete button.dataset.originalContent;
+    }
+  }
+
+  // Initialize button loaders
+  addButtonLoaders();
 });
 </script>
 
