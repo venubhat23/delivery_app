@@ -5624,6 +5624,20 @@ document.getElementById('confirmMarkCompleted').addEventListener('click', functi
 });
 
 // Mobile responsive adjustments for the modal
+function adjustModalForMobile() {
+  const modal = document.querySelector('.custom-modal-content');
+  if (modal) {
+    if (window.innerWidth <= 768) {
+      modal.style.width = '95%';
+      modal.style.maxWidth = '95%';
+      modal.style.margin = '20px auto';
+    } else {
+      modal.style.width = '';
+      modal.style.maxWidth = '800px';
+      modal.style.margin = '50px auto';
+    }
+  }
+}
 
 // Call on window resize
 window.addEventListener('resize', adjustModalForMobile);
@@ -5631,6 +5645,9 @@ document.addEventListener('DOMContentLoaded', adjustModalForMobile);
 
 // Delete Invoice Modal functionality
 let currentDeleteInvoiceId = null;
+
+// Global variable to store current delivery assignment ID being edited
+var currentEditingDeliveryId = null;
 
 function openDeleteModal(button) {
   const invoiceId = button.getAttribute('data-invoice-id');
@@ -5854,8 +5871,18 @@ function updateDeliverySummary(deliveryAssignments) {
 
 // Edit delivery assignment function
 function editDeliveryAssignment(deliveryId) {
-  // Show edit modal (we'll create this next)
-  showEditDeliveryModal(deliveryId);
+  if (!deliveryId) {
+    console.error('No delivery ID provided');
+    alert('Error: No delivery assignment selected');
+    return;
+  }
+
+  try {
+    showEditDeliveryModal(deliveryId);
+  } catch (error) {
+    console.error('Error opening edit modal:', error);
+    alert('Error opening edit modal: ' + error.message);
+  }
 }
 
 // Delete delivery assignment function
@@ -5944,11 +5971,13 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
-// Global variable to store current delivery assignment ID being edited
-let currentEditingDeliveryId = null;
+// Note: currentEditingDeliveryId is declared earlier in the script
 
 // Function to show edit delivery modal
 function showEditDeliveryModal(deliveryId) {
+  if (typeof currentEditingDeliveryId === 'undefined') {
+    window.currentEditingDeliveryId = null;
+  }
   currentEditingDeliveryId = deliveryId;
 
   // Load delivery assignment data
@@ -5967,7 +5996,13 @@ function showEditDeliveryModal(deliveryId) {
       // Load delivery people options
       loadDeliveryPeople();
       // Show modal
-      document.getElementById('editDeliveryAssignmentModal').style.display = 'flex';
+      const modal = document.getElementById('editDeliveryAssignmentModal');
+      if (modal) {
+        modal.style.display = 'flex';
+      } else {
+        console.error('Edit modal not found');
+        alert('Error: Edit modal not found');
+      }
     } else {
       alert('Error: Failed to load delivery assignment data');
     }
@@ -5980,6 +6015,8 @@ function showEditDeliveryModal(deliveryId) {
 
 // Function to populate edit form
 function populateEditForm(delivery) {
+  console.log('Populating form with data:', delivery);
+
   document.getElementById('editScheduledDate').value = delivery.scheduled_date;
   document.getElementById('editStatus').value = delivery.status;
   document.getElementById('editQuantity').value = delivery.quantity;
@@ -5987,9 +6024,11 @@ function populateEditForm(delivery) {
   document.getElementById('editFinalAmount').value = delivery.final_amount_after_discount || '';
   document.getElementById('editSpecialInstructions').value = delivery.special_instructions || '';
 
-  // Set delivery person after options are loaded
+  // Set delivery person after options are loaded (check both user_id and delivery_person_id)
   setTimeout(() => {
-    document.getElementById('editDeliveryPerson').value = delivery.delivery_person_id || '';
+    const deliveryPersonId = delivery.delivery_person_id || delivery.user_id || '';
+    document.getElementById('editDeliveryPerson').value = deliveryPersonId;
+    console.log('Set delivery person ID:', deliveryPersonId);
   }, 100);
 }
 
@@ -6020,8 +6059,13 @@ function loadDeliveryPeople() {
 
 // Function to close edit modal
 function closeEditDeliveryModal() {
-  document.getElementById('editDeliveryAssignmentModal').style.display = 'none';
-  currentEditingDeliveryId = null;
+  const modal = document.getElementById('editDeliveryAssignmentModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  if (typeof currentEditingDeliveryId !== 'undefined') {
+    currentEditingDeliveryId = null;
+  }
 }
 
 // Function to save delivery assignment changes
@@ -6031,50 +6075,122 @@ function saveDeliveryAssignment() {
     return;
   }
 
+  // Get the save button and add loading state
+  const saveButton = document.querySelector('button[onclick="saveDeliveryAssignment()"]');
+  const originalButtonHTML = saveButton.innerHTML;
+
+  // Show loading state
+  saveButton.disabled = true;
+  saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+
   const form = document.getElementById('editDeliveryAssignmentForm');
   const formData = new FormData(form);
 
+  // Prepare the data with correct parameter names and date format conversion
+  const scheduledDate = formData.get('scheduled_date');
+
+  // Convert DD.MM.YYYY to YYYY-MM-DD if needed
+  let formattedDate = scheduledDate;
+  if (scheduledDate && scheduledDate.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
+    const [day, month, year] = scheduledDate.split('.');
+    formattedDate = `${year}-${month}-${day}`;
+  }
+
+  // Handle delivery person ID properly - don't send if empty to avoid validation errors
+  const deliveryPersonId = formData.get('delivery_person_id');
+
   const data = {
     delivery_assignment: {
-      scheduled_date: formData.get('scheduled_date'),
+      scheduled_date: formattedDate,
       status: formData.get('status'),
       quantity: parseFloat(formData.get('quantity')),
       unit: formData.get('unit'),
       final_amount_after_discount: formData.get('final_amount_after_discount') ? parseFloat(formData.get('final_amount_after_discount')) : null,
-      delivery_person_id: formData.get('delivery_person_id') || null,
       special_instructions: formData.get('special_instructions')
     }
   };
 
-  fetch(`/assign_deliveries/${currentEditingDeliveryId}`, {
+  // Only include user_id/delivery_person_id if a delivery person is actually selected
+  if (deliveryPersonId && deliveryPersonId !== '') {
+    data.delivery_assignment.user_id = deliveryPersonId;
+    data.delivery_assignment.delivery_person_id = deliveryPersonId;
+  }
+
+  console.log('Sending update data:', data);
+
+  // Get CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                   document.querySelector('[name="csrf-token"]')?.content;
+
+  fetch(`/assign_deliveries/${currentEditingDeliveryId}.json`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      'Accept': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
     },
     body: JSON.stringify(data)
   })
-  .then(response => response.json())
+  .then(response => {
+    console.log('Response status:', response.status);
+    if (!response.ok) {
+      if (response.status === 422) {
+        return response.json().then(data => {
+          throw new Error(data.message || 'Validation failed');
+        });
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
   .then(result => {
+    console.log('Update result:', result);
+
+    // Reset button state
+    saveButton.disabled = false;
+    saveButton.innerHTML = originalButtonHTML;
+
     if (result.success) {
+      // Close the edit modal
       closeEditDeliveryModal();
 
-      // Reload delivery assignments
+      // Reload delivery assignments to show updated data
       const modal = document.getElementById('deliveryAssignmentsModal');
       const invoiceId = modal.dataset.invoiceId;
       if (invoiceId) {
         loadDeliveryAssignments(invoiceId);
-        recalculateInvoice(invoiceId);
+        // Also recalculate invoice if needed
+        if (typeof recalculateInvoice === 'function') {
+          recalculateInvoice(invoiceId);
+        }
       }
 
-      showNotification(result.message || 'Delivery assignment updated successfully!', 'success');
+      // Show success message
+      if (typeof showNotification === 'function') {
+        showNotification(result.message || 'Delivery assignment updated successfully!', 'success');
+      } else {
+        alert('✅ ' + (result.message || 'Delivery assignment updated successfully!'));
+      }
     } else {
-      alert('Error: ' + (result.message || 'Failed to update delivery assignment'));
+      let errorMessage = result.message || 'Failed to update delivery assignment';
+
+      // If there are specific validation errors, show them
+      if (result.errors && Array.isArray(result.errors)) {
+        errorMessage = 'Validation errors:\n• ' + result.errors.join('\n• ');
+      }
+
+      alert('❌ Error: ' + errorMessage);
     }
   })
   .catch(error => {
     console.error('Error updating delivery assignment:', error);
-    alert('Error: Failed to update delivery assignment');
+
+    // Reset button state
+    saveButton.disabled = false;
+    saveButton.innerHTML = originalButtonHTML;
+
+    alert('❌ Error: Failed to update delivery assignment. Please try again.');
   });
 }
 </script>

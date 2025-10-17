@@ -1383,39 +1383,45 @@
   <%
     # Calculate if any product has GST
     has_gst = @invoice_items.any? { |item| item.product&.is_gst_applicable }
-    
+
     # Calculate totals with proper GST breakdown
+    subtotal_amount = 0
     taxable_amount = 0
     total_cgst = 0
     total_sgst = 0
     total_igst = 0
-    
+
     @invoice_items.each do |item|
+      # Base amount (quantity × unit_price) - this is the amount shown in the items table
       base_amount = item.quantity * (item.unit_price || 0)
+
+      # Add to subtotal (sum of all item amounts)
+      subtotal_amount += base_amount
+
       if item.product&.is_gst_applicable
-        total_gst_rate = (item.product.total_cgst_percentage || 0) + (item.product.total_sgst_percentage || 0) + (item.product.total_igst_percentage || 0)
-        base_amount_before_tax = base_amount
-       
+        # For GST applicable items, add to taxable amount and calculate GST
+        taxable_amount += base_amount
+
+        # Calculate individual tax components based on base amount
         cgst_rate = item.product.total_cgst_percentage || 0
         sgst_rate = item.product.total_sgst_percentage || 0
         igst_rate = item.product.total_igst_percentage || 0
-       
-        cgst_amount = (base_amount_before_tax * cgst_rate / 100).round(2)
-        sgst_amount = (base_amount_before_tax * sgst_rate / 100).round(2)
-        igst_amount = (base_amount_before_tax * igst_rate / 100).round(2)
-        
+
+        cgst_amount = (base_amount * cgst_rate / 100).round(2)
+        sgst_amount = (base_amount * sgst_rate / 100).round(2)
+        igst_amount = (base_amount * igst_rate / 100).round(2)
+
         total_cgst += cgst_amount
         total_sgst += sgst_amount
         total_igst += igst_amount
-        
-        taxable_amount += (base_amount_before_tax - cgst_amount - sgst_amount - igst_amount)
       else
-        taxable_amount += base_amount
+        # For non-GST items, they don't contribute to taxable amount (only GST items do)
+        # but they are part of subtotal
       end
     end
-    
+
     total_tax = total_cgst + total_sgst + total_igst
-    final_total = taxable_amount + total_tax
+    final_total = subtotal_amount + total_tax
   %>
 
   <!-- Action Buttons -->

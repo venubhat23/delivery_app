@@ -432,16 +432,11 @@ class Invoice < ApplicationRecord
   private
   
   def calculate_total_amount
-    # Use total_price from invoice items (which includes discounts) instead of recalculating
-    taxable_amount = invoice_items.sum { |item| item.total_price || (item.quantity * (item.unit_price || 0)) }
-    
-    # Calculate total tax
-    total_tax = invoice_items.sum do |item|
-      base_amount = item.total_price || (item.quantity * (item.unit_price || 0))
-      item.product&.total_tax_amount_for(base_amount) || 0
-    end
-    
-    self.total_amount = taxable_amount + total_tax
+    # Calculate subtotal as sum of all item amounts (base amounts without tax)
+    subtotal_amount = invoice_items.sum { |item| item.total_price || (item.quantity * (item.unit_price || 0)) }
+
+    # Set total_amount to subtotal only (tax is shown separately but not added to total)
+    self.total_amount = subtotal_amount
   end
   
   def self.create_invoice_from_assignments(customer, assignments, invoice_date)

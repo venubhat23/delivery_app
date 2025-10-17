@@ -357,10 +357,10 @@ class ReportsController < ApplicationController
 
   def generate_enhanced_sales_csv(report_data)
     CSV.generate(headers: true) do |csv|
-      # Add header row
-      csv << ['Customer Name', 'Customer Number', 'Customer Address', 'Invoice Number', 'Invoice Date', 'Number of Assignments', 'Total Amount']
+      # Add header row with GST columns
+      csv << ['Customer Name', 'Customer Number', 'Customer Address', 'Invoice Number', 'Invoice Date', 'Number of Assignments', 'Total Amount', 'Total GST', 'CGST', 'SGST', 'IGST']
 
-      # Add data rows
+      # Add data rows with GST information
       report_data[:detailed_sales].each do |sale|
         csv << [
           sale[:customer_name],
@@ -369,11 +369,15 @@ class ReportsController < ApplicationController
           sale[:invoice_number],
           sale[:invoice_date],
           sale[:assignment_count],
-          sale[:total_amount]
+          sale[:total_amount],
+          sale[:total_gst] || 0,
+          sale[:cgst] || 0,
+          sale[:sgst] || 0,
+          sale[:igst] || 0
         ]
       end
 
-      # Add summary row
+      # Add summary row with GST totals
       csv << []
       csv << ['SUMMARY']
       csv << ['Report Period', report_data[:summary][:period]]
@@ -382,6 +386,10 @@ class ReportsController < ApplicationController
       csv << ['Total Assignments', report_data[:summary][:total_assignments]]
       csv << ['Total Invoice Amount', report_data[:summary][:total_invoice_amount]]
       csv << ['Average Invoice Value', report_data[:summary][:average_invoice_value]]
+      csv << ['Total GST Amount', report_data[:summary][:total_gst] || 0]
+      csv << ['Total CGST', report_data[:summary][:total_cgst] || 0]
+      csv << ['Total SGST', report_data[:summary][:total_sgst] || 0]
+      csv << ['Total IGST', report_data[:summary][:total_igst] || 0]
     end
   end
 
@@ -640,7 +648,7 @@ class ReportsController < ApplicationController
           .report-details { font-size: 14px; color: #888; }
           .summary { margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px; }
           .summary h3 { margin: 0 0 10px 0; color: #333; }
-          .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+          .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
           .summary-item { text-align: center; }
           .summary-value { font-size: 18px; font-weight: bold; color: #007bff; }
           .summary-label { font-size: 12px; color: #666; }
@@ -686,6 +694,22 @@ class ReportsController < ApplicationController
               <div class="summary-value">₹#{number_with_delimiter(report_data[:summary][:average_invoice_value])}</div>
               <div class="summary-label">Average Invoice</div>
             </div>
+            <div class="summary-item">
+              <div class="summary-value">₹#{number_with_delimiter(report_data[:summary][:total_gst] || 0)}</div>
+              <div class="summary-label">Total GST</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">₹#{number_with_delimiter(report_data[:summary][:total_cgst] || 0)}</div>
+              <div class="summary-label">Total CGST</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">₹#{number_with_delimiter(report_data[:summary][:total_sgst] || 0)}</div>
+              <div class="summary-label">Total SGST</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">₹#{number_with_delimiter(report_data[:summary][:total_igst] || 0)}</div>
+              <div class="summary-label">Total IGST</div>
+            </div>
           </div>
         </div>
 
@@ -699,6 +723,10 @@ class ReportsController < ApplicationController
               <th>Invoice Date</th>
               <th class="text-center">Assignments</th>
               <th class="text-right">Total Amount</th>
+              <th class="text-right">Total GST</th>
+              <th class="text-right">CGST</th>
+              <th class="text-right">SGST</th>
+              <th class="text-right">IGST</th>
             </tr>
           </thead>
           <tbody>
@@ -712,6 +740,10 @@ class ReportsController < ApplicationController
                   <td>#{sale[:invoice_date]}</td>
                   <td class="text-center">#{sale[:assignment_count]}</td>
                   <td class="text-right amount">₹#{number_with_delimiter(sale[:total_amount])}</td>
+                  <td class="text-right">₹#{number_with_delimiter(sale[:total_gst] || 0)}</td>
+                  <td class="text-right">₹#{number_with_delimiter(sale[:cgst] || 0)}</td>
+                  <td class="text-right">₹#{number_with_delimiter(sale[:sgst] || 0)}</td>
+                  <td class="text-right">₹#{number_with_delimiter(sale[:igst] || 0)}</td>
                 </tr>
               ROW
             end.join}
@@ -719,6 +751,10 @@ class ReportsController < ApplicationController
               <td colspan="5"><strong>TOTAL</strong></td>
               <td class="text-center"><strong>#{report_data[:summary][:total_assignments]}</strong></td>
               <td class="text-right"><strong>₹#{number_with_delimiter(report_data[:summary][:total_invoice_amount])}</strong></td>
+              <td class="text-right"><strong>₹#{number_with_delimiter(report_data[:summary][:total_gst] || 0)}</strong></td>
+              <td class="text-right"><strong>₹#{number_with_delimiter(report_data[:summary][:total_cgst] || 0)}</strong></td>
+              <td class="text-right"><strong>₹#{number_with_delimiter(report_data[:summary][:total_sgst] || 0)}</strong></td>
+              <td class="text-right"><strong>₹#{number_with_delimiter(report_data[:summary][:total_igst] || 0)}</strong></td>
             </tr>
           </tbody>
         </table>
