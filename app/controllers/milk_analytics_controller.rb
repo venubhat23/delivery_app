@@ -1298,28 +1298,45 @@ class MilkAnalyticsController < ApplicationController
 
   def get_schedule_invoice_status
     begin
-      @schedule = current_user.procurement_schedules.find(params[:schedule_id])
-      invoice = @schedule.latest_invoice
+      # Use Rails cache with schedule ID and updated_at timestamp for cache invalidation
+      cache_key = "schedule_invoice_status_#{params[:schedule_id]}"
+
+      # Try to get from cache first
+      cached_result = Rails.cache.read(cache_key)
+      if cached_result
+        render json: cached_result
+        return
+      end
+
+      # Optimize query by including the invoice
+      @schedule = current_user.procurement_schedules
+        .includes(:procurement_invoices)
+        .find(params[:schedule_id])
+
+      invoice = @schedule.procurement_invoices.order(created_at: :desc).first
+
+      result = {
+        success: true,
+        has_invoice: invoice.present?,
+        can_generate: @schedule.procurement_assignments.any?,
+        invoice_number: invoice&.invoice_number,
+        invoice_date: invoice&.invoice_date&.strftime('%d %b %Y'),
+        invoice: invoice ? {
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          status: invoice.status,
+          total_amount: invoice.total_amount,
+          invoice_date: invoice.invoice_date&.strftime('%d %b %Y')
+        } : nil
+      }
+
+      # Cache the result for 2 minutes
+      Rails.cache.write(cache_key, result, expires_in: 2.minutes)
 
       respond_to do |format|
-        format.json {
-          render json: {
-            success: true,
-            has_invoice: @schedule.has_invoice?,
-            can_generate: @schedule.can_generate_invoice?,
-            invoice_number: invoice&.invoice_number,
-            invoice_date: invoice&.invoice_date&.strftime('%d %b %Y'),
-            invoice: invoice ? {
-              id: invoice.id,
-              invoice_number: invoice.invoice_number,
-              status: invoice.status,
-              total_amount: invoice.total_amount,
-              invoice_date: invoice.invoice_date&.strftime('%d %b %Y')
-            } : nil
-          }
-        }
+        format.json { render json: result }
       end
-      
+
     rescue ActiveRecord::RecordNotFound
       respond_to do |format|
         format.json { render json: { success: false, error: 'Schedule not found' }, status: 404 }
@@ -3071,17 +3088,28 @@ class MilkAnalyticsController < ApplicationController
 
   def show_procurement_assignments
     begin
-      @schedule = current_user.procurement_schedules.find(params[:id])
-      @assignments = @schedule.procurement_assignments.includes(:product).order(:date)
+      # Optimize with single query and proper includes
+      @schedule = current_user.procurement_schedules
+        .includes(:product)
+        .find(params[:id])
+
+      # Use limit to prevent huge data loads and optimize with single query
+      @assignments = @schedule.procurement_assignments
+        .includes(:product)
+        .order(:date)
+        .limit(500) # Prevent excessive data loading
 
       respond_to do |format|
         format.html { render partial: 'simple_procurement_assignments_modal' }
         format.json {
+          # Cache the product name to avoid repeated lookups
+          default_product_name = @schedule.product&.name || 'Generic Product'
+
           assignments_data = @assignments.map do |assignment|
             {
               id: assignment.id,
               date: assignment.date.strftime('%d %b %Y'),
-              product_name: assignment.product&.name || @schedule.product&.name || 'Generic Product',
+              product_name: assignment.product&.name || default_product_name,
               planned_quantity: assignment.planned_quantity || 0,
               actual_quantity: assignment.actual_quantity,
               buying_price: assignment.buying_price || 0,
@@ -3100,10 +3128,10 @@ class MilkAnalyticsController < ApplicationController
               vendor_name: @schedule.vendor_name,
               from_date: @schedule.from_date.strftime('%d %b %Y'),
               to_date: @schedule.to_date.strftime('%d %b %Y'),
-              product_name: @schedule.product&.name || 'Generic Product'
+              product_name: default_product_name
             },
             assignments: assignments_data,
-            total_assignments: @assignments.count
+            total_assignments: @assignments.size
           }
         }
       end

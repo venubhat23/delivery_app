@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_18_035837) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_18_063506) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -438,11 +438,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_18_035837) do
     t.index ["procurement_schedule_id", "date"], name: "idx_on_procurement_schedule_id_date_cd15031368"
     t.index ["procurement_schedule_id", "date"], name: "index_procurement_assignments_on_schedule_date"
     t.index ["procurement_schedule_id", "status"], name: "index_procurement_assignments_on_schedule_status"
+    t.index ["procurement_schedule_id", "updated_at"], name: "index_procurement_assignments_schedule_updated"
     t.index ["procurement_schedule_id"], name: "index_procurement_assignments_on_procurement_schedule_id"
     t.index ["product_id", "date"], name: "index_procurement_assignments_on_product_and_date"
     t.index ["product_id"], name: "index_procurement_assignments_on_product_id"
     t.index ["status", "date"], name: "index_procurement_assignments_on_status_and_date"
     t.index ["status"], name: "index_procurement_assignments_on_status"
+    t.index ["updated_at"], name: "index_procurement_assignments_updated_at"
     t.index ["user_id", "date", "product_id"], name: "idx_proc_assignments_user_date_product"
     t.index ["user_id", "date", "vendor_name"], name: "index_procurement_assignments_user_date_vendor"
     t.index ["user_id", "date"], name: "index_procurement_assignments_on_user_and_date"

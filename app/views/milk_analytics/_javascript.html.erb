@@ -1295,8 +1295,29 @@ window.showCopyLoadingOverlay = showCopyLoadingOverlay;
 window.hideCopyLoadingOverlay = hideCopyLoadingOverlay;
 window.showDeleteLoadingOverlay = showDeleteLoadingOverlay;
 window.hideDeleteLoadingOverlay = hideDeleteLoadingOverlay;
-// Check invoice status for a schedule
+// Cache for invoice status checks
+let invoiceStatusCache = new Map();
+let pendingInvoiceChecks = new Set();
+
+// Check invoice status for a schedule with caching and deduplication
 function checkInvoiceStatus(scheduleId) {
+  // Prevent multiple simultaneous calls for the same schedule
+  if (pendingInvoiceChecks.has(scheduleId)) {
+    return;
+  }
+
+  // Check cache first (valid for 2 minutes)
+  const cacheKey = `invoice_${scheduleId}`;
+  const cached = invoiceStatusCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 120000) { // 2 minutes
+    if (cached.data.has_invoice) {
+      updateInvoiceActions(scheduleId, true, cached.data.invoice_number, cached.data.invoice_date);
+    }
+    return;
+  }
+
+  pendingInvoiceChecks.add(scheduleId);
+
   fetch(`/milk-supply-analytics/get_schedule_invoice_status?schedule_id=${scheduleId}`, {
     method: 'GET',
     headers: {
@@ -1306,12 +1327,21 @@ function checkInvoiceStatus(scheduleId) {
   })
   .then(response => response.json())
   .then(data => {
+    // Cache the result
+    invoiceStatusCache.set(cacheKey, {
+      data: data,
+      timestamp: Date.now()
+    });
+
     if (data.has_invoice) {
       updateInvoiceActions(scheduleId, true, data.invoice_number, data.invoice_date);
     }
   })
   .catch(error => {
     console.log('Error checking invoice status:', error);
+  })
+  .finally(() => {
+    pendingInvoiceChecks.delete(scheduleId);
   });
 }
 
@@ -1384,6 +1414,7 @@ function updateInvoiceActions(scheduleId, hasInvoice, invoiceNumber = '', invoic
 
 // Global variables for caching and performance
 let currentScheduleId = null;
+let currentVendorName = null; // Store vendor name to avoid DOM queries
 let assignmentsCache = new Map();
 let isLoadingAssignments = false;
 
@@ -1396,6 +1427,7 @@ function showProcurementAssignments(scheduleId, vendorName) {
     }
 
     currentScheduleId = scheduleId;
+    currentVendorName = vendorName;
     const overlay = document.getElementById('procurementAssignmentsOverlay');
     const content = document.getElementById('procurementAssignmentsContent');
     const title = document.getElementById('procurementAssignmentsTitle');
@@ -1519,14 +1551,14 @@ function showOverlay(overlay) {
 
 // Refresh current assignments
 function refreshCurrentAssignments() {
-  if (currentScheduleId) {
+  if (currentScheduleId && currentVendorName) {
     try {
       // Clear the cache for current assignments
-      const vendorName = document.querySelector(`#actions-${currentScheduleId}`).closest('tr').querySelector('td:nth-child(2)').textContent.trim();
-      const cacheKey = `${currentScheduleId}_${vendorName}`;
+      const cacheKey = `${currentScheduleId}_${currentVendorName}`;
       assignmentsCache.delete(cacheKey);
 
-      showProcurementAssignments(currentScheduleId, vendorName);
+      // Use stored vendor name instead of expensive DOM query
+      showProcurementAssignments(currentScheduleId, currentVendorName);
     } catch (error) {
       console.error('Error refreshing assignments:', error);
       showErrorToast('Unable to refresh assignments');
@@ -1813,18 +1845,21 @@ function updateProcurementAssignment(event, assignmentId) {
     showSuccessToast('✅ Assignment updated successfully!');
     closeProcurementEditModal();
 
-    // Refresh the current assignments view
-    if (typeof refreshCurrentAssignments === 'function') {
-      refreshCurrentAssignments();
-    }
+    // Clear cache and refresh assignments efficiently
+    if (currentScheduleId && currentVendorName) {
+      const cacheKey = `${currentScheduleId}_${currentVendorName}`;
+      assignmentsCache.delete(cacheKey);
 
-    // If the procurement assignments modal is open, refresh it as well
-    const procurementModal = document.getElementById('procurementAssignmentsOverlay');
-    if (procurementModal && procurementModal.style.display !== 'none') {
-      // Refresh the modal content by triggering a reload of the assignments
-      setTimeout(() => {
-        location.reload(); // Simple reload to refresh all data
-      }, 1000);
+      // Also clear invoice status cache since assignment changes may affect invoice generation
+      const invoiceCacheKey = `invoice_${currentScheduleId}`;
+      invoiceStatusCache.delete(invoiceCacheKey);
+
+      // Refresh only if the modal is open
+      const procurementModal = document.getElementById('procurementAssignmentsOverlay');
+      if (procurementModal && procurementModal.style.display !== 'none') {
+        // Use smart refresh instead of full page reload
+        showProcurementAssignments(currentScheduleId, currentVendorName);
+      }
     }
   })
   .catch(error => {
@@ -2134,6 +2169,7 @@ function closeProcurementAssignmentsOverlay() {
 
     // Clean up
     currentScheduleId = null;
+    currentVendorName = null;
     isLoadingAssignments = false;
     const refreshBtn = document.getElementById('refreshAssignmentsBtn');
     if (refreshBtn) {
