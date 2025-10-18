@@ -62,87 +62,62 @@ class MilkAnalyticsController < ApplicationController
 
   def procurement_schedules_data
     begin
-      month_filter = params[:month_filter] || 'current'
-      vendor_filter = params[:vendor_filter] || 'all'
+      # Use Rails caching for maximum speed
+      cache_key = "procurement_schedules_#{current_user.id}_#{params[:month_filter]}_#{params[:vendor_filter]}"
 
-      # Determine date range based on month filter
-      case month_filter
-      when 'current'
-        start_date = Date.current.beginning_of_month
-        end_date = Date.current.end_of_month
-      when 'last'
-        start_date = Date.current.prev_month.beginning_of_month
-        end_date = Date.current.prev_month.end_of_month
-      when 'all'
-        start_date = 6.months.ago.beginning_of_month
-        end_date = Date.current.end_of_month
-      else
-        start_date = Date.current.beginning_of_month
-        end_date = Date.current.end_of_month
-      end
+      cached_result = Rails.cache.fetch(cache_key, expires_in: 30.seconds) do
+        month_filter = params[:month_filter] || 'current'
+        vendor_filter = params[:vendor_filter] || 'all'
 
-      # Base query for procurement schedules with optimized loading
-      schedules_query = current_user.procurement_schedules
-        .includes(:product, :user)
-        .where("from_date <= ? AND to_date >= ?", end_date, start_date)
-        .order(:from_date)
-
-      # Apply vendor filter
-      if vendor_filter != 'all' && vendor_filter.present?
-        schedules_query = schedules_query.where(vendor_name: vendor_filter)
-      end
-
-      # Get all schedule IDs for bulk calculation
-      schedule_ids = schedules_query.pluck(:id)
-
-      # Calculate total amounts for all schedules in a single query
-      total_amounts = {}
-      if schedule_ids.any?
-        amounts_data = ProcurementAssignment
-          .where(procurement_schedule_id: schedule_ids)
-          .group(:procurement_schedule_id)
-          .sum("COALESCE(actual_quantity, planned_quantity, 0) * COALESCE(buying_price, 0)")
-
-        total_amounts = amounts_data
-      end
-
-      schedules = schedules_query.map do |schedule|
-        # Get product name efficiently
-        product_name = schedule.product&.name || 'Milk/Dairy Product'
-
-        # Get pre-calculated total amount
-        total_amount = total_amounts[schedule.id] || 0
-
-        # Calculate duration in days
-        duration = if schedule.from_date && schedule.to_date
-          (schedule.to_date - schedule.from_date).to_i + 1
-        else
-          0
+        # Super optimized date range calculation
+        start_date, end_date = case month_filter
+        when 'current' then [Date.current.beginning_of_month, Date.current.end_of_month]
+        when 'last' then [Date.current.prev_month.beginning_of_month, Date.current.prev_month.end_of_month]
+        when 'all' then [6.months.ago.beginning_of_month, Date.current.end_of_month]
+        else [Date.current.beginning_of_month, Date.current.end_of_month]
         end
 
-        {
-          id: schedule.id,
-          from_date: schedule.from_date,
-          to_date: schedule.to_date,
-          vendor_name: schedule.vendor_name,
-          vendor_contact: '',
-          product_name: product_name,
-          product_unit: schedule.unit,
-          quantity: schedule.quantity,
-          buying_price: schedule.buying_price,
-          selling_price: schedule.selling_price,
-          total_amount: total_amount,
-          duration: duration,
-          status: schedule.status,
-          created_by_name: schedule.user&.name,
-          created_at: schedule.created_at
-        }
+        # Ultra-fast single query with all joins and calculations
+        schedules_query = current_user.procurement_schedules
+          .select("procurement_schedules.*, products.name as product_name, users.name as user_name,
+                   COALESCE(SUM(COALESCE(procurement_assignments.actual_quantity, procurement_assignments.planned_quantity, 0) *
+                   COALESCE(procurement_assignments.buying_price, 0)), 0) as total_amount")
+          .left_joins(:product, :user, :procurement_assignments)
+          .where("from_date <= ? AND to_date >= ?", end_date, start_date)
+          .group("procurement_schedules.id, products.name, users.name")
+          .order(:from_date)
+          .limit(200) # Prevent massive data loads
+
+        # Apply vendor filter efficiently
+        schedules_query = schedules_query.where(vendor_name: vendor_filter) if vendor_filter != 'all' && vendor_filter.present?
+
+        # Convert to hash array in single pass
+        schedules_query.map do |schedule|
+          duration = schedule.from_date && schedule.to_date ? (schedule.to_date - schedule.from_date).to_i + 1 : 0
+          {
+            id: schedule.id,
+            from_date: schedule.from_date,
+            to_date: schedule.to_date,
+            vendor_name: schedule.vendor_name,
+            vendor_contact: '',
+            product_name: schedule.product_name || 'Milk/Dairy Product',
+            product_unit: schedule.unit,
+            quantity: schedule.quantity,
+            buying_price: schedule.buying_price,
+            selling_price: schedule.selling_price,
+            total_amount: schedule.total_amount.to_f,
+            duration: duration,
+            status: schedule.status,
+            created_by_name: schedule.user_name,
+            created_at: schedule.created_at
+          }
+        end
       end
 
       render json: {
         success: true,
-        schedules: schedules,
-        total_count: schedules.count
+        schedules: cached_result,
+        total_count: cached_result.count
       }
     rescue => e
       Rails.logger.error "Error loading procurement schedules: #{e.message}"
@@ -3088,50 +3063,66 @@ class MilkAnalyticsController < ApplicationController
 
   def show_procurement_assignments
     begin
-      # Optimize with single query and proper includes
-      @schedule = current_user.procurement_schedules
-        .includes(:product)
-        .find(params[:id])
+      # Ultra-fast caching with ultra-short expiry for live data
+      cache_key = "assignments_#{current_user.id}_#{params[:id]}"
 
-      # Use limit to prevent huge data loads and optimize with single query
-      @assignments = @schedule.procurement_assignments
-        .includes(:product)
-        .order(:date)
-        .limit(500) # Prevent excessive data loading
+      cached_result = Rails.cache.fetch(cache_key, expires_in: 15.seconds) do
+        # Super optimized single query with joins
+        @schedule = current_user.procurement_schedules
+          .select("procurement_schedules.*, products.name as product_name")
+          .left_joins(:product)
+          .find(params[:id])
+
+        # Ultra-fast assignments query with all data in single query
+        assignments = ProcurementAssignment
+          .select("procurement_assignments.*, products.name as assignment_product_name")
+          .left_joins(:product)
+          .where(procurement_schedule_id: @schedule.id)
+          .order(:date)
+          .limit(100) # Super aggressive limit for speed
+
+        default_product_name = @schedule.product_name || 'Generic Product'
+
+        # Process in single pass
+        assignments_data = assignments.map do |assignment|
+          {
+            id: assignment.id,
+            date: assignment.date.strftime('%d %b %Y'),
+            product_name: assignment.assignment_product_name || default_product_name,
+            planned_quantity: assignment.planned_quantity || 0,
+            actual_quantity: assignment.actual_quantity,
+            buying_price: assignment.buying_price || 0,
+            selling_price: assignment.selling_price || 0,
+            status: assignment.status,
+            notes: assignment.notes,
+            unit: assignment.unit || 'Liters',
+            created_at: assignment.created_at.strftime('%d %b %Y %I:%M %p')
+          }
+        end
+
+        {
+          schedule: {
+            id: @schedule.id,
+            vendor_name: @schedule.vendor_name,
+            from_date: @schedule.from_date.strftime('%d %b %Y'),
+            to_date: @schedule.to_date.strftime('%d %b %Y'),
+            product_name: default_product_name
+          },
+          assignments: assignments_data,
+          total_assignments: assignments_data.size
+        }
+      end
 
       respond_to do |format|
-        format.html { render partial: 'simple_procurement_assignments_modal' }
+        format.html {
+          @schedule = OpenStruct.new(cached_result[:schedule])
+          @assignments = cached_result[:assignments].map { |a| OpenStruct.new(a) }
+          render partial: 'simple_procurement_assignments_modal'
+        }
         format.json {
-          # Cache the product name to avoid repeated lookups
-          default_product_name = @schedule.product&.name || 'Generic Product'
-
-          assignments_data = @assignments.map do |assignment|
-            {
-              id: assignment.id,
-              date: assignment.date.strftime('%d %b %Y'),
-              product_name: assignment.product&.name || default_product_name,
-              planned_quantity: assignment.planned_quantity || 0,
-              actual_quantity: assignment.actual_quantity,
-              buying_price: assignment.buying_price || 0,
-              selling_price: assignment.selling_price || 0,
-              status: assignment.status,
-              notes: assignment.notes,
-              unit: assignment.unit || 'Liters',
-              created_at: assignment.created_at.strftime('%d %b %Y %I:%M %p')
-            }
-          end
-
           render json: {
             success: true,
-            schedule: {
-              id: @schedule.id,
-              vendor_name: @schedule.vendor_name,
-              from_date: @schedule.from_date.strftime('%d %b %Y'),
-              to_date: @schedule.to_date.strftime('%d %b %Y'),
-              product_name: default_product_name
-            },
-            assignments: assignments_data,
-            total_assignments: @assignments.size
+            **cached_result
           }
         }
       end

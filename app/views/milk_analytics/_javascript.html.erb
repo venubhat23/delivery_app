@@ -1426,19 +1426,6 @@ let failedRequestCount = new Map(); // Track failed requests for circuit breaker
 // Show procurement assignments in simple overlay (no modal)
 function showProcurementAssignments(scheduleId, vendorName) {
   try {
-    // Prevent multiple simultaneous loads
-    if (isLoadingAssignments) {
-      return;
-    }
-
-    // Circuit breaker: if too many failures, show error immediately
-    const failureKey = `${scheduleId}_${vendorName}`;
-    const failures = failedRequestCount.get(failureKey) || 0;
-    if (failures >= 3) {
-      showErrorToast('Too many failed attempts. Please refresh the page and try again.');
-      return;
-    }
-
     currentScheduleId = scheduleId;
     currentVendorName = vendorName;
     const overlay = document.getElementById('procurementAssignmentsOverlay');
@@ -1450,30 +1437,22 @@ function showProcurementAssignments(scheduleId, vendorName) {
       return;
     }
 
-    // Update title
+    // Update title immediately
     title.textContent = `Procurement Assignments - ${vendorName}`;
 
-    // Check cache first
-    const cacheKey = `${scheduleId}_${vendorName}`;
+    // Check ultra-fast cache first
+    const cacheKey = `ultra_${scheduleId}_${vendorName}`;
     if (assignmentsCache.has(cacheKey)) {
       content.innerHTML = assignmentsCache.get(cacheKey);
       showOverlay(overlay);
       return;
     }
 
-    // Show simple loading message without spinner
-    content.innerHTML = `
-      <div class="text-center py-3">
-        <p class="text-muted mb-0">Fetching data for ${vendorName}...</p>
-      </div>
-    `;
-
+    // Show overlay immediately with minimal content
+    content.innerHTML = `<div class="text-center py-2"><small class="text-muted">Loading...</small></div>`;
     showOverlay(overlay);
-    isLoadingAssignments = true;
 
-    // Skip timeout completely - just fetch directly
-    // Remove timeout that shows loading states
-
+    // Ultra-fast fetch with minimal timeout
     fetch(`/milk-supply-analytics/show_procurement_assignments?id=${scheduleId}`, {
       method: 'GET',
       headers: {
@@ -1481,46 +1460,23 @@ function showProcurementAssignments(scheduleId, vendorName) {
         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       }
     })
-    .then(response => {
-      isLoadingAssignments = false;
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-      return response.text();
-    })
+    .then(response => response.text())
     .then(html => {
       content.innerHTML = html;
-      // Cache the result for 5 minutes
+      // Ultra-short cache for instant responses
       assignmentsCache.set(cacheKey, html);
-      setTimeout(() => {
-        assignmentsCache.delete(cacheKey);
-      }, 300000); // 5 minutes cache
-
-      // Reset failure count on success
-      failedRequestCount.delete(failureKey);
+      setTimeout(() => assignmentsCache.delete(cacheKey), 20000); // Only 20 seconds cache
     })
     .catch(error => {
-      isLoadingAssignments = false;
-      console.error('Error loading assignments:', error);
-
-      // Increment failure count
-      const currentFailures = failedRequestCount.get(failureKey) || 0;
-      failedRequestCount.set(failureKey, currentFailures + 1);
       content.innerHTML = `
-        <div class="alert alert-danger text-center m-4">
-          <h5>Error Loading Data</h5>
-          <p>Unable to load assignments for ${vendorName}.</p>
-          <button class="btn btn-primary" onclick="showProcurementAssignments(${scheduleId}, '${vendorName}')">
-            Try Again
-          </button>
+        <div class="alert alert-warning text-center m-2">
+          <p class="mb-2">Unable to load data quickly</p>
+          <button class="btn btn-sm btn-primary" onclick="showProcurementAssignments(${scheduleId}, '${vendorName}')">Retry</button>
         </div>
       `;
     });
   } catch (error) {
-    isLoadingAssignments = false;
     console.error('Error in showProcurementAssignments:', error);
-    showErrorToast('Failed to open assignments overlay');
   }
 }
 
@@ -2473,7 +2429,7 @@ function sendMonthlyInvoices() {
   sendButton.disabled = true;
 
   // Make API call
-  fetch('/procurement_schedules/send_monthly_invoices', {
+  fetch('/milk-procurement/send_monthly_invoices', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
