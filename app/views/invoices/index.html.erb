@@ -5568,6 +5568,9 @@ document.addEventListener('DOMContentLoaded', function() {
             </select>
           </div>
 
+          <!-- Spacer for better visual separation -->
+          <div class="col-12 mb-4"></div>
+
           <!-- Scheduled Date -->
           <div class="col-md-6 mb-3">
             <label for="addScheduledDate" class="form-label">
@@ -6044,6 +6047,12 @@ function deleteDeliveryAssignment(deliveryId) {
     return;
   }
 
+  // Find the delete button and add loader
+  const button = event.target.closest('button');
+  const originalHTML = button.innerHTML;
+  button.disabled = true;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
   fetch(`/assign_deliveries/${deliveryId}`, {
     method: 'DELETE',
     headers: {
@@ -6076,6 +6085,11 @@ function deleteDeliveryAssignment(deliveryId) {
   .catch(error => {
     console.error('Error deleting delivery assignment:', error);
     alert('Error: Failed to delete delivery assignment');
+  })
+  .finally(() => {
+    // Restore button state
+    button.disabled = false;
+    button.innerHTML = originalHTML;
   });
 }
 
