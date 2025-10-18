@@ -4,7 +4,7 @@ class ProcurementAssignment < ApplicationRecord
   belongs_to :product, optional: true
 
   validates :vendor_name, presence: true
-  validates :date, presence: true, uniqueness: { scope: [:procurement_schedule_id, :vendor_name] }
+  validates :date, presence: true, uniqueness: { scope: [:procurement_schedule_id, :vendor_name], on: :create }
   validates :planned_quantity, :buying_price, :selling_price, presence: true, numericality: { greater_than: 0 }
   validates :actual_quantity, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :status, inclusion: { in: %w[pending completed cancelled] }

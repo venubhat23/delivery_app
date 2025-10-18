@@ -1342,6 +1342,13 @@ function checkInvoiceStatus(scheduleId) {
   })
   .finally(() => {
     pendingInvoiceChecks.delete(scheduleId);
+    // Ensure no hanging loading states
+    const loadingElements = document.querySelectorAll('.spinner-border, .loading-spinner');
+    loadingElements.forEach(el => {
+      if (el.closest(`#actions-${scheduleId}`)) {
+        el.style.display = 'none';
+      }
+    });
   });
 }
 
@@ -1417,12 +1424,21 @@ let currentScheduleId = null;
 let currentVendorName = null; // Store vendor name to avoid DOM queries
 let assignmentsCache = new Map();
 let isLoadingAssignments = false;
+let failedRequestCount = new Map(); // Track failed requests for circuit breaker
 
 // Show procurement assignments in simple overlay (no modal)
 function showProcurementAssignments(scheduleId, vendorName) {
   try {
     // Prevent multiple simultaneous loads
     if (isLoadingAssignments) {
+      return;
+    }
+
+    // Circuit breaker: if too many failures, show error immediately
+    const failureKey = `${scheduleId}_${vendorName}`;
+    const failures = failedRequestCount.get(failureKey) || 0;
+    if (failures >= 3) {
+      showErrorToast('Too many failed attempts. Please refresh the page and try again.');
       return;
     }
 
@@ -1462,20 +1478,20 @@ function showProcurementAssignments(scheduleId, vendorName) {
     showOverlay(overlay);
     isLoadingAssignments = true;
 
-    // Fetch assignments data with timeout
+    // Fetch assignments data with shorter timeout
     const fetchTimeout = setTimeout(() => {
       isLoadingAssignments = false;
       content.innerHTML = `
         <div class="alert alert-warning text-center m-4">
           <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-          <h5>Request Timeout</h5>
-          <p>The request is taking longer than expected. This might be due to high server load.</p>
+          <h5>Loading Taking Too Long</h5>
+          <p>The server is responding slowly. Click below to try again.</p>
           <button class="btn btn-primary" onclick="showProcurementAssignments(${scheduleId}, '${vendorName}')">
             <i class="fas fa-redo me-1"></i>Try Again
           </button>
         </div>
       `;
-    }, 15000); // 15 second timeout
+    }, 8000); // 8 second timeout instead of 15
 
     fetch(`/milk-supply-analytics/show_procurement_assignments?id=${scheduleId}`, {
       method: 'GET',
@@ -1500,11 +1516,18 @@ function showProcurementAssignments(scheduleId, vendorName) {
       setTimeout(() => {
         assignmentsCache.delete(cacheKey);
       }, 300000); // 5 minutes cache
+
+      // Reset failure count on success
+      failedRequestCount.delete(failureKey);
     })
     .catch(error => {
       clearTimeout(fetchTimeout);
       isLoadingAssignments = false;
       console.error('Error loading assignments:', error);
+
+      // Increment failure count
+      const currentFailures = failedRequestCount.get(failureKey) || 0;
+      failedRequestCount.set(failureKey, currentFailures + 1);
       content.innerHTML = `
         <div class="alert alert-danger text-center m-4">
           <i class="fas fa-exclamation-triangle fa-3x mb-3 text-danger"></i>
@@ -2185,8 +2208,10 @@ function closeProcurementAssignmentsOverlay() {
 function clearAllCaches() {
   assignmentsCache.clear();
   procurementSchedulesCache.clear();
+  invoiceStatusCache.clear();
+  failedRequestCount.clear();
   isProcurementDataLoaded = false;
-  console.log('All caches cleared');
+  console.log('All caches and failure counts cleared');
 }
 
 // Handle escape key press
@@ -2213,6 +2238,34 @@ window.handleEscapeKey = handleEscapeKey;
 window.updateProcurementAssignment = updateProcurementAssignment;
 window.closeProcurementEditModal = closeProcurementEditModal;
 window.clearAllCaches = clearAllCaches;
+
+// Global function to stop all loading states
+function stopAllLoadingStates() {
+  isLoadingAssignments = false;
+  pendingInvoiceChecks.clear();
+
+  // Hide all spinners and loading indicators
+  const allSpinners = document.querySelectorAll('.spinner-border, .loading-spinner, .fa-spin');
+  allSpinners.forEach(spinner => {
+    spinner.style.display = 'none';
+  });
+
+  // Re-enable any disabled buttons
+  const disabledButtons = document.querySelectorAll('button[disabled]');
+  disabledButtons.forEach(btn => {
+    if (btn.innerHTML.includes('spinner') || btn.innerHTML.includes('Loading')) {
+      btn.disabled = false;
+      // Reset button text if it contains loading text
+      if (btn.dataset.originalText) {
+        btn.innerHTML = btn.dataset.originalText;
+      }
+    }
+  });
+
+  console.log('All loading states stopped');
+}
+
+window.stopAllLoadingStates = stopAllLoadingStates;
 
 // Global loader functionality for slow API calls
 let loadingTimer;

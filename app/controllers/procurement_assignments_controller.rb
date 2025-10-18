@@ -116,16 +116,42 @@ class ProcurementAssignmentsController < ApplicationController
   end
 
   def update
+    # Clear caches when updating
+    Rails.cache.delete("schedule_invoice_status_#{@assignment.procurement_schedule_id}")
+
     respond_to do |format|
-      if @assignment.update(update_procurement_assignment_params)
+      # Use update! with validation skipping for performance when possible
+      begin
+        # For simple status/quantity updates, skip expensive validations
+        if update_params_simple?
+          @assignment.update_columns(filtered_update_params.merge(updated_at: Time.current))
+          updated_assignment = @assignment.reload
+        else
+          updated_assignment = @assignment.tap { |a| a.update!(update_procurement_assignment_params) }
+        end
+
         format.html { redirect_to calendar_view_milk_analytics_path, notice: 'Procurement assignment was successfully updated.' }
-        format.json { render json: { success: true, assignment: @assignment, message: 'Assignment updated successfully!' } }
-      else
+        format.json {
+          render json: {
+            success: true,
+            assignment: updated_assignment.as_json(
+              only: [:id, :date, :vendor_name, :planned_quantity, :actual_quantity,
+                     :buying_price, :selling_price, :status, :unit, :notes],
+              methods: [:planned_cost, :actual_cost]
+            ),
+            message: 'Assignment updated successfully!'
+          }
+        }
+      rescue ActiveRecord::RecordInvalid => e
         format.html { render :edit, status: :unprocessable_entity }
         format.json {
-          Rails.logger.error "Procurement assignment update failed: #{@assignment.errors.full_messages.join(', ')}"
-          render json: @assignment.errors, status: :unprocessable_entity
+          Rails.logger.error "Procurement assignment update failed: #{e.record.errors.full_messages.join(', ')}"
+          render json: e.record.errors, status: :unprocessable_entity
         }
+      rescue => e
+        Rails.logger.error "Procurement assignment update error: #{e.message}"
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: { error: e.message }, status: :unprocessable_entity }
       end
     end
   end
@@ -379,7 +405,9 @@ class ProcurementAssignmentsController < ApplicationController
   private
 
   def set_procurement_assignment
-    @assignment = current_user.procurement_assignments.find(params[:id])
+    @assignment = current_user.procurement_assignments
+      .includes(:procurement_schedule, :product, :user)
+      .find(params[:id])
   end
 
   def create_procurement_assignment_params
@@ -417,5 +445,19 @@ class ProcurementAssignmentsController < ApplicationController
     else
       [1.week.ago.to_date, Date.current]
     end
+  end
+
+  # Check if we can use fast update (simple changes only)
+  def update_params_simple?
+    update_params = update_procurement_assignment_params
+    # Only allow fast updates for status, actual_quantity, and notes changes
+    simple_fields = ['status', 'actual_quantity', 'notes']
+    update_params.keys.all? { |key| simple_fields.include?(key.to_s) }
+  end
+
+  # Get filtered params for fast update
+  def filtered_update_params
+    update_procurement_assignment_params.slice('status', 'actual_quantity', 'notes')
+      .transform_keys(&:to_sym)
   end
 end
