@@ -818,7 +818,7 @@ end
   end
 
   def delivery_assignments
-    delivery_assignments = @invoice.delivery_assignments.includes(:product, :delivery_person)
+    delivery_assignments = @invoice.delivery_assignments.includes(:product, :delivery_person).order(:scheduled_date)
 
     delivery_data = delivery_assignments.map do |assignment|
       {
@@ -870,8 +870,7 @@ end
         product: product,
         quantity: total_quantity,
         unit_price: total_product_amount / total_quantity,
-        total_price: total_product_amount,
-        unit: assignments.first.unit
+        total_price: total_product_amount
       )
 
       total_amount += total_product_amount

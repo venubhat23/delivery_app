@@ -71,6 +71,9 @@ Rails.application.routes.draw do
   get '/signup', to: 'users#new'
   post '/signup', to: 'users#create'
 
+  # Routes for modal dropdown data
+  get '/users/delivery_people', to: 'users#delivery_people'
+
   # API routes for searchable dropdowns
   namespace :api do
     get 'customers/search', to: 'customers#search'

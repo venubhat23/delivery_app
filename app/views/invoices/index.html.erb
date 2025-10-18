@@ -299,6 +299,7 @@
                               data-invoice-id="<%= invoice.id %>"
                               data-invoice-number="<%= invoice.formatted_number %>"
                               data-customer-name="<%= invoice.customer.name %>"
+                              data-customer-id="<%= invoice.customer.id %>"
                               onclick="openDeliveryAssignmentsModal(this)"
                               title="View Delivery Assignments">
                         <i class="fas fa-truck"></i>
@@ -5367,7 +5368,12 @@ document.addEventListener('DOMContentLoaded', function() {
       <h5 class="custom-modal-title" id="deliveryModalTitle">
         <i class="fas fa-truck me-2"></i>Delivery Assignments
       </h5>
-      <button type="button" class="custom-close-btn" onclick="closeDeliveryAssignmentsModal()">×</button>
+      <div class="header-actions">
+        <button type="button" class="btn btn-success btn-sm me-2 add-delivery-btn" onclick="openAddDeliveryAssignmentModal()" title="Add New Delivery Assignment" style="background-color: #28a745 !important; color: white !important; border: 1px solid #28a745 !important; padding: 8px 16px !important; font-weight: bold !important;">
+          <i class="fas fa-plus me-1"></i>Add
+        </button>
+        <button type="button" class="custom-close-btn" onclick="closeDeliveryAssignmentsModal()">×</button>
+      </div>
     </div>
     <div class="custom-modal-body">
       <div class="delivery-assignments-container">
@@ -5522,6 +5528,138 @@ document.addEventListener('DOMContentLoaded', function() {
       </button>
       <button type="button" class="btn btn-primary" onclick="saveDeliveryAssignment()">
         <i class="fas fa-save me-1"></i>Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Delivery Assignment Modal -->
+<div id="addDeliveryAssignmentModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeAddDeliveryModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-plus me-2"></i>Add New Delivery Assignment
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeAddDeliveryModal()">×</button>
+    </div>
+    <div class="custom-modal-body">
+      <form id="addDeliveryAssignmentForm">
+        <div class="row">
+          <!-- Product Dropdown -->
+          <div class="col-md-6 mb-3">
+            <label for="addProduct" class="form-label">
+              <i class="fas fa-box me-1"></i>Product
+            </label>
+            <select class="form-select" id="addProduct" name="product_id" required>
+              <option value="">Select Product</option>
+              <!-- Options will be loaded dynamically -->
+            </select>
+          </div>
+
+          <!-- Delivery Person Dropdown -->
+          <div class="col-md-6 mb-3">
+            <label for="addDeliveryPerson" class="form-label">
+              <i class="fas fa-user me-1"></i>Delivery Person
+            </label>
+            <select class="form-select" id="addDeliveryPerson" name="delivery_person_id" required>
+              <option value="">Select Delivery Person</option>
+              <!-- Options will be loaded dynamically -->
+            </select>
+          </div>
+
+          <!-- Scheduled Date -->
+          <div class="col-md-6 mb-3">
+            <label for="addScheduledDate" class="form-label">
+              <i class="fas fa-calendar me-1"></i>Scheduled Date
+            </label>
+            <input type="date" class="form-control" id="addScheduledDate" name="scheduled_date" required>
+          </div>
+
+          <!-- Status -->
+          <div class="col-md-6 mb-3">
+            <label for="addStatus" class="form-label">
+              <i class="fas fa-info-circle me-1"></i>Status
+            </label>
+            <select class="form-select" id="addStatus" name="status" required>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          <!-- Quantity -->
+          <div class="col-md-4 mb-3">
+            <label for="addQuantity" class="form-label">
+              <i class="fas fa-sort-numeric-up me-1"></i>Quantity
+            </label>
+            <input type="number" class="form-control" id="addQuantity" name="quantity" step="0.1" min="0" required>
+          </div>
+
+          <!-- Unit -->
+          <div class="col-md-4 mb-3">
+            <label for="addUnit" class="form-label">
+              <i class="fas fa-balance-scale me-1"></i>Unit
+            </label>
+            <select class="form-select" id="addUnit" name="unit" required>
+              <option value="">Select Unit</option>
+              <option value="liters">Liters</option>
+              <option value="ml">ML</option>
+              <option value="pieces" selected>Pieces</option>
+              <option value="kg">KG</option>
+              <option value="grams">Grams</option>
+            </select>
+          </div>
+
+          <!-- Unit Price (readonly, calculated) -->
+          <div class="col-md-4 mb-3">
+            <label for="addUnitPrice" class="form-label">
+              <i class="fas fa-tag me-1"></i>Unit Price (₹)
+            </label>
+            <input type="number" class="form-control" id="addUnitPrice" step="0.01" readonly>
+          </div>
+
+          <!-- Base Amount (readonly, calculated) -->
+          <div class="col-md-4 mb-3">
+            <label for="addBaseAmount" class="form-label">
+              <i class="fas fa-calculator me-1"></i>Base Amount (₹)
+            </label>
+            <input type="number" class="form-control" id="addBaseAmount" step="0.01" readonly>
+          </div>
+
+          <!-- Discount Amount -->
+          <div class="col-md-4 mb-3">
+            <label for="addDiscountAmount" class="form-label">
+              <i class="fas fa-percent me-1"></i>Discount Amount (₹)
+            </label>
+            <input type="number" class="form-control" id="addDiscountAmount" name="discount_amount" step="0.01" min="0" value="0">
+          </div>
+
+          <!-- Final Amount After Discount (readonly, calculated) -->
+          <div class="col-md-4 mb-3">
+            <label for="addFinalAmount" class="form-label">
+              <i class="fas fa-money-bill-wave me-1"></i>Final Amount (₹)
+            </label>
+            <input type="number" class="form-control" id="addFinalAmount" name="final_amount_after_discount" step="0.01" readonly>
+          </div>
+
+          <!-- Special Instructions -->
+          <div class="col-12 mb-3">
+            <label for="addSpecialInstructions" class="form-label">
+              <i class="fas fa-sticky-note me-1"></i>Special Instructions
+            </label>
+            <textarea class="form-control" id="addSpecialInstructions" name="special_instructions" rows="3" placeholder="Any special instructions for this delivery..."></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeAddDeliveryModal()">
+        <i class="fas fa-times me-1"></i>Cancel
+      </button>
+      <button type="button" class="btn btn-success" id="saveAddDeliveryBtn" onclick="saveNewDeliveryAssignment()">
+        <i class="fas fa-save me-1"></i>Add Delivery Assignment
       </button>
     </div>
   </div>
@@ -5763,10 +5901,13 @@ function openDeliveryAssignmentsModal(button) {
   const invoiceId = button.getAttribute('data-invoice-id');
   const invoiceNumber = button.getAttribute('data-invoice-number');
   const customerName = button.getAttribute('data-customer-name');
+  const customerId = button.getAttribute('data-customer-id');
 
   // Set modal title and info
   document.getElementById('modalInvoiceNumber').textContent = invoiceNumber;
-  document.getElementById('modalCustomerName').textContent = customerName;
+  const customerElement = document.getElementById('modalCustomerName');
+  customerElement.textContent = customerName;
+  customerElement.dataset.customerId = customerId; // Store customer ID for add modal
 
   // Show modal
   const modal = document.getElementById('deliveryAssignmentsModal');
@@ -5877,11 +6018,23 @@ function editDeliveryAssignment(deliveryId) {
     return;
   }
 
+  // Get the button that was clicked to show loader
+  const button = event.target.closest('button');
+  const originalHTML = button.innerHTML;
+
+  // Show loading state on button
+  button.disabled = true;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
   try {
-    showEditDeliveryModal(deliveryId);
+    showEditDeliveryModal(deliveryId, button, originalHTML);
   } catch (error) {
     console.error('Error opening edit modal:', error);
     alert('Error opening edit modal: ' + error.message);
+
+    // Reset button state on error
+    button.disabled = false;
+    button.innerHTML = originalHTML;
   }
 }
 
@@ -5974,7 +6127,7 @@ function showNotification(message, type = 'info') {
 // Note: currentEditingDeliveryId is declared earlier in the script
 
 // Function to show edit delivery modal
-function showEditDeliveryModal(deliveryId) {
+function showEditDeliveryModal(deliveryId, button, originalHTML) {
   if (typeof currentEditingDeliveryId === 'undefined') {
     window.currentEditingDeliveryId = null;
   }
@@ -5990,6 +6143,12 @@ function showEditDeliveryModal(deliveryId) {
   })
   .then(response => response.json())
   .then(data => {
+    // Reset button state
+    if (button && originalHTML) {
+      button.disabled = false;
+      button.innerHTML = originalHTML;
+    }
+
     if (data.success !== false) {
       // Populate form fields
       populateEditForm(data);
@@ -6010,6 +6169,12 @@ function showEditDeliveryModal(deliveryId) {
   .catch(error => {
     console.error('Error loading delivery assignment:', error);
     alert('Error: Failed to load delivery assignment data');
+
+    // Reset button state on error
+    if (button && originalHTML) {
+      button.disabled = false;
+      button.innerHTML = originalHTML;
+    }
   });
 }
 
@@ -6193,6 +6358,334 @@ function saveDeliveryAssignment() {
     alert('❌ Error: Failed to update delivery assignment. Please try again.');
   });
 }
+
+// Add Delivery Assignment Modal Functions
+function openAddDeliveryAssignmentModal() {
+  console.log('🎯 Opening Add Delivery Assignment Modal...');
+
+  // Show modal first
+  const modal = document.getElementById('addDeliveryAssignmentModal');
+  modal.style.display = 'flex';
+
+  // Add focus to modal to ensure it's active
+  modal.focus();
+
+  // Reset form first
+  resetAddDeliveryForm();
+
+  // Load products and delivery people options
+  loadProductsForAdd();
+  loadDeliveryPeopleForAdd();
+
+  // Set default date to today
+  const today = new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('addScheduledDate');
+  if (dateInput) {
+    dateInput.value = today;
+  }
+
+  // Ensure dropdowns are clickable and form calculations are setup
+  setTimeout(() => {
+    const productSelect = document.getElementById('addProduct');
+    const deliveryPersonSelect = document.getElementById('addDeliveryPerson');
+
+    if (productSelect) {
+      productSelect.style.pointerEvents = 'auto';
+      productSelect.style.zIndex = '100001';
+      productSelect.style.position = 'relative';
+    }
+    if (deliveryPersonSelect) {
+      deliveryPersonSelect.style.pointerEvents = 'auto';
+      deliveryPersonSelect.style.zIndex = '100001';
+      deliveryPersonSelect.style.position = 'relative';
+    }
+
+    // Setup form calculations
+    setupAddFormCalculations();
+  }, 200);
+}
+
+function closeAddDeliveryModal() {
+  const modal = document.getElementById('addDeliveryAssignmentModal');
+  modal.style.display = 'none';
+  resetAddDeliveryForm();
+}
+
+function resetAddDeliveryForm() {
+  const form = document.getElementById('addDeliveryAssignmentForm');
+  if (form) {
+    form.reset();
+  }
+
+  // Clear calculated fields
+  document.getElementById('addUnitPrice').value = '';
+  document.getElementById('addBaseAmount').value = '';
+  document.getElementById('addFinalAmount').value = '';
+  document.getElementById('addDiscountAmount').value = '0';
+}
+
+function loadProductsForAdd() {
+  console.log('📦 Loading products for add modal...');
+
+  fetch('/products', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+    .then(response => {
+      console.log('📦 Products response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(products => {
+      console.log('📦 Products loaded:', products.length);
+      const productSelect = document.getElementById('addProduct');
+
+      if (!productSelect) {
+        console.error('❌ Product select element not found!');
+        return;
+      }
+
+      productSelect.innerHTML = '<option value="">Select Product</option>';
+
+      if (products && products.length > 0) {
+        products.forEach(product => {
+          const option = document.createElement('option');
+          option.value = product.id;
+          option.textContent = `${product.name} - ₹${product.price || 0}`;
+          option.dataset.price = product.price || 0;
+          option.dataset.name = product.name;
+          productSelect.appendChild(option);
+        });
+        console.log('✅ Products loaded successfully into dropdown');
+      } else {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No products available';
+        option.disabled = true;
+        productSelect.appendChild(option);
+        console.log('⚠️ No products found');
+      }
+    })
+    .catch(error => {
+      console.error('❌ Error loading products:', error);
+      const productSelect = document.getElementById('addProduct');
+      if (productSelect) {
+        productSelect.innerHTML = '<option value="">Error loading products</option>';
+      }
+      showNotification('Failed to load products. Please try again.', 'error');
+    });
+}
+
+function loadDeliveryPeopleForAdd() {
+  console.log('👤 Loading delivery people for add modal...');
+
+  fetch('/users/delivery_people', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+    .then(response => {
+      console.log('👤 Delivery people response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(deliveryPeople => {
+      console.log('👤 Delivery people loaded:', deliveryPeople.length);
+      const deliveryPersonSelect = document.getElementById('addDeliveryPerson');
+
+      if (!deliveryPersonSelect) {
+        console.error('❌ Delivery person select element not found!');
+        return;
+      }
+
+      deliveryPersonSelect.innerHTML = '<option value="">Select Delivery Person</option>';
+
+      if (deliveryPeople && deliveryPeople.length > 0) {
+        deliveryPeople.forEach(person => {
+          const option = document.createElement('option');
+          option.value = person.id;
+          option.textContent = person.name;
+          deliveryPersonSelect.appendChild(option);
+        });
+        console.log('✅ Delivery people loaded successfully into dropdown');
+      } else {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No delivery people available';
+        option.disabled = true;
+        deliveryPersonSelect.appendChild(option);
+        console.log('⚠️ No delivery people found');
+      }
+    })
+    .catch(error => {
+      console.error('❌ Error loading delivery people:', error);
+      const deliveryPersonSelect = document.getElementById('addDeliveryPerson');
+      if (deliveryPersonSelect) {
+        deliveryPersonSelect.innerHTML = '<option value="">Error loading delivery people</option>';
+      }
+      showNotification('Failed to load delivery people. Please try again.', 'error');
+    });
+}
+
+// Automatic calculation for add form
+function setupAddFormCalculations() {
+  const productSelect = document.getElementById('addProduct');
+  const quantityInput = document.getElementById('addQuantity');
+  const discountInput = document.getElementById('addDiscountAmount');
+
+  // Add event listeners for automatic calculation
+  productSelect.addEventListener('change', calculateAddAmounts);
+  quantityInput.addEventListener('input', calculateAddAmounts);
+  discountInput.addEventListener('input', calculateAddAmounts);
+}
+
+function calculateAddAmounts() {
+  const productSelect = document.getElementById('addProduct');
+  const quantity = parseFloat(document.getElementById('addQuantity').value) || 0;
+  const discount = parseFloat(document.getElementById('addDiscountAmount').value) || 0;
+
+  // Get unit price from selected product
+  const selectedOption = productSelect.options[productSelect.selectedIndex];
+  const unitPrice = parseFloat(selectedOption.dataset.price) || 0;
+
+  // Calculate base amount
+  const baseAmount = unitPrice * quantity;
+
+  // Calculate final amount after discount
+  const finalAmount = Math.max(0, baseAmount - discount);
+
+  // Update the readonly fields
+  document.getElementById('addUnitPrice').value = unitPrice.toFixed(2);
+  document.getElementById('addBaseAmount').value = baseAmount.toFixed(2);
+  document.getElementById('addFinalAmount').value = finalAmount.toFixed(2);
+}
+
+function saveNewDeliveryAssignment() {
+  const saveButton = document.getElementById('saveAddDeliveryBtn');
+  const originalButtonHTML = saveButton.innerHTML;
+
+  // Show loading state
+  saveButton.disabled = true;
+  saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+
+  // Get form data
+  const formData = new FormData(document.getElementById('addDeliveryAssignmentForm'));
+
+  // Get invoice ID from the delivery assignments modal
+  const deliveryModal = document.getElementById('deliveryAssignmentsModal');
+  const invoiceId = deliveryModal.dataset.invoiceId;
+
+  if (!invoiceId) {
+    alert('Error: Invoice ID not found');
+    saveButton.disabled = false;
+    saveButton.innerHTML = originalButtonHTML;
+    return;
+  }
+
+  // Prepare data for submission
+  const data = {
+    delivery_assignment: {
+      customer_id: getCurrentCustomerId(), // Will get from invoice
+      invoice_id: invoiceId,
+      product_id: parseInt(formData.get('product_id')),
+      delivery_person_id: parseInt(formData.get('delivery_person_id')),
+      scheduled_date: formData.get('scheduled_date'),
+      status: formData.get('status'),
+      quantity: parseFloat(formData.get('quantity')),
+      unit: formData.get('unit'),
+      discount_amount: parseFloat(formData.get('discount_amount')) || 0,
+      final_amount_after_discount: parseFloat(formData.get('final_amount_after_discount')),
+      special_instructions: formData.get('special_instructions') || '',
+      invoice_generated: true
+    }
+  };
+
+  // Submit to backend
+  fetch('/assign_deliveries', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    // Reset button state
+    saveButton.disabled = false;
+    saveButton.innerHTML = originalButtonHTML;
+
+    if (result.success) {
+      // Close the add modal
+      closeAddDeliveryModal();
+
+      // Reload delivery assignments to show new data
+      loadDeliveryAssignments(invoiceId);
+
+      // Recalculate invoice
+      if (typeof recalculateInvoice === 'function') {
+        recalculateInvoice(invoiceId);
+      }
+
+      // Show success message
+      if (typeof showNotification === 'function') {
+        showNotification(result.message || 'Delivery assignment added successfully!', 'success');
+      } else {
+        alert('✅ ' + (result.message || 'Delivery assignment added successfully!'));
+      }
+    } else {
+      let errorMessage = result.message || 'Failed to add delivery assignment';
+
+      // If there are specific validation errors, show them
+      if (result.errors && Array.isArray(result.errors)) {
+        errorMessage = 'Validation errors:\n• ' + result.errors.join('\n• ');
+      }
+
+      alert('❌ Error: ' + errorMessage);
+    }
+  })
+  .catch(error => {
+    console.error('Error adding delivery assignment:', error);
+
+    // Reset button state
+    saveButton.disabled = false;
+    saveButton.innerHTML = originalButtonHTML;
+
+    alert('❌ Error: Failed to add delivery assignment. Please try again.');
+  });
+}
+
+function getCurrentCustomerId() {
+  // Get customer ID from the delivery assignments modal info
+  const customerInfo = document.getElementById('modalCustomerName');
+  if (customerInfo && customerInfo.dataset.customerId) {
+    return parseInt(customerInfo.dataset.customerId);
+  }
+
+  // Fallback: try to get from invoice data
+  const deliveryModal = document.getElementById('deliveryAssignmentsModal');
+  const invoiceId = deliveryModal.dataset.invoiceId;
+
+  // This might need to be fetched from the server if not available
+  // For now, we'll handle this in the backend by looking up the invoice
+  return null;
+}
+
+// Initialize calculations when document loads
+document.addEventListener('DOMContentLoaded', function() {
+  setupAddFormCalculations();
+});
 </script>
 
 <style>
@@ -6496,6 +6989,34 @@ function saveDeliveryAssignment() {
 #deliveryAssignmentsModal .custom-modal-header {
   background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#deliveryAssignmentsModal .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#deliveryAssignmentsModal .header-actions .btn {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+}
+
+/* Force Add button to be visible */
+#deliveryAssignmentsModal .add-delivery-btn {
+  background-color: #28a745 !important;
+  color: white !important;
+  border: 2px solid #28a745 !important;
+  padding: 10px 20px !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+  z-index: 99999 !important;
+  position: relative !important;
 }
 
 #deliveryAssignmentsModal .delivery-assignments-container {
@@ -6593,6 +7114,64 @@ function saveDeliveryAssignment() {
   border-radius: 6px;
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
+}
+
+/* Add Delivery Assignment Modal Styles */
+#addDeliveryAssignmentModal .custom-modal-header {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+#addDeliveryAssignmentModal .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+#addDeliveryAssignmentModal .form-control,
+#addDeliveryAssignmentModal .form-select {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  position: relative;
+  z-index: 100001;
+}
+
+#addDeliveryAssignmentModal .form-control:focus,
+#addDeliveryAssignmentModal .form-select:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+  z-index: 100002;
+}
+
+#addDeliveryAssignmentModal .form-control[readonly] {
+  background-color: #f8f9fa;
+  opacity: 1;
+}
+
+#addDeliveryAssignmentModal .btn-group .btn {
+  border-radius: 6px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Ensure select dropdowns are always functional */
+#addDeliveryAssignmentModal select {
+  -webkit-appearance: listbox !important;
+  -moz-appearance: listbox !important;
+  appearance: listbox !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.75rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 16px 12px !important;
+  padding-right: 2.5rem !important;
+}
+
+#addDeliveryAssignmentModal select:focus {
+  outline: none !important;
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
 }
 
 /* Action buttons in table */

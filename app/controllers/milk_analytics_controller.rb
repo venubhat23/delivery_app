@@ -81,9 +81,9 @@ class MilkAnalyticsController < ApplicationController
         end_date = Date.current.end_of_month
       end
 
-      # Base query for procurement schedules
+      # Base query for procurement schedules with optimized loading
       schedules_query = current_user.procurement_schedules
-        .includes(:product, :user, procurement_assignments: :product)
+        .includes(:product, :user)
         .where("from_date <= ? AND to_date >= ?", end_date, start_date)
         .order(:from_date)
 
@@ -92,37 +92,26 @@ class MilkAnalyticsController < ApplicationController
         schedules_query = schedules_query.where(vendor_name: vendor_filter)
       end
 
+      # Get all schedule IDs for bulk calculation
+      schedule_ids = schedules_query.pluck(:id)
+
+      # Calculate total amounts for all schedules in a single query
+      total_amounts = {}
+      if schedule_ids.any?
+        amounts_data = ProcurementAssignment
+          .where(procurement_schedule_id: schedule_ids)
+          .group(:procurement_schedule_id)
+          .sum("COALESCE(actual_quantity, planned_quantity, 0) * COALESCE(buying_price, 0)")
+
+        total_amounts = amounts_data
+      end
+
       schedules = schedules_query.map do |schedule|
-        # Try to get product name from schedule first (most efficient)
-        product_name = schedule.product&.name
+        # Get product name efficiently
+        product_name = schedule.product&.name || 'Milk/Dairy Product'
 
-        # If no product on schedule, use preloaded assignments to avoid N+1 queries
-        if product_name.blank? && schedule.procurement_assignments.loaded?
-          # Find assignment with product from preloaded data
-          assignment_with_product = schedule.procurement_assignments
-            .find { |a| a.product_id.present? && a.product&.name.present? }
-          product_name = assignment_with_product&.product&.name
-        end
-
-        # If still no product and assignments aren't preloaded, get most common product efficiently
-        if product_name.blank? && !schedule.procurement_assignments.loaded?
-          assignment_with_product = schedule.procurement_assignments
-            .joins(:product)
-            .where.not(product_id: nil)
-            .first
-          product_name = assignment_with_product&.product&.name
-        end
-
-        # Final fallback - use a more descriptive name
-        product_name = product_name.presence || 'Milk/Dairy Product'
-
-        # Always calculate total amount from actual assignments to match the modal
-        # This ensures schedule total matches the assignment purchase cost exactly
-        total_amount = schedule.procurement_assignments.sum do |assignment|
-          quantity = assignment.actual_quantity.presence || assignment.planned_quantity || 0
-          rate = assignment.buying_price || schedule.buying_price || 0
-          quantity * rate
-        end
+        # Get pre-calculated total amount
+        total_amount = total_amounts[schedule.id] || 0
 
         # Calculate duration in days
         duration = if schedule.from_date && schedule.to_date

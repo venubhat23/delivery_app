@@ -8,6 +8,19 @@ class ProductsController < ApplicationController
     @products = @products.search(params[:search]) if params[:search].present?
     @total_products = @products.count
     @categories = Category.all.order(:name)
+
+    respond_to do |format|
+      format.html
+      format.json {
+        render json: @products.map { |product|
+          {
+            id: product.id,
+            name: product.name,
+            price: product.price
+          }
+        }
+      }
+    end
   end
 
   def show

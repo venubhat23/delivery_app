@@ -115,6 +115,14 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def create
+    # Handle simple single delivery assignment creation (from modal)
+    if params[:delivery_assignment].present? &&
+       params[:delivery_assignment][:invoice_id].present? &&
+       request.xhr?
+      create_simple_delivery_assignment
+      return
+    end
+
     # Check which date selection mode is being used
     date_selection_mode = params[:date_selection_mode]
 
@@ -165,14 +173,26 @@ class DeliveryAssignmentsController < ApplicationController
   end
 
   def destroy
+    invoice_id = @delivery_assignment.invoice_id
+
+    # Store assignment details before deletion for invoice updates
+    assignment_amount = @delivery_assignment.final_amount_after_discount || 0
+    product_id = @delivery_assignment.product_id
+
     @delivery_assignment.destroy
+
+    # Update invoice if this assignment was linked to one
+    if invoice_id.present?
+      update_invoice_after_assignment_deletion(invoice_id, product_id, assignment_amount)
+    end
+
     respond_to do |format|
-      format.html { redirect_to delivery_assignments_path, notice: 'Delivery assignment was successfully deleted.' }
+      format.html { redirect_to invoices_path, notice: 'Delivery assignment was successfully deleted.' }
       format.json { render json: { success: true, message: 'Assignment deleted successfully!' } }
     end
   rescue => e
     respond_to do |format|
-      format.html { redirect_to delivery_assignments_path, alert: 'Failed to delete delivery assignment.' }
+      format.html { redirect_to invoices_path, alert: 'Failed to delete delivery assignment.' }
       format.json { render json: { success: false, message: 'Error deleting assignment: ' + e.message }, status: :unprocessable_entity }
     end
   end
@@ -481,6 +501,115 @@ class DeliveryAssignmentsController < ApplicationController
     end
 
     da_params
+  end
+
+  def simple_delivery_params
+    params.require(:delivery_assignment).permit(
+      :customer_id, :invoice_id, :product_id, :delivery_person_id,
+      :scheduled_date, :status, :quantity, :unit,
+      :discount_amount, :final_amount_after_discount,
+      :special_instructions, :invoice_generated
+    )
+  end
+
+  def create_simple_delivery_assignment
+    # Get customer_id from invoice if not provided
+    invoice_id = simple_delivery_params[:invoice_id]
+    customer_id = simple_delivery_params[:customer_id]
+
+    if customer_id.blank? && invoice_id.present?
+      invoice = Invoice.find_by(id: invoice_id)
+      customer_id = invoice&.customer_id
+    end
+
+    if customer_id.blank?
+      render json: {
+        success: false,
+        message: 'Customer ID is required',
+        errors: ['Customer ID is required']
+      }, status: 422
+      return
+    end
+
+    # Create the delivery assignment
+    unit = simple_delivery_params[:unit].presence || 'pieces' # default to pieces if empty
+
+    delivery_person_id = simple_delivery_params[:delivery_person_id]
+
+    @delivery_assignment = DeliveryAssignment.new(
+      customer_id: customer_id,
+      invoice_id: invoice_id,
+      product_id: simple_delivery_params[:product_id],
+      delivery_person_id: delivery_person_id,
+      user_id: delivery_person_id, # Set both for compatibility
+      scheduled_date: simple_delivery_params[:scheduled_date],
+      status: simple_delivery_params[:status] || 'pending',
+      quantity: simple_delivery_params[:quantity],
+      unit: unit,
+      discount_amount: simple_delivery_params[:discount_amount] || 0,
+      final_amount_after_discount: simple_delivery_params[:final_amount_after_discount],
+      special_instructions: simple_delivery_params[:special_instructions],
+      invoice_generated: simple_delivery_params[:invoice_generated] || false
+    )
+
+    if @delivery_assignment.save
+      # Create or update invoice item if this assignment belongs to an invoice
+      if invoice_id.present?
+        update_invoice_for_assignment(@delivery_assignment)
+      end
+
+      render json: {
+        success: true,
+        message: 'Delivery assignment created successfully!',
+        delivery_assignment: {
+          id: @delivery_assignment.id,
+          scheduled_date: @delivery_assignment.scheduled_date,
+          product_name: @delivery_assignment.product&.name,
+          quantity: @delivery_assignment.quantity,
+          unit: @delivery_assignment.unit,
+          status: @delivery_assignment.status,
+          final_amount_after_discount: @delivery_assignment.final_amount_after_discount
+        }
+      }
+    else
+      render json: {
+        success: false,
+        message: 'Failed to create delivery assignment',
+        errors: @delivery_assignment.errors.full_messages
+      }, status: 422
+    end
+  end
+
+  def update_invoice_for_assignment(delivery_assignment)
+    invoice = delivery_assignment.invoice
+    return unless invoice
+
+    # Find or create invoice item for this product
+    invoice_item = invoice.invoice_items.find_by(product: delivery_assignment.product)
+
+    if invoice_item
+      # Update existing invoice item - add this delivery's quantity and amount
+      invoice_item.quantity += delivery_assignment.quantity
+      invoice_item.total_price += delivery_assignment.final_amount_after_discount || 0
+      invoice_item.unit_price = invoice_item.total_price / invoice_item.quantity if invoice_item.quantity > 0
+      invoice_item.save!
+    else
+      # Create new invoice item
+      unit_price = delivery_assignment.quantity > 0 ?
+                   (delivery_assignment.final_amount_after_discount || 0) / delivery_assignment.quantity :
+                   0
+
+      invoice.invoice_items.create!(
+        product: delivery_assignment.product,
+        quantity: delivery_assignment.quantity,
+        unit_price: unit_price,
+        total_price: delivery_assignment.final_amount_after_discount || 0
+      )
+    end
+
+    # Update invoice total
+    new_total = invoice.invoice_items.sum(:total_price)
+    invoice.update!(total_amount: new_total)
   end
 
   def create_single_delivery
@@ -1032,5 +1161,49 @@ class DeliveryAssignmentsController < ApplicationController
     else
       assignments
     end
+  end
+
+  def update_invoice_after_assignment_deletion(invoice_id, product_id, assignment_amount)
+    return unless invoice_id.present?
+
+    invoice = Invoice.find_by(id: invoice_id)
+    return unless invoice
+
+    # Find and update/remove invoice item for this product
+    invoice_item = invoice.invoice_items.find_by(product_id: product_id)
+
+    if invoice_item
+      # Get remaining delivery assignments for this product in this invoice
+      remaining_assignments = DeliveryAssignment.where(
+        invoice_id: invoice_id,
+        product_id: product_id
+      )
+
+      if remaining_assignments.any?
+        # Recalculate invoice item based on remaining assignments
+        total_quantity = remaining_assignments.sum(:quantity)
+        total_discounted_amount = remaining_assignments.sum(:final_amount_after_discount)
+
+        # Calculate effective unit price after all discounts
+        effective_unit_price = total_quantity > 0 ? (total_discounted_amount / total_quantity) : 0
+
+        invoice_item.update!(
+          quantity: total_quantity,
+          unit_price: effective_unit_price,
+          total_price: total_discounted_amount
+        )
+      else
+        # No remaining assignments for this product, remove the invoice item
+        invoice_item.destroy
+      end
+    end
+
+    # Recalculate invoice total
+    new_total = invoice.invoice_items.sum { |item| item.total_price || (item.quantity * (item.unit_price || 0)) }
+    invoice.update!(total_amount: new_total)
+
+    Rails.logger.info "Invoice #{invoice_id} total updated after delivery assignment deletion: #{new_total}"
+  rescue => e
+    Rails.logger.error "Error updating invoice after assignment deletion: #{e.message}"
   end
 end

@@ -128,6 +128,11 @@ function resetProcurementForm() {
 
 // ===== Procurement Schedule Tab Functions =====
 
+// Global variables for procurement schedule caching
+let procurementSchedulesCache = new Map();
+let lastLoadedFilters = { month: '', vendor: '' };
+let isProcurementDataLoaded = false;
+
 function initializeProcurementScheduleTab() {
   const procurementScheduleTab = document.getElementById('procurement-schedule-tab');
   const monthFilter = document.getElementById('monthFilter');
@@ -135,18 +140,25 @@ function initializeProcurementScheduleTab() {
 
   if (procurementScheduleTab) {
     procurementScheduleTab.addEventListener('click', function() {
-      loadProcurementSchedules();
+      // Only load if data hasn't been loaded or filters changed
+      loadProcurementSchedulesIfNeeded();
     });
   }
 
   if (monthFilter) {
     monthFilter.addEventListener('change', function() {
+      // Clear cache when filters change
+      procurementSchedulesCache.clear();
+      isProcurementDataLoaded = false;
       loadProcurementSchedules();
     });
   }
 
   if (vendorFilter) {
     vendorFilter.addEventListener('change', function() {
+      // Clear cache when filters change
+      procurementSchedulesCache.clear();
+      isProcurementDataLoaded = false;
       loadProcurementSchedules();
     });
   }
@@ -154,8 +166,30 @@ function initializeProcurementScheduleTab() {
   // Load procurement schedules if tab is active
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('tab') === 'procurement_schedule' || procurementScheduleTab?.classList.contains('active')) {
-    loadProcurementSchedules();
+    loadProcurementSchedulesIfNeeded();
   }
+}
+
+// Smart loading - only load if needed
+function loadProcurementSchedulesIfNeeded() {
+  const monthFilter = document.getElementById('monthFilter');
+  const vendorFilter = document.getElementById('vendorFilter');
+
+  const currentFilters = {
+    month: monthFilter ? monthFilter.value : 'current',
+    vendor: vendorFilter ? vendorFilter.value : 'all'
+  };
+
+  // Check if data is already loaded with same filters
+  if (isProcurementDataLoaded &&
+      lastLoadedFilters.month === currentFilters.month &&
+      lastLoadedFilters.vendor === currentFilters.vendor) {
+    console.log('Procurement data already loaded with same filters, skipping reload');
+    return;
+  }
+
+  // Load fresh data
+  loadProcurementSchedules();
 }
 
 // Load procurement schedules based on filters
@@ -170,10 +204,30 @@ function loadProcurementSchedules() {
   const monthValue = monthFilter ? monthFilter.value : 'current';
   const vendorValue = vendorFilter ? vendorFilter.value : 'all';
 
+  // Create cache key
+  const cacheKey = `${monthValue}_${vendorValue}`;
+
+  // Check cache first
+  if (procurementSchedulesCache.has(cacheKey)) {
+    console.log('Loading procurement schedules from cache');
+    const cachedData = procurementSchedulesCache.get(cacheKey);
+    updateProcurementScheduleTable(cachedData.schedules);
+    if (scheduleCount) {
+      scheduleCount.innerHTML = `
+        <i class="fas fa-info-circle me-1"></i>
+        Showing ${cachedData.schedules.length} procurement schedules
+      `;
+    }
+    // Update tracking variables
+    lastLoadedFilters = { month: monthValue, vendor: vendorValue };
+    isProcurementDataLoaded = true;
+    return;
+  }
+
   // Show loading state
   tableBody.innerHTML = `
     <tr>
-      <td colspan="8" class="text-center py-4">
+      <td colspan="10" class="text-center py-4">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
@@ -200,6 +254,12 @@ function loadProcurementSchedules() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
+      // Cache the data for 3 minutes
+      procurementSchedulesCache.set(cacheKey, data);
+      setTimeout(() => {
+        procurementSchedulesCache.delete(cacheKey);
+      }, 180000); // 3 minutes cache
+
       updateProcurementScheduleTable(data.schedules);
       if (scheduleCount) {
         scheduleCount.innerHTML = `
@@ -207,6 +267,10 @@ function loadProcurementSchedules() {
           Showing ${data.schedules.length} procurement schedules
         `;
       }
+
+      // Update tracking variables
+      lastLoadedFilters = { month: monthValue, vendor: vendorValue };
+      isProcurementDataLoaded = true;
     } else {
       showErrorMessage(data.message || 'Failed to load procurement schedules');
     }
@@ -1318,12 +1382,19 @@ function updateInvoiceActions(scheduleId, hasInvoice, invoiceNumber = '', invoic
   }
 }
 
-// Global variable to store current schedule ID
+// Global variables for caching and performance
 let currentScheduleId = null;
+let assignmentsCache = new Map();
+let isLoadingAssignments = false;
 
 // Show procurement assignments in simple overlay (no modal)
 function showProcurementAssignments(scheduleId, vendorName) {
   try {
+    // Prevent multiple simultaneous loads
+    if (isLoadingAssignments) {
+      return;
+    }
+
     currentScheduleId = scheduleId;
     const overlay = document.getElementById('procurementAssignmentsOverlay');
     const content = document.getElementById('procurementAssignmentsContent');
@@ -1337,6 +1408,14 @@ function showProcurementAssignments(scheduleId, vendorName) {
     // Update title
     title.textContent = `Procurement Assignments - ${vendorName}`;
 
+    // Check cache first
+    const cacheKey = `${scheduleId}_${vendorName}`;
+    if (assignmentsCache.has(cacheKey)) {
+      content.innerHTML = assignmentsCache.get(cacheKey);
+      showOverlay(overlay);
+      return;
+    }
+
     // Show loading state
     content.innerHTML = `
       <div class="text-center py-5">
@@ -1348,31 +1427,24 @@ function showProcurementAssignments(scheduleId, vendorName) {
       </div>
     `;
 
-    // Show overlay with smooth animation
-    overlay.style.display = 'block';
-    overlay.style.opacity = '0';
-    setTimeout(() => {
-      overlay.style.transition = 'opacity 0.3s ease';
-      overlay.style.opacity = '1';
-    }, 10);
+    showOverlay(overlay);
+    isLoadingAssignments = true;
 
-    // Show refresh button
-    const refreshBtn = document.getElementById('refreshAssignmentsBtn');
-    if (refreshBtn) {
-      refreshBtn.style.display = 'inline-block';
-    }
+    // Fetch assignments data with timeout
+    const fetchTimeout = setTimeout(() => {
+      isLoadingAssignments = false;
+      content.innerHTML = `
+        <div class="alert alert-warning text-center m-4">
+          <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+          <h5>Request Timeout</h5>
+          <p>The request is taking longer than expected. This might be due to high server load.</p>
+          <button class="btn btn-primary" onclick="showProcurementAssignments(${scheduleId}, '${vendorName}')">
+            <i class="fas fa-redo me-1"></i>Try Again
+          </button>
+        </div>
+      `;
+    }, 15000); // 15 second timeout
 
-    // Add click outside to close
-    overlay.onclick = function(e) {
-      if (e.target === overlay) {
-        closeProcurementAssignmentsOverlay();
-      }
-    };
-
-    // Add escape key to close
-    document.addEventListener('keydown', handleEscapeKey);
-
-    // Fetch assignments data
     fetch(`/milk-supply-analytics/show_procurement_assignments?id=${scheduleId}`, {
       method: 'GET',
       headers: {
@@ -1381,6 +1453,9 @@ function showProcurementAssignments(scheduleId, vendorName) {
       }
     })
     .then(response => {
+      clearTimeout(fetchTimeout);
+      isLoadingAssignments = false;
+
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
       }
@@ -1388,8 +1463,15 @@ function showProcurementAssignments(scheduleId, vendorName) {
     })
     .then(html => {
       content.innerHTML = html;
+      // Cache the result for 5 minutes
+      assignmentsCache.set(cacheKey, html);
+      setTimeout(() => {
+        assignmentsCache.delete(cacheKey);
+      }, 300000); // 5 minutes cache
     })
     .catch(error => {
+      clearTimeout(fetchTimeout);
+      isLoadingAssignments = false;
       console.error('Error loading assignments:', error);
       content.innerHTML = `
         <div class="alert alert-danger text-center m-4">
@@ -1403,16 +1485,47 @@ function showProcurementAssignments(scheduleId, vendorName) {
       `;
     });
   } catch (error) {
+    isLoadingAssignments = false;
     console.error('Error in showProcurementAssignments:', error);
     showErrorToast('Failed to open assignments overlay');
   }
+}
+
+// Helper function to show overlay with animation
+function showOverlay(overlay) {
+  overlay.style.display = 'block';
+  overlay.style.opacity = '0';
+  setTimeout(() => {
+    overlay.style.transition = 'opacity 0.3s ease';
+    overlay.style.opacity = '1';
+  }, 10);
+
+  // Show refresh button
+  const refreshBtn = document.getElementById('refreshAssignmentsBtn');
+  if (refreshBtn) {
+    refreshBtn.style.display = 'inline-block';
+  }
+
+  // Add click outside to close
+  overlay.onclick = function(e) {
+    if (e.target === overlay) {
+      closeProcurementAssignmentsOverlay();
+    }
+  };
+
+  // Add escape key to close
+  document.addEventListener('keydown', handleEscapeKey);
 }
 
 // Refresh current assignments
 function refreshCurrentAssignments() {
   if (currentScheduleId) {
     try {
+      // Clear the cache for current assignments
       const vendorName = document.querySelector(`#actions-${currentScheduleId}`).closest('tr').querySelector('td:nth-child(2)').textContent.trim();
+      const cacheKey = `${currentScheduleId}_${vendorName}`;
+      assignmentsCache.delete(cacheKey);
+
       showProcurementAssignments(currentScheduleId, vendorName);
     } catch (error) {
       console.error('Error refreshing assignments:', error);
@@ -2021,6 +2134,7 @@ function closeProcurementAssignmentsOverlay() {
 
     // Clean up
     currentScheduleId = null;
+    isLoadingAssignments = false;
     const refreshBtn = document.getElementById('refreshAssignmentsBtn');
     if (refreshBtn) {
       refreshBtn.style.display = 'none';
@@ -2029,6 +2143,14 @@ function closeProcurementAssignmentsOverlay() {
     // Remove escape key listener
     document.removeEventListener('keydown', handleEscapeKey);
   }
+}
+
+// Function to clear all caches when needed
+function clearAllCaches() {
+  assignmentsCache.clear();
+  procurementSchedulesCache.clear();
+  isProcurementDataLoaded = false;
+  console.log('All caches cleared');
 }
 
 // Handle escape key press
@@ -2054,6 +2176,7 @@ window.closeProcurementAssignmentsOverlay = closeProcurementAssignmentsOverlay;
 window.handleEscapeKey = handleEscapeKey;
 window.updateProcurementAssignment = updateProcurementAssignment;
 window.closeProcurementEditModal = closeProcurementEditModal;
+window.clearAllCaches = clearAllCaches;
 
 // Global loader functionality for slow API calls
 let loadingTimer;
