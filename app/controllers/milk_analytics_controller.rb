@@ -3115,8 +3115,17 @@ class MilkAnalyticsController < ApplicationController
 
       respond_to do |format|
         format.html {
-          @schedule = OpenStruct.new(cached_result[:schedule])
-          @assignments = cached_result[:assignments].map { |a| OpenStruct.new(a) }
+          # For HTML rendering, fetch actual ActiveRecord objects instead of using cached hash data
+          @schedule = current_user.procurement_schedules
+            .includes(:product)
+            .find(params[:id])
+
+          @assignments = ProcurementAssignment
+            .includes(:product)
+            .where(procurement_schedule_id: @schedule.id)
+            .order(:date)
+            .limit(100)
+
           render partial: 'simple_procurement_assignments_modal'
         }
         format.json {
