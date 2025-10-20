@@ -484,13 +484,13 @@
                         <i class="fas fa-user-times"></i>
                       </button>
                     <% end %>
-                    <%= button_to customer_path(customer),
-                        method: :delete,
-                        form: { "data-turbo-confirm": "Are you sure you want to delete this customer?", class: "d-inline" },
-                        class: "btn btn-outline-danger",
-                        title: "Delete Customer" do %>
+                    <button type="button"
+                            class="btn btn-outline-danger customer-delete-btn"
+                            title="Delete Customer"
+                            data-customer-id="<%= customer.id %>"
+                            data-customer-name="<%= customer.name %>">
                       <i class="fas fa-trash"></i>
-                    <% end %>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -542,9 +542,12 @@
                         <% end %>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                          <%= button_to "Delete", customer_path(customer), method: :delete, 
-                              form: { "data-turbo-confirm": "Are you sure?" }, 
-                              class: "dropdown-item text-danger" %>
+                          <button type="button"
+                                  class="dropdown-item text-danger customer-delete-btn"
+                                  data-customer-id="<%= customer.id %>"
+                                  data-customer-name="<%= customer.name %>">
+                            <i class="fas fa-trash me-2"></i>Delete
+                          </button>
                         </li>
                       </ul>
                     </div>
@@ -1748,6 +1751,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize customer details modal functionality
   initializeCustomerDetailsModal();
   initializeCustomerImageModal();
+
+  // Initialize customer deletion functionality
+  initializeCustomerDeletion();
 });
 
 // Re-initialize on Turbo navigation
@@ -1762,6 +1768,9 @@ document.addEventListener('turbo:load', function() {
   // Re-initialize customer details modal on Turbo navigation
   initializeCustomerDetailsModal();
   initializeCustomerImageModal();
+
+  // Re-initialize customer deletion on Turbo navigation
+  initializeCustomerDeletion();
 });
 
 function initializeUnassignModal() {
@@ -1951,6 +1960,137 @@ function closeCustomerDetailsModal() {
 
 function initializeCustomerImageModal() {
   // Keep for compatibility
+}
+
+function initializeCustomerDeletion() {
+  // Add event listeners to all delete buttons
+  document.querySelectorAll('.customer-delete-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const customerId = this.dataset.customerId;
+      const customerName = this.dataset.customerName;
+
+      // Show confirmation dialog
+      if (confirm(`Are you sure you want to delete "${customerName}" and all related data (delivery assignments, schedules, invoices)? This action cannot be undone.`)) {
+        deleteCustomer(customerId, customerName, this);
+      }
+    });
+  });
+}
+
+function deleteCustomer(customerId, customerName, buttonElement) {
+  // Show loading state
+  const originalContent = buttonElement.innerHTML;
+  buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  buttonElement.disabled = true;
+  buttonElement.classList.add('loading');
+
+  // Get the customer row element
+  const customerRow = buttonElement.closest('.customer-row') || buttonElement.closest('.customer-card');
+
+  // Add loading class to the row/card
+  if (customerRow) {
+    customerRow.style.opacity = '0.6';
+    customerRow.style.pointerEvents = 'none';
+  }
+
+  // Make AJAX request
+  fetch(`/customers/${customerId}`, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Show success message
+      showSuccessMessage(data.message);
+
+      // Remove the customer row/card with animation
+      if (customerRow) {
+        customerRow.style.transition = 'all 0.5s ease';
+        customerRow.style.transform = 'translateX(-100%)';
+        customerRow.style.opacity = '0';
+
+        setTimeout(() => {
+          customerRow.remove();
+
+          // Check if there are no more customers and show empty state
+          const remainingCustomers = document.querySelectorAll('.customer-row, .customer-card');
+          if (remainingCustomers.length === 0) {
+            // Reload page to show empty state properly
+            window.location.reload();
+          }
+        }, 500);
+      }
+    } else {
+      throw new Error(data.message || 'Failed to delete customer');
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting customer:', error);
+
+    // Restore button state
+    buttonElement.innerHTML = originalContent;
+    buttonElement.disabled = false;
+    buttonElement.classList.remove('loading');
+
+    // Restore row state
+    if (customerRow) {
+      customerRow.style.opacity = '1';
+      customerRow.style.pointerEvents = 'auto';
+    }
+
+    // Show error message
+    showErrorMessage(error.message || 'Failed to delete customer. Please try again.');
+  });
+}
+
+function showSuccessMessage(message) {
+  // Create success toast
+  const toast = document.createElement('div');
+  toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+  toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;';
+  toast.innerHTML = `
+    <i class="fas fa-check-circle me-2"></i>
+    <strong>Success!</strong> ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast && toast.parentNode) {
+      toast.remove();
+    }
+  }, 5000);
+}
+
+function showErrorMessage(message) {
+  // Create error toast
+  const toast = document.createElement('div');
+  toast.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+  toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;';
+  toast.innerHTML = `
+    <i class="fas fa-exclamation-circle me-2"></i>
+    <strong>Error!</strong> ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast && toast.parentNode) {
+      toast.remove();
+    }
+  }, 5000);
 }
 </script>
     </div>
@@ -2205,5 +2345,68 @@ body.modal-open {
 
 .modal.show .modal-dialog {
   transform: none;
+}
+
+/* Customer deletion loading styles */
+.customer-delete-btn.loading {
+  position: relative;
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+}
+
+.customer-delete-btn.loading:disabled {
+  opacity: 1 !important;
+}
+
+.customer-delete-btn .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Toast notification styles */
+.alert.position-fixed {
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: none;
+  backdrop-filter: blur(10px);
+}
+
+.alert-success.position-fixed {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-left: 4px solid #34d399;
+}
+
+.alert-danger.position-fixed {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-left: 4px solid #f87171;
+}
+
+.alert.position-fixed .btn-close {
+  filter: brightness(0) invert(1);
+}
+
+/* Customer row deletion animation */
+.customer-row.deleting,
+.customer-card.deleting {
+  transition: all 0.5s ease;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.customer-row.deleting:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.customer-card.deleting:hover {
+  transform: none;
+  box-shadow: none;
 }
 </style>

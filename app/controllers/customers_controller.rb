@@ -168,8 +168,35 @@ class CustomersController < ApplicationController
   end
   
   def destroy
-    @customer.destroy
-    redirect_to customers_url, notice: 'Customer was successfully deleted.'
+    begin
+      # Count related records before deletion for feedback
+      delivery_assignments_count = @customer.delivery_assignments.count
+      delivery_schedules_count = @customer.delivery_schedules.count
+      invoices_count = @customer.invoices.count
+
+      # Delete customer and all related data (using dependent: :destroy associations)
+      @customer.destroy!
+
+      message = "Customer was successfully deleted along with #{delivery_assignments_count} delivery assignments, #{delivery_schedules_count} delivery schedules, and #{invoices_count} invoices."
+
+      respond_to do |format|
+        format.html { redirect_to customers_url, notice: message }
+        format.json { render json: { success: true, message: message } }
+      end
+    rescue ActiveRecord::RecordNotDestroyed => e
+      error_message = "Failed to delete customer: #{e.message}"
+      respond_to do |format|
+        format.html { redirect_to customers_url, alert: error_message }
+        format.json { render json: { success: false, message: error_message } }
+      end
+    rescue => e
+      Rails.logger.error "Error deleting customer #{@customer.id}: #{e.message}"
+      error_message = "An unexpected error occurred while deleting the customer."
+      respond_to do |format|
+        format.html { redirect_to customers_url, alert: error_message }
+        format.json { render json: { success: false, message: error_message } }
+      end
+    end
   end
   
   # Bulk import form
