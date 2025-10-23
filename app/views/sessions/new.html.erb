@@ -22,12 +22,14 @@
             padding: 0;
         }
 
-        /* Farm-themed Background */
+        /* Farm-themed Background with Images */
         .farm-wrapper {
             position: relative;
             min-height: 100vh;
             width: 100vw;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background:
+                linear-gradient(rgba(135, 206, 235, 0.1), rgba(50, 205, 50, 0.2)),
+                url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?ixlib=rb-4.0.3&auto=format&fit=crop&w=2574&q=80') center/cover no-repeat;
             overflow-x: hidden;
             overflow-y: auto;
             display: flex;
@@ -46,75 +48,93 @@
             overflow: hidden;
         }
 
-        /* Floating Clouds */
-        .cloud {
+        /* Farm Visual Elements with Images */
+        .farm-visual-elements {
             position: absolute;
-            background: white;
-            border-radius: 50px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Desi Cow Image */
+        .desi-cow-image {
+            position: absolute;
+            bottom: 8%;
+            right: 5%;
+            width: 200px;
+            height: 150px;
+            background: url('https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover no-repeat;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            opacity: 0.9;
+        }
+
+        /* Milk Bottles Visual */
+        .milk-bottles {
+            position: absolute;
+            top: 15%;
+            left: 5%;
+            width: 120px;
+            height: 180px;
+            background: url('https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover no-repeat;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
             opacity: 0.8;
-            animation: float-cloud 20s linear infinite;
         }
 
-        .cloud::before,
-        .cloud::after {
-            content: '';
+        /* Farm House */
+        .farm-house {
             position: absolute;
-            background: white;
-            border-radius: 50px;
+            bottom: 20%;
+            left: 8%;
+            width: 150px;
+            height: 120px;
+            background: url('https://images.unsplash.com/photo-1544364093-7ad5ac882d5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover no-repeat;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            opacity: 0.85;
         }
 
-        .cloud-1 {
+        /* Delivery Truck */
+        .delivery-truck-image {
+            position: absolute;
+            bottom: 15%;
+            right: 25%;
+            width: 140px;
+            height: 100px;
+            background: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover no-repeat;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            opacity: 0.85;
+        }
+
+        /* Fresh Grass Field */
+        .grass-field-image {
+            position: absolute;
+            top: 25%;
+            right: 8%;
+            width: 130px;
+            height: 100px;
+            background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover no-repeat;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            opacity: 0.8;
+        }
+
+        /* Organic Label */
+        .organic-badge {
+            position: absolute;
+            top: 8%;
+            right: 15%;
             width: 80px;
-            height: 30px;
-            top: 10%;
-            left: -100px;
-            animation-duration: 25s;
-        }
-
-        .cloud-1::before {
-            width: 40px;
-            height: 40px;
-            top: -20px;
-            left: 10px;
-        }
-
-        .cloud-1::after {
-            width: 60px;
-            height: 35px;
-            top: -15px;
-            right: 5px;
-        }
-
-        .cloud-2 {
-            width: 60px;
-            height: 25px;
-            top: 20%;
-            left: -80px;
-            animation-duration: 30s;
-            animation-delay: -10s;
-        }
-
-        .cloud-2::before {
-            width: 35px;
-            height: 35px;
-            top: -18px;
-            left: 8px;
-        }
-
-        .cloud-2::after {
-            width: 45px;
-            height: 30px;
-            top: -12px;
-            right: 3px;
-        }
-
-        @keyframes float-cloud {
-            from {
-                left: -120px;
-            }
-            to {
-                left: 100vw;
-            }
+            height: 80px;
+            background: url('https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover no-repeat;
+            border-radius: 50%;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            opacity: 0.9;
         }
 
         /* Grass Animation */
@@ -262,21 +282,21 @@
             }
         }
 
-        /* Login Card Styles */
+        /* Enhanced Login Card Styles */
         .farm-login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            border-radius: 25px;
-            box-shadow: 
-                0 20px 40px rgba(0, 0, 0, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            border: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(50, 205, 50, 0.1);
             overflow: hidden;
-            animation: card-float 0.8s ease-out;
             position: relative;
             z-index: 10;
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
             margin: 1rem;
             min-height: auto;
         }
@@ -504,7 +524,7 @@
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
+            gap: 0.8rem;
             margin-top: 1rem;
         }
 
@@ -634,13 +654,40 @@
             .farm-wrapper {
                 padding: 0.5rem;
             }
-            
-            .cow-container {
+
+            /* Hide some farm images on mobile for better performance */
+            .grass-field-image,
+            .organic-badge {
                 display: none;
             }
-            
-            .tree-1, .tree-2 {
-                display: none;
+
+            /* Adjust remaining farm images */
+            .desi-cow-image {
+                width: 120px;
+                height: 90px;
+                bottom: 5%;
+                right: 2%;
+            }
+
+            .milk-bottles {
+                width: 80px;
+                height: 120px;
+                top: 10%;
+                left: 2%;
+            }
+
+            .farm-house {
+                width: 100px;
+                height: 80px;
+                bottom: 15%;
+                left: 5%;
+            }
+
+            .delivery-truck-image {
+                width: 100px;
+                height: 70px;
+                bottom: 10%;
+                right: 20%;
             }
             
             .farm-header {
@@ -759,26 +806,25 @@
 </head>
 <body>
     <div class="farm-wrapper">
-        <!-- Animated Background -->
-        <div class="background-elements">
-            <!-- Clouds -->
-            <div class="cloud cloud-1"></div>
-            <div class="cloud cloud-2"></div>
-            
-            <!-- Sun -->
-            <div class="sun"></div>
-            
-            <!-- Trees -->
-            <div class="tree tree-1">🌳</div>
-            <div class="tree tree-2">🌲</div>
-            
-            <!-- Animated Cow -->
-            <div class="cow-container">
-                <div class="cow">🐄</div>
-            </div>
-            
-            <!-- Grass Field -->
-            <div class="grass-field"></div>
+        <!-- Farm Visual Elements -->
+        <div class="farm-visual-elements">
+            <!-- Desi Cow -->
+            <div class="desi-cow-image"></div>
+
+            <!-- Fresh Milk Bottles -->
+            <div class="milk-bottles"></div>
+
+            <!-- Traditional Farm House -->
+            <div class="farm-house"></div>
+
+            <!-- Delivery Truck -->
+            <div class="delivery-truck-image"></div>
+
+            <!-- Green Grass Field -->
+            <div class="grass-field-image"></div>
+
+            <!-- Organic Badge -->
+            <div class="organic-badge"></div>
         </div>
         
         <!-- Main Content -->
@@ -854,15 +900,27 @@
                                 <div class="feature-grid">
                                     <div class="feature-item">
                                         <i class="fas fa-cow"></i>
-                                        <span>Pure Desi Cow</span>
+                                        <span>Desi Gau Mata</span>
                                     </div>
                                     <div class="feature-item">
-                                        <i class="fas fa-leaf"></i>
-                                        <span>100% Organic</span>
+                                        <i class="fas fa-seedling"></i>
+                                        <span>Natural Farming</span>
                                     </div>
                                     <div class="feature-item">
-                                        <i class="fas fa-truck"></i>
-                                        <span>Fresh Delivery</span>
+                                        <i class="fas fa-glass-whiskey"></i>
+                                        <span>Fresh Milk Daily</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-home"></i>
+                                        <span>Farm to Home</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-heart"></i>
+                                        <span>Pure & Healthy</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-shipping-fast"></i>
+                                        <span>Swift Delivery</span>
                                     </div>
                                 </div>
                             </div>
@@ -871,44 +929,8 @@
     </div>
 
     <script>
-        // Create animated grass blades
-        function createGrassField() {
-            const grassField = document.querySelector('.grass-field');
-            const screenWidth = window.innerWidth;
-            const grassCount = Math.floor(screenWidth / 8);
-            
-            for (let i = 0; i < grassCount; i++) {
-                const grass = document.createElement('div');
-                grass.classList.add('grass-blade');
-                grass.style.left = `${(i * 8) + Math.random() * 4}px`;
-                grass.style.height = `${15 + Math.random() * 15}px`;
-                grass.style.animationDelay = `${Math.random() * 2}s`;
-                grass.style.animationDuration = `${2 + Math.random() * 2}s`;
-                grassField.appendChild(grass);
-            }
-        }
-
-        // Create floating milk drops
-        function createMilkDrops() {
-            setInterval(() => {
-                const drop = document.createElement('div');
-                drop.classList.add('milk-drop');
-                drop.style.left = Math.random() * window.innerWidth + 'px';
-                drop.style.animationDelay = Math.random() * 2 + 's';
-                document.querySelector('.background-elements').appendChild(drop);
-                
-                // Remove drop after animation
-                setTimeout(() => {
-                    drop.remove();
-                }, 3000);
-            }, 2000);
-        }
-
-        // Initialize animations
+        // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            createGrassField();
-            createMilkDrops();
-            
             // Auto-hide flash messages
             setTimeout(function() {
                 const alerts = document.querySelectorAll('.farm-alert');
@@ -917,6 +939,19 @@
                     setTimeout(() => alert.remove(), 500);
                 });
             }, 4000);
+
+            // Add subtle hover effects to farm images
+            const farmImages = document.querySelectorAll('.farm-visual-elements > div');
+            farmImages.forEach(img => {
+                img.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+
+                img.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
         });
 
         // Add CSS for fade out animation
@@ -926,21 +961,8 @@
                 from { opacity: 1; }
                 to { opacity: 0; }
             }
-            
-            @keyframes blade-sway {
-                0%, 100% { transform: rotate(0deg); }
-                25% { transform: rotate(1deg); }
-                75% { transform: rotate(-1deg); }
-            }
         `;
         document.head.appendChild(style);
-        
-        // Add window resize handler for grass field
-        window.addEventListener('resize', function() {
-            const grassField = document.querySelector('.grass-field');
-            grassField.innerHTML = '';
-            createGrassField();
-        });
     </script>
 </body>
 </html>
