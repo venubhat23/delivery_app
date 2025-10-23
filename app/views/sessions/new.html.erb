@@ -14,22 +14,31 @@
             box-sizing: border-box;
         }
 
-        body {
+        html, body {
             font-family: 'Poppins', sans-serif;
+            height: 100%;
             min-height: 100vh;
             overflow-x: hidden;
             margin: 0;
             padding: 0;
+            width: 100%;
         }
 
-        /* Farm-themed Background with Images */
+        /* Farm-themed Background with Desi Cow */
         .farm-wrapper {
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
             min-height: 100vh;
+            height: 100vh;
             width: 100vw;
             background:
-                linear-gradient(rgba(135, 206, 235, 0.1), rgba(50, 205, 50, 0.2)),
-                url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?ixlib=rb-4.0.3&auto=format&fit=crop&w=2574&q=80') center/cover no-repeat;
+                linear-gradient(rgba(0, 0, 0, 0.4), rgba(139, 69, 19, 0.3)),
+                url('/Desi_cow_image.png?v=2025102303') center/cover no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             overflow-x: hidden;
             overflow-y: auto;
             display: flex;
@@ -59,17 +68,9 @@
             pointer-events: none;
         }
 
-        /* Desi Cow Image */
+        /* Desi Cow Image - Hidden (main background is now desi cow) */
         .desi-cow-image {
-            position: absolute;
-            bottom: 8%;
-            right: 5%;
-            width: 200px;
-            height: 150px;
-            background: url('https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover no-repeat;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            opacity: 0.9;
+            display: none;
         }
 
         /* Milk Bottles Visual */
@@ -122,6 +123,11 @@
             border-radius: 15px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
             opacity: 0.8;
+        }
+
+        /* Malnad Gidda Cow Image - Hidden (main background is now desi cow) */
+        .malnad-cow-image {
+            display: none;
         }
 
         /* Organic Label */
@@ -284,14 +290,14 @@
 
         /* Enhanced Login Card Styles */
         .farm-login-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
             border-radius: 30px;
             box-shadow:
-                0 30px 60px rgba(0, 0, 0, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-            border: 2px solid rgba(50, 205, 50, 0.1);
+                0 30px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 3px solid rgba(139, 69, 19, 0.2);
             overflow: hidden;
             position: relative;
             z-index: 10;
@@ -308,7 +314,7 @@
             left: 0;
             right: 0;
             height: 6px;
-            background: linear-gradient(90deg, #32CD32, #228B22, #90EE90, #32CD32);
+            background: linear-gradient(90deg, #8B4513, #D2B48C, #CD853F, #8B4513);
             background-size: 400% 100%;
             animation: gradient-shift 3s ease-in-out infinite;
         }
@@ -637,6 +643,11 @@
                 max-width: none;
                 width: auto;
             }
+
+            .farm-wrapper {
+                background-attachment: scroll;
+                background-size: cover;
+            }
         }
         
         @media (max-width: 992px) {
@@ -667,6 +678,13 @@
                 height: 90px;
                 bottom: 5%;
                 right: 2%;
+            }
+
+            .malnad-cow-image {
+                width: 100px;
+                height: 80px;
+                top: 8%;
+                left: 2%;
             }
 
             .milk-bottles {
@@ -808,8 +826,11 @@
     <div class="farm-wrapper">
         <!-- Farm Visual Elements -->
         <div class="farm-visual-elements">
-            <!-- Desi Cow -->
-            <div class="desi-cow-image"></div>
+            <!-- Authentic Desi Cow - Farm's Own Image -->
+            <div class="desi-cow-image" title="Authentic Desi Cow - Pure A2 Milk Producer"></div>
+
+            <!-- Desi Cow - Indigenous Indian Breed -->
+            <div class="malnad-cow-image" title="Indigenous Desi Cow - Traditional Indian Breed"></div>
 
             <!-- Fresh Milk Bottles -->
             <div class="milk-bottles"></div>
