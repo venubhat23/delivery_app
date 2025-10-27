@@ -453,6 +453,7 @@ Rails.application.routes.draw do
 
   # File Upload API
   post '/api/upload', to: 'uploads#create'
+  post '/api/upload/third_party', to: 'uploads#create_via_third_party'
   
   # API routes
   namespace :api do
