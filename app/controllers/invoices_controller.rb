@@ -911,8 +911,8 @@ end
     month_year = invoice.invoice_date&.strftime('%B %Y') || invoice.created_at&.strftime('%B %Y') || Date.current.strftime('%B %Y')
     formatted_amount = ActionController::Base.helpers.number_with_delimiter(invoice.total_amount, delimiter: ',')
 
-    # Calculate due date (use invoice due_date or 10 days from creation)
-    due_date = invoice.due_date&.strftime('%d/%m/%Y') || (invoice.created_at + 10.days).strftime('%d/%m/%Y')
+    # Calculate due date (always 10 days from creation date)
+    due_date = (invoice.created_at + 10.days).strftime('%d/%m/%Y')
 
     message = <<~MESSAGE.strip
       👋 Hello #{invoice.customer.name}!
@@ -1040,7 +1040,7 @@ end
   def build_enhanced_invoice_message(invoice, public_url, pdf_url = nil)
     month_year = invoice.invoice_date.strftime("%B %Y")
     formatted_amount = "₹#{ActionController::Base.helpers.number_with_delimiter(invoice.total_amount)}"
-    due_date = invoice.due_date.strftime('%d %B %Y')
+    due_date = (invoice.created_at + 10.days).strftime('%d %B %Y')
 
     message = <<~MESSAGE.strip
       👋 Hello #{invoice.customer.name}!
