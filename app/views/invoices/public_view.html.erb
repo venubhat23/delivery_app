@@ -1825,9 +1825,6 @@
               <tr>
                 <td data-label="PRODUCT">
                   <div class="product-name"><%= summary[:product].name %></div>
-                  <% if summary[:product].description.present? %>
-                    <div class="product-desc"><%= summary[:product].description %></div>
-                  <% end %>
                   <% if summary[:product].unit_type.present? %>
                     <span class="product-unit-badge"><%= summary[:product].unit_type %></span>
                   <% end %>

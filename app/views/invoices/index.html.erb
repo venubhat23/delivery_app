@@ -1388,6 +1388,68 @@
 <%= render 'shared/super_attractive_loader_js' %>
 
 <script>
+  // Global function to open WhatsApp directly without modal - MUST BE FIRST
+  window.openWhatsAppDirect = function(button) {
+    console.log('🚀 Opening WhatsApp directly');
+
+    // Extract data from button
+    const invoiceData = {
+      id: button.dataset.invoiceId,
+      number: button.dataset.invoiceNumber,
+      customerName: button.dataset.customerName,
+      customerPhone: button.dataset.customerPhone,
+      customerId: button.dataset.customerId,
+      amount: button.dataset.amount
+    };
+
+    console.log('📊 Invoice data:', invoiceData);
+
+    // Validate phone number
+    if (!invoiceData.customerPhone || invoiceData.customerPhone === 'null' || invoiceData.customerPhone === '') {
+      alert('No phone number found for this customer. Please update customer details.');
+      return;
+    }
+
+    // Show loading state
+    button.disabled = true;
+    const originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    // Make AJAX request to share_whatsapp endpoint
+    fetch(`/invoices/${invoiceData.id}/share_whatsapp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        phone_number: invoiceData.customerPhone
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Open WhatsApp directly
+        window.open(data.whatsapp_url, '_blank');
+        // Show success message
+        if (typeof showNotification === 'function') {
+          showNotification('WhatsApp opened successfully! 🚀', 'success');
+        }
+      } else {
+        alert('Error: ' + (data.error || 'Failed to generate WhatsApp link'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Network error. Please try again.');
+    })
+    .finally(() => {
+      // Reset button state
+      button.disabled = false;
+      button.innerHTML = originalHtml;
+    });
+  };
+
   window.openCompletedModal = openCompletedModal;
 window.closeMarkCompletedModal = closeMarkCompletedModal;
 
@@ -1758,65 +1820,6 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentInvoiceData = null;
   let currentCustomerPattern = null;
 
-  // Global function to open WhatsApp directly without modal
-  window.openWhatsAppDirect = function(button) {
-    console.log('🚀 Opening WhatsApp directly');
-
-    // Extract data from button
-    const invoiceData = {
-      id: button.dataset.invoiceId,
-      number: button.dataset.invoiceNumber,
-      customerName: button.dataset.customerName,
-      customerPhone: button.dataset.customerPhone,
-      customerId: button.dataset.customerId,
-      amount: button.dataset.amount
-    };
-
-    console.log('📊 Invoice data:', invoiceData);
-
-    // Validate phone number
-    if (!invoiceData.customerPhone || invoiceData.customerPhone === 'null' || invoiceData.customerPhone === '') {
-      alert('No phone number found for this customer. Please update customer details.');
-      return;
-    }
-
-    // Show loading state
-    button.disabled = true;
-    const originalHtml = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    // Make AJAX request to share_whatsapp endpoint
-    fetch(`/invoices/${invoiceData.id}/share_whatsapp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').getAttribute('content')
-      },
-      body: JSON.stringify({
-        phone_number: invoiceData.customerPhone
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Open WhatsApp directly
-        window.open(data.whatsapp_url, '_blank');
-        // Show success message
-        showNotification('WhatsApp opened successfully! 🚀', 'success');
-      } else {
-        alert('Error: ' + (data.error || 'Failed to generate WhatsApp link'));
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Network error. Please try again.');
-    })
-    .finally(() => {
-      // Reset button state
-      button.disabled = false;
-      button.innerHTML = originalHtml;
-    });
-  };
 
   // Global function to open WhatsApp modal - similar to deliveries modal pattern
   window.openWhatsAppModal = function(button) {
@@ -5880,10 +5883,15 @@ document.getElementById('confirmDeleteInvoice').addEventListener('click', functi
 // Mobile responsive adjustments for delete modal
 function adjustDeleteModalForMobile() {
   const modal = document.getElementById('deleteInvoiceModal');
-  if (window.innerWidth < 768) {
-    modal.querySelector('.modal-dialog').classList.add('modal-fullscreen-sm-down');
-  } else {
-    modal.querySelector('.modal-dialog').classList.remove('modal-fullscreen-sm-down');
+  if (modal) {
+    const modalContent = modal.querySelector('.custom-modal-content');
+    if (modalContent) {
+      if (window.innerWidth < 768) {
+        modalContent.classList.add('modal-fullscreen-sm-down');
+      } else {
+        modalContent.classList.remove('modal-fullscreen-sm-down');
+      }
+    }
   }
 }
 

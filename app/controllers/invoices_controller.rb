@@ -457,7 +457,7 @@ end
     
     # Generate WhatsApp URLs for each invoice
     whatsapp_urls = []
-    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+    host = Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
     
     invoices.each do |invoice|
       # Ensure share token exists
@@ -465,7 +465,7 @@ end
       invoice.save! if invoice.changed?
       
       # Generate public URL
-      protocol = Rails.env.production? ? 'https' : (request&.protocol || 'http')
+      protocol = 'https'
       public_url = invoice.public_url(host: host, protocol: protocol).gsub(':3000', '')
 
       # Generate public PDF URL
@@ -531,8 +531,8 @@ end
     @invoice.save! if @invoice.changed?
     
     # Generate public URL with explicit host and protocol
-    host = request.host || Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
-    protocol = Rails.env.production? ? 'https' : request.protocol || 'http'
+    host = Rails.application.config.action_controller.default_url_options[:host] || 'atmanirbharfarmbangalore.com'
+    protocol = 'https'
     public_url = @invoice.public_url(host: host, protocol: protocol).gsub(':3000', '')
     
     # Generate public PDF URL
