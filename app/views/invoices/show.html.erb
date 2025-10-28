@@ -994,9 +994,7 @@
               <tr style="<%= 'background-color: #f8f9fa;' if index.even? %>">
                 <td style="padding: 10px; border: 1px solid #ddd;">
                   <div style="font-weight: bold; margin-bottom: 5px;"><%= summary[:product].name %></div>
-                  <% if summary[:product].description.present? %>
-                    <div style="font-size: 11px; color: #666; font-style: italic; margin-bottom: 5px;"><%= summary[:product].description %></div>
-                  <% end %>
+                
                   <% if summary[:product].unit_type.present? %>
                     <span style="background-color: #6c757d; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;"><%= summary[:product].unit_type %></span>
                   <% end %>
