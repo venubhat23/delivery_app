@@ -7492,17 +7492,41 @@ document.addEventListener('DOMContentLoaded', function() {
       <form id="sidebarInvoiceForm">
         <!-- Customer Selection -->
         <div class="form-group mb-3">
-          <label for="customerSelect" class="form-label">
+          <label for="customerInput" class="form-label">
             <i class="fas fa-user me-2"></i>Customer
           </label>
-          <select class="form-select" id="customerSelect" name="customer_id" required>
-            <option value="">Select Customer...</option>
-            <% Customer.order(:name).each do |customer| %>
-              <option value="<%= customer.id %>" data-phone="<%= customer.phone_number %>">
-                <%= customer.name %> - <%= customer.phone_number %>
-              </option>
-            <% end %>
-          </select>
+          <div class="position-relative">
+            <input type="text"
+                   class="form-control"
+                   id="customerInput"
+                   name="customer_name"
+                   placeholder="Type customer name or select from dropdown..."
+                   autocomplete="off"
+                   required>
+            <input type="hidden" id="selectedCustomerId" name="customer_id" value="">
+
+            <!-- Dropdown for existing customers -->
+            <div class="dropdown-menu w-100" id="customerDropdown" style="max-height: 200px; overflow-y: auto;">
+              <div class="dropdown-item-text">
+                <small class="text-muted">Existing Customers:</small>
+              </div>
+              <% Customer.order(:name).limit(100).each do |customer| %>
+                <a class="dropdown-item customer-option"
+                   href="#"
+                   data-customer-id="<%= customer.id %>"
+                   data-customer-name="<%= customer.name %>"
+                   data-phone="<%= customer.phone_number %>">
+                  <div class="d-flex justify-content-between">
+                    <span><%= customer.name %></span>
+                    <small class="text-muted"><%= customer.phone_number %></small>
+                  </div>
+                </a>
+              <% end %>
+            </div>
+          </div>
+          <small class="form-text text-muted">
+            You can either select an existing customer or type a new customer name
+          </small>
         </div>
 
         <!-- Product Selection -->

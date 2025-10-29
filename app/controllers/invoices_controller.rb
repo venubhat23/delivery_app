@@ -963,6 +963,9 @@ end
 
       invoice.total_amount = total_amount
 
+      # Explicitly generate invoice number to ensure it's not blank
+      invoice.send(:generate_invoice_number) if invoice.invoice_number.blank?
+
       if invoice.save
         # Link delivery assignment to invoice
         delivery_assignment.update!(
