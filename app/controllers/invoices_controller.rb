@@ -912,7 +912,47 @@ end
   # Create sidebar invoice with delivery assignment
   def create_sidebar_invoice
     begin
-      customer = Customer.find(params[:customer_id])
+      # Handle customer - either existing by ID or create new by name
+      if params[:customer_id].present? && params[:customer_id] != ""
+        customer = Customer.find(params[:customer_id])
+      else
+        # Create a new customer with the provided name and phone
+        customer_name = params[:customer_name].to_s.strip
+        customer_phone = params[:customer_phone].to_s.strip
+
+        if customer_name.blank?
+          render json: { success: false, error: 'Customer name is required' }, status: 422
+          return
+        end
+
+        # Try to find existing customer by name first
+        existing_customer = Customer.find_by("name ILIKE ?", customer_name)
+
+        if existing_customer
+          customer = existing_customer
+        else
+          # Create new customer with required fields
+          customer = Customer.new(
+            name: customer_name,
+            phone_number: customer_phone.present? ? customer_phone : "9999999999", # Default if no phone provided
+            address: "Quick Invoice Customer", # Default address for quick invoices
+            user_id: current_user.id, # Associate with current admin user
+            password: "customer@123", # Default password for quick invoices
+            password_confirmation: "customer@123",
+            created_at: Time.current,
+            updated_at: Time.current
+          )
+
+          unless customer.save
+            render json: {
+              success: false,
+              error: "Failed to create customer: #{customer.errors.full_messages.join(', ')}"
+            }, status: 422
+            return
+          end
+        end
+      end
+
       product = Product.find(params[:product_id])
 
       # Parse parameters

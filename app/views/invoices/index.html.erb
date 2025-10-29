@@ -7500,32 +7500,38 @@ document.addEventListener('DOMContentLoaded', function() {
                    class="form-control"
                    id="customerInput"
                    name="customer_name"
-                   placeholder="Type customer name or select from dropdown..."
+                   placeholder="Search existing customer or enter new customer name..."
                    autocomplete="off"
                    required>
             <input type="hidden" id="selectedCustomerId" name="customer_id" value="">
 
             <!-- Dropdown for existing customers -->
-            <div class="dropdown-menu w-100" id="customerDropdown" style="max-height: 200px; overflow-y: auto;">
+            <div class="dropdown-menu w-100" id="customerDropdown" style="max-height: 200px; overflow-y: auto; display: none;">
               <div class="dropdown-item-text">
                 <small class="text-muted">Existing Customers:</small>
               </div>
-              <% Customer.order(:name).limit(100).each do |customer| %>
-                <a class="dropdown-item customer-option"
-                   href="#"
-                   data-customer-id="<%= customer.id %>"
-                   data-customer-name="<%= customer.name %>"
-                   data-phone="<%= customer.phone_number %>">
-                  <div class="d-flex justify-content-between">
-                    <span><%= customer.name %></span>
-                    <small class="text-muted"><%= customer.phone_number %></small>
-                  </div>
-                </a>
-              <% end %>
+              <div id="customerSearchResults">
+                <!-- Results will be populated by JavaScript -->
+              </div>
             </div>
           </div>
           <small class="form-text text-muted">
-            You can either select an existing customer or type a new customer name
+            Search by name or phone, or enter new customer details
+          </small>
+        </div>
+
+        <!-- Customer Phone (for new customers) -->
+        <div class="form-group mb-3">
+          <label for="customerPhone" class="form-label">
+            <i class="fas fa-phone me-2"></i>Customer Phone
+          </label>
+          <input type="tel"
+                 class="form-control"
+                 id="customerPhone"
+                 name="customer_phone"
+                 placeholder="Enter phone number (optional for new customers)">
+          <small class="form-text text-muted">
+            Auto-filled for existing customers, optional for new customers
           </small>
         </div>
 
@@ -7732,6 +7738,9 @@ function openSidebarInvoice() {
   // Load products
   loadProducts();
 
+  // Setup customer search functionality
+  setupCustomerSearch();
+
   // Set today's date as default
   const deliveryDateElement = document.getElementById('deliveryDate');
   if (deliveryDateElement) {
@@ -7825,12 +7834,116 @@ function updateTotal() {
   document.getElementById('totalAmount').textContent = total.toFixed(2);
 }
 
+// Customer search functionality
+function setupCustomerSearch() {
+  const customerInput = document.getElementById('customerInput');
+  const customerDropdown = document.getElementById('customerDropdown');
+  const customerSearchResults = document.getElementById('customerSearchResults');
+  const selectedCustomerId = document.getElementById('selectedCustomerId');
+  const customerPhone = document.getElementById('customerPhone');
+
+  if (!customerInput) return;
+
+  // Search customers as user types
+  customerInput.addEventListener('input', function() {
+    const query = this.value.trim();
+
+    if (query.length >= 1) {
+      searchCustomers(query);
+    } else {
+      customerDropdown.style.display = 'none';
+      selectedCustomerId.value = '';
+      customerPhone.value = '';
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!customerInput.contains(e.target) && !customerDropdown.contains(e.target)) {
+      customerDropdown.style.display = 'none';
+    }
+  });
+
+  // Show dropdown when input is focused and has content
+  customerInput.addEventListener('focus', function() {
+    if (this.value.trim().length >= 1) {
+      searchCustomers(this.value.trim());
+    }
+  });
+}
+
+function searchCustomers(query) {
+  fetch(`/invoices/search_suggestions?q=${encodeURIComponent(query)}&page=1`)
+    .then(response => response.json())
+    .then(data => {
+      const customerSearchResults = document.getElementById('customerSearchResults');
+      const customerDropdown = document.getElementById('customerDropdown');
+
+      if (data.suggestions && data.suggestions.length > 0) {
+        const customerSuggestions = data.suggestions.filter(s => s.type === 'customer');
+
+        customerSearchResults.innerHTML = '';
+
+        if (customerSuggestions.length > 0) {
+          customerSuggestions.forEach(customer => {
+            const item = document.createElement('a');
+            item.className = 'dropdown-item customer-option';
+            item.href = '#';
+            item.innerHTML = `
+              <div class="d-flex justify-content-between">
+                <span>${customer.label}</span>
+                <small class="text-muted">${customer.phone || 'No phone'}</small>
+              </div>
+            `;
+
+            item.addEventListener('click', function(e) {
+              e.preventDefault();
+              selectCustomer(customer.id, customer.label, customer.phone || '');
+            });
+
+            customerSearchResults.appendChild(item);
+          });
+
+          customerDropdown.style.display = 'block';
+        } else {
+          customerDropdown.style.display = 'none';
+        }
+      } else {
+        customerDropdown.style.display = 'none';
+      }
+    })
+    .catch(error => {
+      console.error('Error searching customers:', error);
+      document.getElementById('customerDropdown').style.display = 'none';
+    });
+}
+
+function selectCustomer(customerId, customerName, customerPhone) {
+  const customerInput = document.getElementById('customerInput');
+  const selectedCustomerId = document.getElementById('selectedCustomerId');
+  const customerPhoneInput = document.getElementById('customerPhone');
+  const customerDropdown = document.getElementById('customerDropdown');
+
+  customerInput.value = customerName;
+  selectedCustomerId.value = customerId;
+  customerPhoneInput.value = customerPhone;
+  customerDropdown.style.display = 'none';
+}
+
 function submitSidebarInvoice() {
   const form = document.getElementById('sidebarInvoiceForm');
   const formData = new FormData(form);
 
   // Validate required fields
-  const requiredFields = ['customer_id', 'product_id', 'delivery_date', 'quantity', 'rate'];
+  const customerName = formData.get('customer_name');
+  const customerId = formData.get('customer_id');
+
+  if (!customerName && !customerId) {
+    alert('Please enter a customer name or select an existing customer.');
+    return;
+  }
+
+  const requiredFields = ['product_id', 'delivery_date', 'quantity', 'rate'];
   for (let field of requiredFields) {
     if (!formData.get(field)) {
       alert(`Please fill in the ${field.replace('_', ' ')}.`);
