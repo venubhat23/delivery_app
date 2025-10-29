@@ -11,7 +11,7 @@
       <p class="text-muted mb-0">Manage your invoices, track payments, and monitor overdue accounts</p>
     </div>
     <div class="d-flex gap-2">
-      <button type="button" class="btn btn-success" onclick="openSidebarInvoice()">
+      <button type="button" class="btn btn-success" onclick="openQuickInvoiceModal()">
         <i class="fas fa-bolt me-2"></i>Quick Invoice
       </button>
       <%= link_to generate_invoices_path, class: 'btn btn-outline-success' do %>
@@ -1391,7 +1391,38 @@
 <%= render 'shared/super_attractive_loader_js' %>
 
 <script>
-  // Global function to open WhatsApp directly without modal - MUST BE FIRST
+  // Global WhatsApp Modal functions - MUST BE FIRST
+  window.openWhatsAppInvoiceModal = function() {
+    console.log('🔓 Opening WhatsApp Invoice modal');
+    const modal = document.getElementById('generateWhatsAppInvoiceModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+
+      // Focus on the first interactive element
+      setTimeout(() => {
+        const firstInput = modal.querySelector('select, input, button');
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 100);
+    } else {
+      console.error('❌ WhatsApp Invoice modal element not found');
+    }
+  };
+
+  window.closeWhatsAppInvoiceModal = function() {
+    console.log('🔒 Closing WhatsApp Invoice modal');
+    const modal = document.getElementById('generateWhatsAppInvoiceModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
+  };
+
+  // Global function to open WhatsApp directly without modal
   window.openWhatsAppDirect = function(button) {
     console.log('🚀 Opening WhatsApp directly');
 
@@ -2450,36 +2481,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
-  // WhatsApp Modal functions
-  window.openWhatsAppInvoiceModal = function() {
-    console.log('🔓 Opening WhatsApp Invoice modal');
-    const modal = document.getElementById('generateWhatsAppInvoiceModal');
-    if (modal) {
-      modal.style.display = 'flex';
-      document.body.classList.add('modal-open');
-      document.body.style.overflow = 'hidden';
-
-      // Focus on the first interactive element
-      setTimeout(() => {
-        const firstInput = modal.querySelector('select, input, button');
-        if (firstInput) {
-          firstInput.focus();
-        }
-      }, 100);
-    } else {
-      console.error('❌ WhatsApp Invoice modal element not found');
-    }
-  };
-
-  window.closeWhatsAppInvoiceModal = function() {
-    console.log('🔒 Closing WhatsApp Invoice modal');
-    const modal = document.getElementById('generateWhatsAppInvoiceModal');
-    if (modal) {
-      modal.style.display = 'none';
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = '';
-    }
-  };
+  // WhatsApp Modal functions already defined at top of script
 
   // Email Modal functions
   let currentEmailInvoiceData = null;
@@ -7479,17 +7481,19 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
-<!-- Quick Invoice Sidebar -->
-<div id="sidebarInvoice" class="sidebar-invoice">
-  <div class="sidebar-invoice-overlay" onclick="closeSidebarInvoice()"></div>
-  <div class="sidebar-invoice-content">
-    <div class="sidebar-invoice-header">
-      <h4><i class="fas fa-bolt me-2"></i>Quick Invoice</h4>
-      <button type="button" class="btn-close" onclick="closeSidebarInvoice()"></button>
+<!-- Quick Invoice Modal -->
+<div id="quickInvoiceModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="closeQuickInvoiceModal()"></div>
+  <div class="custom-modal-content quick-invoice-modal-large">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class="fas fa-bolt me-2"></i>Quick Invoice
+      </h5>
+      <button type="button" class="custom-close-btn" onclick="closeQuickInvoiceModal()">×</button>
     </div>
 
-    <div class="sidebar-invoice-body">
-      <form id="sidebarInvoiceForm">
+    <div class="custom-modal-body">
+      <form id="quickInvoiceForm">
         <!-- Customer Selection -->
         <div class="form-group mb-3">
           <label for="customerInput" class="form-label">
@@ -7535,16 +7539,6 @@ document.addEventListener('DOMContentLoaded', function() {
           </small>
         </div>
 
-        <!-- Product Selection -->
-        <div class="form-group mb-3">
-          <label for="productSelect" class="form-label">
-            <i class="fas fa-box me-2"></i>Product
-          </label>
-          <select class="form-select" id="productSelect" name="product_id" required>
-            <option value="">Select Product...</option>
-          </select>
-        </div>
-
         <!-- Delivery Date -->
         <div class="form-group mb-3">
           <label for="deliveryDate" class="form-label">
@@ -7553,28 +7547,20 @@ document.addEventListener('DOMContentLoaded', function() {
           <input type="date" class="form-control" id="deliveryDate" name="delivery_date" required>
         </div>
 
-        <!-- Quantity -->
+        <!-- Products Section -->
         <div class="form-group mb-3">
-          <label for="quantity" class="form-label">
-            <i class="fas fa-weight me-2"></i>Quantity
-          </label>
-          <input type="number" class="form-control" id="quantity" name="quantity" step="0.01" min="0.01" required>
-        </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label mb-0">
+              <i class="fas fa-box me-2"></i>Products
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProductRow()">
+              <i class="fas fa-plus me-1"></i>Add Product
+            </button>
+          </div>
 
-        <!-- Rate -->
-        <div class="form-group mb-3">
-          <label for="rate" class="form-label">
-            <i class="fas fa-rupee-sign me-2"></i>Rate per Unit
-          </label>
-          <input type="number" class="form-control" id="rate" name="rate" step="0.01" min="0.01" required>
-        </div>
-
-        <!-- Discount -->
-        <div class="form-group mb-3">
-          <label for="discount" class="form-label">
-            <i class="fas fa-percentage me-2"></i>Discount Amount
-          </label>
-          <input type="number" class="form-control" id="discount" name="discount_amount" step="0.01" min="0" value="0">
+          <div id="productsContainer">
+            <!-- Product rows will be added here -->
+          </div>
         </div>
 
         <!-- Delivery Person (Optional) -->
@@ -7600,9 +7586,9 @@ document.addEventListener('DOMContentLoaded', function() {
       </form>
     </div>
 
-    <div class="sidebar-invoice-footer">
-      <button type="button" class="btn btn-secondary me-2" onclick="closeSidebarInvoice()">Cancel</button>
-      <button type="button" class="btn btn-success" onclick="submitSidebarInvoice()">
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary me-2" onclick="closeQuickInvoiceModal()">Cancel</button>
+      <button type="button" class="btn btn-success" onclick="submitQuickInvoice()">
         <i class="fas fa-check me-2"></i>Create Invoice
       </button>
     </div>
@@ -7610,95 +7596,41 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <style>
-.sidebar-invoice {
+/* Quick Invoice Modal Specific Styles */
+#quickInvoiceModal.custom-modal {
   position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 100vw;
-  z-index: 1055;
-  visibility: hidden;
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.sidebar-invoice.show {
-  visibility: visible;
-  opacity: 1;
-}
-
-.sidebar-invoice-overlay {
-  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-}
-
-.sidebar-invoice-content {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 450px;
-  height: 100vh;
-  background: #ffffff;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
   display: flex;
-  flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-}
-
-.sidebar-invoice.show .sidebar-invoice-content {
-  transform: translateX(0);
-}
-
-.sidebar-invoice-header {
-  padding: 1.5rem 1.5rem 1rem;
-  border-bottom: 2px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  justify-content: center;
+  padding: 80px 0 20px 280px;
 }
 
-.sidebar-invoice-header h4 {
-  margin: 0;
-  font-weight: 700;
+.quick-invoice-modal-large {
+  max-width: 800px;
+  width: 90%;
 }
 
-.sidebar-invoice-header .btn-close {
-  filter: brightness(0) invert(1);
-}
-
-.sidebar-invoice-body {
-  flex: 1;
-  padding: 2rem 1.5rem;
+.quick-invoice-modal-large .custom-modal-body {
+  max-height: 70vh;
   overflow-y: auto;
 }
 
-.sidebar-invoice-footer {
-  padding: 1.5rem;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.sidebar-invoice .form-group .form-label {
+#quickInvoiceModal .form-group .form-label {
   font-weight: 600;
   color: #495057;
   margin-bottom: 0.5rem;
 }
 
-.sidebar-invoice .form-group .form-label i {
+#quickInvoiceModal .form-group .form-label i {
   color: #667eea;
 }
 
-.total-display {
+#quickInvoiceModal .total-display {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 1rem 1.5rem;
@@ -7707,34 +7639,93 @@ document.addEventListener('DOMContentLoaded', function() {
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-.total-label {
+#quickInvoiceModal .total-label {
   display: block;
   font-size: 0.9rem;
   opacity: 0.9;
   margin-bottom: 0.25rem;
 }
 
-.total-amount {
+#quickInvoiceModal .total-amount {
   display: block;
   font-size: 1.8rem;
   font-weight: 700;
 }
 
-.sidebar-invoice .form-control:focus,
-.sidebar-invoice .form-select:focus {
+#quickInvoiceModal .product-row {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+#quickInvoiceModal .product-row:hover {
+  border-color: #667eea !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+#quickInvoiceModal .product-row h6 {
+  color: #495057;
+  font-weight: 600;
+}
+
+#quickInvoiceModal .product-row .btn-outline-danger {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+#quickInvoiceModal .product-row .btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+#quickInvoiceModal .product-row .row-total {
+  color: #28a745;
+  font-weight: 600;
+}
+
+#quickInvoiceModal .form-control:focus,
+#quickInvoiceModal .form-select:focus {
   border-color: #667eea;
   box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
 }
 
+/* Responsive Design for Quick Invoice Modal */
+@media (max-width: 1200px) {
+  #quickInvoiceModal.custom-modal {
+    padding: 60px 0 20px 200px;
+  }
+}
+
+@media (max-width: 992px) {
+  #quickInvoiceModal.custom-modal {
+    padding: 60px 20px 20px 20px;
+  }
+
+  .quick-invoice-modal-large {
+    width: 95%;
+    max-width: 95%;
+  }
+}
+
 @media (max-width: 768px) {
-  .sidebar-invoice-content {
-    width: 100vw;
+  #quickInvoiceModal.custom-modal {
+    padding: 80px 10px 20px 10px;
+  }
+
+  .quick-invoice-modal-large {
+    width: 98%;
+    max-width: none;
+  }
+
+  .quick-invoice-modal-large .custom-modal-body {
+    max-height: 60vh;
   }
 }
 </style>
 
 <script>
-function openSidebarInvoice() {
+function openQuickInvoiceModal() {
   // Load products
   loadProducts();
 
@@ -7760,36 +7751,32 @@ function openSidebarInvoice() {
     }
   }
 
-  // Show sidebar
-  document.getElementById('sidebarInvoice').classList.add('show');
-  document.body.style.overflow = 'hidden';
+  // Add initial product row
+  addProductRow();
+
+  // Show modal
+  document.getElementById('quickInvoiceModal').style.display = 'block';
 }
 
-function closeSidebarInvoice() {
-  document.getElementById('sidebarInvoice').classList.remove('show');
-  document.body.style.overflow = '';
+function closeQuickInvoiceModal() {
+  document.getElementById('quickInvoiceModal').style.display = 'none';
 
   // Reset form
-  document.getElementById('sidebarInvoiceForm').reset();
+  document.getElementById('quickInvoiceForm').reset();
   document.getElementById('totalAmount').textContent = '0.00';
+
+  // Clear products container
+  document.getElementById('productsContainer').innerHTML = '';
+  productRowCounter = 0;
 }
 
 function loadProducts() {
   fetch('/invoices/get_products')
     .then(response => response.json())
     .then(data => {
-      const productSelect = document.getElementById('productSelect');
-      productSelect.innerHTML = '<option value="">Select Product...</option>';
-
       if (data.success) {
-        data.products.forEach(product => {
-          const option = document.createElement('option');
-          option.value = product.id;
-          option.textContent = `${product.name} (₹${product.price}/${product.unit_type})`;
-          option.dataset.price = product.price;
-          option.dataset.unit = product.unit_type;
-          productSelect.appendChild(option);
-        });
+        // Store products globally for use in multiple product rows
+        availableProducts = data.products;
       }
     })
     .catch(error => {
@@ -7798,41 +7785,7 @@ function loadProducts() {
     });
 }
 
-// Auto-fill rate when product is selected
-document.addEventListener('DOMContentLoaded', function() {
-  const productSelect = document.getElementById('productSelect');
-  const rateInput = document.getElementById('rate');
-  const quantityInput = document.getElementById('quantity');
-  const discountInput = document.getElementById('discount');
-
-  if (productSelect) {
-    productSelect.addEventListener('change', function() {
-      const selectedOption = this.options[this.selectedIndex];
-      if (selectedOption.dataset.price) {
-        rateInput.value = selectedOption.dataset.price;
-        updateTotal();
-      }
-    });
-  }
-
-  // Update total when inputs change
-  [quantityInput, rateInput, discountInput].forEach(input => {
-    if (input) {
-      input.addEventListener('input', updateTotal);
-    }
-  });
-});
-
-function updateTotal() {
-  const quantity = parseFloat(document.getElementById('quantity').value) || 0;
-  const rate = parseFloat(document.getElementById('rate').value) || 0;
-  const discount = parseFloat(document.getElementById('discount').value) || 0;
-
-  const subtotal = quantity * rate;
-  const total = Math.max(0, subtotal - discount);
-
-  document.getElementById('totalAmount').textContent = total.toFixed(2);
-}
+// Auto-fill rate when product is selected - removed since we now use dynamic product rows
 
 // Customer search functionality
 function setupCustomerSearch() {
@@ -7930,8 +7883,117 @@ function selectCustomer(customerId, customerName, customerPhone) {
   customerDropdown.style.display = 'none';
 }
 
-function submitSidebarInvoice() {
-  const form = document.getElementById('sidebarInvoiceForm');
+let productRowCounter = 0;
+let availableProducts = [];
+
+function addProductRow() {
+  productRowCounter++;
+  const container = document.getElementById('productsContainer');
+
+  const productRow = document.createElement('div');
+  productRow.className = 'product-row mb-3 p-3 border rounded';
+  productRow.id = `productRow${productRowCounter}`;
+
+  productRow.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="mb-0">Product ${productRowCounter}</h6>
+      <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProductRow(${productRowCounter})">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Product</label>
+        <select class="form-select product-select" name="products[${productRowCounter}][product_id]" required>
+          <option value="">Select Product...</option>
+        </select>
+      </div>
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Quantity</label>
+        <input type="number" class="form-control quantity-input" name="products[${productRowCounter}][quantity]"
+               step="0.01" min="0.01" required onchange="calculateRowTotal(${productRowCounter})">
+      </div>
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Rate per Unit</label>
+        <input type="number" class="form-control rate-input" name="products[${productRowCounter}][rate]"
+               step="0.01" min="0.01" required onchange="calculateRowTotal(${productRowCounter})">
+      </div>
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Discount Amount</label>
+        <input type="number" class="form-control discount-input" name="products[${productRowCounter}][discount_amount]"
+               step="0.01" min="0" value="0" onchange="calculateRowTotal(${productRowCounter})">
+      </div>
+      <div class="col-12">
+        <div class="text-end">
+          <strong>Subtotal: ₹<span class="row-total" id="rowTotal${productRowCounter}">0.00</span></strong>
+        </div>
+      </div>
+    </div>
+  `;
+
+  container.appendChild(productRow);
+
+  // Populate product options for the new row
+  const productSelect = productRow.querySelector('.product-select');
+  availableProducts.forEach(product => {
+    const option = document.createElement('option');
+    option.value = product.id;
+    option.textContent = `${product.name} (₹${product.price}/${product.unit_type})`;
+    productSelect.appendChild(option);
+  });
+
+  // Auto-fill rate when product is selected
+  productSelect.addEventListener('change', function() {
+    const selectedProduct = availableProducts.find(p => p.id == this.value);
+    if (selectedProduct) {
+      const rateInput = productRow.querySelector('.rate-input');
+      rateInput.value = selectedProduct.price;
+      calculateRowTotal(productRowCounter);
+    }
+  });
+
+  updateTotalAmount();
+}
+
+function removeProductRow(rowId) {
+  const productRows = document.querySelectorAll('.product-row');
+  if (productRows.length > 1) {
+    document.getElementById(`productRow${rowId}`).remove();
+    updateTotalAmount();
+  } else {
+    alert('At least one product is required.');
+  }
+}
+
+function calculateRowTotal(rowId) {
+  const row = document.getElementById(`productRow${rowId}`);
+  const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+  const rate = parseFloat(row.querySelector('.rate-input').value) || 0;
+  const discount = parseFloat(row.querySelector('.discount-input').value) || 0;
+
+  const subtotal = (quantity * rate) - discount;
+  row.querySelector('.row-total').textContent = subtotal.toFixed(2);
+
+  updateTotalAmount();
+}
+
+function updateTotalAmount() {
+  const allRowTotals = document.querySelectorAll('.row-total');
+  let grandTotal = 0;
+
+  allRowTotals.forEach(totalElement => {
+    grandTotal += parseFloat(totalElement.textContent) || 0;
+  });
+
+  const totalAmountElement = document.getElementById('totalAmount');
+  if (totalAmountElement) {
+    totalAmountElement.textContent = grandTotal.toFixed(2);
+  }
+}
+
+function submitQuickInvoice() {
+  const form = document.getElementById('quickInvoiceForm');
   const formData = new FormData(form);
 
   // Validate required fields
@@ -7943,12 +8005,38 @@ function submitSidebarInvoice() {
     return;
   }
 
-  const requiredFields = ['product_id', 'delivery_date', 'quantity', 'rate'];
-  for (let field of requiredFields) {
-    if (!formData.get(field)) {
-      alert(`Please fill in the ${field.replace('_', ' ')}.`);
+  if (!formData.get('delivery_date')) {
+    alert('Please select a delivery date.');
+    return;
+  }
+
+  // Collect products data
+  const productRows = document.querySelectorAll('.product-row');
+  const products = [];
+  let hasValidProducts = true;
+
+  productRows.forEach((row, index) => {
+    const productId = row.querySelector('.product-select').value;
+    const quantity = row.querySelector('.quantity-input').value;
+    const rate = row.querySelector('.rate-input').value;
+    const discount = row.querySelector('.discount-input').value || 0;
+
+    if (!productId || !quantity || !rate) {
+      hasValidProducts = false;
+      alert(`Please complete all fields for Product ${index + 1}.`);
       return;
     }
+
+    products.push({
+      product_id: productId,
+      quantity: quantity,
+      rate: rate,
+      discount_amount: discount
+    });
+  });
+
+  if (!hasValidProducts || products.length === 0) {
+    return;
   }
 
   // Show loading state
@@ -7957,13 +8045,23 @@ function submitSidebarInvoice() {
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
   submitBtn.disabled = true;
 
+  // Prepare data for submission
+  const submitData = {
+    customer_name: formData.get('customer_name'),
+    customer_id: formData.get('customer_id'),
+    customer_phone: formData.get('customer_phone'),
+    delivery_date: formData.get('delivery_date'),
+    delivery_person_id: formData.get('delivery_person_id'),
+    products: products
+  };
+
   fetch('/invoices/create_sidebar_invoice', {
     method: 'POST',
     headers: {
       'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'Content-Type': 'application/json'
     },
-    body: new URLSearchParams(formData)
+    body: JSON.stringify(submitData)
   })
   .then(response => response.json())
   .then(data => {
@@ -7972,7 +8070,7 @@ function submitSidebarInvoice() {
 
     if (data.success) {
       alert(`Invoice ${data.invoice_number} created successfully!`);
-      closeSidebarInvoice();
+      closeQuickInvoiceModal();
 
       // Reload page to show new invoice
       window.location.reload();
@@ -7988,10 +8086,10 @@ function submitSidebarInvoice() {
   });
 }
 
-// Close sidebar with Escape key
+// Close modal with Escape key
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    closeSidebarInvoice();
+    closeQuickInvoiceModal();
   }
 });
 </script>

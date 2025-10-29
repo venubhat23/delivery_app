@@ -953,35 +953,17 @@ end
         end
       end
 
-      product = Product.find(params[:product_id])
-
       # Parse parameters
       delivery_date = Date.parse(params[:delivery_date])
-      quantity = params[:quantity].to_f
-      rate = params[:rate].to_f
-      discount_amount = params[:discount_amount].to_f
       delivery_person_id = params[:delivery_person_id].presence
 
-      # Create delivery assignment first (completed status)
-      assignment_params = {
-        customer: customer,
-        product: product,
-        scheduled_date: delivery_date,
-        quantity: quantity,
-        unit: product.unit_type,
-        status: 'completed',
-        completed_at: delivery_date.end_of_day,
-        discount_amount: discount_amount,
-        booked_by: 0, # Admin
-        invoice_generated: false
-      }
+      # Handle multiple products
+      products_data = params[:products] || []
 
-      # Only add user_id if delivery person is specified and valid
-      if delivery_person_id.present? && delivery_person_id.to_i > 0
-        assignment_params[:user_id] = delivery_person_id.to_i
+      if products_data.empty?
+        render json: { success: false, error: 'At least one product is required' }, status: 422
+        return
       end
-
-      delivery_assignment = DeliveryAssignment.create!(assignment_params)
 
       # Create invoice
       invoice = Invoice.new(
@@ -992,36 +974,75 @@ end
         invoice_type: 'manual'
       )
 
-      # Create invoice item
-      total_amount = (rate * quantity) - discount_amount
-      invoice.invoice_items.build(
-        product: product,
-        quantity: quantity,
-        unit_price: rate,
-        total_price: total_amount
-      )
+      total_invoice_amount = 0
+      delivery_assignments = []
 
-      invoice.total_amount = total_amount
+      # Process each product
+      products_data.each do |product_data|
+        product = Product.find(product_data[:product_id])
+        quantity = product_data[:quantity].to_f
+        rate = product_data[:rate].to_f
+        discount_amount = product_data[:discount_amount].to_f || 0
+
+        # Create delivery assignment for this product
+        assignment_params = {
+          customer: customer,
+          product: product,
+          scheduled_date: delivery_date,
+          quantity: quantity,
+          unit: product.unit_type,
+          status: 'completed',
+          completed_at: delivery_date.end_of_day,
+          discount_amount: discount_amount,
+          booked_by: 0, # Admin
+          invoice_generated: false
+        }
+
+        # Only add user_id if delivery person is specified and valid
+        if delivery_person_id.present? && delivery_person_id.to_i > 0
+          assignment_params[:user_id] = delivery_person_id.to_i
+        end
+
+        delivery_assignment = DeliveryAssignment.create!(assignment_params)
+        delivery_assignments << delivery_assignment
+
+        # Create invoice item
+        product_total = (rate * quantity) - discount_amount
+        invoice.invoice_items.build(
+          product: product,
+          quantity: quantity,
+          unit_price: rate,
+          total_price: product_total
+        )
+
+        total_invoice_amount += product_total
+      end
+
+      invoice.total_amount = total_invoice_amount
 
       # Explicitly generate invoice number to ensure it's not blank
       invoice.send(:generate_invoice_number) if invoice.invoice_number.blank?
 
       if invoice.save
-        # Link delivery assignment to invoice
-        delivery_assignment.update!(
-          invoice_generated: true,
-          invoice_id: invoice.id
-        )
+        # Link all delivery assignments to invoice
+        delivery_assignments.each do |assignment|
+          assignment.update!(
+            invoice_generated: true,
+            invoice_id: invoice.id
+          )
+        end
 
         render json: {
           success: true,
-          message: 'Invoice and delivery assignment created successfully!',
+          message: "Invoice with #{products_data.length} product(s) created successfully!",
           invoice_id: invoice.id,
           invoice_number: invoice.formatted_number,
-          delivery_assignment_id: delivery_assignment.id
+          delivery_assignment_ids: delivery_assignments.map(&:id),
+          total_amount: total_invoice_amount
         }
       else
-        delivery_assignment.destroy
+        # Clean up delivery assignments if invoice creation fails
+        delivery_assignments.each(&:destroy)
         render json: {
           success: false,
           error: invoice.errors.full_messages.join(', ')
