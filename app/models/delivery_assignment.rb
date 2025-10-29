@@ -1,13 +1,14 @@
 # app/models/delivery_assignment.rb
 class DeliveryAssignment < ApplicationRecord
   belongs_to :customer
-  belongs_to :user  # delivery person
-  belongs_to :delivery_person, -> { where(role: 'delivery_person') }, class_name: 'User', foreign_key: 'user_id'
+  belongs_to :user, optional: true  # delivery person
+  belongs_to :delivery_person, -> { where(role: 'delivery_person') }, class_name: 'User', foreign_key: 'user_id', optional: true
   belongs_to :product
   belongs_to :delivery_schedule, optional: true
   belongs_to :invoice, optional: true
 
-  validates :customer_id, :user_id, :product_id, :scheduled_date, :unit, presence: true
+  validates :customer_id, :product_id, :scheduled_date, :unit, presence: true
+  validates :user_id, presence: true, unless: :allow_nil_user_id?
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending in_progress completed cancelled] }
   validates :unit, inclusion: { in: %w[liters gallons kg pounds pieces] }
@@ -242,6 +243,11 @@ class DeliveryAssignment < ApplicationRecord
   rescue => e
     Rails.logger.error "Error calculating total liters: #{e.message}"
     0
+  end
+
+  def allow_nil_user_id?
+    # Allow nil user_id for invoices created through sidebar
+    invoice_generated? || status == 'completed'
   end
 
   private

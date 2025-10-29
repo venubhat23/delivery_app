@@ -325,6 +325,8 @@ Rails.application.routes.draw do
       get :export_for_whatsapp
       post :generate_and_send_whatsapp
       get :download_customer_list
+      post :create_sidebar_invoice
+      get :get_products
     end
   end
 

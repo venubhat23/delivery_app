@@ -892,6 +892,108 @@ end
     }, status: 500
   end
 
+  # Get products for dropdown
+  def get_products
+    products = Product.active.order(:name).select(:id, :name, :price, :unit_type)
+
+    render json: {
+      success: true,
+      products: products.map do |product|
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          unit_type: product.unit_type
+        }
+      end
+    }
+  end
+
+  # Create sidebar invoice with delivery assignment
+  def create_sidebar_invoice
+    begin
+      customer = Customer.find(params[:customer_id])
+      product = Product.find(params[:product_id])
+
+      # Parse parameters
+      delivery_date = Date.parse(params[:delivery_date])
+      quantity = params[:quantity].to_f
+      rate = params[:rate].to_f
+      discount_amount = params[:discount_amount].to_f
+      delivery_person_id = params[:delivery_person_id].presence
+
+      # Create delivery assignment first (completed status)
+      assignment_params = {
+        customer: customer,
+        product: product,
+        scheduled_date: delivery_date,
+        quantity: quantity,
+        unit: product.unit_type,
+        status: 'completed',
+        completed_at: delivery_date.end_of_day,
+        discount_amount: discount_amount,
+        booked_by: 0, # Admin
+        invoice_generated: false
+      }
+
+      # Only add user_id if delivery person is specified and valid
+      if delivery_person_id.present? && delivery_person_id.to_i > 0
+        assignment_params[:user_id] = delivery_person_id.to_i
+      end
+
+      delivery_assignment = DeliveryAssignment.create!(assignment_params)
+
+      # Create invoice
+      invoice = Invoice.new(
+        customer: customer,
+        invoice_date: delivery_date,
+        due_date: delivery_date + 10.days,
+        status: 'pending',
+        invoice_type: 'manual'
+      )
+
+      # Create invoice item
+      total_amount = (rate * quantity) - discount_amount
+      invoice.invoice_items.build(
+        product: product,
+        quantity: quantity,
+        unit_price: rate,
+        total_price: total_amount
+      )
+
+      invoice.total_amount = total_amount
+
+      if invoice.save
+        # Link delivery assignment to invoice
+        delivery_assignment.update!(
+          invoice_generated: true,
+          invoice_id: invoice.id
+        )
+
+        render json: {
+          success: true,
+          message: 'Invoice and delivery assignment created successfully!',
+          invoice_id: invoice.id,
+          invoice_number: invoice.formatted_number,
+          delivery_assignment_id: delivery_assignment.id
+        }
+      else
+        delivery_assignment.destroy
+        render json: {
+          success: false,
+          error: invoice.errors.full_messages.join(', ')
+        }, status: 422
+      end
+
+    rescue => e
+      Rails.logger.error "Error creating sidebar invoice: #{e.message}"
+      render json: {
+        success: false,
+        error: 'An error occurred while creating the invoice'
+      }, status: 500
+    end
+  end
+
   private
 
   def set_invoice

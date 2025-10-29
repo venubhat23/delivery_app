@@ -11,7 +11,10 @@
       <p class="text-muted mb-0">Manage your invoices, track payments, and monitor overdue accounts</p>
     </div>
     <div class="d-flex gap-2">
-      <%= link_to generate_invoices_path, class: 'btn btn-success' do %>
+      <button type="button" class="btn btn-success" onclick="openSidebarInvoice()">
+        <i class="fas fa-bolt me-2"></i>Quick Invoice
+      </button>
+      <%= link_to generate_invoices_path, class: 'btn btn-outline-success' do %>
         <i class="fas fa-plus me-2"></i>Generate Invoice
       <% end %>
       <button type="button" class="btn btn-primary" onclick="openGenerateMonthlyModal()">
@@ -7476,3 +7479,382 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+<!-- Quick Invoice Sidebar -->
+<div id="sidebarInvoice" class="sidebar-invoice">
+  <div class="sidebar-invoice-overlay" onclick="closeSidebarInvoice()"></div>
+  <div class="sidebar-invoice-content">
+    <div class="sidebar-invoice-header">
+      <h4><i class="fas fa-bolt me-2"></i>Quick Invoice</h4>
+      <button type="button" class="btn-close" onclick="closeSidebarInvoice()"></button>
+    </div>
+
+    <div class="sidebar-invoice-body">
+      <form id="sidebarInvoiceForm">
+        <!-- Customer Selection -->
+        <div class="form-group mb-3">
+          <label for="customerSelect" class="form-label">
+            <i class="fas fa-user me-2"></i>Customer
+          </label>
+          <select class="form-select" id="customerSelect" name="customer_id" required>
+            <option value="">Select Customer...</option>
+            <% Customer.order(:name).each do |customer| %>
+              <option value="<%= customer.id %>" data-phone="<%= customer.phone_number %>">
+                <%= customer.name %> - <%= customer.phone_number %>
+              </option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- Product Selection -->
+        <div class="form-group mb-3">
+          <label for="productSelect" class="form-label">
+            <i class="fas fa-box me-2"></i>Product
+          </label>
+          <select class="form-select" id="productSelect" name="product_id" required>
+            <option value="">Select Product...</option>
+          </select>
+        </div>
+
+        <!-- Delivery Date -->
+        <div class="form-group mb-3">
+          <label for="deliveryDate" class="form-label">
+            <i class="fas fa-calendar me-2"></i>Delivery Date
+          </label>
+          <input type="date" class="form-control" id="deliveryDate" name="delivery_date" required>
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group mb-3">
+          <label for="quantity" class="form-label">
+            <i class="fas fa-weight me-2"></i>Quantity
+          </label>
+          <input type="number" class="form-control" id="quantity" name="quantity" step="0.01" min="0.01" required>
+        </div>
+
+        <!-- Rate -->
+        <div class="form-group mb-3">
+          <label for="rate" class="form-label">
+            <i class="fas fa-rupee-sign me-2"></i>Rate per Unit
+          </label>
+          <input type="number" class="form-control" id="rate" name="rate" step="0.01" min="0.01" required>
+        </div>
+
+        <!-- Discount -->
+        <div class="form-group mb-3">
+          <label for="discount" class="form-label">
+            <i class="fas fa-percentage me-2"></i>Discount Amount
+          </label>
+          <input type="number" class="form-control" id="discount" name="discount_amount" step="0.01" min="0" value="0">
+        </div>
+
+        <!-- Delivery Person (Optional) -->
+        <div class="form-group mb-4">
+          <label for="deliveryPerson" class="form-label">
+            <i class="fas fa-truck me-2"></i>Delivery Person <span class="text-muted">(Optional)</span>
+          </label>
+          <select class="form-select" id="deliveryPerson" name="delivery_person_id">
+            <option value="">Auto Assign</option>
+            <% User.delivery_people.order(:name).each do |person| %>
+              <option value="<%= person.id %>"><%= person.name %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- Total Amount Display -->
+        <div class="form-group mb-4">
+          <div class="total-display">
+            <span class="total-label">Total Amount:</span>
+            <span class="total-amount">₹<span id="totalAmount">0.00</span></span>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="sidebar-invoice-footer">
+      <button type="button" class="btn btn-secondary me-2" onclick="closeSidebarInvoice()">Cancel</button>
+      <button type="button" class="btn btn-success" onclick="submitSidebarInvoice()">
+        <i class="fas fa-check me-2"></i>Create Invoice
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.sidebar-invoice {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 100vw;
+  z-index: 1055;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.sidebar-invoice.show {
+  visibility: visible;
+  opacity: 1;
+}
+
+.sidebar-invoice-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.sidebar-invoice-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 450px;
+  height: 100vh;
+  background: #ffffff;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-invoice.show .sidebar-invoice-content {
+  transform: translateX(0);
+}
+
+.sidebar-invoice-header {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 2px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.sidebar-invoice-header h4 {
+  margin: 0;
+  font-weight: 700;
+}
+
+.sidebar-invoice-header .btn-close {
+  filter: brightness(0) invert(1);
+}
+
+.sidebar-invoice-body {
+  flex: 1;
+  padding: 2rem 1.5rem;
+  overflow-y: auto;
+}
+
+.sidebar-invoice-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sidebar-invoice .form-group .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-invoice .form-group .form-label i {
+  color: #667eea;
+}
+
+.total-display {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.total-label {
+  display: block;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.total-amount {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.sidebar-invoice .form-control:focus,
+.sidebar-invoice .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+@media (max-width: 768px) {
+  .sidebar-invoice-content {
+    width: 100vw;
+  }
+}
+</style>
+
+<script>
+function openSidebarInvoice() {
+  // Load products
+  loadProducts();
+
+  // Set today's date as default
+  const deliveryDateElement = document.getElementById('deliveryDate');
+  if (deliveryDateElement) {
+    try {
+      // Try using valueAsDate first
+      if (deliveryDateElement.type === 'date') {
+        deliveryDateElement.valueAsDate = new Date();
+      } else {
+        // Fallback to setting value as ISO string
+        const today = new Date();
+        deliveryDateElement.value = today.toISOString().split('T')[0];
+      }
+    } catch (error) {
+      // Fallback method if valueAsDate fails
+      const today = new Date();
+      deliveryDateElement.value = today.toISOString().split('T')[0];
+    }
+  }
+
+  // Show sidebar
+  document.getElementById('sidebarInvoice').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebarInvoice() {
+  document.getElementById('sidebarInvoice').classList.remove('show');
+  document.body.style.overflow = '';
+
+  // Reset form
+  document.getElementById('sidebarInvoiceForm').reset();
+  document.getElementById('totalAmount').textContent = '0.00';
+}
+
+function loadProducts() {
+  fetch('/invoices/get_products')
+    .then(response => response.json())
+    .then(data => {
+      const productSelect = document.getElementById('productSelect');
+      productSelect.innerHTML = '<option value="">Select Product...</option>';
+
+      if (data.success) {
+        data.products.forEach(product => {
+          const option = document.createElement('option');
+          option.value = product.id;
+          option.textContent = `${product.name} (₹${product.price}/${product.unit_type})`;
+          option.dataset.price = product.price;
+          option.dataset.unit = product.unit_type;
+          productSelect.appendChild(option);
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error loading products:', error);
+      alert('Error loading products. Please try again.');
+    });
+}
+
+// Auto-fill rate when product is selected
+document.addEventListener('DOMContentLoaded', function() {
+  const productSelect = document.getElementById('productSelect');
+  const rateInput = document.getElementById('rate');
+  const quantityInput = document.getElementById('quantity');
+  const discountInput = document.getElementById('discount');
+
+  if (productSelect) {
+    productSelect.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption.dataset.price) {
+        rateInput.value = selectedOption.dataset.price;
+        updateTotal();
+      }
+    });
+  }
+
+  // Update total when inputs change
+  [quantityInput, rateInput, discountInput].forEach(input => {
+    if (input) {
+      input.addEventListener('input', updateTotal);
+    }
+  });
+});
+
+function updateTotal() {
+  const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+  const rate = parseFloat(document.getElementById('rate').value) || 0;
+  const discount = parseFloat(document.getElementById('discount').value) || 0;
+
+  const subtotal = quantity * rate;
+  const total = Math.max(0, subtotal - discount);
+
+  document.getElementById('totalAmount').textContent = total.toFixed(2);
+}
+
+function submitSidebarInvoice() {
+  const form = document.getElementById('sidebarInvoiceForm');
+  const formData = new FormData(form);
+
+  // Validate required fields
+  const requiredFields = ['customer_id', 'product_id', 'delivery_date', 'quantity', 'rate'];
+  for (let field of requiredFields) {
+    if (!formData.get(field)) {
+      alert(`Please fill in the ${field.replace('_', ' ')}.`);
+      return;
+    }
+  }
+
+  // Show loading state
+  const submitBtn = event.target;
+  const originalText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+  submitBtn.disabled = true;
+
+  fetch('/invoices/create_sidebar_invoice', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: new URLSearchParams(formData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+
+    if (data.success) {
+      alert(`Invoice ${data.invoice_number} created successfully!`);
+      closeSidebarInvoice();
+
+      // Reload page to show new invoice
+      window.location.reload();
+    } else {
+      alert(`Error: ${data.error}`);
+    }
+  })
+  .catch(error => {
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+    console.error('Error:', error);
+    alert('An error occurred while creating the invoice.');
+  });
+}
+
+// Close sidebar with Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeSidebarInvoice();
+  }
+});
+</script>
