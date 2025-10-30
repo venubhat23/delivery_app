@@ -1391,7 +1391,7 @@
 <%= render 'shared/super_attractive_loader_js' %>
 
 <script>
-  // Global WhatsApp Modal functions - MUST BE FIRST
+  // Global Modal functions - MUST BE FIRST
   window.openWhatsAppInvoiceModal = function() {
     console.log('🔓 Opening WhatsApp Invoice modal');
     const modal = document.getElementById('generateWhatsAppInvoiceModal');
@@ -1415,6 +1415,36 @@
   window.closeWhatsAppInvoiceModal = function() {
     console.log('🔒 Closing WhatsApp Invoice modal');
     const modal = document.getElementById('generateWhatsAppInvoiceModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
+  };
+
+  window.openGenerateMonthlyModal = function() {
+    console.log('🔓 Opening Generate Monthly modal');
+    const modal = document.getElementById('generateMonthlyModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+
+      // Focus on the first interactive element
+      setTimeout(() => {
+        const firstInput = modal.querySelector('select, input, button');
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 100);
+    } else {
+      console.error('❌ Generate Monthly modal element not found');
+    }
+  };
+
+  window.closeGenerateMonthlyModal = function() {
+    console.log('🔒 Closing Generate Monthly modal');
+    const modal = document.getElementById('generateMonthlyModal');
     if (modal) {
       modal.style.display = 'none';
       document.body.classList.remove('modal-open');
@@ -2450,36 +2480,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Custom modal functions for Generate Monthly Modal
-  window.openGenerateMonthlyModal = function() {
-    console.log('🔓 Opening Generate Monthly modal');
-    const modal = document.getElementById('generateMonthlyModal');
-    if (modal) {
-      modal.style.display = 'flex';
-      document.body.classList.add('modal-open');
-      document.body.style.overflow = 'hidden';
-
-      // Focus on the first interactive element
-      setTimeout(() => {
-        const firstInput = modal.querySelector('select, input, button');
-        if (firstInput) {
-          firstInput.focus();
-        }
-      }, 100);
-    } else {
-      console.error('❌ Generate Monthly modal element not found');
-    }
-  };
-
-  window.closeGenerateMonthlyModal = function() {
-    console.log('🔒 Closing Generate Monthly modal');
-    const modal = document.getElementById('generateMonthlyModal');
-    if (modal) {
-      modal.style.display = 'none';
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = '';
-    }
-  };
+  // Generate Monthly Modal functions already defined at top of script
 
   // WhatsApp Modal functions already defined at top of script
 
@@ -4605,7 +4606,11 @@ document.addEventListener('DOMContentLoaded', function() {
       customerCheckboxes.forEach(checkbox => {
         // Remove any existing event listeners to prevent duplicates
         checkbox.removeEventListener('change', handleIndividualCheckboxChange);
-        checkbox.addEventListener('change', handleIndividualCheckboxChange);
+        // Add a flag to prevent multiple listeners
+        if (!checkbox.hasEventListener) {
+          checkbox.addEventListener('change', handleIndividualCheckboxChange);
+          checkbox.hasEventListener = true;
+        }
       });
     }
 
@@ -4715,12 +4720,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Function to update customer count display
+  let updateCustomerCountTimeout;
   function updateCustomerCount() {
-    const countText = document.getElementById('customer-count-text');
-    const selectAllCheckbox = document.getElementById('select-all-customers');
+    // Debounce the function to prevent excessive calls
+    if (updateCustomerCountTimeout) {
+      clearTimeout(updateCustomerCountTimeout);
+    }
 
-    console.log('🔍 updateCustomerCount called, countText element:', countText);
-    if (!countText) return;
+    updateCustomerCountTimeout = setTimeout(() => {
+      const countText = document.getElementById('customer-count-text');
+      const selectAllCheckbox = document.getElementById('select-all-customers');
+
+      console.log('🔍 updateCustomerCount called, countText element:', countText);
+      if (!countText) return;
 
     // Check if "All Customers" is selected
     if (selectAllCheckbox && selectAllCheckbox.checked && !selectAllCheckbox.indeterminate) {
@@ -4796,6 +4808,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (badge) {
       badge.className = count > 0 ? 'badge bg-primary' : 'badge bg-secondary';
     }
+    }, 50); // Debounce for 50ms
   }
   
   // Initialize search functionality when modal opens
@@ -4843,15 +4856,21 @@ document.addEventListener('DOMContentLoaded', function() {
     modalElement.addEventListener('shown.bs.modal', initializeModalContent);
   }
 
-  // Also call when custom modal opens (since we're using custom modal)
-  const originalOpenModal = window.openGenerateMonthlyModal;
-  window.openGenerateMonthlyModal = function() {
-    if (originalOpenModal) {
-      originalOpenModal();
-    }
-    // Initialize content after a short delay to ensure modal is visible
-    setTimeout(initializeModalContent, 100);
-  };
+  // Add event listener for when the modal opens
+  const generateMonthlyModal = document.getElementById('generateMonthlyModal');
+  if (generateMonthlyModal) {
+    // Use a mutation observer to detect when the modal becomes visible
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+          if (generateMonthlyModal.style.display === 'flex') {
+            setTimeout(initializeModalContent, 100);
+          }
+        }
+      });
+    });
+    observer.observe(generateMonthlyModal, { attributes: true });
+  }
 
   
   // Clean up when modal closes
