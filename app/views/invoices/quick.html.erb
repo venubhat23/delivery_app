@@ -1,0 +1,437 @@
+<!-- Quick Invoice Creation Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">
+              <i class="fas fa-bolt me-3"></i>Quick Invoice
+            </h1>
+            <p class="text-muted mb-0">Create invoices quickly with auto-calculations</p>
+          </div>
+          <div class="d-flex gap-2">
+            <%= link_to invoices_path, class: 'btn btn-outline-secondary' do %>
+              <i class="fas fa-arrow-left me-2"></i>Back to Invoices
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Invoice Form -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-file-invoice me-2"></i>Invoice Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <%= form_with model: Invoice.new, url: invoices_path, method: :post, local: true, id: 'quickInvoiceForm', class: 'needs-validation', novalidate: true do |form| %>
+
+            <!-- Customer Selection -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="customerInput" class="form-label required">
+                  <i class="fas fa-user me-2"></i>Customer
+                </label>
+                <div class="position-relative">
+                  <input type="text"
+                         class="form-control"
+                         id="customerInput"
+                         name="customer_name"
+                         placeholder="Search existing customer or enter new customer name..."
+                         required>
+                  <%= form.hidden_field :customer_id, id: 'selectedCustomerId' %>
+
+                  <!-- Customer Search Results -->
+                  <div id="customerDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                    <div id="customerSearchResults">
+                      <!-- Search results will appear here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <label for="customerPhone" class="form-label">
+                  <i class="fas fa-phone me-2"></i>Phone Number
+                </label>
+                <input type="tel" class="form-control" id="customerPhone" name="customer_phone" placeholder="Phone number (optional for new customers)">
+              </div>
+
+              <div class="col-md-3">
+                <label for="deliveryDate" class="form-label required">
+                  <i class="fas fa-calendar me-2"></i>Delivery Date
+                </label>
+                <%= form.date_field :delivery_date,
+                    id: 'deliveryDate',
+                    class: 'form-control',
+                    value: Date.current.strftime('%Y-%m-%d'),
+                    required: true %>
+              </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="mb-0">
+                    <i class="fas fa-box me-2"></i>Products
+                  </h6>
+                  <button type="button" class="btn btn-outline-primary btn-sm" onclick="addProductRow()">
+                    <i class="fas fa-plus me-2"></i>Add Product
+                  </button>
+                </div>
+
+                <div id="productsContainer">
+                  <!-- Product rows will be added here dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery Person (Optional) -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="deliveryPerson" class="form-label">
+                  <i class="fas fa-truck me-2"></i>Delivery Person (Optional)
+                </label>
+                <%= form.select :delivery_person_id,
+                    options_from_collection_for_select(@delivery_people, :id, :name, nil),
+                    { prompt: 'Auto Assign' },
+                    { class: 'form-select', id: 'deliveryPerson' } %>
+              </div>
+
+              <div class="col-md-6">
+                <label for="invoiceNotes" class="form-label">
+                  <i class="fas fa-sticky-note me-2"></i>Notes (Optional)
+                </label>
+                <%= form.text_area :notes,
+                    id: 'invoiceNotes',
+                    class: 'form-control',
+                    rows: 2,
+                    placeholder: 'Any special instructions or notes...' %>
+              </div>
+            </div>
+
+            <!-- Total Amount Display -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="total-display">
+                  <h4 class="mb-0">
+                    Total Amount: <span id="totalAmount">₹0.00</span>
+                  </h4>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                  <%= link_to 'Cancel', invoices_path, class: 'btn btn-outline-secondary' %>
+                  <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Create Invoice
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Quick Invoice Page Styles */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 15px 15px 0 0 !important;
+  padding: 1.5rem;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #dc3545;
+}
+
+.product-row {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.product-row:hover {
+  border-color: #667eea;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.total-display {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+.btn-outline-primary {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.btn-outline-primary:hover {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+/* Customer Search Dropdown */
+#customerDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: none;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+#customerDropdown .dropdown-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#customerDropdown .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+#customerDropdown .dropdown-item:last-child {
+  border-bottom: none;
+}
+</style>
+
+<script>
+// Global variables
+let productRowCounter = 0;
+let availableProducts = <%= @products.to_json.html_safe %>;
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  setupCustomerSearch();
+  addProductRow(); // Add initial product row
+});
+
+// Customer search functionality
+function setupCustomerSearch() {
+  const customerInput = document.getElementById('customerInput');
+  const customerDropdown = document.getElementById('customerDropdown');
+  const customerSearchResults = document.getElementById('customerSearchResults');
+  const selectedCustomerId = document.getElementById('selectedCustomerId');
+  const customerPhone = document.getElementById('customerPhone');
+
+  if (!customerInput) return;
+
+  let searchTimeout;
+
+  customerInput.addEventListener('input', function() {
+    const query = this.value.trim();
+
+    if (query.length < 2) {
+      customerDropdown.style.display = 'none';
+      return;
+    }
+
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      searchCustomers(query);
+    }, 300);
+  });
+
+  customerInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      customerDropdown.style.display = 'none';
+    }, 200);
+  });
+
+  function searchCustomers(query) {
+    fetch(`/api/customers/search?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(customers => {
+        customerSearchResults.innerHTML = '';
+
+        if (customers.length === 0) {
+          customerSearchResults.innerHTML = '<div class="dropdown-item text-muted">No customers found. Will create new customer.</div>';
+        } else {
+          customers.forEach(customer => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.innerHTML = `
+              <div>
+                <strong>${customer.name}</strong>
+                <br>
+                <small class="text-muted">${customer.phone_number || 'No phone'} • ${customer.address || 'No address'}</small>
+              </div>
+            `;
+            item.addEventListener('click', () => selectCustomer(customer));
+            customerSearchResults.appendChild(item);
+          });
+        }
+
+        customerDropdown.style.display = 'block';
+      })
+      .catch(error => {
+        console.error('Error searching customers:', error);
+      });
+  }
+
+  function selectCustomer(customer) {
+    customerInput.value = customer.name;
+    selectedCustomerId.value = customer.id;
+    customerPhone.value = customer.phone_number || '';
+    customerDropdown.style.display = 'none';
+  }
+}
+
+// Product row management
+function addProductRow() {
+  productRowCounter++;
+  const container = document.getElementById('productsContainer');
+
+  const productRow = document.createElement('div');
+  productRow.className = 'product-row mb-3 p-3';
+  productRow.id = `productRow${productRowCounter}`;
+
+  productRow.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="mb-0">Product ${productRowCounter}</h6>
+      <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeProductRow(${productRowCounter})">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Product</label>
+        <select class="form-select product-select" name="invoice[invoice_items_attributes][${productRowCounter}][product_id]" required>
+          <option value="">Select Product...</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Quantity</label>
+        <input type="number" class="form-control quantity-input" name="invoice[invoice_items_attributes][${productRowCounter}][quantity]"
+               step="0.01" min="0.01" required onchange="calculateRowTotal(${productRowCounter})">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Rate</label>
+        <input type="number" class="form-control rate-input" name="invoice[invoice_items_attributes][${productRowCounter}][unit_price]"
+               step="0.01" min="0" required onchange="calculateRowTotal(${productRowCounter})">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Discount</label>
+        <input type="number" class="form-control discount-input" name="invoice[invoice_items_attributes][${productRowCounter}][discount_amount]"
+               step="0.01" min="0" value="0" onchange="calculateRowTotal(${productRowCounter})">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Subtotal</label>
+        <input type="text" class="form-control subtotal-display" readonly value="₹0.00">
+      </div>
+    </div>
+  `;
+
+  container.appendChild(productRow);
+
+  // Populate product options
+  const productSelect = productRow.querySelector('.product-select');
+  availableProducts.forEach(product => {
+    const option = document.createElement('option');
+    option.value = product.id;
+    option.textContent = `${product.name} (₹${product.price}/${product.unit_type})`;
+    option.dataset.price = product.price;
+    productSelect.appendChild(option);
+  });
+
+  // Auto-fill rate when product is selected
+  productSelect.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.dataset.price) {
+      const rateInput = productRow.querySelector('.rate-input');
+      rateInput.value = selectedOption.dataset.price;
+      calculateRowTotal(productRowCounter);
+    }
+  });
+}
+
+function removeProductRow(rowId) {
+  const row = document.getElementById(`productRow${rowId}`);
+  if (row) {
+    row.remove();
+    updateTotalAmount();
+  }
+}
+
+function calculateRowTotal(rowId) {
+  const row = document.getElementById(`productRow${rowId}`);
+  const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+  const rate = parseFloat(row.querySelector('.rate-input').value) || 0;
+  const discount = parseFloat(row.querySelector('.discount-input').value) || 0;
+
+  const subtotal = Math.max(0, (quantity * rate) - discount);
+  row.querySelector('.subtotal-display').value = `₹${subtotal.toFixed(2)}`;
+
+  updateTotalAmount();
+}
+
+function updateTotalAmount() {
+  const subtotalDisplays = document.querySelectorAll('.subtotal-display');
+  let total = 0;
+
+  subtotalDisplays.forEach(display => {
+    const value = display.value.replace('₹', '').replace(',', '');
+    total += parseFloat(value) || 0;
+  });
+
+  document.getElementById('totalAmount').textContent = `₹${total.toFixed(2)}`;
+}
+</script>

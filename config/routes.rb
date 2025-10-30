@@ -314,6 +314,7 @@ Rails.application.routes.draw do
     end
 
     collection do
+      get :quick
       get :generate
       post :generate
       post :bulk_share_whatsapp

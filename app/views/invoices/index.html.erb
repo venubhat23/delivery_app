@@ -11,9 +11,9 @@
       <p class="text-muted mb-0">Manage your invoices, track payments, and monitor overdue accounts</p>
     </div>
     <div class="d-flex gap-2">
-      <button type="button" class="btn btn-success" onclick="openQuickInvoiceModal()">
+      <%= link_to quick_invoices_path, class: 'btn btn-success' do %>
         <i class="fas fa-bolt me-2"></i>Quick Invoice
-      </button>
+      <% end %>
       <%= link_to generate_invoices_path, class: 'btn btn-outline-success' do %>
         <i class="fas fa-plus me-2"></i>Generate Invoice
       <% end %>
@@ -2855,9 +2855,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- Customer Count Display -->
             <div class="mt-2">
-              <span class="badge bg-primary" id="customer-count-badge">
+              <span class="badge bg-secondary" id="customer-count-badge">
                 <i class="fas fa-users me-1"></i>
-                <span id="customer-count-text">0 customers selected</span>
+                <span id="customer-count-text">0 CUSTOMERS SELECTED</span>
               </span>
             </div>
           </div>
@@ -4847,6 +4847,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (selectAllCheckbox) {
       selectAllCheckbox.dispatchEvent(new Event('change'));
     }
+
+    // Ensure customer count is updated
+    setTimeout(() => {
+      updateCustomerCount();
+    }, 100);
 
   }
 
@@ -7745,6 +7750,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 function openQuickInvoiceModal() {
+  // Reset form and clear previous data
+  resetQuickInvoiceForm();
+
   // Load products
   loadProducts();
 
@@ -7770,9 +7778,6 @@ function openQuickInvoiceModal() {
     }
   }
 
-  // Add initial product row
-  addProductRow();
-
   // Show modal
   document.getElementById('quickInvoiceModal').style.display = 'block';
 }
@@ -7796,6 +7801,9 @@ function loadProducts() {
       if (data.success) {
         // Store products globally for use in multiple product rows
         availableProducts = data.products;
+
+        // Add initial product row after products are loaded
+        addProductRow();
       }
     })
     .catch(error => {

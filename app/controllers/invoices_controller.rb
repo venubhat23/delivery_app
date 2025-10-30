@@ -105,16 +105,30 @@ end
   end
   
   def create
+    # Handle customer creation if needed
+    if params[:invoice][:customer_id].blank? && params[:customer_name].present?
+      customer = Customer.find_or_create_by(name: params[:customer_name]) do |c|
+        c.phone_number = params[:customer_phone] if params[:customer_phone].present?
+        c.address = "Address to be updated"
+      end
+      params[:invoice][:customer_id] = customer.id
+    end
+
     @invoice = Invoice.new(invoice_params)
-    @invoice.invoice_date = Date.current if @invoice.invoice_date.blank?
+    @invoice.invoice_date = @invoice.delivery_date || Date.current
     @invoice.due_date = @invoice.invoice_date + 10.days if @invoice.due_date.blank?
     @invoice.status = 'pending' if @invoice.status.blank?
-    
+    @invoice.invoice_type = 'manual' # Mark as manual/quick invoice
+
     if @invoice.save
-      redirect_to @invoice, notice: 'Invoice was successfully created.'
+      redirect_to @invoice, notice: 'Quick Invoice was successfully created!'
     else
-      @invoice.invoice_items.build if @invoice.invoice_items.empty?
-      render :new
+      # Reload data for the form
+      @customers = Customer.all.order(:name)
+      @products = Product.all.order(:name)
+      @delivery_people = User.delivery_people.order(:name)
+
+      render :quick
     end
   end
   
@@ -281,6 +295,13 @@ end
     redirect_to invoices_url, notice: 'Invoice was successfully deleted.'
   end
   
+  # Quick Invoice page - simple form to create invoices
+  def quick
+    @customers = Customer.all.order(:name)
+    @products = Product.all.order(:name)
+    @delivery_people = User.delivery_people.order(:name)
+  end
+
   # Existing action for generating single customer invoice
   def generate
     if request.post?
@@ -1065,7 +1086,10 @@ end
   end
 
   def invoice_params
-    params.require(:invoice).permit(:customer_id, :status, :invoice_date, :due_date, :invoice_number, :notes)
+    params.require(:invoice).permit(
+      :customer_id, :status, :invoice_date, :due_date, :invoice_number, :notes, :delivery_date, :delivery_person_id,
+      invoice_items_attributes: [:id, :product_id, :quantity, :unit_price, :discount_amount, :_destroy]
+    )
   end
 
   def set_customers
