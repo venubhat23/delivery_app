@@ -105,28 +105,74 @@ end
   end
   
   def create
-    # Handle customer creation if needed
+    @invoice = Invoice.new(invoice_params)
+
+    # Check if this is a quick invoice (no customer_id but has customer_name)
     if params[:invoice][:customer_id].blank? && params[:customer_name].present?
-      customer = Customer.find_or_create_by(name: params[:customer_name]) do |c|
-        c.phone_number = params[:customer_phone] if params[:customer_phone].present?
-        c.address = "Address to be updated"
-      end
-      params[:invoice][:customer_id] = customer.id
+      # This is a quick invoice - don't create customer
+      @invoice.is_quick_invoice = true
+      @invoice.quick_customer_name = params[:customer_name]
+      @invoice.quick_customer_phone_number = params[:customer_phone]
+      @invoice.customer_id = nil  # Explicitly set to nil
+      Rails.logger.info "Creating quick invoice for: #{params[:customer_name]} (#{params[:customer_phone]})"
+    elsif params[:invoice][:customer_id].present?
+      # This is a regular invoice with existing customer
+      @invoice.is_quick_invoice = false
+      Rails.logger.info "Using existing customer ID: #{params[:invoice][:customer_id]}"
     end
 
-    @invoice = Invoice.new(invoice_params)
-    @invoice.invoice_date = @invoice.delivery_date || Date.current
+    @invoice.invoice_date = @invoice.invoice_date || Date.current
     @invoice.due_date = @invoice.invoice_date + 10.days if @invoice.due_date.blank?
     @invoice.status = 'pending' if @invoice.status.blank?
     @invoice.invoice_type = 'manual' # Mark as manual/quick invoice
 
+    # Generate invoice number if not present
+    if @invoice.invoice_number.blank?
+      @invoice.invoice_number = Invoice.generate_invoice_number(@invoice.invoice_type || 'manual')
+    end
+
+    # Calculate total amount from invoice items
+    if @invoice.invoice_items.any?
+      @invoice.total_amount = @invoice.invoice_items.sum(&:total_price)
+    end
+
     if @invoice.save
-      redirect_to @invoice, notice: 'Quick Invoice was successfully created!'
+      # Create delivery assignments with completed status for each invoice item
+      # For quick invoices, customer_id will be nil
+      @invoice.invoice_items.each do |item|
+        delivery_assignment = DeliveryAssignment.create!(
+          customer_id: @invoice.customer_id,  # Will be nil for quick invoices
+          product: item.product,
+          scheduled_date: @invoice.invoice_date,
+          quantity: item.quantity,
+          unit: item.product.unit_type || 'pieces',
+          status: 'completed',
+          completed_at: @invoice.invoice_date.end_of_day,
+          invoice_generated: true,
+          invoice_id: @invoice.id,
+          booked_by: 0, # Admin
+          final_amount_after_discount: item.total_price
+        )
+        Rails.logger.info "Created delivery assignment: #{delivery_assignment.id} for product #{item.product.name}"
+      end
+
+      success_message = @invoice.is_quick_invoice? ?
+        "Quick Invoice was successfully created for #{@invoice.quick_customer_name}!" :
+        "Invoice was successfully created!"
+
+      redirect_to invoice_path(@invoice), notice: success_message
     else
+      # Debug validation errors
+      Rails.logger.error "Invoice validation errors: #{@invoice.errors.full_messages}"
+      @invoice.invoice_items.each_with_index do |item, index|
+        if item.errors.any?
+          Rails.logger.error "Invoice item #{index} errors: #{item.errors.full_messages}"
+        end
+      end
+
       # Reload data for the form
       @customers = Customer.all.order(:name)
       @products = Product.all.order(:name)
-      @delivery_people = User.delivery_people.order(:name)
 
       render :quick
     end
@@ -299,7 +345,6 @@ end
   def quick
     @customers = Customer.all.order(:name)
     @products = Product.all.order(:name)
-    @delivery_people = User.delivery_people.order(:name)
   end
 
   # Existing action for generating single customer invoice
@@ -933,11 +978,17 @@ end
   # Create sidebar invoice with delivery assignment
   def create_sidebar_invoice
     begin
-      # Handle customer - either existing by ID or create new by name
+      # Handle customer - either existing by ID or create quick invoice
+      customer = nil
+      is_quick_invoice = false
+      quick_customer_name = nil
+      quick_customer_phone = nil
+
       if params[:customer_id].present? && params[:customer_id] != ""
         customer = Customer.find(params[:customer_id])
+        is_quick_invoice = false
       else
-        # Create a new customer with the provided name and phone
+        # This is a quick invoice - don't create customer
         customer_name = params[:customer_name].to_s.strip
         customer_phone = params[:customer_phone].to_s.strip
 
@@ -946,32 +997,11 @@ end
           return
         end
 
-        # Try to find existing customer by name first
-        existing_customer = Customer.find_by("name ILIKE ?", customer_name)
-
-        if existing_customer
-          customer = existing_customer
-        else
-          # Create new customer with required fields
-          customer = Customer.new(
-            name: customer_name,
-            phone_number: customer_phone.present? ? customer_phone : "9999999999", # Default if no phone provided
-            address: "Quick Invoice Customer", # Default address for quick invoices
-            user_id: current_user.id, # Associate with current admin user
-            password: "customer@123", # Default password for quick invoices
-            password_confirmation: "customer@123",
-            created_at: Time.current,
-            updated_at: Time.current
-          )
-
-          unless customer.save
-            render json: {
-              success: false,
-              error: "Failed to create customer: #{customer.errors.full_messages.join(', ')}"
-            }, status: 422
-            return
-          end
-        end
+        # Set quick invoice details
+        is_quick_invoice = true
+        quick_customer_name = customer_name
+        quick_customer_phone = customer_phone
+        customer = nil  # No customer for quick invoices
       end
 
       # Parse parameters
@@ -986,13 +1016,16 @@ end
         return
       end
 
-      # Create invoice
+      # Create invoice (either regular or quick)
       invoice = Invoice.new(
         customer: customer,
         invoice_date: delivery_date,
         due_date: delivery_date + 10.days,
         status: 'pending',
-        invoice_type: 'manual'
+        invoice_type: 'manual',
+        is_quick_invoice: is_quick_invoice,
+        quick_customer_name: quick_customer_name,
+        quick_customer_phone_number: quick_customer_phone
       )
 
       total_invoice_amount = 0
@@ -1007,7 +1040,7 @@ end
 
         # Create delivery assignment for this product
         assignment_params = {
-          customer: customer,
+          customer: customer,  # Will be nil for quick invoices
           product: product,
           scheduled_date: delivery_date,
           quantity: quantity,
@@ -1087,8 +1120,9 @@ end
 
   def invoice_params
     params.require(:invoice).permit(
-      :customer_id, :status, :invoice_date, :due_date, :invoice_number, :notes, :delivery_date, :delivery_person_id,
-      invoice_items_attributes: [:id, :product_id, :quantity, :unit_price, :discount_amount, :_destroy]
+      :customer_id, :status, :invoice_date, :due_date, :invoice_number, :notes,
+      :quick_customer_name, :quick_customer_phone_number, :is_quick_invoice,
+      invoice_items_attributes: [:id, :product_id, :quantity, :unit_price, :total_price, :_destroy]
     )
   end
 

@@ -2,7 +2,7 @@
 require 'securerandom'
 
 class Invoice < ApplicationRecord
-  belongs_to :customer, counter_cache: true
+  belongs_to :customer, counter_cache: true, optional: true
   has_many :invoice_items, dependent: :destroy
   has_many :products, through: :invoice_items
   has_many :delivery_assignments, dependent: :nullify
@@ -10,7 +10,9 @@ class Invoice < ApplicationRecord
   accepts_nested_attributes_for :invoice_items, allow_destroy: true, reject_if: :all_blank
   
   # Validations
-  validates :customer_id, presence: true
+  validates :customer_id, presence: true, unless: :is_quick_invoice?
+  validates :quick_customer_name, presence: true, if: :is_quick_invoice?
+  validates :quick_customer_phone_number, presence: true, if: :is_quick_invoice?
   validates :invoice_date, presence: true
   validates :due_date, presence: true
   
@@ -427,6 +429,27 @@ class Invoice < ApplicationRecord
 
   def mark_customer_invoice_created
     customer.update_column(:invoice_created_at, Time.current) if customer
+  end
+
+  # Quick Invoice helper methods
+  def customer_name
+    if is_quick_invoice?
+      quick_customer_name
+    else
+      customer&.name
+    end
+  end
+
+  def customer_phone
+    if is_quick_invoice?
+      quick_customer_phone_number
+    else
+      customer&.phone_number
+    end
+  end
+
+  def is_quick_invoice?
+    is_quick_invoice == true
   end
 
   private

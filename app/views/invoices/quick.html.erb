@@ -56,15 +56,24 @@
                 <label for="customerPhone" class="form-label">
                   <i class="fas fa-phone me-2"></i>Phone Number
                 </label>
-                <input type="tel" class="form-control" id="customerPhone" name="customer_phone" placeholder="Phone number (optional for new customers)">
+                <div class="position-relative">
+                  <input type="tel" class="form-control" id="customerPhone" name="customer_phone" placeholder="Search by phone or enter new number...">
+
+                  <!-- Phone Search Results -->
+                  <div id="phoneDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                    <div id="phoneSearchResults">
+                      <!-- Search results will appear here -->
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="col-md-3">
-                <label for="deliveryDate" class="form-label required">
-                  <i class="fas fa-calendar me-2"></i>Delivery Date
+                <label for="invoiceDate" class="form-label required">
+                  <i class="fas fa-calendar me-2"></i>Invoice Date
                 </label>
-                <%= form.date_field :delivery_date,
-                    id: 'deliveryDate',
+                <%= form.date_field :invoice_date,
+                    id: 'invoiceDate',
                     class: 'form-control',
                     value: Date.current.strftime('%Y-%m-%d'),
                     required: true %>
@@ -89,18 +98,8 @@
               </div>
             </div>
 
-            <!-- Delivery Person (Optional) -->
+            <!-- Notes (Optional) -->
             <div class="row mb-4">
-              <div class="col-md-6">
-                <label for="deliveryPerson" class="form-label">
-                  <i class="fas fa-truck me-2"></i>Delivery Person (Optional)
-                </label>
-                <%= form.select :delivery_person_id,
-                    options_from_collection_for_select(@delivery_people, :id, :name, nil),
-                    { prompt: 'Auto Assign' },
-                    { class: 'form-select', id: 'deliveryPerson' } %>
-              </div>
-
               <div class="col-md-6">
                 <label for="invoiceNotes" class="form-label">
                   <i class="fas fa-sticky-note me-2"></i>Notes (Optional)
@@ -222,8 +221,8 @@
   border-color: #667eea;
 }
 
-/* Customer Search Dropdown */
-#customerDropdown {
+/* Customer and Phone Search Dropdowns */
+#customerDropdown, #phoneDropdown {
   position: absolute;
   top: 100%;
   left: 0;
@@ -236,19 +235,28 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-#customerDropdown .dropdown-item {
+#customerDropdown .dropdown-item, #phoneDropdown .dropdown-item {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #f8f9fa;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-#customerDropdown .dropdown-item:hover {
+#customerDropdown .dropdown-item:hover, #phoneDropdown .dropdown-item:hover {
   background-color: #f8f9fa;
 }
 
-#customerDropdown .dropdown-item:last-child {
+#customerDropdown .dropdown-item:last-child, #phoneDropdown .dropdown-item:last-child {
   border-bottom: none;
+}
+
+/* Visual feedback for successful selection */
+.form-control.is-valid {
+  border-color: #28a745;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.5-.6L7.5 1.3l.5.6-5.5 5.5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
 }
 </style>
 
@@ -259,33 +267,42 @@ let availableProducts = <%= @products.to_json.html_safe %>;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-  setupCustomerSearch();
+  setupCustomerPhoneSearch();
   addProductRow(); // Add initial product row
 });
 
-// Customer search functionality
-function setupCustomerSearch() {
+// Enhanced Customer and Phone search functionality
+function setupCustomerPhoneSearch() {
   const customerInput = document.getElementById('customerInput');
   const customerDropdown = document.getElementById('customerDropdown');
   const customerSearchResults = document.getElementById('customerSearchResults');
   const selectedCustomerId = document.getElementById('selectedCustomerId');
   const customerPhone = document.getElementById('customerPhone');
+  const phoneDropdown = document.getElementById('phoneDropdown');
+  const phoneSearchResults = document.getElementById('phoneSearchResults');
 
-  if (!customerInput) return;
+  if (!customerInput || !customerPhone) return;
 
-  let searchTimeout;
+  let customerSearchTimeout;
+  let phoneSearchTimeout;
 
+  // Customer name search
   customerInput.addEventListener('input', function() {
     const query = this.value.trim();
 
     if (query.length < 2) {
       customerDropdown.style.display = 'none';
+      // Clear customer selection if input is cleared
+      if (query.length === 0) {
+        selectedCustomerId.value = '';
+        customerPhone.value = '';
+      }
       return;
     }
 
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      searchCustomers(query);
+    clearTimeout(customerSearchTimeout);
+    customerSearchTimeout = setTimeout(() => {
+      searchCustomersByName(query);
     }, 300);
   });
 
@@ -295,7 +312,33 @@ function setupCustomerSearch() {
     }, 200);
   });
 
-  function searchCustomers(query) {
+  // Phone number search
+  customerPhone.addEventListener('input', function() {
+    const query = this.value.trim();
+
+    if (query.length < 3) {
+      phoneDropdown.style.display = 'none';
+      // Clear customer selection if phone is cleared
+      if (query.length === 0) {
+        selectedCustomerId.value = '';
+        customerInput.value = '';
+      }
+      return;
+    }
+
+    clearTimeout(phoneSearchTimeout);
+    phoneSearchTimeout = setTimeout(() => {
+      searchCustomersByPhone(query);
+    }, 300);
+  });
+
+  customerPhone.addEventListener('blur', function() {
+    setTimeout(() => {
+      phoneDropdown.style.display = 'none';
+    }, 200);
+  });
+
+  function searchCustomersByName(query) {
     fetch(`/api/customers/search?q=${encodeURIComponent(query)}`)
       .then(response => response.json())
       .then(customers => {
@@ -314,7 +357,7 @@ function setupCustomerSearch() {
                 <small class="text-muted">${customer.phone_number || 'No phone'} • ${customer.address || 'No address'}</small>
               </div>
             `;
-            item.addEventListener('click', () => selectCustomer(customer));
+            item.addEventListener('click', () => selectCustomerFromName(customer));
             customerSearchResults.appendChild(item);
           });
         }
@@ -322,15 +365,69 @@ function setupCustomerSearch() {
         customerDropdown.style.display = 'block';
       })
       .catch(error => {
-        console.error('Error searching customers:', error);
+        console.error('Error searching customers by name:', error);
       });
   }
 
-  function selectCustomer(customer) {
+  function searchCustomersByPhone(query) {
+    fetch(`/api/customers/search?phone=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(customers => {
+        phoneSearchResults.innerHTML = '';
+
+        if (customers.length === 0) {
+          phoneSearchResults.innerHTML = '<div class="dropdown-item text-muted">No customer found with this phone. Will use as new number.</div>';
+        } else {
+          customers.forEach(customer => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.innerHTML = `
+              <div>
+                <strong>${customer.phone_number}</strong>
+                <br>
+                <small class="text-muted">${customer.name} • ${customer.address || 'No address'}</small>
+              </div>
+            `;
+            item.addEventListener('click', () => selectCustomerFromPhone(customer));
+            phoneSearchResults.appendChild(item);
+          });
+        }
+
+        phoneDropdown.style.display = 'block';
+      })
+      .catch(error => {
+        console.error('Error searching customers by phone:', error);
+      });
+  }
+
+  function selectCustomerFromName(customer) {
     customerInput.value = customer.name;
     selectedCustomerId.value = customer.id;
     customerPhone.value = customer.phone_number || '';
     customerDropdown.style.display = 'none';
+
+    // Add visual feedback
+    customerInput.classList.add('is-valid');
+    customerPhone.classList.add('is-valid');
+    setTimeout(() => {
+      customerInput.classList.remove('is-valid');
+      customerPhone.classList.remove('is-valid');
+    }, 2000);
+  }
+
+  function selectCustomerFromPhone(customer) {
+    customerPhone.value = customer.phone_number;
+    customerInput.value = customer.name;
+    selectedCustomerId.value = customer.id;
+    phoneDropdown.style.display = 'none';
+
+    // Add visual feedback
+    customerInput.classList.add('is-valid');
+    customerPhone.classList.add('is-valid');
+    setTimeout(() => {
+      customerInput.classList.remove('is-valid');
+      customerPhone.classList.remove('is-valid');
+    }, 2000);
   }
 }
 
@@ -370,12 +467,13 @@ function addProductRow() {
       </div>
       <div class="col-md-2">
         <label class="form-label">Discount</label>
-        <input type="number" class="form-control discount-input" name="invoice[invoice_items_attributes][${productRowCounter}][discount_amount]"
+        <input type="number" class="form-control discount-input"
                step="0.01" min="0" value="0" onchange="calculateRowTotal(${productRowCounter})">
       </div>
       <div class="col-md-2">
         <label class="form-label">Subtotal</label>
         <input type="text" class="form-control subtotal-display" readonly value="₹0.00">
+        <input type="hidden" class="total-price-input" name="invoice[invoice_items_attributes][${productRowCounter}][total_price]" value="0">
       </div>
     </div>
   `;
@@ -419,6 +517,9 @@ function calculateRowTotal(rowId) {
 
   const subtotal = Math.max(0, (quantity * rate) - discount);
   row.querySelector('.subtotal-display').value = `₹${subtotal.toFixed(2)}`;
+
+  // Set the total_price for the invoice item (this is what gets saved to database)
+  row.querySelector('.total-price-input').value = subtotal.toFixed(2);
 
   updateTotalAmount();
 }

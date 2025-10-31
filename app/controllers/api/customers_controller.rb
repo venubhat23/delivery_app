@@ -1,11 +1,21 @@
 class Api::CustomersController < Api::BaseController
   def search
     search_term = params[:q].to_s.strip
+    phone_term = params[:phone].to_s.strip
     page = params[:page]&.to_i || 1
-    
+
     # Basic paginated JSON for Select2 or similar
     scope = Customer.active.order(:name)
-    if search_term.present?
+
+    if phone_term.present?
+      # Search specifically by phone number
+      like = "%#{phone_term}%"
+      scope = scope.where(
+        "phone_number ILIKE :phone OR alt_phone_number ILIKE :phone",
+        phone: like
+      )
+    elsif search_term.present?
+      # Search by name or phone
       like = "%#{search_term}%"
       scope = scope.where(
         "name ILIKE :q OR phone_number ILIKE :q OR alt_phone_number ILIKE :q OR email ILIKE :q OR member_id ILIKE :q",
@@ -15,18 +25,15 @@ class Api::CustomersController < Api::BaseController
 
     customers = scope.page(page).per(20)
 
-    render json: {
-      results: customers.map { |customer|
-        {
-          id: customer.id,
-          text: [customer.name, customer.phone_number.presence || customer.alt_phone_number, (customer.member_id.present? ? "ID: #{customer.member_id}" : nil)].compact.join(" · "),
-          name: customer.name,
-          phone: customer.phone_number.presence || customer.alt_phone_number,
-          member_id: customer.member_id,
-          address: customer.address
-        }
-      },
-      pagination: { more: customers.next_page.present? }
+    render json: customers.map { |customer|
+      {
+        id: customer.id,
+        text: [customer.name, customer.phone_number.presence || customer.alt_phone_number, (customer.member_id.present? ? "ID: #{customer.member_id}" : nil)].compact.join(" · "),
+        name: customer.name,
+        phone_number: customer.phone_number.presence || customer.alt_phone_number,
+        member_id: customer.member_id,
+        address: customer.address
+      }
     }
   end
 
@@ -52,7 +59,7 @@ class Api::CustomersController < Api::BaseController
           id: customer.id,
           text: "#{customer.name} - #{customer.phone_number.presence || customer.alt_phone_number}",
           name: customer.name,
-          phone: customer.phone_number.presence || customer.alt_phone_number,
+          phone_number: customer.phone_number.presence || customer.alt_phone_number,
           address: customer.address
         }
       end,

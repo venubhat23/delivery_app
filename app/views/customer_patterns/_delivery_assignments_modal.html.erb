@@ -400,9 +400,9 @@ console.log('✅ Assignment functions loaded:', {
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 12px;">
-                      <%= assignment.user.name.first.upcase %>
+                      <%= assignment.user&.name&.first&.upcase || 'N' %>
                     </div>
-                    <span class="text-muted small"><%= assignment.user.name %></span>
+                    <span class="text-muted small"><%= assignment.user&.name || 'No user assigned' %></span>
                   </div>
                 </td>
                 <td>

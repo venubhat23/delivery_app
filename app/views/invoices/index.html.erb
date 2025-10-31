@@ -4618,6 +4618,7 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('🔥 Individual checkbox changed:', this.value, this.checked);
       console.log('🔥 Calling updateCustomerCount and updateSelectedCustomerIds');
 
+
       // Determine which container is currently visible
       const uninvoicedContainer = document.getElementById('uninvoiced-customers');
       const allContainer = document.getElementById('all-customers');
@@ -4730,6 +4731,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCustomerCountTimeout = setTimeout(() => {
       const countText = document.getElementById('customer-count-text');
       const selectAllCheckbox = document.getElementById('select-all-customers');
+
 
       console.log('🔍 updateCustomerCount called, countText element:', countText);
       if (!countText) return;
@@ -4851,7 +4853,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ensure customer count is updated
     setTimeout(() => {
       updateCustomerCount();
+
+      // Force re-setup of all checkbox event handlers to ensure they work
+      const allCheckboxes = customerCheckboxContainer.querySelectorAll('.customer-checkbox-input');
+      allCheckboxes.forEach(checkbox => {
+        // Remove any existing listeners
+        checkbox.removeEventListener('change', handleIndividualCheckboxChange);
+        // Add fresh listener
+        checkbox.addEventListener('change', handleIndividualCheckboxChange);
+
+        // Add a backup direct listener to ensure count updates
+        checkbox.addEventListener('change', function() {
+          setTimeout(() => {
+            updateCustomerCount();
+          }, 10);
+        });
+      });
+
+      // Also update the count again after handlers are set up
+      setTimeout(() => {
+        updateCustomerCount();
+      }, 50);
     }, 100);
+
+    // Add event delegation as a final backup for checkbox changes
+    customerCheckboxContainer.addEventListener('change', function(e) {
+      if (e.target && e.target.classList.contains('customer-checkbox-input')) {
+        setTimeout(() => {
+          updateCustomerCount();
+        }, 10);
+      }
+    });
 
   }
 

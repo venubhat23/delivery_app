@@ -1,13 +1,14 @@
 # app/models/delivery_assignment.rb
 class DeliveryAssignment < ApplicationRecord
-  belongs_to :customer
+  belongs_to :customer, optional: true
   belongs_to :user, optional: true  # delivery person
   belongs_to :delivery_person, -> { where(role: 'delivery_person') }, class_name: 'User', foreign_key: 'user_id', optional: true
   belongs_to :product
   belongs_to :delivery_schedule, optional: true
   belongs_to :invoice, optional: true
 
-  validates :customer_id, :product_id, :scheduled_date, :unit, presence: true
+  validates :customer_id, presence: true, unless: :belongs_to_quick_invoice?
+  validates :product_id, :scheduled_date, :unit, presence: true
   validates :user_id, presence: true, unless: :allow_nil_user_id?
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending in_progress completed cancelled] }
@@ -321,5 +322,11 @@ class DeliveryAssignment < ApplicationRecord
     end
   rescue => e
     Rails.logger.error "Error awarding points for delivery assignment #{id}: #{e.message}"
+  end
+
+  private
+
+  def belongs_to_quick_invoice?
+    invoice&.is_quick_invoice?
   end
 end
