@@ -54,14 +54,21 @@ class TwilioWhatsappService
     # Send direct WhatsApp message instead of using template
 
     content_variables = {
-      '1' => message_body
+      '1' => invoice.customer.name,
+      '2' => invoice.created_at.strftime('%B %Y'),  # Month year
+      '3' => invoice.invoice_number,
+      '4' => invoice.total_amount.to_s,
+      '5' => invoice.due_date.strftime('%d/%m/%Y'),
+      '6' => public_url
     }
+
     # Send WhatsApp message
     message = @client.messages.create(
       to: "whatsapp:#{phone_number}",
       from: @from_number,
       content_variables: content_variables.to_json,
-      content_sid: @content_sid,
+      media_url: [public_url],
+      content_sid: "HX76519f55cd2df98449cb2a99852d796a"
     )
 
 

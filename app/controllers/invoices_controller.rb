@@ -1157,6 +1157,54 @@ end
     end
   end
 
+  def customers_for_month
+    month = params[:month].to_i
+    year = params[:year].to_i
+    show_all = params[:show_all] == 'true'
+
+    if month.zero? || year.zero?
+      render json: { success: false, error: 'Invalid month or year' }
+      return
+    end
+
+    begin
+      if show_all
+        customers = Customer.includes(:delivery_person, :invoices).order(:name).limit(1000)
+      else
+        # Only consider month and year columns, not invoice_date
+        customer_ids_with_invoices = Invoice.where(
+          "month = ? AND year = ?",
+          month, year
+        ).distinct.pluck(:customer_id).compact
+
+        customers = Customer.includes(:delivery_person)
+                           .where.not(id: customer_ids_with_invoices)
+                           .order(:name).limit(1000)
+      end
+
+      Rails.logger.info "Found #{customers.count} customers for month #{month}/#{year}, show_all: #{show_all}"
+
+      html = render_to_string(
+        partial: 'invoices/customers_list',
+        formats: [:html],
+        locals: {
+          customers: customers,
+          month: month,
+          year: year,
+          show_all: show_all,
+          container_prefix: show_all ? 'all' : 'uninvoiced'
+        }
+      )
+
+      Rails.logger.info "Partial rendered successfully, HTML length: #{html.length}"
+      render json: { success: true, html: html, count: customers.count }
+    rescue => e
+      Rails.logger.error "Error loading customers for month: #{e.message}"
+      Rails.logger.error "Error backtrace: #{e.backtrace.first(5).join('\n')}"
+      render json: { success: false, error: 'Server error' }
+    end
+  end
+
   private
 
   def set_invoice

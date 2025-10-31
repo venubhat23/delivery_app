@@ -1430,13 +1430,19 @@
       document.body.classList.add('modal-open');
       document.body.style.overflow = 'hidden';
 
+      // Load customers for the selected month/year
+      setTimeout(() => {
+        console.log('📊 Loading customers for monthly invoice generation...');
+        loadCustomersForMonth();
+      }, 200);
+
       // Focus on the first interactive element
       setTimeout(() => {
         const firstInput = modal.querySelector('select, input, button');
         if (firstInput) {
           firstInput.focus();
         }
-      }, 100);
+      }, 300);
     } else {
       console.error('❌ Generate Monthly modal element not found');
     }
@@ -2798,54 +2804,19 @@ document.addEventListener('DOMContentLoaded', function() {
                   </label>
                 </div>
                 <hr class="my-2">
-                <!-- Uninvoiced customers -->
+                <!-- Uninvoiced customers for selected month/year -->
                 <div id="uninvoiced-customers">
-                  <% Customer.where(invoice_created_at: nil, invoice_sent_at: nil).includes(:delivery_person).limit(500).order(:name).each do |customer| %>
-                    <div class="form-check customer-checkbox" data-delivery-person="<%= customer.delivery_person_id %>" data-invoiced="false">
-                      <input type="checkbox" class="form-check-input customer-checkbox-input"
-                             id="customer-<%= customer.id %>"
-                             name="customer_ids[]"
-                             value="<%= customer.id %>">
-                      <label class="form-check-label" for="customer-<%= customer.id %>">
-                        <div class="d-flex align-items-center">
-                          <div class="customer-avatar-small me-2">
-                            <%= customer.name.first.upcase %>
-                          </div>
-                          <div>
-                            <div class="fw-medium"><%= customer.name %></div>
-                            <small class="text-muted"><%= customer.delivery_person&.name || 'No Delivery Person' %></small>
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-                  <% end %>
+                  <!-- Will be populated dynamically based on selected month/year -->
+                  <div class="text-center text-muted p-3">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Loading customers...
+                  </div>
                 </div>
                 <!-- All customers (hidden by default) -->
                 <div id="all-customers" style="display: none;">
-                  <% Customer.includes(:delivery_person).limit(500).order(:name).each do |customer| %>
-                    <div class="form-check customer-checkbox" data-delivery-person="<%= customer.delivery_person_id %>" data-invoiced="<%= customer.invoice_sent_at.present? %>">
-                      <input type="checkbox" class="form-check-input customer-checkbox-input"
-                             id="all-customer-<%= customer.id %>"
-                             name="customer_ids[]"
-                             value="<%= customer.id %>">
-                      <label class="form-check-label" for="all-customer-<%= customer.id %>">
-                        <div class="d-flex align-items-center">
-                          <div class="customer-avatar-small me-2">
-                            <%= customer.name.first.upcase %>
-                          </div>
-                          <div>
-                            <div class="fw-medium">
-                              <%= customer.name %>
-                              <% if customer.invoice_sent_at.present? %>
-                                <span class="badge bg-success text-white ms-1" style="font-size: 0.6rem;">✓ Invoiced</span>
-                              <% end %>
-                            </div>
-                            <small class="text-muted"><%= customer.delivery_person&.name || 'No Delivery Person' %></small>
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-                  <% end %>
+                  <!-- Will be populated dynamically based on selected month/year -->
+                  <div class="text-center text-muted p-3">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Loading customers...
+                  </div>
                 </div>
               </div>
               <!-- Hidden input to ensure form submission works -->
@@ -4795,6 +4766,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const count = checkedCheckboxes.length;
     const totalVisible = visibleCheckboxes.length;
 
+    // 🔍 DEBUG: Enhanced logging to understand count discrepancy
+    console.log('🔍 DETAILED COUNT DEBUG:');
+    console.log('🔍 Active container:', activeContainer?.id);
+    console.log('🔍 Raw checkboxes in container:', activeContainer.querySelectorAll('.customer-checkbox-input').length);
+    console.log('🔍 Visible checkboxes (after filter):', totalVisible);
+    console.log('🔍 Selected checkboxes:', count);
+
     let text = '';
 
     if (count === 0) {
@@ -4823,15 +4801,100 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 50); // Debounce for 50ms
   }
   
+  // Load customers based on selected month and year
+  function loadCustomersForMonth() {
+    const monthSelect = document.getElementById('modal-month-select');
+    const yearSelect = document.getElementById('modal-year-select');
+
+    if (!monthSelect || !yearSelect) {
+      console.log('Month or year select not found');
+      return;
+    }
+
+    const selectedMonth = monthSelect.value;
+    const selectedYear = yearSelect.value;
+
+    console.log('🔄 Loading customers for:', selectedMonth, selectedYear);
+
+    // Load customers for both containers
+    loadCustomersForContainer('uninvoiced-customers', selectedMonth, selectedYear, false);
+    loadCustomersForContainer('all-customers', selectedMonth, selectedYear, true);
+  }
+
+  // Load customers for a specific container
+  function loadCustomersForContainer(containerId, month, year, showAll = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Show loading
+    container.innerHTML = '<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading customers...</div>';
+
+    // Make AJAX request to load customers
+    const url = '/invoices/customers_for_month';
+    const params = new URLSearchParams({
+      month: month,
+      year: year,
+      show_all: showAll
+    });
+
+    console.log(`🌐 Fetching customers: ${url}?${params}`);
+
+    fetch(`${url}?${params}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      console.log('📡 Response received:', response.status, response.statusText);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('📊 Data received:', data);
+      if (data.success) {
+        console.log(`✅ Successfully loaded ${data.count} customers`);
+        container.innerHTML = data.html;
+        // Re-setup event handlers after loading new content
+        setupCustomerCheckboxHandlers();
+        updateCustomerCount();
+      } else {
+        console.error('❌ Server returned error:', data.error);
+        container.innerHTML = '<div class="text-center text-danger p-3">Error loading customers</div>';
+      }
+    })
+    .catch(error => {
+      console.error('❌ Network/parsing error:', error);
+      container.innerHTML = '<div class="text-center text-danger p-3">Error loading customers</div>';
+    });
+  }
+
   // Initialize search functionality when modal opens
   function initializeModalContent() {
     // Remove existing search inputs if any
     const existingDeliverySearch = document.getElementById('delivery-person-search');
     const existingCustomerSearch = document.getElementById('customer-search');
-    
+
     if (existingDeliverySearch) existingDeliverySearch.remove();
     if (existingCustomerSearch) existingCustomerSearch.remove();
-    
+
+    // Load customers for selected month/year
+    loadCustomersForMonth();
+
+    // Add event listeners for month/year changes
+    const monthSelect = document.getElementById('modal-month-select');
+    const yearSelect = document.getElementById('modal-year-select');
+
+    if (monthSelect) {
+      monthSelect.addEventListener('change', loadCustomersForMonth);
+    }
+    if (yearSelect) {
+      yearSelect.addEventListener('change', loadCustomersForMonth);
+    }
+
     // Add search functionality
     addSearchToDeliveryPerson();
     addSearchToCustomer();

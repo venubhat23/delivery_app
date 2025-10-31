@@ -11,9 +11,9 @@ class Customer < ApplicationRecord
   belongs_to :user
   belongs_to :delivery_person, class_name: 'User', optional: true
   has_many :deliveries, dependent: :destroy
-  has_many :delivery_assignments, dependent: :destroy, counter_cache: true
+  has_many :delivery_assignments, dependent: :destroy
   has_many :delivery_schedules, dependent: :destroy
-  has_many :invoices, dependent: :destroy, counter_cache: true
+  has_many :invoices, dependent: :destroy
   has_many :faqs, dependent: :destroy
   has_many :support_tickets, dependent: :destroy
   has_many :customer_addresses, dependent: :destroy
@@ -521,8 +521,8 @@ class Customer < ApplicationRecord
 
   # Optimized Delivery related methods to prevent N+1 queries
   def total_deliveries
-    # Use counter cache if available, fallback to count
-    read_attribute(:delivery_assignments_count) || delivery_assignments.count
+    # Count delivery assignments directly
+    delivery_assignments.count
   end
 
   def pending_deliveries
@@ -538,12 +538,8 @@ class Customer < ApplicationRecord
   end
 
   def delivery_assignments_count
-    # Use counter cache column if available, otherwise calculate
-    if has_attribute?(:delivery_assignments_count) && read_attribute(:delivery_assignments_count)
-      read_attribute(:delivery_assignments_count)
-    else
-      delivery_assignments.count
-    end
+    # Since counter cache column doesn't exist, just count directly
+    delivery_assignments.count
   end
 
   def active_schedules
@@ -556,7 +552,8 @@ class Customer < ApplicationRecord
 
   # Optimized Invoice related methods
   def total_invoices
-    read_attribute(:invoices_count) || invoices.count
+    # Count invoices directly since counter cache was removed
+    invoices.count
   end
 
   def total_invoice_amount
