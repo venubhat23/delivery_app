@@ -564,12 +564,14 @@ class Customer < ApplicationRecord
     if respond_to?(:total_invoice_amount) && attributes['total_invoice_amount'].present?
       attributes['total_invoice_amount'].to_f
     else
-      invoices.sum(:total_amount) || 0
+      amount = invoices.sum(:total_amount)
+      amount.nil? ? 0 : amount.to_f
     end
   end
 
   def pending_invoice_amount
-    invoices.where(status: 'pending').sum(:total_amount) || 0
+    amount = invoices.where(status: 'pending').sum(:total_amount)
+    amount.nil? ? 0 : amount.to_f
   end
 
   # Scheduling methods
@@ -594,16 +596,25 @@ class Customer < ApplicationRecord
   # Distance calculation (if you want to add distance-based features later)
   def distance_from(lat, lng)
     return nil unless has_coordinates?
-    
+    return nil if lat.nil? || lng.nil?
+
+    # Convert to float and validate
+    lat_f = lat.to_f
+    lng_f = lng.to_f
+    my_lat_f = latitude.to_f
+    my_lng_f = longitude.to_f
+
+    return nil if lat_f.zero? || lng_f.zero? || my_lat_f.zero? || my_lng_f.zero?
+
     # Using Haversine formula for distance calculation
     rad_per_deg = Math::PI / 180  # PI / 180
     rkm = 6371                    # Earth radius in kilometers
     rm = rkm * 1000               # Radius in meters
 
-    dlat_rad = (lat - latitude.to_f) * rad_per_deg
-    dlon_rad = (lng - longitude.to_f) * rad_per_deg
+    dlat_rad = (lat_f - my_lat_f) * rad_per_deg
+    dlon_rad = (lng_f - my_lng_f) * rad_per_deg
 
-    lat1_rad, lat2_rad = latitude.to_f * rad_per_deg, lat * rad_per_deg
+    lat1_rad, lat2_rad = my_lat_f * rad_per_deg, lat_f * rad_per_deg
 
     a = Math.sin(dlat_rad / 2)**2 + Math.cos(lat1_rad) * Math.cos(lat2_rad) * Math.sin(dlon_rad / 2)**2
     c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
@@ -798,7 +809,11 @@ class Customer < ApplicationRecord
   end
 
   def coordinates_presence
-    if latitude.present? ^ longitude.present?
+    # Only validate if one is present but not the other
+    lat_present = latitude.present? && !latitude.to_s.strip.empty?
+    lng_present = longitude.present? && !longitude.to_s.strip.empty?
+
+    if lat_present ^ lng_present
       errors.add(:base, "Both latitude and longitude must be provided together")
     end
   end

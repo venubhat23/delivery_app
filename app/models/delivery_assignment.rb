@@ -94,13 +94,13 @@ class DeliveryAssignment < ApplicationRecord
   end
 
   def calculate_final_amount_after_discount
-    base_amount = total_amount
-    discount = discount_amount.to_f
+    base_amount = total_amount.to_f || 0.0
+    discount = discount_amount.to_f || 0.0
     final_amount = [base_amount - discount, 0].max.round(2)
-    
+
     # Update the stored value
     update_column(:final_amount_after_discount, final_amount) if final_amount_after_discount != final_amount
-    
+
     final_amount
   end
 
@@ -284,12 +284,13 @@ class DeliveryAssignment < ApplicationRecord
   def calculate_and_set_final_amount
     # Only calculate if we have the necessary data
     return unless product&.price && quantity
-    
-    base_amount = total_amount
-    discount = discount_amount.to_f
-    
+
+    base_amount = total_amount.to_f || 0.0
+    discount = discount_amount.to_f || 0.0
+
     # Calculate final amount after discount
-    self.final_amount_after_discount = [base_amount - discount, 0].max.round(2)
+    final_amount = base_amount - discount
+    self.final_amount_after_discount = [final_amount, 0].max.round(2)
   end
 
   def set_completed_at_if_completed

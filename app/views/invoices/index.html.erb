@@ -191,12 +191,12 @@
             <% @invoices.each do |invoice| %>
               <tr class="invoice-row">
                 <td>
-                  <% if invoice.customer.phone_number.present? && invoice.status != 'paid' %>
-                    <input type="checkbox" 
-                           class="form-check-input invoice-checkbox" 
+                  <% if invoice.customer&.phone_number.present? && invoice.status != 'paid' %>
+                    <input type="checkbox"
+                           class="form-check-input invoice-checkbox"
                            data-invoice-id="<%= invoice.id %>"
-                           data-customer-name="<%= invoice.customer.name %>"
-                           data-customer-phone="<%= invoice.customer.phone_number %>"
+                           data-customer-name="<%= invoice.customer&.name %>"
+                           data-customer-phone="<%= invoice.customer&.phone_number %>"
                            data-invoice-number="<%= invoice.formatted_number %>"
                            data-amount="<%= invoice.total_amount %>">
                   <% end %>
@@ -213,8 +213,8 @@
                 </td>
                 <td>
                   <div class="customer-info">
-                    <strong><%= invoice.customer.name %></strong>
-                    <% if invoice.customer.phone_number.present? %>
+                    <strong><%= invoice.customer&.name || 'No Customer' %></strong>
+                    <% if invoice.customer&.phone_number.present? %>
                       <div class="text-muted small">
                         <i class="fas fa-phone me-1"></i><%= invoice.customer.phone_number %>
                       </div>
@@ -289,9 +289,9 @@
                               class="btn btn-sm btn-outline-warning share-whatsapp-btn"
                               data-invoice-id="<%= invoice.id %>"
                               data-invoice-number="<%= invoice.formatted_number %>"
-                              data-customer-name="<%= invoice.customer.name %>"
-                              data-customer-phone="<%= invoice.customer.phone_number %>"
-                              data-customer-id="<%= invoice.customer.id %>"
+                              data-customer-name="<%= invoice.customer&.name || 'No Customer' %>"
+                              data-customer-phone="<%= invoice.customer&.phone_number || '' %>"
+                              data-customer-id="<%= invoice.customer&.id || '' %>"
                               data-amount="<%= invoice.total_amount %>"
                               onclick="openWhatsAppDirect(this)"
                               title="Share via WhatsApp">
@@ -301,8 +301,8 @@
                               class="btn btn-sm btn-outline-purple delivery-assignments-btn"
                               data-invoice-id="<%= invoice.id %>"
                               data-invoice-number="<%= invoice.formatted_number %>"
-                              data-customer-name="<%= invoice.customer.name %>"
-                              data-customer-id="<%= invoice.customer.id %>"
+                              data-customer-name="<%= invoice.customer&.name || 'No Customer' %>"
+                              data-customer-id="<%= invoice.customer&.id || '' %>"
                               onclick="openDeliveryAssignmentsModal(this)"
                               title="View Delivery Assignments">
                         <i class="fas fa-truck"></i>
@@ -315,7 +315,7 @@
                               class="btn btn-sm btn-outline-secondary send-email-btn"
                               data-invoice-id="<%= invoice.id %>"
                               data-invoice-number="<%= invoice.formatted_number %>"
-                              data-customer-name="<%= invoice.customer.name %>"
+                              data-customer-name="<%= invoice.customer&.name || 'No Customer' %>"
                               onclick="openEmailModal(this)"
                               title="Send via Email">
                         <i class="fas fa-envelope"></i>
@@ -325,7 +325,7 @@
                                 class="btn btn-sm btn-outline-success mark-completed-btn"
                                 data-invoice-id="<%= invoice.id %>"
                                 data-invoice-number="<%= invoice.formatted_number %>"
-                                data-customer-name="<%= invoice.customer.name %>"
+                                data-customer-name="<%= invoice.customer&.name || 'No Customer' %>"
                                 onclick="openCompletedModal(this)"
                                 title="Mark as Completed">
                           <i class="fas fa-check-double"></i>
@@ -339,7 +339,7 @@
                               class="btn btn-sm btn-outline-danger delete-invoice-btn"
                               data-invoice-id="<%= invoice.id %>"
                               data-invoice-number="<%= invoice.formatted_number %>"
-                              data-customer-name="<%= invoice.customer.name %>"
+                              data-customer-name="<%= invoice.customer&.name || 'No Customer' %>"
                               data-total-amount="<%= invoice.total_amount %>"
                               onclick="openDeleteModal(this)"
                               title="Delete Invoice">
@@ -385,7 +385,7 @@
                 </div>
                 
                 <div class="invoice-card-body">
-                  <h6 class="customer-name"><%= invoice.customer.name %></h6>
+                  <h6 class="customer-name"><%= invoice.customer&.name || 'No Customer' %></h6>
                   
                   <div class="invoice-details">
                     <div class="detail-item">
@@ -417,9 +417,9 @@
                             class="btn btn-sm btn-outline-warning me-1 share-whatsapp-btn"
                             data-invoice-id="<%= invoice.id %>"
                             data-invoice-number="<%= invoice.formatted_number %>"
-                            data-customer-name="<%= invoice.customer.name %>"
-                            data-customer-phone="<%= invoice.customer.phone_number %>"
-                            data-customer-id="<%= invoice.customer.id %>"
+                            data-customer-name="<%= invoice.customer&.name || 'No Customer' %>"
+                            data-customer-phone="<%= invoice.customer&.phone_number || '' %>"
+                            data-customer-id="<%= invoice.customer&.id || '' %>"
                             data-amount="<%= invoice.total_amount %>"
                             onclick="openWhatsAppDirect(this)"
                             title="Share via WhatsApp">
@@ -429,7 +429,7 @@
                             class="btn btn-sm btn-outline-secondary me-1 send-email-btn"
                             data-invoice-id="<%= invoice.id %>"
                             data-invoice-number="<%= invoice.formatted_number %>"
-                            data-customer-name="<%= invoice.customer.name %>"
+                            data-customer-name="<%= invoice.customer&.name || 'No Customer' %>"
                             onclick="openEmailModal(this)"
                             title="Send via Email">
                       <i class="fas fa-envelope me-1"></i>Email
@@ -4734,7 +4734,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
       console.log('🔍 updateCustomerCount called, countText element:', countText);
-      if (!countText) return;
+      console.log('🔍 selectAllCheckbox element:', selectAllCheckbox);
+
+      if (!countText) {
+        console.log('❌ countText element not found! Modal might not be ready.');
+        return;
+      }
 
     // Check if "All Customers" is selected
     if (selectAllCheckbox && selectAllCheckbox.checked && !selectAllCheckbox.indeterminate) {
@@ -4755,7 +4760,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .filter(cb => cb.closest('.customer-checkbox').style.display !== 'none');
 
       const totalVisible = visibleCheckboxes.length;
-      countText.textContent = `${totalVisible} CUSTOMERS SELECTED (ALL)`;
+      countText.textContent = `ALL ${totalVisible} CUSTOMERS SELECTED`;
 
       // Update badge color
       const badge = document.getElementById('customer-count-badge');
@@ -4793,17 +4798,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let text = '';
 
     if (count === 0) {
-      text = `0 CUSTOMERS SELECTED`;
+      text = `0 OF ${totalVisible} CUSTOMERS SELECTED`;
     } else if (count === totalVisible) {
-      text = `${count} CUSTOMERS SELECTED (ALL)`;
+      text = `ALL ${totalVisible} CUSTOMERS SELECTED`;
+    } else if (count === 1) {
+      text = `1 OF ${totalVisible} CUSTOMERS SELECTED`;
     } else {
-      text = count === 1 ? `${count} CUSTOMER SELECTED` : `${count} CUSTOMERS SELECTED`;
+      text = `${count} OF ${totalVisible} CUSTOMERS SELECTED`;
     }
 
     console.log('🔍 Setting countText to:', text, 'Count:', count, 'Total visible:', totalVisible);
+    console.log('🔍 Checked checkboxes:', checkedCheckboxes.map(cb => cb.value));
+    console.log('🔍 All visible checkboxes:', visibleCheckboxes.map(cb => cb.value));
+
     countText.textContent = text;
 
-    console.log('Updated count display:', text, 'Checked:', count, 'Total visible:', totalVisible, 'Active container:', activeContainer.id);
+    console.log('Updated count display:', text, 'Checked:', count, 'Total visible:', totalVisible, 'Active container:', activeContainer?.id);
 
     // Update badge color based on count
     const badge = document.getElementById('customer-count-badge');
@@ -4879,18 +4889,88 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event delegation as a final backup for checkbox changes
     customerCheckboxContainer.addEventListener('change', function(e) {
       if (e.target && e.target.classList.contains('customer-checkbox-input')) {
+        console.log('🔥 Checkbox changed via delegation:', e.target.value, e.target.checked);
         setTimeout(() => {
           updateCustomerCount();
         }, 10);
       }
     });
 
+    // Force an immediate count update when the modal is shown
+    setTimeout(() => {
+      console.log('🔄 Forcing initial customer count update...');
+      updateCustomerCount();
+    }, 200);
+
+    // Additional aggressive forced updates to ensure counter works
+    setTimeout(() => {
+      console.log('🔄 AGGRESSIVE FORCE #1: Updating customer count...');
+      const countText = document.getElementById('customer-count-text');
+      console.log('🔍 Count text element found:', !!countText);
+      if (countText) {
+        updateCustomerCount();
+      }
+    }, 500);
+
+    setTimeout(() => {
+      console.log('🔄 AGGRESSIVE FORCE #2: Direct count update...');
+      const countText = document.getElementById('customer-count-text');
+      const checkboxes = document.querySelectorAll('.customer-checkbox-input:checked');
+      console.log('🔍 Found', checkboxes.length, 'checked checkboxes');
+      if (countText) {
+        const allCheckboxes = document.querySelectorAll('.customer-checkbox-input');
+        const checkedCount = checkboxes.length;
+        const totalCount = allCheckboxes.length;
+
+        const text = checkedCount === 0 ? `0 OF ${totalCount} CUSTOMERS SELECTED` :
+                    checkedCount === totalCount ? `ALL ${totalCount} CUSTOMERS SELECTED` :
+                    checkedCount === 1 ? `1 OF ${totalCount} CUSTOMERS SELECTED` :
+                    `${checkedCount} OF ${totalCount} CUSTOMERS SELECTED`;
+        countText.textContent = text;
+        console.log('🔄 Directly set count text to:', text);
+      }
+    }, 1000);
+
   }
+
+  // Direct function to test customer count update
+  window.testCustomerCount = function() {
+    console.log('🧪 TESTING: Direct customer count update');
+    const countText = document.getElementById('customer-count-text');
+    const checkboxes = document.querySelectorAll('.customer-checkbox-input:checked');
+    const allCheckboxes = document.querySelectorAll('.customer-checkbox-input');
+
+    console.log('🧪 Count text element:', countText);
+    console.log('🧪 All checkboxes found:', allCheckboxes.length);
+    console.log('🧪 Checked checkboxes found:', checkboxes.length);
+
+    if (countText) {
+      const checkedCount = checkboxes.length;
+      const totalCount = allCheckboxes.length;
+
+      const text = checkedCount === 0 ? `0 OF ${totalCount} CUSTOMERS SELECTED` :
+                  checkedCount === totalCount ? `ALL ${totalCount} CUSTOMERS SELECTED` :
+                  checkedCount === 1 ? `1 OF ${totalCount} CUSTOMERS SELECTED` :
+                  `${checkedCount} OF ${totalCount} CUSTOMERS SELECTED`;
+      countText.textContent = text;
+      console.log('🧪 Set count to:', text);
+    } else {
+      console.log('🧪 ❌ Count text element not found!');
+    }
+  };
 
   // Call initialization when Bootstrap modal opens (if using Bootstrap)
   const modalElement = document.getElementById('generateMonthlyModal');
   if (modalElement) {
     modalElement.addEventListener('shown.bs.modal', initializeModalContent);
+
+    // IMMEDIATE initialization when modal opens (before shown.bs.modal)
+    modalElement.addEventListener('show.bs.modal', function() {
+      console.log('🔄 Modal opening - immediate count update');
+      setTimeout(() => {
+        updateCustomerCount();
+      }, 50);
+    });
   }
 
   // Add event listener for when the modal opens
@@ -5333,92 +5413,138 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
-<!-- Delete Invoice Confirmation Modal - Custom Modal -->
+<!-- Delete Invoice Confirmation Modal - Enhanced Modern Design -->
 <div id="deleteInvoiceModal" class="custom-modal" style="display: none;">
   <div class="custom-modal-backdrop" onclick="closeDeleteInvoiceModal()"></div>
-  <div class="custom-modal-content">
-    <div class="custom-modal-header bg-danger">
+  <div class="custom-modal-content delete-modal-enhanced">
+    <div class="custom-modal-header delete-modal-header">
       <h5 class="custom-modal-title">
         <i class="fas fa-exclamation-triangle me-2"></i>Delete Invoice
       </h5>
       <button type="button" class="custom-close-btn" onclick="closeDeleteInvoiceModal()">×</button>
     </div>
     <div class="custom-modal-body">
-      <div class="text-center mb-3">
-        <div class="alert alert-danger">
-          <i class="fas fa-trash me-2"></i>
-          <strong>⚠️ PERMANENT DELETION WARNING</strong>
+      <!-- Enhanced Warning Section -->
+      <div class="text-center mb-4">
+        <div class="warning-icon-container">
+          <i class="fas fa-trash-alt warning-icon"></i>
+        </div>
+        <div class="alert alert-danger border-0 shadow-sm" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);">
+          <div class="text-white fw-bold">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ⚠️ PERMANENT DELETION WARNING
+          </div>
         </div>
       </div>
 
       <div class="delete-warning-content">
-        <p class="text-danger fw-bold mb-3">
-          This action will permanently delete the invoice and cannot be undone!
-        </p>
+        <div class="warning-message-container mb-4">
+          <div class="alert alert-warning border-0 shadow-sm">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-exclamation-triangle text-warning me-3 mt-1" style="font-size: 20px;"></i>
+              <div>
+                <h6 class="fw-bold text-dark">⚠️ Critical Action</h6>
+                <p class="mb-0 text-dark">This action will <strong>permanently delete</strong> the invoice and <strong>cannot be undone!</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <!-- Enhanced Invoice Details Card -->
         <div class="invoice-delete-details mb-4">
-          <h6 class="mb-3">Invoice to be deleted:</h6>
-          <div class="card border-danger">
+          <h6 class="mb-3 text-dark"><i class="fas fa-file-invoice me-2 text-primary"></i>Invoice to be deleted:</h6>
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+              <h6 class="mb-0 text-primary"><i class="fas fa-info-circle me-2"></i>Invoice Details</h6>
+            </div>
             <div class="card-body">
-              <div class="row">
+              <div class="row align-items-center mb-2">
                 <div class="col-5">
-                  <strong>Invoice Number:</strong>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-hashtag text-muted me-2"></i>
+                    <strong>Invoice Number:</strong>
+                  </div>
                 </div>
-                <div class="col-7" id="deleteModalInvoiceNumber">
-                  -
+                <div class="col-7">
+                  <span class="badge bg-primary" id="deleteModalInvoiceNumber">-</span>
                 </div>
               </div>
-              <div class="row">
+              <div class="row align-items-center mb-2">
                 <div class="col-5">
-                  <strong>Customer:</strong>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user text-muted me-2"></i>
+                    <strong>Customer:</strong>
+                  </div>
                 </div>
-                <div class="col-7" id="deleteModalCustomerName">
-                  -
+                <div class="col-7">
+                  <span class="text-dark fw-semibold" id="deleteModalCustomerName">-</span>
                 </div>
               </div>
-              <div class="row">
+              <div class="row align-items-center">
                 <div class="col-5">
-                  <strong>Amount:</strong>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-rupee-sign text-muted me-2"></i>
+                    <strong>Amount:</strong>
+                  </div>
                 </div>
-                <div class="col-7" id="deleteModalAmount">
-                  -
+                <div class="col-7">
+                  <span class="text-success fw-bold fs-5" id="deleteModalAmount">-</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Enhanced Impact Warning -->
         <div class="delete-confirmation-section">
-          <div class="alert alert-warning">
-            <p class="mb-2"><strong>This will also delete:</strong></p>
-            <ul class="mb-0">
-              <li>All invoice items associated with this invoice</li>
-              <li>All related data and records</li>
-            </ul>
+          <div class="alert alert-warning border-0 shadow-sm">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-exclamation-triangle text-warning me-3 mt-1" style="font-size: 18px;"></i>
+              <div>
+                <h6 class="fw-bold text-dark mb-2">📋 This will also delete:</h6>
+                <ul class="mb-0 text-dark">
+                  <li><strong>All invoice items</strong> associated with this invoice</li>
+                  <li><strong>All related data and records</strong></li>
+                  <li><strong>PDF files and documents</strong> linked to this invoice</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
-          <div class="confirmation-input mt-4">
-            <label for="deleteConfirmationInput" class="form-label">
-              <strong>To confirm deletion, type "delete" below:</strong>
-            </label>
-            <input type="text"
-                   class="form-control"
-                   id="deleteConfirmationInput"
-                   placeholder="Type 'delete' to confirm"
-                   autocomplete="off">
-            <div class="form-text text-muted">
-              This confirmation is required to prevent accidental deletions.
+          <!-- Enhanced Confirmation Input -->
+          <div class="confirmation-input-container mt-4">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-shield-alt me-2"></i>Confirmation Required
+                </h6>
+              </div>
+              <div class="card-body">
+                <label for="deleteConfirmationInput" class="form-label fw-bold text-dark">
+                  To confirm deletion, type <span class="badge bg-danger">"delete"</span> below:
+                </label>
+                <input type="text"
+                       class="form-control form-control-lg"
+                       id="deleteConfirmationInput"
+                       placeholder="Type 'delete' to confirm"
+                       autocomplete="off"
+                       style="border: 2px solid #e2e8f0; border-radius: 8px;">
+                <div class="form-text text-muted mt-2">
+                  <i class="fas fa-info-circle me-1"></i>
+                  This confirmation is required to prevent accidental deletions.
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
     <div class="custom-modal-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeDeleteInvoiceModal()">
-        <i class="fas fa-times me-1"></i>Cancel
+      <button type="button" class="btn btn-secondary btn-lg me-2" onclick="closeDeleteInvoiceModal()">
+        <i class="fas fa-times me-2"></i>Cancel
       </button>
-      <button type="button" class="btn btn-danger" id="confirmDeleteInvoice" disabled>
-        <i class="fas fa-trash me-1"></i>Delete Invoice
+      <button type="button" class="btn btn-danger btn-lg" id="confirmDeleteInvoice" disabled>
+        <i class="fas fa-trash me-2"></i>Delete Invoice
       </button>
     </div>
   </div>
@@ -5870,16 +5996,25 @@ function openDeleteModal(button) {
   // Reset input field
   const inputField = document.getElementById('deleteConfirmationInput');
   inputField.value = '';
+  inputField.classList.remove('is-valid', 'is-invalid');
   document.getElementById('confirmDeleteInvoice').disabled = true;
 
-  // Show modal
-  const modal = new bootstrap.Modal(document.getElementById('deleteInvoiceModal'));
-  modal.show();
+  // Show enhanced custom modal
+  const modal = document.getElementById('deleteInvoiceModal');
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
 
   // Focus on input field after modal is shown
   setTimeout(() => {
     inputField.focus();
-  }, 500);
+  }, 300);
+}
+
+function closeDeleteInvoiceModal() {
+  const modal = document.getElementById('deleteInvoiceModal');
+  modal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+  currentDeleteInvoiceId = null;
 }
 
 // Enable/disable delete button based on input
@@ -5915,30 +6050,73 @@ document.getElementById('confirmDeleteInvoice').addEventListener('click', functi
   confirmBtn.disabled = true;
   confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
 
-  // Create and submit form
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = `/invoices/${currentDeleteInvoiceId}`;
-
-  // Add CSRF token
+  // Get CSRF token
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-  if (csrfToken) {
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = 'authenticity_token';
-    csrfInput.value = csrfToken;
-    form.appendChild(csrfInput);
-  }
 
-  // Add method override for DELETE
-  const methodInput = document.createElement('input');
-  methodInput.type = 'hidden';
-  methodInput.name = '_method';
-  methodInput.value = 'delete';
-  form.appendChild(methodInput);
+  // Make AJAX request for better UX
+  fetch(`/invoices/${currentDeleteInvoiceId}`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Show success animation
+      confirmBtn.innerHTML = '<i class="fas fa-check me-1"></i>Deleted!';
+      confirmBtn.classList.remove('btn-danger');
+      confirmBtn.classList.add('btn-success');
 
-  document.body.appendChild(form);
-  form.submit();
+      // Show success message
+      if (window.showSimpleToast) {
+        window.showSimpleToast(data.message, 'success');
+      } else {
+        alert(data.message);
+      }
+
+      // Close modal after a brief delay
+      setTimeout(() => {
+        closeDeleteInvoiceModal();
+
+        // Remove the invoice from the UI
+        const invoiceRow = document.querySelector(`tr[data-invoice-id="${currentDeleteInvoiceId}"]`);
+        if (invoiceRow) {
+          invoiceRow.style.transition = 'all 0.3s ease';
+          invoiceRow.style.opacity = '0';
+          invoiceRow.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            invoiceRow.remove();
+          }, 300);
+        }
+
+        // Or refresh the page if row removal doesn't work well
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }, 1500);
+
+    } else {
+      throw new Error(data.message || 'Failed to delete invoice');
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting invoice:', error);
+
+    // Show error message
+    if (window.showSimpleToast) {
+      window.showSimpleToast(`❌ Error: ${error.message}`, 'error');
+    } else {
+      alert(`Error deleting invoice: ${error.message}`);
+    }
+
+    // Reset button state
+    confirmBtn.innerHTML = originalText;
+    confirmBtn.disabled = false;
+  });
 });
 
 // Mobile responsive adjustments for delete modal
@@ -6924,6 +7102,166 @@ document.addEventListener('DOMContentLoaded', function() {
 .delete-warning-content .text-danger {
   font-weight: 700;
   font-size: 1.1rem;
+}
+
+/* Enhanced Delete Modal Styles - Matching Customer Patterns Design */
+.delete-modal-enhanced {
+  width: 600px;
+  max-width: 90vw;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.delete-modal-header {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+  color: white;
+  padding: 1.5rem 2rem;
+  border: none;
+}
+
+.delete-modal-header .custom-modal-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.warning-icon-container {
+  margin-bottom: 1rem;
+}
+
+.warning-icon {
+  font-size: 3rem;
+  color: #dc3545;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -15px, 0);
+  }
+  70% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -7px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+.delete-modal-enhanced .custom-modal-body {
+  padding: 2rem;
+}
+
+.delete-modal-enhanced .custom-modal-footer {
+  padding: 1.5rem 2rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+/* Enhanced cards and alerts */
+.delete-modal-enhanced .alert {
+  border-radius: 10px;
+  border: none;
+}
+
+.delete-modal-enhanced .card {
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.delete-modal-enhanced .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.delete-modal-enhanced .card-header {
+  border-radius: 10px 10px 0 0;
+  font-weight: 600;
+}
+
+.delete-modal-enhanced .card-body {
+  padding: 1.5rem;
+}
+
+/* Enhanced form styling */
+.confirmation-input-container .form-control {
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.confirmation-input-container .form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
+  transform: translateY(-1px);
+}
+
+/* Enhanced button styling */
+.delete-modal-enhanced .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.delete-modal-enhanced .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.delete-modal-enhanced .btn-danger {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.delete-modal-enhanced .btn-danger:not(:disabled) {
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(220, 53, 69, 0.6);
+  }
+  100% {
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+  }
+}
+
+.delete-modal-enhanced .btn-secondary {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  border: none;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .delete-modal-enhanced {
+    width: 95vw;
+    margin: 0 10px;
+  }
+
+  .delete-modal-enhanced .custom-modal-body {
+    padding: 1.5rem;
+  }
+
+  .delete-modal-enhanced .custom-modal-footer {
+    padding: 1rem 1.5rem;
+  }
+
+  .delete-modal-enhanced .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .invoice-delete-details .card {

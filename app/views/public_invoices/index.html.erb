@@ -1201,27 +1201,116 @@
     </div>
   </div>
 
-  <!-- Delete Confirmation Modal -->
-  <div id="deleteModal" class="delete-modal">
-    <div class="modal-content">
-      <div class="modal-icon">
-        <i class="fas fa-exclamation-triangle"></i>
+  <!-- Delete Confirmation Modal - Enhanced Modern Design -->
+  <div id="deleteModal" class="custom-modal" style="display: none;">
+    <div class="custom-modal-backdrop" onclick="closeDeleteModal()"></div>
+    <div class="custom-modal-content delete-modal-enhanced">
+      <div class="custom-modal-header delete-modal-header">
+        <h5 class="custom-modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>Delete Invoice
+        </h5>
+        <button type="button" class="custom-close-btn" onclick="closeDeleteModal()">×</button>
       </div>
-      <h2 class="modal-title">Delete Invoice</h2>
-      <p class="modal-text">
-        Are you sure you want to delete invoice <span id="invoiceNumber"></span>?<br>
-        This action cannot be undone and will delete all associated invoice items.
-      </p>
-      <p class="modal-text">
-        <strong>Type "DELETE" to confirm:</strong>
-      </p>
-      <input type="text" id="deleteConfirmInput" class="modal-input" placeholder="Type DELETE to confirm" autocomplete="off">
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">
+      <div class="custom-modal-body">
+        <!-- Enhanced Warning Section -->
+        <div class="text-center mb-4">
+          <div class="warning-icon-container">
+            <i class="fas fa-trash-alt warning-icon"></i>
+          </div>
+          <div class="alert alert-danger border-0 shadow-sm" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);">
+            <div class="text-white fw-bold">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              ⚠️ PERMANENT DELETION WARNING
+            </div>
+          </div>
+        </div>
+
+        <div class="delete-warning-content">
+          <div class="warning-message-container mb-4">
+            <div class="alert alert-warning border-0 shadow-sm">
+              <div class="d-flex align-items-start">
+                <i class="fas fa-exclamation-triangle text-warning me-3 mt-1" style="font-size: 20px;"></i>
+                <div>
+                  <h6 class="fw-bold text-dark">⚠️ Critical Action</h6>
+                  <p class="mb-0 text-dark">This action will <strong>permanently delete</strong> the invoice and <strong>cannot be undone!</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enhanced Invoice Details Card -->
+          <div class="invoice-delete-details mb-4">
+            <h6 class="mb-3 text-dark"><i class="fas fa-file-invoice me-2 text-primary"></i>Invoice to be deleted:</h6>
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 text-primary"><i class="fas fa-info-circle me-2"></i>Invoice Details</h6>
+              </div>
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col-5">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-hashtag text-muted me-2"></i>
+                      <strong>Invoice Number:</strong>
+                    </div>
+                  </div>
+                  <div class="col-7">
+                    <span class="badge bg-primary" id="invoiceNumber">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enhanced Impact Warning -->
+          <div class="delete-confirmation-section">
+            <div class="alert alert-warning border-0 shadow-sm">
+              <div class="d-flex align-items-start">
+                <i class="fas fa-exclamation-triangle text-warning me-3 mt-1" style="font-size: 18px;"></i>
+                <div>
+                  <h6 class="fw-bold text-dark mb-2">📋 This will also delete:</h6>
+                  <ul class="mb-0 text-dark">
+                    <li><strong>All invoice items</strong> associated with this invoice</li>
+                    <li><strong>All related data and records</strong></li>
+                    <li><strong>PDF files and documents</strong> linked to this invoice</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Enhanced Confirmation Input -->
+            <div class="confirmation-input-container mt-4">
+              <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Confirmation Required
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <label for="deleteConfirmInput" class="form-label fw-bold text-dark">
+                    To confirm deletion, type <span class="badge bg-danger">"DELETE"</span> below:
+                  </label>
+                  <input type="text"
+                         class="form-control form-control-lg"
+                         id="deleteConfirmInput"
+                         placeholder="Type 'DELETE' to confirm"
+                         autocomplete="off"
+                         style="border: 2px solid #e2e8f0; border-radius: 8px;">
+                  <div class="form-text text-muted mt-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    This confirmation is required to prevent accidental deletions.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="custom-modal-footer">
+        <button type="button" class="btn btn-secondary btn-lg me-2" onclick="closeDeleteModal()">
           <i class="fas fa-times me-2"></i>Cancel
         </button>
-        <button class="modal-btn modal-btn-delete" id="confirmDeleteBtn" onclick="confirmDelete()">
-          <i class="fas fa-trash-alt me-2"></i>Delete Invoice
+        <button type="button" class="btn btn-danger btn-lg" id="confirmDeleteBtn" onclick="confirmDelete()">
+          <i class="fas fa-trash me-2"></i>Delete Invoice
         </button>
       </div>
     </div>

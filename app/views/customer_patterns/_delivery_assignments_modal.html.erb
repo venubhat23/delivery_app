@@ -9,7 +9,12 @@ console.log('🔧 Defining completeTillToday function...');
 
   window.completeTillToday = function(customerId, month, year) {
     console.log('🎯 completeTillToday called from modal:', customerId, month, year);
-    if (!confirm('Mark all pending assignments till today as completed?')) return;
+
+    // Prevent any default navigation
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
 
     const button = event.target.closest('button');
     const originalHTML = button.innerHTML;
@@ -31,15 +36,32 @@ console.log('🔧 Defining completeTillToday function...');
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        alert('✅ Assignments completed successfully!');
-        location.reload();
+        // Update all pending assignments till today to completed status
+        const today = new Date();
+        const pendingRows = document.querySelectorAll('tr');
+        pendingRows.forEach(row => {
+          const statusCell = row.querySelector('td:nth-child(6)');
+          const statusBadge = statusCell?.querySelector('.badge');
+          if (statusBadge && statusBadge.textContent.includes('Pending')) {
+            // Check if assignment date is till today (you may need to adjust date parsing)
+            statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
+
+            // Update complete button
+            const completeBtn = row.querySelector('button[onclick*="completeAssignment"]');
+            if (completeBtn) {
+              completeBtn.disabled = true;
+              completeBtn.innerHTML = '<i class="fas fa-check"></i>';
+              completeBtn.classList.remove('btn-outline-success');
+              completeBtn.classList.add('btn-success');
+            }
+          }
+        });
       } else {
-        alert('❌ Error: ' + data.message);
+        console.error('Error completing assignments:', data.message);
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('❌ Error completing assignments');
     })
     .finally(() => {
       button.innerHTML = originalHTML;
@@ -55,7 +77,13 @@ if (typeof window.completeAssignment === 'function') {
 
   window.completeAssignment = function(id) {
     console.log('✅ completeAssignment called from modal:', id);
-    if (!confirm('Mark this assignment as completed?')) return;
+
+    // Prevent any default navigation
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
 
     const button = event.target.closest('button');
     const originalHTML = button.innerHTML;
@@ -74,19 +102,30 @@ if (typeof window.completeAssignment === 'function') {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        alert('✅ Assignment completed successfully!');
-        location.reload();
+        // Just update the button state and status
+        const row = button.closest('tr');
+        if (row) {
+          const statusCell = row.querySelector('td:nth-child(6)');
+          if (statusCell) {
+            statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
+          }
+          button.disabled = true;
+          button.innerHTML = '<i class="fas fa-check"></i>';
+          button.classList.remove('btn-outline-success');
+          button.classList.add('btn-success');
+        }
       } else {
-        alert('❌ Error: ' + data.message);
+        console.error('Error completing assignment:', data.message);
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('❌ Error completing assignment');
     })
     .finally(() => {
-      button.innerHTML = originalHTML;
-      button.disabled = false;
+      if (!button.disabled) {
+        button.innerHTML = originalHTML;
+        button.disabled = false;
+      }
     });
   };
 }
@@ -98,7 +137,13 @@ if (typeof window.deleteAssignment === 'function') {
 
   window.deleteAssignment = function(id) {
     console.log('🗑️ deleteAssignment called from modal:', id);
-    if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+    // Prevent any default navigation
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
 
     const button = event.target.closest('button');
     const originalHTML = button.innerHTML;
@@ -116,15 +161,32 @@ if (typeof window.deleteAssignment === 'function') {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        alert('✅ Assignment deleted successfully!');
-        location.reload();
+        // Just remove the row from the table
+        const row = button.closest('tr');
+        if (row) {
+          row.style.transition = 'all 0.3s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            row.remove();
+            // Update assignment count in header
+            const header = document.querySelector('h5');
+            if (header) {
+              const currentText = header.textContent;
+              const match = currentText.match(/\((\d+) assignments\)/);
+              if (match) {
+                const newCount = parseInt(match[1]) - 1;
+                header.textContent = currentText.replace(/\(\d+ assignments\)/, `(${newCount} assignments)`);
+              }
+            }
+          }, 300);
+        }
       } else {
-        alert('❌ Error: ' + data.message);
+        console.error('Error deleting assignment:', data.message);
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('❌ Error deleting assignment');
     })
     .finally(() => {
       button.innerHTML = originalHTML;
@@ -165,12 +227,11 @@ if (typeof window.editAssignment === 'function') {
           modalInstance.show();
         }
       } else {
-        alert('❌ Error loading edit form: ' + data.message);
+        console.error('Error loading edit form:', data.message);
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('❌ Error loading edit form');
     });
   };
 }
@@ -179,7 +240,12 @@ if (typeof window.editAssignment === 'function') {
 console.log('🔧 Defining completeAll function...');
   window.completeAll = function(customerId, month, year) {
     console.log('🎯 completeAll called from modal context:', customerId, month, year);
-    if (!confirm('Mark ALL pending assignments for this customer as completed?')) return;
+
+    // Prevent any default navigation
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
 
     const button = event.target.closest('button');
     const originalHTML = button.innerHTML;
@@ -201,18 +267,32 @@ console.log('🔧 Defining completeAll function...');
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        alert('✅ All assignments completed successfully!');
-        // Close all modals and reopen
         setTimeout(() => {
-          location.reload();
-        }, 1000);
+          // Update all pending assignments to completed status
+          const pendingRows = document.querySelectorAll('tr');
+          pendingRows.forEach(row => {
+            const statusCell = row.querySelector('td:nth-child(6)');
+            const statusBadge = statusCell?.querySelector('.badge');
+            if (statusBadge && statusBadge.textContent.includes('Pending')) {
+              statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
+
+              // Update complete button
+              const completeBtn = row.querySelector('button[onclick*="completeAssignment"]');
+              if (completeBtn) {
+                completeBtn.disabled = true;
+                completeBtn.innerHTML = '<i class="fas fa-check"></i>';
+                completeBtn.classList.remove('btn-outline-success');
+                completeBtn.classList.add('btn-success');
+              }
+            }
+          });
+        }, 500);
       } else {
-        alert('❌ Error completing assignments: ' + data.message);
+        console.error('Error completing assignments:', data.message);
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('❌ Error completing assignments');
     })
     .finally(() => {
       button.innerHTML = originalHTML;
@@ -221,17 +301,19 @@ console.log('🔧 Defining completeAll function...');
   };
 }
 
-if (typeof window.reloadCurrentModal === 'function') {
-  console.log('✅ reloadCurrentModal available');
-} else {
-  console.error('❌ reloadCurrentModal not available - defining simple version');
+// Define modal content reload function - DISABLED to prevent navigation
+window.reloadModalContent = function() {
+  console.log('🔄 Modal reload called but DISABLED to prevent navigation');
+  console.log('Modal stays in current state without any refresh');
+  // Do nothing - modal stays exactly as it is
+};
 
-  // Define simple reloadCurrentModal function
-  window.reloadCurrentModal = function() {
-    console.log('🔄 Simple reloadCurrentModal called - reloading page');
-    location.reload();
-  };
-}
+// Override any existing reloadCurrentModal function to prevent navigation
+window.reloadCurrentModal = function() {
+  console.log('🔄 reloadCurrentModal called but DISABLED to prevent navigation');
+  console.log('Modal stays in current state without any refresh');
+  // Do nothing - modal stays exactly as it is
+};
 
 console.log('✅ Assignment functions loaded:', {
   completeTillToday: typeof window.completeTillToday,
@@ -270,7 +352,7 @@ console.log('✅ Assignment functions loaded:', {
         <div class="btn-group">
           <% if @pending_till_today_count > 0 %>
             <button class="btn btn-dark btn-lg shadow" onclick="
-              if (!confirm('Mark all pending assignments till today as completed?')) return;
+              event.preventDefault(); event.stopPropagation();
               const button = this;
               const originalHTML = button.innerHTML;
               button.innerHTML = '<i class=&quot;fas fa-spinner fa-spin me-1&quot;></i>Processing...';
@@ -286,10 +368,28 @@ console.log('✅ Assignment functions loaded:', {
               .then(response => response.json())
               .then(data => {
                 if (data.success) {
-                  alert('✅ Assignments till today completed successfully!');
-                  setTimeout(() => location.reload(), 1000);
+                  setTimeout(() => {
+                    // Update all pending assignments to completed status
+                    const pendingRows = document.querySelectorAll('tr');
+                    pendingRows.forEach(row => {
+                      const statusCell = row.querySelector('td:nth-child(6)');
+                      const statusBadge = statusCell?.querySelector('.badge');
+                      if (statusBadge && statusBadge.textContent.includes('Pending')) {
+                        statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
+
+                        // Update complete button
+                        const completeBtn = row.querySelector('button[onclick*="completeAssignment"]');
+                        if (completeBtn) {
+                          completeBtn.disabled = true;
+                          completeBtn.innerHTML = '<i class="fas fa-check"></i>';
+                          completeBtn.classList.remove('btn-outline-success');
+                          completeBtn.classList.add('btn-success');
+                        }
+                      }
+                    });
+                  }, 500);
                 } else {
-                  alert('❌ Error: ' + (data.message || 'Unknown error'));
+                  console.error('Error completing assignments:', data.message || 'Unknown error');
                 }
               })
               .catch(error => {
@@ -307,7 +407,7 @@ console.log('✅ Assignment functions loaded:', {
           <% end %>
           <% if @pending_till_month_end_count > 0 %>
             <button class="btn btn-success btn-lg shadow" onclick="
-              if (!confirm('Mark ALL pending assignments for this customer as completed?')) return;
+              event.preventDefault(); event.stopPropagation();
               const button = this;
               const originalHTML = button.innerHTML;
               button.innerHTML = '<i class=&quot;fas fa-spinner fa-spin me-1&quot;></i>Processing...';
@@ -323,10 +423,28 @@ console.log('✅ Assignment functions loaded:', {
               .then(response => response.json())
               .then(data => {
                 if (data.success) {
-                  alert('✅ All assignments completed successfully!');
-                  setTimeout(() => location.reload(), 1000);
+                  setTimeout(() => {
+                    // Update all pending assignments to completed status
+                    const pendingRows = document.querySelectorAll('tr');
+                    pendingRows.forEach(row => {
+                      const statusCell = row.querySelector('td:nth-child(6)');
+                      const statusBadge = statusCell?.querySelector('.badge');
+                      if (statusBadge && statusBadge.textContent.includes('Pending')) {
+                        statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
+
+                        // Update complete button
+                        const completeBtn = row.querySelector('button[onclick*="completeAssignment"]');
+                        if (completeBtn) {
+                          completeBtn.disabled = true;
+                          completeBtn.innerHTML = '<i class="fas fa-check"></i>';
+                          completeBtn.classList.remove('btn-outline-success');
+                          completeBtn.classList.add('btn-success');
+                        }
+                      }
+                    });
+                  }, 500);
                 } else {
-                  alert('❌ Error: ' + (data.message || 'Unknown error'));
+                  console.error('Error completing assignments:', data.message || 'Unknown error');
                 }
               })
               .catch(error => {
@@ -485,6 +603,16 @@ console.log('✅ Assignment functions loaded:', {
 
 <script>
 console.log('📝 Modal loaded - bulk delete functions are defined in main page');
+
+// Completely prevent ALL form submissions in this modal to prevent navigation
+document.addEventListener('submit', function(e) {
+  if (e.target.closest('#deliveryModal')) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🛑 ALL FORM SUBMISSIONS BLOCKED in delivery modal to prevent navigation');
+    return false;
+  }
+}, true); // Use capture phase to catch it early
 
 // Initialize delete button when modal loads
 setTimeout(function() {

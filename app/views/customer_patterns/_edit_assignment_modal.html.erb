@@ -56,9 +56,23 @@
   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
     <i class="fas fa-times me-1"></i>Cancel
   </button>
-  <button type="submit" class="btn btn-primary btn-lg" id="update-assignment-btn" data-assignment-id="<%= assignment.id %>">
+  <button type="button" class="btn btn-primary btn-lg" id="update-assignment-btn" data-assignment-id="<%= assignment.id %>">
     <i class="fas fa-save me-2"></i>Save Changes
   </button>
 </div>
 
 <!-- JavaScript moved to main page for proper execution -->
+<script>
+// Completely prevent form submission to stop navigation
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('edit-assignment-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🛑 Form submission prevented - using AJAX handler instead');
+      return false;
+    });
+  }
+});
+</script>

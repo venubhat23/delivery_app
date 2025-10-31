@@ -337,8 +337,53 @@ end
   end
   
   def destroy
-    @invoice.destroy
-    redirect_to invoices_url, notice: 'Invoice was successfully deleted.'
+    begin
+      # Store invoice details before deletion for response
+      invoice_number = @invoice.formatted_number || @invoice.invoice_number
+      customer_name = @invoice.customer&.name || 'Unknown Customer'
+
+      # Delete all related records properly
+      ActiveRecord::Base.transaction do
+        # Delete invoice items first
+        @invoice.invoice_items.destroy_all
+
+        # Update delivery assignments to remove invoice reference
+        @invoice.delivery_assignments.update_all(invoice_id: nil)
+
+        # Delete the invoice
+        @invoice.destroy!
+      end
+
+      respond_to do |format|
+        format.html {
+          redirect_to invoices_url, notice: "Invoice #{invoice_number} was successfully deleted."
+        }
+        format.json {
+          render json: {
+            success: true,
+            message: "✅ Invoice #{invoice_number} has been successfully deleted!",
+            invoice_number: invoice_number,
+            customer_name: customer_name
+          }
+        }
+      end
+
+    rescue => e
+      Rails.logger.error "Error deleting invoice: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+
+      respond_to do |format|
+        format.html {
+          redirect_to invoices_url, alert: "Error deleting invoice: #{e.message}"
+        }
+        format.json {
+          render json: {
+            success: false,
+            message: "❌ Error deleting invoice: #{e.message}"
+          }, status: :unprocessable_entity
+        }
+      end
+    end
   end
   
   # Quick Invoice page - simple form to create invoices

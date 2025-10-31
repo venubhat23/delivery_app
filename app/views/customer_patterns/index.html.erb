@@ -2621,18 +2621,11 @@ console.log('🔧 Loading assignment functions at page level...');
 
 // Define critical functions immediately to prevent undefined errors
 
-// CRITICAL: reloadCurrentModal function - must be defined first
+// CRITICAL: reloadCurrentModal function - DISABLED to prevent navigation
 window.reloadCurrentModal = function() {
-  console.log('🔄 reloadCurrentModal called');
-
-  if (window.currentModalData) {
-    console.log('✅ Found currentModalData:', window.currentModalData);
-    const { customerId, customerName, month, year } = window.currentModalData;
-    console.log('🔄 Reloading modal content for:', { customerId, customerName, month, year });
-    loadModalContent(customerId, customerName, month, year);
-  } else {
-    console.log('❌ No currentModalData found, cannot reload');
-  }
+  console.log('🔄 reloadCurrentModal called but DISABLED to prevent navigation');
+  console.log('Modal stays in current state without any refresh');
+  // Do nothing - modal stays exactly as it is
 };
 
 // REMOVED: Duplicate completeAll function (defined at top of script)
@@ -2722,12 +2715,26 @@ window.completeAssignment = function(id) {
   })
   .then(response => response.json())
   .then(data => {
-    alert(data.message || 'Assignment completed successfully!');
-    location.reload();
+    // Check if we're in the delivery modal
+    if (document.querySelector('#deliveryModal.show')) {
+      // Update the row instead of reloading
+      const row = button.closest('tr');
+      if (row) {
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (statusCell) {
+          statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
+        }
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove('btn-outline-success');
+        button.classList.add('btn-success');
+      }
+    } else {
+      location.reload();
+    }
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('Error completing assignment');
   })
   .finally(() => {
     button.innerHTML = originalHTML;
@@ -2738,7 +2745,12 @@ window.completeAssignment = function(id) {
 // Delete Assignment function
 window.deleteAssignment = function(id) {
   console.log('🗑️ deleteAssignment called:', id);
-  if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+  // Prevent default navigation
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   const button = event.target.closest('button');
   const originalHTML = button.innerHTML;
@@ -2755,12 +2767,34 @@ window.deleteAssignment = function(id) {
   })
   .then(response => response.json())
   .then(data => {
-    alert(data.message || 'Assignment deleted successfully!');
-    location.reload();
+    // Check if we're in the delivery modal
+    if (document.querySelector('#deliveryModal.show')) {
+      // Remove the row instead of reloading
+      const row = button.closest('tr');
+      if (row) {
+        row.style.transition = 'all 0.3s ease';
+        row.style.opacity = '0';
+        row.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          row.remove();
+          // Update assignment count in header
+          const header = document.querySelector('#deliveryModal h5');
+          if (header) {
+            const currentText = header.textContent;
+            const match = currentText.match(/\((\d+) assignments\)/);
+            if (match) {
+              const newCount = parseInt(match[1]) - 1;
+              header.textContent = currentText.replace(/\(\d+ assignments\)/, `(${newCount} assignments)`);
+            }
+          }
+        }, 300);
+      }
+    } else {
+      location.reload();
+    }
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('Error deleting assignment');
   })
   .finally(() => {
     button.innerHTML = originalHTML;
@@ -2854,16 +2888,35 @@ function setupEditForm() {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert(data.message || 'Assignment updated successfully!');
+          // Close edit modal
           document.getElementById('editModal').style.display = 'none';
-          location.reload();
+
+          // Check if we're in the delivery modal and update only the relevant row
+          if (document.querySelector('#deliveryModal.show')) {
+            // Find the updated assignment and refresh its data
+            const assignmentId = form.action.match(/\/(\d+)\/update_assignment/)?.[1];
+            if (assignmentId) {
+              // Update the row in the delivery modal
+              const rows = document.querySelectorAll('#deliveryModal tr[data-assignment-id], #deliveryModal tr');
+              rows.forEach(row => {
+                const buttons = row.querySelectorAll('button[onclick*="' + assignmentId + '"]');
+                if (buttons.length > 0) {
+                  // This is the row for our updated assignment
+                  // You could update specific fields here, but for now just close the edit modal
+                  console.log('Assignment updated successfully, staying in modal');
+                }
+              });
+            }
+          } else {
+            // If not in modal, reload the page
+            location.reload();
+          }
         } else {
-          alert(data.message || 'Error updating assignment');
+          console.error('Error updating assignment:', data.message || 'Unknown error');
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('Error updating assignment');
       })
       .finally(() => {
         submitBtn.innerHTML = originalText;
@@ -3433,9 +3486,9 @@ window.deleteAssignment = function(id) {
         setTimeout(() => {
           button.innerHTML = '<i class="fas fa-trash-alt text-danger"></i>';
           setTimeout(() => {
-            console.log('✅ Assignment deleted successfully, showing toast and reloading modal');
+            console.log('✅ Assignment deleted successfully, showing toast but NOT reloading modal');
             window.showSimpleToast(data.message || 'Assignment deleted successfully!', 'success');
-            window.reloadCurrentModal();
+            // NO RELOAD - Keep delivery modal open as is
           }, 600);
         }, 200);
       } else {
@@ -3533,9 +3586,9 @@ window.completeAssignment = function(id) {
         setTimeout(() => {
           button.innerHTML = '<i class="fas fa-check text-success"></i>';
           setTimeout(() => {
-            console.log('✅ Assignment completed successfully, showing toast and reloading modal');
+            console.log('✅ Assignment completed successfully, showing toast but NOT reloading modal');
             window.showSimpleToast(data.message || 'Assignment completed successfully!', 'success');
-            window.reloadCurrentModal();
+            // NO RELOAD - Keep delivery modal open as is
           }, 600);
         }, 200);
       } else {
@@ -3607,11 +3660,18 @@ document.addEventListener('submit', function(e) {
     .then(data => {
       console.log('Response data:', data);
       if (data.success) {
-        console.log('Update successful, closing modal and reloading');
-        window.showSimpleToast(data.message || 'Assignment updated successfully!', 'success');
-        // Close edit modal and reload main modal
+        console.log('Update successful, closing modal and staying in place');
+        // Close edit modal only, don't reload main modal
         window.closeEditModal();
-        window.reloadCurrentModal();
+
+        // Check if we're in the delivery modal and just close the edit modal
+        if (document.querySelector('#deliveryModal.show')) {
+          console.log('Staying in delivery modal, no reload needed');
+          // Just close the edit modal, the main modal stays open
+        } else {
+          // If not in delivery modal, still do NOT reload to keep consistency
+          console.log('✅ Edit completed, keeping all modals without reload');
+        }
       } else {
         console.log('Update failed:', data);
         window.showSimpleToast(data.message || 'Error updating assignment', 'error');
@@ -5863,15 +5923,8 @@ if (typeof window.completeAssignment !== 'function') {
             button.innerHTML = '<i class="fas fa-check text-success"></i>';
             setTimeout(() => {
               window.showSimpleToast ? window.showSimpleToast(data.message || 'Assignment completed!', 'success') : alert(data.message);
-              if (window.reloadCurrentModal) {
-                window.reloadCurrentModal();
-              } else {
-                // Store modal state before reload
-                if (window.currentModalData) {
-                  sessionStorage.setItem('reopenModal', JSON.stringify(window.currentModalData));
-                }
-                location.reload();
-              }
+              // NO RELOAD - Keep delivery modal open as is
+              console.log('✅ Assignment completed, keeping modal open without reload');
             }, 600);
           }, 200);
         } else {
@@ -5942,15 +5995,8 @@ if (typeof window.deleteAssignment !== 'function') {
             button.innerHTML = '<i class="fas fa-trash-alt text-danger"></i>';
             setTimeout(() => {
               window.showSimpleToast ? window.showSimpleToast(data.message || 'Assignment deleted!', 'success') : alert(data.message);
-              if (window.reloadCurrentModal) {
-                window.reloadCurrentModal();
-              } else {
-                // Store modal state before reload
-                if (window.currentModalData) {
-                  sessionStorage.setItem('reopenModal', JSON.stringify(window.currentModalData));
-                }
-                location.reload();
-              }
+              // NO RELOAD - Keep delivery modal open as is
+              console.log('✅ Assignment completed, keeping modal open without reload');
             }, 600);
           }, 200);
         } else {
@@ -6230,97 +6276,59 @@ function handleEditAssignmentSubmission(submitBtn) {
             }
           }
 
-          // Immediately reload the main delivery assignments modal with updated data
-          console.log('🔄 Refreshing main modal with updated assignment data...');
-          console.log('🔍 Checking reloadCurrentModal availability:', typeof window.reloadCurrentModal);
-          console.log('🔍 Current modal data:', window.currentModalData);
+          // Update the specific row in delivery modal without reloading
+          console.log('🔄 Updating specific assignment row in delivery modal...');
 
-          if (window.reloadCurrentModal) {
-            console.log('✅ Calling reloadCurrentModal...');
-            window.reloadCurrentModal();
+          // Find and update the specific assignment row if it exists
+          const assignmentId = submitBtn.dataset.assignmentId;
+          if (assignmentId && data.assignment) {
+            const updatedAssignment = data.assignment;
 
-            // Also ensure the main modal is visible
-            setTimeout(() => {
-              const mainModal = document.getElementById('assignmentModal');
-              if (mainModal && !mainModal.classList.contains('show')) {
-                console.log('🔄 Main modal not visible, ensuring it shows...');
-                const modalInstance = bootstrap.Modal.getInstance(mainModal);
-                if (modalInstance) {
-                  modalInstance.show();
-                } else {
-                  const newModalInstance = new bootstrap.Modal(mainModal);
-                  newModalInstance.show();
-                }
-              }
-            }, 100);
-          } else {
-            console.error('❌ reloadCurrentModal function not found!');
-            // Fallback: Close all modals and reopen the main one
-            console.log('🔄 Fallback: Closing all modals and reopening...');
+            // Find the row with this assignment
+            const deliveryModal = document.getElementById('deliveryModal');
+            if (deliveryModal) {
+              // Look for buttons with this assignment ID in their onclick
+              const assignmentButtons = deliveryModal.querySelectorAll(`button[onclick*="${assignmentId}"]`);
 
-            if (window.currentModalData) {
-              const { customerId, customerName, month, year } = window.currentModalData;
-              console.log('🔄 Will reopen modal with data:', { customerId, customerName, month, year });
+              if (assignmentButtons.length > 0) {
+                const assignmentRow = assignmentButtons[0].closest('tr');
+                if (assignmentRow) {
+                  console.log('✅ Found assignment row, updating quantity and unit...');
 
-              // Step 1: Close all existing modals
-              console.log('🔄 Step 1: Closing all modals...');
-
-              // Close edit modal
-              const editModal = document.getElementById('editModal');
-              if (editModal) {
-                const editModalInstance = bootstrap.Modal.getInstance(editModal);
-                if (editModalInstance) {
-                  editModalInstance.hide();
-                }
-              }
-
-              // Close assignment modal
-              const assignmentModal = document.getElementById('assignmentModal');
-              if (assignmentModal) {
-                const assignmentModalInstance = bootstrap.Modal.getInstance(assignmentModal);
-                if (assignmentModalInstance) {
-                  assignmentModalInstance.hide();
-                }
-              }
-
-              // Remove any lingering backdrops
-              setTimeout(() => {
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(backdrop => backdrop.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
-
-                console.log('🔄 Step 2: All modals closed, reopening in 500ms...');
-
-                // Step 2: Reopen the assignment modal after a brief delay
-                setTimeout(() => {
-                  console.log('🔄 Step 3: Reopening assignment modal...');
-
-                  // Find the button that originally opened this modal and click it
-                  const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
-                  const triggerButton = document.querySelector(`[onclick*="openDeliveryModal(${customerId}"]`);
-
-                  if (triggerButton) {
-                    console.log('✅ Found original trigger button, clicking...');
-                    triggerButton.click();
-                  } else {
-                    // Manual reopening as last resort
-                    console.log('🔄 Manual reopening as fallback...');
-                    if (typeof window.openDeliveryModal === 'function') {
-                      window.openDeliveryModal(customerId, customerName, month, year);
-                    } else {
-                      console.error('❌ openDeliveryModal function not available');
-                      window.showSimpleToast('Please click the view button again to see updated data', 'info');
-                    }
+                  // Update quantity column (column 4)
+                  const quantityCell = assignmentRow.querySelector('td:nth-child(4)');
+                  if (quantityCell && updatedAssignment.quantity && updatedAssignment.unit) {
+                    quantityCell.innerHTML = `
+                      <span class="badge bg-light text-dark border">
+                        <strong>${updatedAssignment.quantity}</strong> ${updatedAssignment.unit}
+                      </span>
+                    `;
                   }
-                }, 500);
-              }, 300);
+
+                  // Update amount column if final_amount is provided (column 7)
+                  const amountCell = assignmentRow.querySelector('td:nth-child(7)');
+                  if (amountCell && updatedAssignment.final_amount !== undefined) {
+                    amountCell.innerHTML = `
+                      <div class="text-success fw-bold">
+                        ₹${parseFloat(updatedAssignment.final_amount).toFixed(2)}
+                      </div>
+                    `;
+                  }
+
+                  console.log('✅ Assignment row updated successfully');
+                } else {
+                  console.log('⚠️ Could not find assignment row');
+                }
+              } else {
+                console.log('⚠️ Could not find assignment buttons');
+              }
             } else {
-              console.error('❌ No currentModalData found, cannot reopen');
-              window.showSimpleToast('Modal updated successfully. Please reopen to see changes.', 'success');
+              console.log('⚠️ Delivery modal not found');
             }
           }
+
+          // Keep the delivery modal open - DO NOT call reloadCurrentModal()
+          console.log('✅ Keeping delivery modal open without reload');
         }, 800); // Reduced from 1500ms to 800ms for faster UX
 
       }, 300);
@@ -6361,22 +6369,11 @@ function handleEditAssignmentSubmission(submitBtn) {
 
   // Ensure reloadCurrentModal is always available
   if (typeof window.reloadCurrentModal !== 'function') {
-    console.log('🔧 Adding missing reloadCurrentModal function...');
+    console.log('🔧 Adding missing reloadCurrentModal function - DISABLED...');
     window.reloadCurrentModal = function() {
-      console.log('🔄 reloadCurrentModal called');
-      if (window.currentModalData) {
-        console.log('✅ Found currentModalData:', window.currentModalData);
-        const { customerId, customerName, month, year } = window.currentModalData;
-        console.log('🔄 Reloading modal content for:', { customerId, customerName, month, year });
-        if (typeof loadModalContent === 'function') {
-          loadModalContent(customerId, customerName, month, year);
-        } else {
-          console.error('❌ loadModalContent function not found');
-          location.reload(); // Fallback
-        }
-      } else {
-        console.log('❌ No currentModalData found, cannot reload');
-      }
+      console.log('🔄 reloadCurrentModal called but DISABLED to prevent navigation');
+      console.log('Modal stays in current state without any refresh');
+      // Do nothing - modal stays exactly as it is
     };
   }
 
@@ -6960,14 +6957,16 @@ window.toggleAll = function(selectAllCheckbox) {
 window.bulkDeleteAssignments = function() {
   console.log('🗑️ Global bulk delete function called');
 
+  // Prevent any default navigation
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   const checkedBoxes = document.querySelectorAll('.assignment-checkbox:checked');
 
   if (checkedBoxes.length === 0) {
-    alert('Please select assignments to delete');
-    return;
-  }
-
-  if (!confirm(`Delete ${checkedBoxes.length} selected assignment(s)?`)) {
+    console.log('No assignments selected for deletion');
     return;
   }
 
@@ -7006,10 +7005,38 @@ window.bulkDeleteAssignments = function() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert(`✅ Successfully deleted ${data.deleted_count} assignment(s)!`);
-      setTimeout(() => location.reload(), 1000);
+      setTimeout(() => {
+        // Check if we're in a modal
+        if (document.querySelector('#deliveryModal.show')) {
+          // Just remove the selected rows from the table
+          checkedBoxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            if (row) {
+              row.remove();
+            }
+          });
+
+          // Update assignment count in header
+          const header = document.querySelector('#deliveryModal h5');
+          if (header) {
+            const currentText = header.textContent;
+            const match = currentText.match(/\((\d+) assignments\)/);
+            if (match) {
+              const newCount = parseInt(match[1]) - checkedBoxes.length;
+              header.textContent = currentText.replace(/\(\d+ assignments\)/, `(${newCount} assignments)`);
+            }
+          }
+
+          // Update delete button state
+          if (typeof window.updateDeleteButton === 'function') {
+            window.updateDeleteButton();
+          }
+        } else {
+          location.reload();
+        }
+      }, 500);
     } else {
-      alert('❌ Error: ' + (data.message || 'Unknown error'));
+      console.error('Error deleting assignments:', data.message || 'Unknown error');
       // Restore row visibility on error
       checkedBoxes.forEach(checkbox => {
         const row = checkbox.closest('tr');

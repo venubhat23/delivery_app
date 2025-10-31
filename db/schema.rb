@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_29_044403) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_30_132721) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -318,7 +318,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_044403) do
   end
 
   create_table "invoices", force: :cascade do |t|
-    t.bigint "customer_id", null: false
+    t.bigint "customer_id"
     t.float "total_amount"
     t.string "status"
     t.date "invoice_date"
@@ -335,6 +335,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_044403) do
     t.datetime "shared_at"
     t.integer "month"
     t.integer "year"
+    t.string "quick_customer_name"
+    t.string "quick_customer_phone_number"
+    t.boolean "is_quick_invoice", default: false
     t.index ["customer_id"], name: "index_invoices_on_customer_id"
     t.index ["due_date"], name: "index_invoices_on_due_date"
     t.index ["invoice_date"], name: "index_invoices_on_invoice_date"
