@@ -412,7 +412,7 @@
             <tr>
               <td><%= index + 1 %></td>
               <td>
-                <div class="item-name"><%= item.product&.name || 'Product' %></div>
+                <div class="item-name"><%= item.product&.name || item.description || 'Product' %></div>
               </td>
               <td>
                 <%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %>

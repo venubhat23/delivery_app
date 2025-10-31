@@ -1517,7 +1517,7 @@
           <% @invoice_items.each do |item| %>
             <tr>
               <td data-label="ITEMS">
-                <div class="product-name"><%= item.product&.name || 'Product' %></div>
+                <div class="product-name"><%= item.product&.name || item.description || 'Product' %></div>
               </td>
               <td class="text-center" data-label="HSN"><%= item.product&.hsn_sac || '-' %></td>
               <td class="text-center" data-label="QTY"><%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %> <%= item.product&.unit_type || 'units' %></td>

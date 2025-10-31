@@ -695,7 +695,7 @@
           <% @invoice_items.each do |item| %>
             <tr>
               <td>
-                <div><%= item.product&.name || 'Product' %></div>
+                <div><%= item.product&.name || item.description || 'Product' %></div>
               </td>
               <td class="center-align"><%= item.product&.hsn_sac || '-' %></td>
               <td class="center-align"><%= item.quantity %> <%= item.product&.unit_type || 'PCS' %></td>

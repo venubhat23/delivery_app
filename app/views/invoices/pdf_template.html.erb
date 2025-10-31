@@ -347,7 +347,7 @@
         <% @invoice.@invoice_items.each do |item| %>
           <tr>
             <td>
-              <%= item.product&.name || 'Product' %>
+              <%= item.product&.name || item.description || 'Product' %>
               <% if item.respond_to?(:description) && item.description.present? %>
                 <br><small style="color: #666;"><%= item.description %></small>
               <% end %>
