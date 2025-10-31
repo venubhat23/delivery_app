@@ -303,19 +303,51 @@ class Invoice < ApplicationRecord
       total_paid_amount: paid.sum(:total_amount)
     }
   end
-  
+
+  # Helper method to check if previous month has pending invoice
+  def self.check_previous_month_pending_invoice(customer, current_month, current_year)
+    # Calculate previous month and year
+    if current_month == 1
+      previous_month = 12
+      previous_year = current_year - 1
+    else
+      previous_month = current_month - 1
+      previous_year = current_year
+    end
+
+    # Look for previous month's invoice that is still pending (not paid and not already included)
+    previous_invoice = Invoice.where(
+      customer: customer,
+      month: previous_month,
+      year: previous_year,
+      invoice_type: 'monthly'
+    ).where(status: 'pending').first
+
+    if previous_invoice
+      Rails.logger.info "Found pending invoice from #{Date::MONTHNAMES[previous_month]} #{previous_year}: #{previous_invoice.invoice_number} - Amount: ₹#{previous_invoice.total_amount}"
+      return {
+        invoice: previous_invoice,
+        month_name: Date::MONTHNAMES[previous_month],
+        year: previous_year,
+        amount: previous_invoice.total_amount
+      }
+    end
+
+    nil
+  end
+
   def self.generate_invoice_for_customer_month(customer_id, month, year)
     customer = Customer.find(customer_id)
     start_date = Date.new(year, month, 1).beginning_of_month
     end_date = start_date.end_of_month
-    
+
     # Check if invoice already exists
     # existing_invoice = Invoice.where(
     #   customer: customer,
     #   invoice_date: start_date..end_date,
     #   invoice_type: 'monthly'
     # ).first
-    
+
     # return { success: false, message: "Invoice already exists for this month" } if existing_invoice
 
     # Get completed delivery assignments for this customer in the month
@@ -325,11 +357,14 @@ class Invoice < ApplicationRecord
       scheduled_date: start_date..end_date,
       invoice_generated: false
     ).includes(:product)
-    
+
     return { success: false, message: "No completed deliveries found for this month" } if assignments.empty?
-    
-    invoice = create_invoice_from_assignments(customer, assignments, start_date)
-    
+
+    # Check for previous month's pending invoice
+    previous_month_invoice = check_previous_month_pending_invoice(customer, month, year)
+
+    invoice = create_invoice_from_assignments(customer, assignments, start_date, previous_month_invoice)
+
     if invoice
       { success: true, invoice: invoice, message: "Invoice generated successfully" }
     else
@@ -339,22 +374,76 @@ class Invoice < ApplicationRecord
 
   def self.generate_monthly_invoices_for_all_customers(month = Date.current.month, year = Date.current.year)
     results = []
+
+    # Get customers with current month deliveries
     customers_with_deliveries = Customer.joins(:delivery_assignments)
-                                      .where(delivery_assignments: { 
+                                      .where(delivery_assignments: {
                                         status: 'completed',
                                         scheduled_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
                                         invoice_generated: false
                                       })
                                       .distinct
-    
-    customers_with_deliveries.each do |customer|
-      result = generate_invoice_for_customer_month(customer.id, month, year)
-      results << {
-        customer: customer,
-        result: result
-      }
+
+    # Calculate previous month for pending invoice check
+    if month == 1
+      previous_month = 12
+      previous_year = year - 1
+    else
+      previous_month = month - 1
+      previous_year = year
     end
-    
+
+    # Get customers with pending invoices from previous month (even if no current deliveries)
+    customers_with_pending = Customer.joins(:invoices)
+                                   .where(invoices: {
+                                     month: previous_month,
+                                     year: previous_year,
+                                     invoice_type: 'monthly'
+                                   })
+                                   .where(invoices: { status: 'pending' })
+                                   .distinct
+
+    # Combine both sets of customers (union)
+    all_customers = (customers_with_deliveries + customers_with_pending).uniq
+
+    Rails.logger.info "Processing #{all_customers.count} customers for month #{month}/#{year}"
+    Rails.logger.info "- #{customers_with_deliveries.count} with current month deliveries"
+    Rails.logger.info "- #{customers_with_pending.count} with previous month pending invoices"
+
+    all_customers.each do |customer|
+      # Check if customer has current month deliveries first
+      current_month_deliveries = DeliveryAssignment.where(
+        customer: customer,
+        status: 'completed',
+        scheduled_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
+        invoice_generated: false
+      )
+
+      if current_month_deliveries.exists?
+        # Customer has deliveries this month, generate invoice normally
+        result = generate_invoice_for_customer_month(customer.id, month, year)
+        results << {
+          customer: customer,
+          result: result
+        }
+      else
+        # Customer has no current deliveries but has pending invoice
+        previous_month_invoice = check_previous_month_pending_invoice(customer, month, year)
+        if previous_month_invoice
+          results << {
+            customer: customer,
+            result: {
+              success: false,
+              message: "Customer has pending amount from #{previous_month_invoice[:month_name]} #{previous_month_invoice[:year]} (₹#{previous_month_invoice[:amount]}) but no deliveries this month. Pending amount will be added when next invoice is generated.",
+              pending_amount: previous_month_invoice[:amount],
+              pending_month: previous_month_invoice[:month_name],
+              pending_year: previous_month_invoice[:year]
+            }
+          }
+        end
+      end
+    end
+
     results
   end
 
@@ -363,14 +452,17 @@ class Invoice < ApplicationRecord
     customers_with_deliveries = Customer.joins(:delivery_assignments)
                                       .where(
                                         delivery_person_id: delivery_person_id,
-                                        delivery_assignments: { 
+                                        delivery_assignments: {
                                           status: 'completed',
                                           scheduled_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
                                           invoice_generated: false
                                         }
                                       )
                                       .distinct
-    
+
+    Rails.logger.info "Generating invoices for delivery person #{delivery_person_id} - #{customers_with_deliveries.count} customers with deliveries for #{month}/#{year}"
+    Rails.logger.info "Previous month pending checks will be automatically included for each customer"
+
     customers_with_deliveries.each do |customer|
       result = generate_invoice_for_customer_month(customer.id, month, year)
       results << {
@@ -378,7 +470,7 @@ class Invoice < ApplicationRecord
         result: result
       }
     end
-    
+
     results
   end
 
@@ -387,13 +479,16 @@ class Invoice < ApplicationRecord
     customers_with_deliveries = Customer.joins(:delivery_assignments)
                                       .where(
                                         id: customer_ids,
-                                        delivery_assignments: { 
+                                        delivery_assignments: {
                                           status: 'completed',
                                           scheduled_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month,
                                         }
                                       )
                                       .distinct
-    
+
+    Rails.logger.info "Generating invoices for #{customer_ids.count} selected customers - #{customers_with_deliveries.count} have deliveries for #{month}/#{year}"
+    Rails.logger.info "Previous month pending checks will be automatically included for each customer"
+
     customers_with_deliveries.each do |customer|
       result = generate_invoice_for_customer_month(customer.id, month, year)
       results << {
@@ -401,7 +496,7 @@ class Invoice < ApplicationRecord
         result: result
       }
     end
-    
+
     results
   end
 
@@ -462,7 +557,7 @@ class Invoice < ApplicationRecord
     self.total_amount = subtotal_amount
   end
   
-  def self.create_invoice_from_assignments(customer, assignments, invoice_date)
+  def self.create_invoice_from_assignments(customer, assignments, invoice_date, previous_month_invoice = nil)
     return nil if assignments.empty?
     invoice = Invoice.new(
       customer: customer,
@@ -475,15 +570,16 @@ class Invoice < ApplicationRecord
 
     total_amount = 0
 
+    # Add current month's delivery items
     grouped_assignments = assignments.group_by(&:product_id)
 
     grouped_assignments.each do |product_id, product_assignments|
       product = Product.find(product_id)
       total_quantity = product_assignments.sum(&:quantity)
-      
+
       # Use the sum of final_amount_after_discount instead of price * quantity
       total_discounted_amount = product_assignments.sum(&:final_amount_after_discount)
-      
+
       # Calculate effective unit price after discounts
       effective_unit_price = total_quantity > 0 ? (total_discounted_amount / total_quantity) : 0
 
@@ -496,6 +592,22 @@ class Invoice < ApplicationRecord
       total_amount += total_discounted_amount
     end
 
+    # Add previous month's pending amount as a separate line item if exists
+    if previous_month_invoice
+      Rails.logger.info "Adding previous month pending amount: ₹#{previous_month_invoice[:amount]}"
+
+      # Create a special invoice item for previous month pending
+      pending_item = invoice.invoice_items.build(
+        product: nil, # No product association for pending amounts
+        quantity: 1,
+        unit_price: previous_month_invoice[:amount],
+        total_price: previous_month_invoice[:amount],
+        description: "Pending from Last Month (#{previous_month_invoice[:month_name]} #{previous_month_invoice[:year]})"
+      )
+
+      total_amount += previous_month_invoice[:amount]
+    end
+
     invoice.total_amount = total_amount
     
     # Explicitly generate invoice number before save
@@ -505,6 +617,13 @@ class Invoice < ApplicationRecord
       assignments.each do |assignment|
         assignment.update(invoice_generated: true, invoice_id: invoice.id)
       end
+
+      # Log that previous month amount was included (but don't change previous invoice status)
+      if previous_month_invoice
+        previous_invoice = previous_month_invoice[:invoice]
+        Rails.logger.info "Previous month pending amount from invoice #{previous_invoice.invoice_number} (₹#{previous_month_invoice[:amount]}) added to new invoice #{invoice.invoice_number}"
+      end
+
       invoice
     else
       Rails.logger.error "Invoice save failed: #{invoice.errors.full_messages.join(', ')}"

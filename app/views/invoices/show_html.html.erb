@@ -976,6 +976,7 @@
               product_summary = {}
               @invoice_items.each do |item|
                 product = item.product
+                next unless product # Skip items without products (like pending amounts)
                 if product_summary[product.id]
                   product_summary[product.id][:quantity] += item.quantity
                   product_summary[product.id][:total_amount] += (item.quantity * item.unit_price)
