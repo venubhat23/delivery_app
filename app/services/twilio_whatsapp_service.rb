@@ -68,7 +68,7 @@ class TwilioWhatsappService
       from: @from_number,
       content_variables: content_variables.to_json,
       media_url: [public_url],
-      content_sid: "HX76519f55cd2df98449cb2a99852d796a"
+      content_sid: "HX6d6a076f9410bfa567222bbb68fb71b2"
     )
 
 
