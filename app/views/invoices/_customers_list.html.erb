@@ -1,0 +1,43 @@
+<% customers.each do |customer| %>
+  <%
+    # Check if customer has invoice for this specific month/year (only consider month/year columns)
+    has_invoice_for_month = customer.invoices.any? do |inv|
+      inv.month == month && inv.year == year
+    end
+
+    customer_id_prefix = show_all ? "all-customer-#{customer.id}" : "customer-#{customer.id}"
+  %>
+  <div class="form-check customer-checkbox" data-delivery-person="<%= customer.delivery_person_id %>" data-invoiced="<%= has_invoice_for_month %>">
+    <input type="checkbox" class="form-check-input customer-checkbox-input"
+           id="<%= customer_id_prefix %>"
+           name="customer_ids[]"
+           value="<%= customer.id %>">
+    <label class="form-check-label" for="<%= customer_id_prefix %>">
+      <div class="d-flex align-items-center">
+        <div class="customer-avatar-small me-2">
+          <%= customer.name.first.upcase %>
+        </div>
+        <div>
+          <div class="fw-medium">
+            <%= customer.name %>
+            <% if show_all && has_invoice_for_month %>
+              <span class="badge bg-success text-white ms-1" style="font-size: 0.6rem;">✓ Invoiced</span>
+            <% end %>
+          </div>
+          <small class="text-muted"><%= customer.delivery_person&.name || 'No Delivery Person' %></small>
+        </div>
+      </div>
+    </label>
+  </div>
+<% end %>
+
+<% if customers.empty? %>
+  <div class="text-center text-muted p-3">
+    <i class="fas fa-users me-2"></i>
+    <% if show_all %>
+      No customers found
+    <% else %>
+      All customers have invoices for <%= Date::MONTHNAMES[month] %> <%= year %>
+    <% end %>
+  </div>
+<% end %>
