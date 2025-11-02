@@ -68,7 +68,6 @@ console.log('🔧 Defining completeTillToday function...');
       button.disabled = false;
     });
   };
-}
 
 if (typeof window.completeAssignment === 'function') {
   console.log('✅ completeAssignment available');
@@ -299,7 +298,6 @@ console.log('🔧 Defining completeAll function...');
       button.disabled = false;
     });
   };
-}
 
 // Define modal content reload function - DISABLED to prevent navigation
 window.reloadModalContent = function() {
@@ -351,111 +349,13 @@ console.log('✅ Assignment functions loaded:', {
         </div>
         <div class="btn-group">
           <% if @pending_till_today_count > 0 %>
-            <button class="btn btn-dark btn-lg shadow" onclick="
-              event.preventDefault(); event.stopPropagation();
-              const button = this;
-              const originalHTML = button.innerHTML;
-              button.innerHTML = '<i class=&quot;fas fa-spinner fa-spin me-1&quot;></i>Processing...';
-              button.disabled = true;
-              fetch('/customer-patterns/complete_all_till_today', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-Token': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
-                },
-                body: JSON.stringify({ customer_id: <%= @customer.id %>, month: <%= @month %>, year: <%= @year %> })
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  setTimeout(() => {
-                    // Update all pending assignments to completed status
-                    const pendingRows = document.querySelectorAll('tr');
-                    pendingRows.forEach(row => {
-                      const statusCell = row.querySelector('td:nth-child(6)');
-                      const statusBadge = statusCell?.querySelector('.badge');
-                      if (statusBadge && statusBadge.textContent.includes('Pending')) {
-                        statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
-
-                        // Update complete button
-                        const completeBtn = row.querySelector('button[onclick*="completeAssignment"]');
-                        if (completeBtn) {
-                          completeBtn.disabled = true;
-                          completeBtn.innerHTML = '<i class="fas fa-check"></i>';
-                          completeBtn.classList.remove('btn-outline-success');
-                          completeBtn.classList.add('btn-success');
-                        }
-                      }
-                    });
-                  }, 500);
-                } else {
-                  console.error('Error completing assignments:', data.message || 'Unknown error');
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                alert('❌ Error completing assignments till today');
-              })
-              .finally(() => {
-                button.innerHTML = originalHTML;
-                button.disabled = false;
-              });
-            ">
+            <button class="btn btn-dark btn-lg shadow" onclick="completeTillToday(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
               <i class="fas fa-check-circle me-2"></i>
               Complete Till Today (<%= @pending_till_today_count %>)
             </button>
           <% end %>
           <% if @pending_till_month_end_count > 0 %>
-            <button class="btn btn-success btn-lg shadow" onclick="
-              event.preventDefault(); event.stopPropagation();
-              const button = this;
-              const originalHTML = button.innerHTML;
-              button.innerHTML = '<i class=&quot;fas fa-spinner fa-spin me-1&quot;></i>Processing...';
-              button.disabled = true;
-              fetch('/customer-patterns/complete_all', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-Token': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
-                },
-                body: JSON.stringify({ customer_id: <%= @customer.id %>, month: <%= @month %>, year: <%= @year %> })
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  setTimeout(() => {
-                    // Update all pending assignments to completed status
-                    const pendingRows = document.querySelectorAll('tr');
-                    pendingRows.forEach(row => {
-                      const statusCell = row.querySelector('td:nth-child(6)');
-                      const statusBadge = statusCell?.querySelector('.badge');
-                      if (statusBadge && statusBadge.textContent.includes('Pending')) {
-                        statusCell.innerHTML = '<span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Completed</span>';
-
-                        // Update complete button
-                        const completeBtn = row.querySelector('button[onclick*="completeAssignment"]');
-                        if (completeBtn) {
-                          completeBtn.disabled = true;
-                          completeBtn.innerHTML = '<i class="fas fa-check"></i>';
-                          completeBtn.classList.remove('btn-outline-success');
-                          completeBtn.classList.add('btn-success');
-                        }
-                      }
-                    });
-                  }, 500);
-                } else {
-                  console.error('Error completing assignments:', data.message || 'Unknown error');
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                alert('❌ Error completing assignments');
-              })
-              .finally(() => {
-                button.innerHTML = originalHTML;
-                button.disabled = false;
-              });
-            ">
+            <button class="btn btn-success btn-lg shadow" onclick="completeAll(<%= @customer.id %>, <%= @month %>, <%= @year %>)">
               <i class="fas fa-check-double me-2"></i>
               Complete All This Month (<%= @pending_till_month_end_count %>)
             </button>
