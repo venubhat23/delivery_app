@@ -21,6 +21,10 @@ class PublicInvoicesController < ApplicationController
                           .where(customers: { delivery_person_id: params[:delivery_person_id] })
     end
 
+    if params[:month].present? && params[:month] != 'all'
+      @invoices = @invoices.where(month: params[:month])
+    end
+
     # Apply sorting
     case params[:sort_by]
     when 'amount_high_to_low'

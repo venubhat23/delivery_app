@@ -21,7 +21,7 @@ console.log('🔧 Defining completeTillToday function...');
     button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
     button.disabled = true;
 
-    fetch('/customer-patterns/complete_all_till_today', {
+    fetch('/customer-patterns/complete_till_today', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

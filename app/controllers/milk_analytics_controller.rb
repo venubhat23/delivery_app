@@ -131,8 +131,12 @@ class MilkAnalyticsController < ApplicationController
 
   def copy_schedules_from_last_month
     begin
-      from_month = params[:from_month] || '2025-08'
-      to_month = params[:to_month] || '2025-09'
+      # Dynamically calculate current month and previous month
+      current_date = Date.current
+      previous_month_date = current_date.prev_month
+
+      from_month = params[:from_month] || previous_month_date.strftime('%Y-%m')
+      to_month = params[:to_month] || current_date.strftime('%Y-%m')
 
       # Parse months to get date ranges
       from_start_date = Date.parse("#{from_month}-01")
