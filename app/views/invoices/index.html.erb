@@ -27,7 +27,10 @@
 <!-- Enhanced Stats Cards -->
 <div class="row mb-4">
   <div class="col-md-3 mb-3">
-    <div class="stats-card">
+    <div class="stats-card clickable-card <%= 'active' if params[:status] == 'pending' %>"
+         data-status="pending"
+         onclick="filterByStatus('pending')"
+         title="Click to filter pending invoices">
       <div class="stats-icon">
         <i class="fas fa-clock"></i>
       </div>
@@ -37,7 +40,10 @@
     </div>
   </div>
   <div class="col-md-3 mb-3">
-    <div class="stats-card stats-card-success">
+    <div class="stats-card stats-card-success clickable-card <%= 'active' if params[:status] == 'paid' %>"
+         data-status="paid"
+         onclick="filterByStatus('paid')"
+         title="Click to filter paid invoices">
       <div class="stats-icon">
         <i class="fas fa-check-circle"></i>
       </div>
@@ -47,7 +53,10 @@
     </div>
   </div>
   <div class="col-md-3 mb-3">
-    <div class="stats-card stats-card-danger">
+    <div class="stats-card stats-card-danger clickable-card <%= 'active' if params[:status] == 'overdue' %>"
+         data-status="overdue"
+         onclick="filterByStatus('overdue')"
+         title="Click to filter overdue invoices">
       <div class="stats-icon">
         <i class="fas fa-exclamation-triangle"></i>
       </div>
@@ -57,7 +66,10 @@
     </div>
   </div>
   <div class="col-md-3 mb-3">
-    <div class="stats-card stats-card-info">
+    <div class="stats-card stats-card-info clickable-card <%= 'active' if params[:status].blank? %>"
+         data-status=""
+         onclick="filterByStatus('')"
+         title="Click to show all invoices">
       <div class="stats-icon">
         <i class="fas fa-file-invoice"></i>
       </div>
@@ -574,6 +586,45 @@
 .stats-card:hover {
   box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
   transform: translateY(-8px) scale(1.02);
+}
+
+/* Clickable Stats Cards */
+.clickable-card {
+  cursor: pointer;
+  user-select: none;
+}
+
+.clickable-card:hover {
+  cursor: pointer;
+}
+
+.clickable-card:active {
+  transform: translateY(-4px) scale(0.98);
+}
+
+.clickable-card.active {
+  box-shadow: 0 25px 70px rgba(102, 126, 234, 0.25);
+  transform: translateY(-12px) scale(1.03);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.clickable-card.active::before {
+  height: 6px;
+}
+
+.stats-card-success.clickable-card.active {
+  box-shadow: 0 25px 70px rgba(40, 167, 69, 0.25);
+  border-color: rgba(40, 167, 69, 0.3);
+}
+
+.stats-card-danger.clickable-card.active {
+  box-shadow: 0 25px 70px rgba(220, 53, 69, 0.25);
+  border-color: rgba(220, 53, 69, 0.3);
+}
+
+.stats-card-info.clickable-card.active {
+  box-shadow: 0 25px 70px rgba(108, 117, 125, 0.25);
+  border-color: rgba(108, 117, 125, 0.3);
 }
 
 .stats-card .stats-icon {
@@ -8550,6 +8601,53 @@ function submitQuickInvoice() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeQuickInvoiceModal();
+  }
+});
+
+// Filter by status function for clickable cards
+function filterByStatus(status) {
+  // Remove active class from all cards
+  document.querySelectorAll('.clickable-card').forEach(card => {
+    card.classList.remove('active');
+  });
+
+  // Add active class to clicked card
+  const clickedCard = document.querySelector(`[data-status="${status}"]`);
+  if (clickedCard) {
+    clickedCard.classList.add('active');
+  }
+
+  // Get current URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // Update or remove status parameter
+  if (status === '') {
+    urlParams.delete('status');
+  } else {
+    urlParams.set('status', status);
+  }
+
+  // Construct new URL
+  const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+
+  // Navigate to new URL
+  window.location.href = newUrl;
+}
+
+// Initialize active state on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentStatus = urlParams.get('status') || '';
+
+  // Remove active class from all cards first
+  document.querySelectorAll('.clickable-card').forEach(card => {
+    card.classList.remove('active');
+  });
+
+  // Add active class to the current filter
+  const activeCard = document.querySelector(`[data-status="${currentStatus}"]`);
+  if (activeCard) {
+    activeCard.classList.add('active');
   }
 });
 </script>
