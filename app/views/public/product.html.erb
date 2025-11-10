@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeliveryMaster - Farm Fresh Delivery Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Farm-themed background */
+        .farm-bg {
+            background: linear-gradient(135deg, #8bc34a 0%, #4caf50 50%, #2e7d32 100%);
+            position: relative;
+        }
+
+        .farm-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g fill="rgba(255,255,255,0.1)"><circle cx="20" cy="20" r="2"/><circle cx="80" cy="30" r="1.5"/><circle cx="40" cy="70" r="1"/><circle cx="90" cy="80" r="2.5"/><circle cx="60" cy="10" r="1.2"/><circle cx="30" cy="90" r="1.8"/></g></svg>');
+            animation: float-particles 15s infinite linear;
+        }
+
+        @keyframes float-particles {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-20px) rotate(360deg); }
+        }
+
+        /* Header Section */
+        .header {
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.95), rgba(76, 175, 80, 0.95));
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '🥛';
+            position: absolute;
+            font-size: 15rem;
+            opacity: 0.1;
+            top: -20px;
+            left: 10%;
+            animation: sway 6s ease-in-out infinite;
+        }
+
+        .header::after {
+            content: '🧀';
+            position: absolute;
+            font-size: 12rem;
+            opacity: 0.1;
+            bottom: -20px;
+            right: 10%;
+            animation: sway 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .farm-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            animation: title-glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes title-glow {
+            0% { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); }
+            100% { text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.3); }
+        }
+
+        .farm-subtitle {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 300;
+        }
+
+        .farm-description {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Feature Sections */
+        .feature-section {
+            padding: 80px 0;
+            position: relative;
+        }
+
+        .section-bg-1 {
+            background: linear-gradient(135deg, #fff8e1, #f3e5ab);
+        }
+
+        .section-bg-2 {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+        }
+
+        .section-bg-3 {
+            background: linear-gradient(135deg, #fff3e0, #ffcc80);
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 50px;
+            color: #2e7d32;
+            position: relative;
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            border-radius: 2px;
+        }
+
+        /* Feature Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(76, 175, 80, 0.2);
+            border-color: #4caf50;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+            text-align: center;
+        }
+
+        .feature-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .feature-description {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 5px 0;
+            color: #666;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .feature-list li::before {
+            content: '🥛';
+            position: absolute;
+            left: 0;
+            font-size: 1rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(135deg, #2e7d32, #388e3c);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .stats-section::before {
+            content: '🥛';
+            position: absolute;
+            font-size: 20rem;
+            opacity: 0.05;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #8bc34a;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Tech Stack */
+        .tech-section {
+            background: linear-gradient(135deg, #f1f8e9, #dcedc8);
+            padding: 80px 0;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .tech-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .tech-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .tech-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #4caf50;
+        }
+
+        .tech-name {
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .tech-description {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            background: linear-gradient(135deg, #fff8e1, #f57f17);
+            padding: 80px 0;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            align-items: start;
+        }
+
+        .benefit-category {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .benefit-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: #e65100;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .benefit-title::before {
+            content: attr(data-icon);
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+
+        .benefit-item {
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(230, 81, 0, 0.1);
+        }
+
+        .benefit-item:last-child {
+            border-bottom: none;
+        }
+
+        .benefit-item strong {
+            color: #e65100;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .cta-section::before {
+            content: '🥛🧈';
+            position: absolute;
+            font-size: 8rem;
+            opacity: 0.1;
+            top: 20px;
+            left: 10%;
+        }
+
+        .cta-section::after {
+            content: '🧀🥛';
+            position: absolute;
+            font-size: 8rem;
+            opacity: 0.1;
+            bottom: 20px;
+            right: 10%;
+        }
+
+        .cta-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            margin-bottom: 30px;
+        }
+
+        .cta-description {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(76, 175, 80, 0.5);
+        }
+
+        .cta-button-secondary {
+            background: transparent;
+            border: 2px solid #8bc34a;
+        }
+
+        .cta-button-secondary:hover {
+            background: #8bc34a;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .farm-title {
+                font-size: 3rem;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Floating Animation */
+        .float-animation {
+            animation: float-gentle 6s ease-in-out infinite;
+        }
+
+        @keyframes float-gentle {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <section class="header farm-bg">
+        <div class="container">
+            <h1 class="farm-title">🥛 DeliveryMaster 🧀</h1>
+            <p class="farm-subtitle">Farm Fresh Delivery Management System</p>
+            <p class="farm-description">
+                Transform your dairy farm and organic delivery business with our comprehensive,
+                cloud-based management system designed specifically for farm-to-door operations.
+            </p>
+        </div>
+    </section>
+
+    <!-- Admin Panel Features -->
+    <section class="feature-section section-bg-1">
+        <div class="container">
+            <h2 class="section-title">📊 Complete Admin Panel Features</h2>
+
+            <div class="features-grid">
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">📈</div>
+                    <h3 class="feature-title">Dashboard & Analytics</h3>
+                    <p class="feature-description">Real-time insights into your farm delivery operations</p>
+                    <ul class="feature-list">
+                        <li>Real-time delivery analytics with interactive charts</li>
+                        <li>Revenue tracking with daily, weekly, and monthly breakdowns</li>
+                        <li>Product performance metrics showing top-selling items</li>
+                        <li>Customer behavior analysis and delivery patterns</li>
+                        <li>AI-powered insights for demand forecasting and churn prediction</li>
+                        <li>Milk supply analytics with vendor performance tracking</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">👥</div>
+                    <h3 class="feature-title">Customer Management</h3>
+                    <p class="feature-description">Complete customer relationship management for your farm business</p>
+                    <ul class="feature-list">
+                        <li>Comprehensive customer database with advanced search and filtering</li>
+                        <li>Bulk customer import via CSV with data validation</li>
+                        <li>Customer segmentation (regular vs irregular customers)</li>
+                        <li>Delivery person assignment and route optimization</li>
+                        <li>Customer location tracking with GPS coordinates</li>
+                        <li>Payment history and outstanding balances</li>
+                        <li>Customer loyalty points system with rewards tracking</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🥛</div>
+                    <h3 class="feature-title">Product & Inventory Management</h3>
+                    <p class="feature-description">Manage your farm products and inventory efficiently</p>
+                    <ul class="feature-list">
+                        <li>Multi-category product catalog (dairy, vegetables, groceries)</li>
+                        <li>Stock level monitoring with low-stock alerts</li>
+                        <li>Unit type management (liters, kg, pieces, bottles, packets)</li>
+                        <li>GST calculation with CGST, SGST, and IGST support</li>
+                        <li>Product pricing with cost analysis and profit margins</li>
+                        <li>Category-based organization with color-coded system</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🚛</div>
+                    <h3 class="feature-title">Delivery Operations</h3>
+                    <p class="feature-description">Streamlined delivery management for farm-fresh products</p>
+                    <ul class="feature-list">
+                        <li>Intelligent delivery scheduling with automated assignment generation</li>
+                        <li>Route optimization for delivery personnel</li>
+                        <li>Real-time delivery tracking and status updates</li>
+                        <li>Bulk delivery management with pattern recognition</li>
+                        <li>Customer delivery preferences and time windows</li>
+                        <li>Exception handling for cancelled or rescheduled deliveries</li>
+                        <li>Performance analytics for delivery personnel</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🧾</div>
+                    <h3 class="feature-title">Invoice & Financial Management</h3>
+                    <p class="feature-description">Complete financial control for your farm business</p>
+                    <ul class="feature-list">
+                        <li>Automated monthly invoice generation for all customers</li>
+                        <li>Quick invoicing for walk-in customers</li>
+                        <li>WhatsApp invoice sharing with PDF generation</li>
+                        <li>GST-compliant invoicing with tax breakdowns</li>
+                        <li>Payment tracking with multiple status options</li>
+                        <li>Previous month balance integration into new invoices</li>
+                        <li>Revenue reporting with profit analysis</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">💬</div>
+                    <h3 class="feature-title">WhatsApp Integration</h3>
+                    <p class="feature-description">Direct communication with your farm customers</p>
+                    <ul class="feature-list">
+                        <li>Automated notifications for new orders and signups</li>
+                        <li>Bulk messaging to customer segments</li>
+                        <li>PDF invoice delivery via WhatsApp</li>
+                        <li>Payment reminders and promotional messages</li>
+                        <li>Two-way communication with webhook support</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🥛</div>
+                    <h3 class="feature-title">Procurement & Supplier Management</h3>
+                    <p class="feature-description">Manage your dairy supply chain efficiently</p>
+                    <ul class="feature-list">
+                        <li>Vendor management with procurement scheduling</li>
+                        <li>Milk supply tracking and quality monitoring</li>
+                        <li>Purchase invoice generation for suppliers</li>
+                        <li>Inventory reconciliation and cost tracking</li>
+                        <li>Seasonal pattern analysis for procurement planning</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">⚙️</div>
+                    <h3 class="feature-title">Advanced Features</h3>
+                    <p class="feature-description">Enterprise-grade capabilities for growing farm businesses</p>
+                    <ul class="feature-list">
+                        <li>Multi-role access control (Admin, Delivery Person, Customer)</li>
+                        <li>Bulk operations for efficiency at scale</li>
+                        <li>Data export capabilities for reporting</li>
+                        <li>Customer pattern analysis with ML insights</li>
+                        <li>Coupon management system</li>
+                        <li>Referral program tracking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mobile App Features -->
+    <section class="feature-section section-bg-2">
+        <div class="container">
+            <h2 class="section-title">📱 Mobile App API Features</h2>
+
+            <div class="features-grid">
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🥛</div>
+                    <h3 class="feature-title">Customer-Facing Features</h3>
+                    <p class="feature-description">Delightful mobile experience for your dairy customers</p>
+                    <ul class="feature-list">
+                        <li>Account creation with automatic SMS notifications</li>
+                        <li>Product browsing with real-time availability</li>
+                        <li>Order placement with delivery date selection</li>
+                        <li>Order history and tracking</li>
+                        <li>Address management with GPS integration</li>
+                        <li>Delivery preferences configuration</li>
+                        <li>Payment tracking and invoice access</li>
+                        <li>Loyalty points viewing and redemption</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🚚</div>
+                    <h3 class="feature-title">Delivery Person App Features</h3>
+                    <p class="feature-description">Powerful tools for your delivery team</p>
+                    <ul class="feature-list">
+                        <li>Daily delivery assignments with optimized routes</li>
+                        <li>Customer location with turn-by-turn navigation</li>
+                        <li>Order completion with photo verification</li>
+                        <li>Real-time inventory updates</li>
+                        <li>Customer communication tools</li>
+                        <li>Performance dashboard with earnings tracking</li>
+                        <li>Exception reporting for delivery issues</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🔔</div>
+                    <h3 class="feature-title">Real-time Notifications</h3>
+                    <p class="feature-description">Keep everyone informed instantly</p>
+                    <ul class="feature-list">
+                        <li>Order confirmations and updates</li>
+                        <li>Delivery reminders for customers</li>
+                        <li>Route changes for delivery personnel</li>
+                        <li>Payment notifications and receipts</li>
+                        <li>Promotional offers and announcements</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card float-animation">
+                    <div class="feature-icon">🔗</div>
+                    <h3 class="feature-title">Integration Capabilities</h3>
+                    <p class="feature-description">Seamless connectivity for your farm operations</p>
+                    <ul class="feature-list">
+                        <li>RESTful API with comprehensive endpoints</li>
+                        <li>JWT authentication for secure access</li>
+                        <li>Real-time data synchronization</li>
+                        <li>Offline mode support for delivery personnel</li>
+                        <li>Third-party payment gateway integration ready</li>
+                        <li>GPS tracking and location services</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Architecture -->
+    <section class="tech-section">
+        <div class="container">
+            <h2 class="section-title">🔧 Technical Architecture</h2>
+
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-icon">💎</div>
+                    <div class="tech-name">Ruby on Rails 8.0</div>
+                    <div class="tech-description">Modern web framework with exceptional productivity</div>
+                </div>
+
+                <div class="tech-item">
+                    <div class="tech-icon">🐘</div>
+                    <div class="tech-name">PostgreSQL</div>
+                    <div class="tech-description">Robust database with optimized indexing</div>
+                </div>
+
+                <div class="tech-item">
+                    <div class="tech-icon">⚡</div>
+                    <div class="tech-name">Redis Caching</div>
+                    <div class="tech-description">Performance optimization for high-traffic</div>
+                </div>
+
+                <div class="tech-item">
+                    <div class="tech-icon">📄</div>
+                    <div class="tech-name">PDF Generation</div>
+                    <div class="tech-description">Professional invoices with wkhtmltopdf</div>
+                </div>
+
+                <div class="tech-item">
+                    <div class="tech-icon">☁️</div>
+                    <div class="tech-name">AWS S3</div>
+                    <div class="tech-description">Secure cloud file storage integration</div>
+                </div>
+
+                <div class="tech-item">
+                    <div class="tech-icon">🔒</div>
+                    <div class="tech-name">Security & Compliance</div>
+                    <div class="tech-description">GDPR-ready with GST compliance</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Business Benefits -->
+    <section class="benefits-section">
+        <div class="container">
+            <h2 class="section-title">🚀 Key Business Benefits</h2>
+
+            <div class="benefits-grid">
+                <div class="benefit-category">
+                    <h3 class="benefit-title" data-icon="⚡">Operational Efficiency</h3>
+                    <div class="benefit-item">
+                        <strong>95% reduction</strong> in manual paperwork through digitization
+                    </div>
+                    <div class="benefit-item">
+                        <strong>80% less planning time</strong> with automated scheduling
+                    </div>
+                    <div class="benefit-item">
+                        <strong>30% faster deliveries</strong> through route optimization
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Improved customer satisfaction</strong> with real-time tracking
+                    </div>
+                </div>
+
+                <div class="benefit-category">
+                    <h3 class="benefit-title" data-icon="💰">Financial Management</h3>
+                    <div class="benefit-item">
+                        <strong>Automated GST calculations</strong> ensure tax compliance
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Streamlined cash flow</strong> with monthly billing automation
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Optimized pricing</strong> with profit analysis tools
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Reduced receivables</strong> with payment tracking
+                    </div>
+                </div>
+
+                <div class="benefit-category">
+                    <h3 class="benefit-title" data-icon="😊">Customer Experience</h3>
+                    <div class="benefit-item">
+                        <strong>Instant communication</strong> via WhatsApp integration
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Flexible scheduling</strong> accommodates customer preferences
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Loyalty rewards</strong> increase customer retention
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Mobile app convenience</strong> drives engagement
+                    </div>
+                </div>
+
+                <div class="benefit-category">
+                    <h3 class="benefit-title" data-icon="📈">Scalability</h3>
+                    <div class="benefit-item">
+                        <strong>Multi-vendor support</strong> for business expansion
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Bulk operations</strong> handle growing customer base
+                    </div>
+                    <div class="benefit-item">
+                        <strong>API-first design</strong> enables third-party integrations
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Cloud-ready architecture</strong> supports geographic expansion
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="stats-section">
+        <div class="container">
+            <h2 class="section-title" style="color: white;">Performance Metrics</h2>
+            <p style="font-size: 1.2rem; opacity: 0.9; margin-bottom: 20px;">
+                Proven results from farm delivery businesses using our system
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">95%</span>
+                    <span class="stat-label">Paperwork Reduction</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">80%</span>
+                    <span class="stat-label">Time Savings</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">30%</span>
+                    <span class="stat-label">Faster Deliveries</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">99.9%</span>
+                    <span class="stat-label">System Uptime</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Perfect For Section -->
+    <section class="feature-section section-bg-1">
+        <div class="container">
+            <h2 class="section-title">📈 Perfect For</h2>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🥛</div>
+                    <h3 class="feature-title">Dairy Farms</h3>
+                    <p class="feature-description">Direct-to-consumer milk and dairy product delivery operations</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🥕</div>
+                    <h3 class="feature-title">Organic Suppliers</h3>
+                    <p class="feature-description">Fresh vegetable suppliers serving local communities</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🛒</div>
+                    <h3 class="feature-title">Grocery Delivery</h3>
+                    <p class="feature-description">Grocery delivery services in residential areas</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3 class="feature-title">Subscription Boxes</h3>
+                    <p class="feature-description">Businesses with recurring delivery subscriptions</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🏘️</div>
+                    <h3 class="feature-title">Local Cooperatives</h3>
+                    <p class="feature-description">Cooperatives managing member deliveries efficiently</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <h3 class="feature-title">SME Operations</h3>
+                    <p class="feature-description">Small to medium enterprises scaling delivery operations</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">Ready to Transform Your Farm Business?</h2>
+            <p class="cta-description">
+                Join hundreds of farmers and delivery businesses who have revolutionized their operations
+                with our comprehensive delivery management system.
+            </p>
+
+            <div class="cta-buttons">
+                <a href="/integration-invite" class="cta-button">
+                    🌾 Start Your Farm Journey
+                </a>
+                <a href="/product-launch" class="cta-button cta-button-secondary">
+                    🚀 See Live Demo
+                </a>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

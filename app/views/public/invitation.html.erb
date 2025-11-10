@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Integration Ceremony - Chief Guest Invitation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 215, 0, 0.6);
+            border-radius: 50%;
+            animation: float-particles 15s infinite linear;
+        }
+
+        .particle:nth-child(1) { width: 4px; height: 4px; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 6px; height: 6px; left: 20%; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 3px; height: 3px; left: 30%; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 5px; height: 5px; left: 40%; animation-delay: 6s; }
+        .particle:nth-child(5) { width: 4px; height: 4px; left: 50%; animation-delay: 8s; }
+        .particle:nth-child(6) { width: 7px; height: 7px; left: 60%; animation-delay: 10s; }
+        .particle:nth-child(7) { width: 3px; height: 3px; left: 70%; animation-delay: 12s; }
+        .particle:nth-child(8) { width: 5px; height: 5px; left: 80%; animation-delay: 14s; }
+        .particle:nth-child(9) { width: 4px; height: 4px; left: 90%; animation-delay: 16s; }
+
+        @keyframes float-particles {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Main invitation container */
+        .invitation-container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Royal header */
+        .royal-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .crown {
+            font-size: 4rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+            animation: crown-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes crown-glow {
+            0% { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700; }
+            100% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700, 0 0 40px #ffd700; }
+        }
+
+        .ceremonial-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ffd700, #ffed4a, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 15px;
+            animation: title-shine 3s ease-in-out infinite;
+        }
+
+        @keyframes title-shine {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #e2e8f0;
+            font-weight: 300;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Main invitation card */
+        .invitation-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 30px;
+            padding: 60px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .invitation-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            animation: card-shimmer 4s linear infinite;
+        }
+
+        @keyframes card-shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Ceremonial content */
+        .ceremonial-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .invitation-text {
+            font-size: 1.4rem;
+            color: #f7fafc;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .chief-guest-notice {
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 237, 74, 0.2));
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .chief-guest-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #ffd700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Event details grid */
+        .event-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .detail-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        .detail-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.3rem;
+            color: #f7fafc;
+            font-weight: 600;
+        }
+
+        /* Special ceremony section */
+        .ceremony-highlights {
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.1), rgba(255, 237, 74, 0.1));
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .ceremony-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .ceremony-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .ceremony-feature {
+            display: flex;
+            align-items: center;
+            color: #e2e8f0;
+            font-size: 1.1rem;
+            padding: 10px;
+        }
+
+        .ceremony-feature .icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #ffd700;
+        }
+
+        /* Call to action */
+        .cta-section {
+            margin-top: 40px;
+        }
+
+        .ceremonial-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #ffd700, #ffed4a, #ffd700);
+            color: #1a1a2e;
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding: 20px 50px;
+            border-radius: 50px;
+            text-decoration: none;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ceremonial-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.6);
+        }
+
+        .ceremonial-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .ceremonial-button:hover::before {
+            left: 100%;
+        }
+
+        /* Footer */
+        .ceremonial-footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #a0aec0;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .ceremonial-title {
+                font-size: 3rem;
+            }
+
+            .invitation-card {
+                padding: 40px 30px;
+                margin: 20px;
+            }
+
+            .invitation-text {
+                font-size: 1.2rem;
+            }
+
+            .event-details {
+                grid-template-columns: 1fr;
+            }
+
+            .ceremony-features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Main invitation -->
+    <div class="invitation-container">
+        <!-- Royal Header -->
+        <div class="royal-header">
+            <div class="crown">👑</div>
+            <h1 class="ceremonial-title">GRAND INTEGRATION</h1>
+            <h2 class="ceremonial-title" style="font-size: 3.5rem; margin-bottom: 0;">CEREMONY</h2>
+            <p class="subtitle">An Exclusive Technology Innovation Event</p>
+        </div>
+
+        <!-- Main Invitation Card -->
+        <div class="invitation-card">
+            <div class="ceremonial-content">
+                <div class="chief-guest-notice">
+                    <p class="chief-guest-text">🎖️ CHIEF GUEST INVITATION 🎖️</p>
+                </div>
+
+                <p class="invitation-text">
+                    We are honored to cordially invite you as our <strong>Chief Guest</strong> for the grand integration ceremony
+                    of our revolutionary Delivery Management System. This prestigious event marks a significant milestone
+                    in technological innovation and digital transformation.
+                </p>
+
+                <!-- Event Details -->
+                <div class="event-details">
+                    <div class="detail-item">
+                        <div class="detail-icon">📅</div>
+                        <div class="detail-label">Ceremony Date</div>
+                        <div class="detail-value">Tomorrow</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">📍</div>
+                        <div class="detail-label">Venue</div>
+                        <div class="detail-value">Bangalore</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">👨‍💼</div>
+                        <div class="detail-label">Host</div>
+                        <div class="detail-value">Mahadev Bhat</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">🌟</div>
+                        <div class="detail-label">Event Type</div>
+                        <div class="detail-value">Exclusive Ceremony</div>
+                    </div>
+                </div>
+
+                <!-- Ceremony Highlights -->
+                <div class="ceremony-highlights">
+                    <h3 class="ceremony-title">✨ Ceremony Highlights ✨</h3>
+                    <div class="ceremony-features">
+                        <div class="ceremony-feature">
+                            <span class="icon">🚀</span>
+                            <span>Live System Integration Demo</span>
+                        </div>
+                        <div class="ceremony-feature">
+                            <span class="icon">🎯</span>
+                            <span>Technology Innovation Showcase</span>
+                        </div>
+                        <div class="ceremony-feature">
+                            <span class="icon">🏆</span>
+                            <span>Achievement Recognition</span>
+                        </div>
+                        <div class="ceremony-feature">
+                            <span class="icon">🤝</span>
+                            <span>Partnership Announcement</span>
+                        </div>
+                        <div class="ceremony-feature">
+                            <span class="icon">📊</span>
+                            <span>Future Roadmap Presentation</span>
+                        </div>
+                        <div class="ceremony-feature">
+                            <span class="icon">🎊</span>
+                            <span>Celebratory Reception</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Call to Action -->
+                <div class="cta-section">
+                    <a href="#" class="ceremonial-button">
+                        🎖️ CONFIRM CHIEF GUEST ATTENDANCE 🎖️
+                    </a>
+                </div>
+
+                <!-- Footer -->
+                <div class="ceremonial-footer">
+                    <p>🌟 <strong>A momentous occasion in technological advancement</strong> 🌟</p>
+                    <p>Your presence will add tremendous honor and prestige to this celebration</p>
+                    <p>📧 RSVP required • 🎭 Formal attire recommended • 🏅 VIP treatment assured</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

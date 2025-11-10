@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  # Congratulations page
+  get '/congratulations', to: 'congratulations#show'
   resources :ai_insights, path: 'ai-insights', only: [:index] do
     collection do
       get :reorder_suggestions
@@ -671,6 +673,18 @@ Rails.application.routes.draw do
       post :send_wishes_to_all
     end
   end
+
+  # Public invitation page for app integration
+  get '/integration-invite', to: 'public#invitation', as: 'integration_invitation'
+
+  # Public product launch page for chief guest
+  get '/product-launch', to: 'public#launch', as: 'product_launch'
+
+  # Public product showcase page
+  get '/product-showcase', to: 'public#product', as: 'product_showcase'
+
+  # Atma Nirbhar Farm launch page
+  get '/atma-nirbhar-farm', to: 'public#atma_nirbhar', as: 'atma_nirbhar_farm'
 
   # Webhook endpoints - direct routes to WebhooksController
   post '/webhooks/twilio/whatsapp', to: 'webhooks#twilio_whatsapp'

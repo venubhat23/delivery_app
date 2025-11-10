@@ -1,0 +1,23 @@
+class PublicController < ApplicationController
+  skip_before_action :require_login
+
+  def invitation
+    # This is a public page, no authentication required
+    # The view is rendered automatically from app/views/public/invitation.html.erb
+  end
+
+  def launch
+    # This is the product launch page for chief guest activation
+    # The view is rendered automatically from app/views/public/launch.html.erb
+  end
+
+  def product
+    # This is the farm-themed product showcase page
+    # The view is rendered automatically from app/views/public/product.html.erb
+  end
+
+  def atma_nirbhar
+    # This is the Atma Nirbhar Farm launch page with ribbon cutting
+    # The view is rendered automatically from app/views/public/atma_nirbhar.html.erb
+  end
+end

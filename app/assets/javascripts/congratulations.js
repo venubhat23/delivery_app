@@ -1,0 +1,243 @@
+function showCongratulationsModal() {
+  // Create the modal HTML
+  const modalHTML = `
+    <div id="congratulations-overlay" class="congratulations-overlay" style="display: flex;">
+      <div class="fireworks-container">
+        <div class="firework"></div>
+        <div class="firework"></div>
+        <div class="firework"></div>
+        <div class="firework"></div>
+        <div class="firework"></div>
+      </div>
+
+      <div class="congratulations-content">
+        <div class="scrolling-message">
+          🎊 Congratulations! Atma Nirbhar Farm Bangalore Software Product Launch Successfully Inaugurated! 🎊
+          <div style="font-size: 2rem; margin-top: 20px;">Place:- Bangalore</div>
+        </div>
+      </div>
+
+      <button class="close-btn" onclick="closeCongratulations()">×</button>
+    </div>
+  `;
+
+  // Create the CSS
+  const modalCSS = `
+    <style id="congratulations-css">
+    .congratulations-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .congratulations-content {
+      text-align: center;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scrolling-message {
+      font-size: 3rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      white-space: nowrap;
+      animation: scrollUp 8s ease-in-out infinite;
+      padding: 20px;
+    }
+
+    @keyframes scrollUp {
+      0% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+      20% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      80% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100vh);
+        opacity: 0;
+      }
+    }
+
+    .fireworks-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .firework {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      animation: firework 2s ease-out infinite;
+    }
+
+    .firework:nth-child(1) {
+      left: 20%;
+      top: 20%;
+      animation-delay: 0s;
+      background: #ff6b6b;
+    }
+
+    .firework:nth-child(2) {
+      left: 80%;
+      top: 30%;
+      animation-delay: 0.5s;
+      background: #4ecdc4;
+    }
+
+    .firework:nth-child(3) {
+      left: 60%;
+      top: 70%;
+      animation-delay: 1s;
+      background: #45b7d1;
+    }
+
+    .firework:nth-child(4) {
+      left: 30%;
+      top: 80%;
+      animation-delay: 1.5s;
+      background: #f9ca24;
+    }
+
+    .firework:nth-child(5) {
+      left: 70%;
+      top: 50%;
+      animation-delay: 2s;
+      background: #6c5ce7;
+    }
+
+    @keyframes firework {
+      0% {
+        transform: scale(0);
+        box-shadow: 0 0 0 0 currentColor,
+                    0 0 0 0 currentColor,
+                    0 0 0 0 currentColor,
+                    0 0 0 0 currentColor,
+                    0 0 0 0 currentColor,
+                    0 0 0 0 currentColor;
+      }
+      50% {
+        transform: scale(1);
+        box-shadow: 0 -20px 0 5px currentColor,
+                    14px -14px 0 5px currentColor,
+                    20px 0 0 5px currentColor,
+                    14px 14px 0 5px currentColor,
+                    0 20px 0 5px currentColor,
+                    -14px 14px 0 5px currentColor,
+                    -20px 0 0 5px currentColor,
+                    -14px -14px 0 5px currentColor;
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 -40px 0 0 transparent,
+                    28px -28px 0 0 transparent,
+                    40px 0 0 0 transparent,
+                    28px 28px 0 0 transparent,
+                    0 40px 0 0 transparent,
+                    -28px 28px 0 0 transparent,
+                    -40px 0 0 0 transparent,
+                    -28px -28px 0 0 transparent;
+      }
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 3rem;
+      cursor: pointer;
+      z-index: 11;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+    }
+
+    .close-btn:hover {
+      opacity: 1;
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .scrolling-message {
+        font-size: 1.8rem;
+        padding: 10px;
+      }
+
+      .close-btn {
+        font-size: 2rem;
+        top: 15px;
+        right: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .scrolling-message {
+        font-size: 1.4rem;
+      }
+    }
+    </style>
+  `;
+
+  // Remove existing modal and CSS if present
+  const existingModal = document.getElementById('congratulations-overlay');
+  const existingCSS = document.getElementById('congratulations-css');
+
+  if (existingModal) existingModal.remove();
+  if (existingCSS) existingCSS.remove();
+
+  // Add CSS to head
+  document.head.insertAdjacentHTML('beforeend', modalCSS);
+
+  // Add modal to body
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+  // Auto close after 10 seconds
+  setTimeout(closeCongratulations, 10000);
+}
+
+function closeCongratulations() {
+  const overlay = document.getElementById('congratulations-overlay');
+  const css = document.getElementById('congratulations-css');
+
+  if (overlay) {
+    overlay.style.animation = 'fadeOut 0.5s ease-out';
+    setTimeout(() => {
+      overlay.remove();
+      if (css) css.remove();
+    }, 500);
+  }
+}
+
+// Global function to trigger congratulations
+window.showCongratulations = showCongratulationsModal;
+window.closeCongratulations = closeCongratulations;

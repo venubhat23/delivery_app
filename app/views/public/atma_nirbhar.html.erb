@@ -1,0 +1,2351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atma Nirbhar Farm Bangalore Software Product Launch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 25%, #90caf9 50%, #64b5f6 75%, #42a5f5 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            cursor: default;
+        }
+
+        /* Floating farm elements */
+        .farm-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .farm-particle {
+            position: absolute;
+            animation: float-farm-particles 20s infinite linear;
+            opacity: 0.6;
+        }
+
+        .farm-particle:nth-child(1) { content: '🥛'; left: 5%; font-size: 2rem; animation-delay: 0s; }
+        .farm-particle:nth-child(2) { content: '🧀'; left: 15%; font-size: 1.8rem; animation-delay: 3s; }
+        .farm-particle:nth-child(3) { content: '🥛'; left: 25%; font-size: 2.2rem; animation-delay: 6s; }
+        .farm-particle:nth-child(4) { content: '🧈'; left: 35%; font-size: 1.6rem; animation-delay: 9s; }
+        .farm-particle:nth-child(5) { content: '🥛'; left: 45%; font-size: 2rem; animation-delay: 12s; }
+        .farm-particle:nth-child(6) { content: '🧀'; left: 55%; font-size: 1.9rem; animation-delay: 15s; }
+        .farm-particle:nth-child(7) { content: '🥛'; left: 65%; font-size: 2.1rem; animation-delay: 18s; }
+        .farm-particle:nth-child(8) { content: '🧈'; left: 75%; font-size: 1.7rem; animation-delay: 21s; }
+        .farm-particle:nth-child(9) { content: '🥛'; left: 85%; font-size: 2rem; animation-delay: 24s; }
+        .farm-particle:nth-child(10) { content: '🧀'; left: 95%; font-size: 1.8rem; animation-delay: 27s; }
+
+        @keyframes float-farm-particles {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Main container */
+        .launch-container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 140px 20px 20px;
+            text-align: center;
+        }
+
+        /* Header section */
+        .farm-header {
+            margin-bottom: 60px;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px 50px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(33, 150, 243, 0.2);
+            border: 2px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .farm-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 4.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #1565c0, #1976d2, #1e88e5, #2196f3);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: title-gradient 4s ease-in-out infinite;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes title-gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .farm-subtitle {
+            font-size: 2rem;
+            color: #0d47a1;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .launch-by {
+            font-size: 1.5rem;
+            color: #1565c0;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .launch-date {
+            font-size: 1.3rem;
+            color: #1976d2;
+            margin-bottom: 60px;
+            font-weight: 400;
+        }
+
+        /* Ribbon Inaugurate button */
+        .ribbon-inaugurate-button {
+            position: relative;
+            background: linear-gradient(45deg, #e91e63, #f06292, #e91e63);
+            background-size: 400% 400%;
+            border: none;
+            border-radius: 15px;
+            padding: 20px 50px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 15px 50px rgba(233, 30, 99, 0.4);
+            transition: all 0.3s ease;
+            animation: ribbon-gradient 3s ease-in-out infinite, ribbon-float 2s ease-in-out infinite;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .ribbon-inaugurate-button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            animation: ribbon-shine 2s ease-in-out infinite;
+        }
+
+        .ribbon-icon {
+            font-size: 2rem;
+            animation: ribbon-icon-pulse 1.5s ease-in-out infinite;
+        }
+
+        .ribbon-text {
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes ribbon-gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes ribbon-float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+
+        @keyframes ribbon-shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(300%) rotate(45deg); }
+        }
+
+        @keyframes ribbon-icon-pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(10deg); }
+        }
+
+        .ribbon-inaugurate-button:hover {
+            transform: scale(1.1) rotate(-1deg);
+            box-shadow: 0 20px 60px rgba(233, 30, 99, 0.6);
+            background: linear-gradient(45deg, #d81b60, #e91e63, #f06292);
+        }
+
+        .ribbon-inaugurate-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Farm Gallery */
+        .farm-gallery {
+            margin: 40px 0;
+            padding: 30px 0;
+        }
+
+        .gallery-title {
+            font-size: 2rem;
+            color: #1565c0;
+            margin-bottom: 30px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .image-placeholder {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(227, 242, 253, 0.8));
+            border: 3px dashed #2196f3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(33, 150, 243, 0.3);
+        }
+
+        .image-placeholder:hover {
+            transform: translateY(-5px);
+            border-color: #1976d2;
+            box-shadow: 0 15px 40px rgba(33, 150, 243, 0.3);
+        }
+
+        .image-upload-area {
+            text-align: center;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 10px;
+            color: #2196f3;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: #1565c0;
+            font-weight: 600;
+        }
+
+        .image-upload {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .image-placeholder.has-image {
+            border: 3px solid #4caf50;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .image-placeholder.has-image .image-upload-area {
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        .image-placeholder.has-image .upload-icon {
+            color: white;
+            font-size: 2rem;
+        }
+
+        .image-placeholder.has-image .upload-text {
+            color: white;
+            font-size: 1rem;
+        }
+
+        /* Product link */
+        .product-link {
+            display: inline-block;
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .product-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(76, 175, 80, 0.5);
+        }
+
+        /* Curtain Animation */
+        .curtain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 300;
+            display: none;
+        }
+
+        .curtain-container.active {
+            display: block;
+        }
+
+        .curtain {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(135deg, #8e24aa, #ab47bc, #ce93d8);
+            transition: transform 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .curtain-left {
+            left: 0;
+            transform-origin: left center;
+            background: linear-gradient(135deg, #8e24aa, #ab47bc, #ce93d8, #e1bee7);
+            border-right: 5px solid #6a1b9a;
+        }
+
+        .curtain-right {
+            right: 0;
+            transform-origin: right center;
+            background: linear-gradient(135deg, #e1bee7, #ce93d8, #ab47bc, #8e24aa);
+            border-left: 5px solid #6a1b9a;
+        }
+
+        .curtain-pattern {
+            width: 100%;
+            height: 100%;
+            background-image:
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(255, 255, 255, 0.1) 20px,
+                    rgba(255, 255, 255, 0.1) 40px
+                );
+        }
+
+        .curtain-rod {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: linear-gradient(135deg, #bf360c, #d84315, #ff5722);
+            box-shadow: 0 5px 15px rgba(191, 54, 12, 0.5);
+            z-index: 310;
+        }
+
+        .curtain-tassel {
+            position: absolute;
+            bottom: 20%;
+            width: 30px;
+            height: 40px;
+            background: linear-gradient(135deg, #ffb74d, #ff9800, #f57c00);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 0 5px 15px rgba(245, 124, 0, 0.4);
+        }
+
+        .curtain-tassel-left {
+            right: 10px;
+            animation: tassel-swing-left 3s ease-in-out infinite;
+        }
+
+        .curtain-tassel-right {
+            left: 10px;
+            animation: tassel-swing-right 3s ease-in-out infinite;
+        }
+
+        @keyframes tassel-swing-left {
+            0%, 100% { transform: rotate(5deg); }
+            50% { transform: rotate(-5deg); }
+        }
+
+        @keyframes tassel-swing-right {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .curtain-container.opening .curtain-left {
+            transform: translateX(-100%) rotate(-10deg);
+        }
+
+        .curtain-container.opening .curtain-right {
+            transform: translateX(100%) rotate(10deg);
+        }
+
+        /* Golden sparkles behind curtains */
+        .curtain-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 40%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 30%, rgba(255, 193, 7, 0.2) 0%, transparent 50%);
+            animation: golden-shimmer 4s ease-in-out infinite;
+            z-index: 299;
+        }
+
+        @keyframes golden-shimmer {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Ribbon cutting animation */
+        .ribbon {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            display: none;
+            z-index: 250;
+            transform: translateY(-50%);
+        }
+
+        .ribbon.active {
+            display: block;
+        }
+
+        .ribbon-left, .ribbon-right {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff1744, #f50057, #ff5722);
+            transition: transform 2s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(255, 23, 68, 0.4);
+        }
+
+        .ribbon-left {
+            left: 0;
+            transform-origin: right center;
+            border-radius: 0 20px 20px 0;
+        }
+
+        .ribbon-right {
+            right: 0;
+            transform-origin: left center;
+            border-radius: 20px 0 0 20px;
+        }
+
+        .ribbon-left::before {
+            content: '🎀 INAUGURATION';
+        }
+
+        .ribbon-right::before {
+            content: 'CEREMONY 🎀';
+        }
+
+        .ribbon.cutting .ribbon-left {
+            transform: translateX(-100%) rotate(-20deg);
+        }
+
+        .ribbon.cutting .ribbon-right {
+            transform: translateX(100%) rotate(20deg);
+        }
+
+        /* Fireworks */
+        .fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 150;
+            display: none;
+        }
+
+        .fireworks.active {
+            display: block;
+        }
+
+        .firework {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffeb3b;
+            border-radius: 50%;
+            animation: firework-explosion 2.5s ease-out infinite;
+        }
+
+        @keyframes firework-explosion {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+                box-shadow: 0 0 0 rgba(255, 235, 59, 0.8);
+            }
+            25% {
+                transform: scale(8) rotate(90deg);
+                opacity: 1;
+                box-shadow: 0 0 20px rgba(255, 235, 59, 0.6);
+            }
+            50% {
+                transform: scale(15) rotate(180deg);
+                opacity: 0.8;
+                box-shadow: 0 0 40px rgba(255, 235, 59, 0.4);
+            }
+            75% {
+                transform: scale(25) rotate(270deg);
+                opacity: 0.4;
+                box-shadow: 0 0 60px rgba(255, 235, 59, 0.2);
+            }
+            100% {
+                transform: scale(35) rotate(360deg);
+                opacity: 0;
+                box-shadow: 0 0 80px rgba(255, 235, 59, 0.1);
+            }
+        }
+
+        /* Crackers animation */
+        .cracker {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ff5722;
+            border-radius: 50%;
+            animation: cracker-burst 1.5s ease-out infinite;
+        }
+
+        @keyframes cracker-burst {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+                background: #ff5722;
+            }
+            25% {
+                transform: scale(3);
+                opacity: 1;
+                background: #ff9800;
+            }
+            50% {
+                transform: scale(6);
+                opacity: 0.8;
+                background: #ffeb3b;
+            }
+            75% {
+                transform: scale(10);
+                opacity: 0.4;
+                background: #4caf50;
+            }
+            100% {
+                transform: scale(15);
+                opacity: 0;
+                background: #2196f3;
+            }
+        }
+
+        /* Sparkle effect */
+        .sparkle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+            animation: sparkle-twinkle 1s ease-in-out infinite;
+        }
+
+        @keyframes sparkle-twinkle {
+            0%, 100% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 1;
+                box-shadow: 0 0 10px white;
+            }
+        }
+
+        /* Enhanced Launch message */
+        .launch-message {
+            display: none;
+            text-align: center;
+            animation: message-appear 2s ease-out;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 60px 40px;
+            border-radius: 30px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 25px 80px rgba(76, 175, 80, 0.3);
+            border: 3px solid rgba(76, 175, 80, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .launch-message::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: success-shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes success-shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(300%) rotate(45deg); }
+        }
+
+        .launch-message.active {
+            display: block;
+        }
+
+        @keyframes message-appear {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) translateY(100px) rotate(-15deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.1) translateY(0) rotate(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0) rotate(0deg);
+            }
+        }
+
+        .launch-success-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #4caf50, #66bb6a, #81c784, #a5d6a7);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            animation: success-glow 2s ease-in-out infinite alternate, success-gradient 4s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.5));
+        }
+
+        @keyframes success-glow {
+            0% {
+                text-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+                transform: scale(1);
+            }
+            100% {
+                text-shadow: 0 0 40px rgba(76, 175, 80, 0.8), 0 0 60px rgba(76, 175, 80, 0.6);
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes success-gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .launch-success-message {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #2e7d32, #388e3c, #4caf50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 40px;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+            animation: message-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes message-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.02);
+                opacity: 0.9;
+            }
+        }
+
+        /* Sanskrit Saying at Top */
+        .sanskrit-saying {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 250;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 40px;
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(255, 193, 7, 0.4);
+            border: 3px solid #ff9800;
+            backdrop-filter: blur(15px);
+            animation: sanskrit-glow 3s ease-in-out infinite;
+        }
+
+        .sanskrit-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: #ff6f00;
+            margin: 0;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(255, 111, 0, 0.4);
+            background: linear-gradient(45deg, #ff6f00, #ff9800, #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes sanskrit-glow {
+            0%, 100% {
+                box-shadow: 0 15px 40px rgba(255, 193, 7, 0.4);
+                border-color: #ff9800;
+            }
+            50% {
+                box-shadow: 0 20px 50px rgba(255, 193, 7, 0.6);
+                border-color: #ffc107;
+            }
+        }
+
+        /* Top Corner Images */
+        .top-corner-images {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 240;
+        }
+
+        .corner-image {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            border: 5px solid #ff9800;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            pointer-events: all;
+            box-shadow: 0 12px 35px rgba(255, 152, 0, 0.4);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            animation: corner-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes corner-glow {
+            0%, 100% {
+                box-shadow: 0 12px 35px rgba(255, 152, 0, 0.4);
+                border-color: #ff9800;
+            }
+            50% {
+                box-shadow: 0 18px 50px rgba(255, 152, 0, 0.6);
+                border-color: #ffc107;
+            }
+        }
+
+        .corner-image.top-left {
+            top: 120px;
+            left: 30px;
+        }
+
+        .corner-image.top-right {
+            top: 120px;
+            right: 30px;
+        }
+
+        .corner-image:hover {
+            transform: scale(1.08) rotate(5deg);
+            border-color: #f57c00;
+            box-shadow: 0 20px 60px rgba(255, 152, 0, 0.7);
+        }
+
+        .corner-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .farm-image-left:hover .corner-img {
+            transform: scale(1.05) rotate(-3deg);
+        }
+
+        .farm-image-right:hover .corner-img {
+            transform: scale(1.05) rotate(3deg);
+        }
+
+        /* Scrolling Success Message */
+        .scrolling-success {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            display: none;
+        }
+
+        .scrolling-success.active {
+            display: block;
+            animation: scroll-bottom-to-top 8s linear infinite;
+        }
+
+        @keyframes scroll-bottom-to-top {
+            0% {
+                bottom: -100px;
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                bottom: 100vh;
+                opacity: 0;
+            }
+        }
+
+        .scroll-message {
+            background: linear-gradient(45deg, #4caf50, #66bb6a, #81c784);
+            background-size: 300% 300%;
+            animation: scroll-gradient 2s ease-in-out infinite;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(76, 175, 80, 0.6);
+            border: 3px solid #2e7d32;
+            white-space: nowrap;
+        }
+
+        @keyframes scroll-gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .scroll-fireworks {
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+        }
+
+        @keyframes scroll-firework-burst {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+                box-shadow: 0 0 0 rgba(255, 235, 59, 0.8);
+            }
+            25% {
+                transform: scale(4) rotate(90deg);
+                opacity: 1;
+                box-shadow: 0 0 15px rgba(255, 235, 59, 0.6);
+            }
+            50% {
+                transform: scale(8) rotate(180deg);
+                opacity: 0.8;
+                box-shadow: 0 0 25px rgba(255, 235, 59, 0.4);
+            }
+            75% {
+                transform: scale(12) rotate(270deg);
+                opacity: 0.4;
+                box-shadow: 0 0 35px rgba(255, 235, 59, 0.2);
+            }
+            100% {
+                transform: scale(16) rotate(360deg);
+                opacity: 0;
+                box-shadow: 0 0 45px rgba(255, 235, 59, 0.1);
+            }
+        }
+
+        /* Celebration Balloons Animation */
+        .celebration-balloons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .balloon {
+            position: absolute;
+            font-size: 2.5rem;
+            opacity: 0.8;
+            animation: balloon-float 15s linear infinite;
+        }
+
+        .balloon-1 { left: 10%; animation-delay: 0s; color: #ff1744; }
+        .balloon-2 { left: 25%; animation-delay: 3s; color: #2196f3; }
+        .balloon-3 { left: 45%; animation-delay: 6s; color: #4caf50; }
+        .balloon-4 { left: 65%; animation-delay: 9s; color: #ff9800; }
+        .balloon-5 { left: 80%; animation-delay: 12s; color: #e91e63; }
+        .balloon-6 { left: 90%; animation-delay: 15s; color: #9c27b0; }
+
+        @keyframes balloon-float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-150px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Celebration Confetti */
+        .celebration-confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 12;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            animation: confetti-fall 8s linear infinite;
+        }
+
+        .confetti-1 { left: 5%; background: #ff1744; animation-delay: 0s; }
+        .confetti-2 { left: 15%; background: #2196f3; animation-delay: 1s; }
+        .confetti-3 { left: 25%; background: #4caf50; animation-delay: 2s; }
+        .confetti-4 { left: 35%; background: #ff9800; animation-delay: 3s; }
+        .confetti-5 { left: 45%; background: #e91e63; animation-delay: 4s; }
+        .confetti-6 { left: 55%; background: #9c27b0; animation-delay: 5s; }
+        .confetti-7 { left: 65%; background: #ffeb3b; animation-delay: 6s; }
+        .confetti-8 { left: 75%; background: #00bcd4; animation-delay: 7s; }
+        .confetti-9 { left: 85%; background: #8bc34a; animation-delay: 8s; }
+        .confetti-10 { left: 95%; background: #f44336; animation-delay: 9s; }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Celebration Crackers */
+        .celebration-crackers {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 11;
+        }
+
+        .cracker-burst {
+            position: absolute;
+            font-size: 3rem;
+            animation: cracker-explosion 6s ease-in-out infinite;
+        }
+
+        .cracker-1 { top: 20%; left: 20%; animation-delay: 0s; }
+        .cracker-2 { top: 30%; right: 20%; animation-delay: 2s; }
+        .cracker-3 { top: 60%; left: 30%; animation-delay: 4s; }
+        .cracker-4 { top: 40%; right: 30%; animation-delay: 6s; }
+        .cracker-5 { top: 70%; left: 70%; animation-delay: 8s; }
+        .cracker-6 { top: 15%; left: 60%; animation-delay: 10s; }
+        .cracker-7 { top: 50%; left: 10%; animation-delay: 12s; }
+        .cracker-8 { top: 80%; right: 15%; animation-delay: 14s; }
+        .cracker-9 { top: 35%; left: 80%; animation-delay: 16s; }
+        .cracker-10 { top: 65%; right: 50%; animation-delay: 18s; }
+
+        @keyframes cracker-explosion {
+            0%, 90% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                transform: scale(1.2) rotate(180deg);
+                opacity: 1;
+                filter: brightness(1.5);
+            }
+            15% {
+                transform: scale(1) rotate(360deg);
+                opacity: 0.8;
+                filter: brightness(1);
+            }
+            25% {
+                transform: scale(0.8) rotate(540deg);
+                opacity: 0;
+            }
+        }
+
+        /* Floating Celebration Emojis */
+        .floating-celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 13;
+        }
+
+        .celebration-emoji {
+            position: absolute;
+            font-size: 2rem;
+            animation: celebration-float 12s ease-in-out infinite;
+        }
+
+        .emoji-1 { top: 10%; left: 10%; animation-delay: 0s; }
+        .emoji-2 { top: 20%; right: 15%; animation-delay: 1.5s; }
+        .emoji-3 { top: 40%; left: 5%; animation-delay: 3s; }
+        .emoji-4 { top: 60%; right: 10%; animation-delay: 4.5s; }
+        .emoji-5 { top: 80%; left: 20%; animation-delay: 6s; }
+        .emoji-6 { top: 30%; left: 80%; animation-delay: 7.5s; }
+        .emoji-7 { top: 50%; right: 25%; animation-delay: 9s; }
+        .emoji-8 { top: 70%; left: 75%; animation-delay: 10.5s; }
+
+        @keyframes celebration-float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg) scale(1);
+                opacity: 0.8;
+            }
+            25% {
+                transform: translateY(-20px) rotate(90deg) scale(1.1);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-40px) rotate(180deg) scale(1.2);
+                opacity: 0.9;
+            }
+            75% {
+                transform: translateY(-20px) rotate(270deg) scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        /* Indian Celebration Decorations */
+        .indian-decorations {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9;
+        }
+
+        /* Rangoli Patterns */
+        .rangoli {
+            position: absolute;
+            font-size: 3rem;
+            animation: rangoli-rotate 8s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 105, 180, 0.5));
+        }
+
+        .rangoli-1 { top: 15%; left: 10%; animation-delay: 0s; color: #ff1744; }
+        .rangoli-2 { top: 25%; right: 15%; animation-delay: 2s; color: #e91e63; }
+        .rangoli-3 { top: 60%; left: 8%; animation-delay: 4s; color: #ff9800; }
+        .rangoli-4 { top: 70%; right: 12%; animation-delay: 6s; color: #9c27b0; }
+        .rangoli-5 { top: 40%; left: 85%; animation-delay: 8s; color: #f06292; }
+
+        @keyframes rangoli-rotate {
+            0%, 100% {
+                transform: rotate(0deg) scale(1);
+                opacity: 0.8;
+            }
+            25% {
+                transform: rotate(90deg) scale(1.2);
+                opacity: 1;
+            }
+            50% {
+                transform: rotate(180deg) scale(1.1);
+                opacity: 0.9;
+            }
+            75% {
+                transform: rotate(270deg) scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        /* Diyas (Oil Lamps) */
+        .diya {
+            position: absolute;
+            font-size: 2.5rem;
+            animation: diya-flicker 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.8));
+        }
+
+        .diya-1 { bottom: 20%; left: 15%; animation-delay: 0s; }
+        .diya-2 { bottom: 25%; right: 20%; animation-delay: 1s; }
+        .diya-3 { bottom: 30%; left: 40%; animation-delay: 2s; }
+        .diya-4 { bottom: 15%; right: 35%; animation-delay: 3s; }
+        .diya-5 { bottom: 35%; left: 70%; animation-delay: 4s; }
+        .diya-6 { bottom: 20%; left: 50%; animation-delay: 5s; }
+
+        @keyframes diya-flicker {
+            0%, 100% {
+                transform: scale(1) rotate(-2deg);
+                filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.8));
+                opacity: 1;
+            }
+            25% {
+                transform: scale(1.1) rotate(1deg);
+                filter: drop-shadow(0 0 20px rgba(255, 140, 0, 1));
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(0.9) rotate(-1deg);
+                filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.9));
+                opacity: 1;
+            }
+            75% {
+                transform: scale(1.2) rotate(2deg);
+                filter: drop-shadow(0 0 18px rgba(255, 165, 0, 0.7));
+                opacity: 0.8;
+            }
+        }
+
+        /* Lotus Flowers */
+        .lotus {
+            position: absolute;
+            font-size: 2.8rem;
+            animation: lotus-bloom 10s ease-in-out infinite;
+            filter: drop-shadow(0 0 12px rgba(255, 20, 147, 0.6));
+        }
+
+        .lotus-1 { top: 35%; left: 25%; animation-delay: 0s; }
+        .lotus-2 { top: 55%; right: 25%; animation-delay: 3s; }
+        .lotus-3 { top: 45%; left: 60%; animation-delay: 6s; }
+
+        @keyframes lotus-bloom {
+            0%, 100% {
+                transform: scale(0.8) rotate(0deg);
+                opacity: 0.7;
+            }
+            25% {
+                transform: scale(1.2) rotate(45deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1) rotate(90deg);
+                opacity: 0.9;
+            }
+            75% {
+                transform: scale(1.3) rotate(135deg);
+                opacity: 1;
+            }
+        }
+
+        /* Traditional Elements */
+        .traditional {
+            position: absolute;
+            font-size: 2.2rem;
+            animation: traditional-glow 6s ease-in-out infinite;
+        }
+
+        .traditional-1 {
+            top: 50%; left: 5%;
+            animation-delay: 0s;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+        }
+        .traditional-2 {
+            top: 20%; right: 5%;
+            animation-delay: 2s;
+            filter: drop-shadow(0 0 12px rgba(255, 165, 0, 0.7));
+        }
+        .traditional-3 {
+            top: 80%; left: 30%;
+            animation-delay: 4s;
+            filter: drop-shadow(0 0 10px rgba(76, 175, 80, 0.6));
+        }
+        .traditional-4 {
+            top: 75%; right: 40%;
+            animation-delay: 6s;
+            filter: drop-shadow(0 0 12px rgba(255, 20, 147, 0.6));
+        }
+
+        @keyframes traditional-glow {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.3) rotate(180deg);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive design */
+        /* Enhanced WhatsApp Loader Modal */
+        .whatsapp-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg,
+                rgba(37, 211, 102, 0.1) 0%,
+                rgba(18, 140, 126, 0.1) 25%,
+                rgba(227, 242, 253, 0.9) 50%,
+                rgba(187, 222, 251, 0.9) 75%,
+                rgba(144, 202, 249, 0.9) 100%);
+            backdrop-filter: blur(15px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            animation: loader-background 4s ease-in-out infinite;
+        }
+
+        @keyframes loader-background {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .whatsapp-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.98);
+            border: 3px solid rgba(37, 211, 102, 0.4);
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            max-width: 550px;
+            width: 90%;
+            box-shadow: 0 25px 80px rgba(37, 211, 102, 0.3);
+            backdrop-filter: blur(25px);
+            animation: modal-appear 1s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(37, 211, 102, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: modal-shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes modal-shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(300%) rotate(45deg); }
+        }
+
+        @keyframes modal-appear {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) translateY(100px) rotate(-10deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.1) translateY(0px) rotate(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0) rotate(0deg);
+            }
+        }
+
+        .whatsapp-icon {
+            font-size: 5rem;
+            color: #25d366;
+            margin-bottom: 25px;
+            animation: whatsapp-enhanced-pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(37, 211, 102, 0.5));
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes whatsapp-enhanced-pulse {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                filter: drop-shadow(0 0 20px rgba(37, 211, 102, 0.5));
+            }
+            25% {
+                transform: scale(1.1) rotate(5deg);
+                filter: drop-shadow(0 0 25px rgba(37, 211, 102, 0.7));
+            }
+            50% {
+                transform: scale(1.2) rotate(0deg);
+                filter: drop-shadow(0 0 30px rgba(37, 211, 102, 0.9));
+            }
+            75% {
+                transform: scale(1.1) rotate(-5deg);
+                filter: drop-shadow(0 0 25px rgba(37, 211, 102, 0.7));
+            }
+        }
+
+        .loader-text {
+            font-size: 1.8rem;
+            background: linear-gradient(45deg, #25d366, #128c7e, #075e54);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 25px;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(37, 211, 102, 0.2);
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 12px;
+            background: linear-gradient(45deg, #e0e0e0, #f5f5f5);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(45deg, #25d366, #128c7e, #075e54);
+            background-size: 200% 200%;
+            border-radius: 10px;
+            animation: loading-fill 3s ease-out forwards, loading-gradient 2s ease-in-out infinite;
+            width: 0%;
+            box-shadow: 0 0 15px rgba(37, 211, 102, 0.5);
+        }
+
+        @keyframes loading-fill {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes loading-gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .loading-status {
+            font-size: 1.2rem;
+            color: #128c7e;
+            margin-bottom: 15px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+            animation: status-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes status-glow {
+            0%, 100% { color: #128c7e; }
+            50% { color: #25d366; text-shadow: 0 0 10px rgba(37, 211, 102, 0.5); }
+        }
+
+        /* Success Modal */
+        .success-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(227, 242, 253, 0.98), rgba(187, 222, 251, 0.98), rgba(144, 202, 249, 0.98), rgba(100, 181, 246, 0.98));
+            backdrop-filter: blur(15px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 400;
+        }
+
+        .success-modal.active {
+            display: flex;
+        }
+
+        .success-content {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid rgba(76, 175, 80, 0.6);
+            border-radius: 25px;
+            padding: 50px;
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            color: #2e7d32;
+            box-shadow: 0 20px 60px rgba(76, 175, 80, 0.3);
+            backdrop-filter: blur(20px);
+            animation: success-appear 1s ease-out;
+        }
+
+        @keyframes success-appear {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) rotate(-180deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.1) rotate(0deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .success-icon {
+            font-size: 6rem;
+            margin-bottom: 30px;
+            animation: success-bounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.6));
+        }
+
+        @keyframes success-bounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .success-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 2px 2px 4px rgba(76, 175, 80, 0.2);
+        }
+
+        .success-message {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            color: #2e7d32;
+            opacity: 0.9;
+        }
+
+        .success-close {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            border: 2px solid #4caf50;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .success-close:hover {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        /* Thank You Section */
+        .thank-you-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 2px solid #ffc107;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            animation: thank-you-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes thank-you-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+                border-color: #ffc107;
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(255, 193, 7, 0.5);
+                border-color: #ff9800;
+            }
+        }
+
+        .thank-you-message {
+            font-size: 1.4rem;
+            color: #e65100;
+            text-align: center;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ff6f00, #ff9800, #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: thank-you-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes thank-you-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+        }
+
+        /* App Links Section */
+        .app-links-section {
+            margin: 25px 0;
+            padding: 25px;
+            background: rgba(33, 150, 243, 0.1);
+            border: 2px solid #2196f3;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .app-links-title {
+            font-size: 1.5rem;
+            color: #1565c0;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #1565c0, #1976d2, #2196f3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .app-links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .app-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            border-radius: 15px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-link {
+            border-color: #ff9800;
+            background: linear-gradient(45deg, rgba(255, 152, 0, 0.1), rgba(255, 193, 7, 0.1));
+        }
+
+        .customer-link {
+            border-color: #4caf50;
+            background: linear-gradient(45deg, rgba(76, 175, 80, 0.1), rgba(129, 199, 132, 0.1));
+        }
+
+        .app-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-link:hover {
+            background: linear-gradient(45deg, rgba(255, 152, 0, 0.2), rgba(255, 193, 7, 0.2));
+            border-color: #f57c00;
+        }
+
+        .customer-link:hover {
+            background: linear-gradient(45deg, rgba(76, 175, 80, 0.2), rgba(129, 199, 132, 0.2));
+            border-color: #388e3c;
+        }
+
+        .app-icon {
+            font-size: 2.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .app-info {
+            flex: 1;
+        }
+
+        .app-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .app-url {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .admin-link .app-name {
+            color: #e65100;
+        }
+
+        .customer-link .app-name {
+            color: #2e7d32;
+        }
+
+        @media (max-width: 768px) {
+            .farm-title {
+                font-size: 3rem;
+            }
+
+            .launch-success-title {
+                font-size: 3.5rem;
+            }
+
+            .ribbon-inaugurate-button {
+                padding: 15px 35px;
+                font-size: 1.3rem;
+                gap: 10px;
+            }
+
+            .ribbon-icon {
+                font-size: 1.5rem;
+            }
+
+            .farm-subtitle {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                padding: 30px 20px;
+            }
+
+            .success-content {
+                padding: 40px 30px;
+            }
+
+            .gallery-title {
+                font-size: 1.5rem;
+            }
+
+            .image-placeholder {
+                width: 280px;
+                height: 180px;
+            }
+
+            .image-container {
+                gap: 20px;
+            }
+
+            .sanskrit-text {
+                font-size: 1.2rem;
+            }
+
+            .sanskrit-meaning {
+                font-size: 0.7rem;
+            }
+
+            .corner-image {
+                width: 110px;
+                height: 110px;
+                top: 100px;
+                border-width: 4px;
+            }
+
+            .corner-image.top-left {
+                left: 15px;
+            }
+
+            .corner-image.top-right {
+                right: 15px;
+            }
+
+            .scroll-message {
+                font-size: 1.1rem;
+                padding: 15px 25px;
+            }
+
+            .farm-header {
+                padding: 20px 25px;
+                margin-bottom: 40px;
+            }
+
+            .launch-message {
+                padding: 40px 20px;
+            }
+
+            .launch-success-title {
+                font-size: 3.5rem;
+            }
+
+            .launch-success-message {
+                font-size: 1.4rem;
+            }
+
+            .modal-content {
+                padding: 30px 20px;
+            }
+
+            .loader-text {
+                font-size: 1.4rem;
+            }
+
+            .whatsapp-icon {
+                font-size: 3.5rem;
+            }
+
+            /* Mobile Responsive for Celebration Elements */
+            .balloon {
+                font-size: 1.8rem;
+            }
+
+            .cracker-burst {
+                font-size: 2rem;
+            }
+
+            .celebration-emoji {
+                font-size: 1.5rem;
+            }
+
+            .confetti {
+                width: 6px;
+                height: 6px;
+            }
+
+            /* Mobile Responsive for Indian Decorations */
+            .rangoli {
+                font-size: 2rem;
+            }
+
+            .diya {
+                font-size: 1.8rem;
+            }
+
+            .lotus {
+                font-size: 2rem;
+            }
+
+            .traditional {
+                font-size: 1.6rem;
+            }
+
+            /* Mobile Responsive for Success Modal */
+            .success-content {
+                padding: 30px 20px;
+                max-width: 95%;
+            }
+
+            .thank-you-message {
+                font-size: 1.1rem;
+            }
+
+            .app-links-title {
+                font-size: 1.2rem;
+            }
+
+            .app-icon {
+                font-size: 2rem;
+            }
+
+            .app-name {
+                font-size: 1rem;
+            }
+
+            .app-url {
+                font-size: 0.9rem;
+            }
+
+            .scroll-message {
+                font-size: 1rem;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Farm particles -->
+    <div class="farm-particles">
+        <div class="farm-particle">🥛</div>
+        <div class="farm-particle">🧀</div>
+        <div class="farm-particle">🥛</div>
+        <div class="farm-particle">🧈</div>
+        <div class="farm-particle">🥛</div>
+        <div class="farm-particle">🧀</div>
+        <div class="farm-particle">🥛</div>
+        <div class="farm-particle">🧈</div>
+        <div class="farm-particle">🥛</div>
+        <div class="farm-particle">🧀</div>
+    </div>
+
+    <!-- Celebration Balloons -->
+    <div class="celebration-balloons">
+        <div class="balloon balloon-1">🎈</div>
+        <div class="balloon balloon-2">🎈</div>
+        <div class="balloon balloon-3">🎈</div>
+        <div class="balloon balloon-4">🎈</div>
+        <div class="balloon balloon-5">🎈</div>
+        <div class="balloon balloon-6">🎈</div>
+    </div>
+
+    <!-- Celebration Confetti -->
+    <div class="celebration-confetti">
+        <div class="confetti confetti-1"></div>
+        <div class="confetti confetti-2"></div>
+        <div class="confetti confetti-3"></div>
+        <div class="confetti confetti-4"></div>
+        <div class="confetti confetti-5"></div>
+        <div class="confetti confetti-6"></div>
+        <div class="confetti confetti-7"></div>
+        <div class="confetti confetti-8"></div>
+        <div class="confetti confetti-9"></div>
+        <div class="confetti confetti-10"></div>
+    </div>
+
+    <!-- Celebration Crackers -->
+    <div class="celebration-crackers">
+        <div class="cracker-burst cracker-1">🎆</div>
+        <div class="cracker-burst cracker-2">🎇</div>
+        <div class="cracker-burst cracker-3">✨</div>
+        <div class="cracker-burst cracker-4">🎆</div>
+        <div class="cracker-burst cracker-5">🎇</div>
+        <div class="cracker-burst cracker-6">🎆</div>
+        <div class="cracker-burst cracker-7">🎇</div>
+        <div class="cracker-burst cracker-8">✨</div>
+        <div class="cracker-burst cracker-9">🎆</div>
+        <div class="cracker-burst cracker-10">🎇</div>
+    </div>
+
+    <!-- Floating Celebration Emojis -->
+    <div class="floating-celebration">
+        <div class="celebration-emoji emoji-1">🎉</div>
+        <div class="celebration-emoji emoji-2">🎊</div>
+        <div class="celebration-emoji emoji-3">🌟</div>
+        <div class="celebration-emoji emoji-4">✨</div>
+        <div class="celebration-emoji emoji-5">🎉</div>
+        <div class="celebration-emoji emoji-6">🎊</div>
+        <div class="celebration-emoji emoji-7">⭐</div>
+        <div class="celebration-emoji emoji-8">💫</div>
+    </div>
+
+    <!-- Indian Celebration Decorations -->
+    <div class="indian-decorations">
+        <!-- Rangoli Patterns -->
+        <div class="rangoli rangoli-1">🌺</div>
+        <div class="rangoli rangoli-2">🌸</div>
+        <div class="rangoli rangoli-3">🌻</div>
+        <div class="rangoli rangoli-4">🌺</div>
+        <div class="rangoli rangoli-5">🌸</div>
+
+        <!-- Diyas (Oil Lamps) -->
+        <div class="diya diya-1">🪔</div>
+        <div class="diya diya-2">🪔</div>
+        <div class="diya diya-3">🪔</div>
+        <div class="diya diya-4">🪔</div>
+        <div class="diya diya-5">🪔</div>
+        <div class="diya diya-6">🪔</div>
+
+        <!-- Lotus Flowers -->
+        <div class="lotus lotus-1">🪷</div>
+        <div class="lotus lotus-2">🪷</div>
+        <div class="lotus lotus-3">🪷</div>
+
+        <!-- Traditional Elements -->
+        <div class="traditional traditional-1">🕉️</div>
+        <div class="traditional traditional-2">🔔</div>
+        <div class="traditional traditional-3">🎋</div>
+        <div class="traditional traditional-4">🪷</div>
+    </div>
+
+    <!-- Curtains -->
+    <div class="curtain-container" id="curtainContainer">
+        <div class="curtain curtain-left" id="curtainLeft">
+            <div class="curtain-pattern"></div>
+            <div class="curtain-tassel curtain-tassel-left"></div>
+        </div>
+        <div class="curtain curtain-right" id="curtainRight">
+            <div class="curtain-pattern"></div>
+            <div class="curtain-tassel curtain-tassel-right"></div>
+        </div>
+        <div class="curtain-rod"></div>
+    </div>
+
+    <!-- Ribbon -->
+    <div class="ribbon" id="ribbon">
+        <div class="ribbon-left"></div>
+        <div class="ribbon-right"></div>
+    </div>
+
+    <!-- Fireworks -->
+    <div class="fireworks" id="fireworks"></div>
+
+    <!-- Top Sanskrit Saying -->
+    <div class="sanskrit-saying">
+        <h2 class="sanskrit-text">गावो विश्वस्य मातरः</h2>
+    </div>
+
+    <!-- Top Corner Images -->
+    <div class="top-corner-images">
+        <div class="corner-image top-left farm-image-left">
+            <img src="/images/farm1.jpg" alt="Farm Image 1" class="corner-img">
+        </div>
+        <div class="corner-image top-right farm-image-right">
+            <img src="/images/farm2.png" alt="Farm Image 2" class="corner-img">
+        </div>
+    </div>
+
+    <!-- Main launch container -->
+    <div class="launch-container" id="launchContainer">
+        <!-- Header -->
+        <div class="farm-header">
+            <h1 class="farm-title">ATMA NIRBHAR FARM BANGALORE</h1>
+            <h2 class="farm-subtitle">Software Product Launch</h2>
+            <p class="launch-by">By Shri Dr. Kalliri Guruju</p>
+            <p class="launch-date">📅 Date: 10th Nov, 2025</p>
+        </div>
+
+        <!-- Ribbon Inaugurate button -->
+        <button class="ribbon-inaugurate-button" onclick="openCurtains()">
+            <span class="ribbon-icon">🎀</span>
+            <span class="ribbon-text">Launch Software</span>
+            <span class="ribbon-icon">🎀</span>
+        </button>
+
+        <!-- Image Gallery Section -->
+        <div class="farm-gallery">
+            <h3 class="gallery-title">🖼️ Farm Gallery</h3>
+            <div class="image-container">
+                <div class="image-placeholder image-1">
+                    <div class="image-upload-area">
+                        <span class="upload-icon">📷</span>
+                        <span class="upload-text">Farm Image 1</span>
+                        <input type="file" class="image-upload" accept="image/*" onchange="handleImageUpload(event, 1)">
+                    </div>
+                </div>
+                <div class="image-placeholder image-2">
+                    <div class="image-upload-area">
+                        <span class="upload-icon">📷</span>
+                        <span class="upload-text">Farm Image 2</span>
+                        <input type="file" class="image-upload" accept="image/*" onchange="handleImageUpload(event, 2)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product link -->
+        <a href="http://localhost:3002/product-showcase" class="product-link">
+            📖 Know More About The Product
+        </a>
+
+        <!-- Launch message (hidden initially) -->
+        <div class="launch-message" id="launchMessage">
+            <h1 class="launch-success-title">🎉 SOFTWARE LAUNCHED! 🎉</h1>
+            <p class="launch-success-message">
+                Atma Nirbhar Farm Bangalore Software is now live and ready to transform dairy farming across India!
+            </p>
+            <a href="http://localhost:3002/product-showcase" class="product-link">
+                🚀 Explore All Features
+            </a>
+        </div>
+    </div>
+
+    <!-- WhatsApp Loader Modal -->
+    <div class="whatsapp-modal" id="whatsappModal">
+        <div class="modal-content">
+            <div class="whatsapp-icon">📱</div>
+            <div class="loader-text">Sending WhatsApp Messages</div>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <div class="loading-status" id="loadingStatus">Connecting to customers...</div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="success-modal" id="successModal">
+        <div class="success-content">
+            <div class="success-icon">🎉</div>
+            <div class="success-title">Software Successfully Inaugurated!</div>
+            <div class="success-message">
+                Atma Nirbhar Farm Bangalore Software has been successfully launched and all customers have been notified via WhatsApp.
+            </div>
+            <div class="thank-you-section">
+                <div class="thank-you-message">
+                    🙏 <strong>Thank you to Kanneri Swamiji for the software launch</strong> 🙏
+                </div>
+            </div>
+            <div class="app-links-section">
+                <h4 class="app-links-title">📱 Access Our Applications</h4>
+                <div class="app-links-container">
+                    <a href="https://atmanirbharfarmbangalore.com" target="_blank" class="app-link admin-link">
+                        <span class="app-icon">🖥️</span>
+                        <div class="app-info">
+                            <div class="app-name">Admin Panel</div>
+                            <div class="app-url">atmanirbharfarmbangalore.com</div>
+                        </div>
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.atmanirbharfarmbangalore" target="_blank" class="app-link customer-link">
+                        <span class="app-icon">📱</span>
+                        <div class="app-info">
+                            <div class="app-name">Customer App</div>
+                            <div class="app-url">Google Play Store</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <button class="success-close" onclick="closeSuccessModal()">Continue to Celebration</button>
+        </div>
+    </div>
+
+    <!-- Scrolling Success Message -->
+    <div class="scrolling-success" id="scrollingSuccess">
+        <div class="scroll-message">
+            🎊 Congratulations! Atma Nirbhar Farm Bangalore Software Successfully Inaugurated!
+            <br>🙏 Thank you Kanneri Swamiji! 🙏
+        </div>
+        <div class="scroll-fireworks" id="scrollFireworks"></div>
+    </div>
+
+    <script>
+        function handleImageUpload(event, imageNumber) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imagePlaceholder = document.querySelector(`.image-${imageNumber}`);
+                    imagePlaceholder.style.backgroundImage = `url(${e.target.result})`;
+                    imagePlaceholder.classList.add('has-image');
+
+                    // Update the text
+                    const uploadText = imagePlaceholder.querySelector('.upload-text');
+                    uploadText.textContent = `Change Image ${imageNumber}`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function createFirework(x, y) {
+            const colors = ['#ffeb3b', '#f44336', '#4caf50', '#2196f3', '#ff9800', '#e91e63'];
+
+            for (let i = 0; i < 20; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.left = (x + Math.random() * 150 - 75) + 'px';
+                firework.style.top = (y + Math.random() * 150 - 75) + 'px';
+                firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                firework.style.animationDelay = (Math.random() * 0.8) + 's';
+                document.getElementById('fireworks').appendChild(firework);
+
+                setTimeout(() => {
+                    firework.remove();
+                }, 2500);
+            }
+        }
+
+        function createCracker(x, y) {
+            const crackerColors = ['#ff5722', '#ff9800', '#ffeb3b', '#4caf50', '#2196f3'];
+
+            for (let i = 0; i < 10; i++) {
+                const cracker = document.createElement('div');
+                cracker.className = 'cracker';
+                cracker.style.left = (x + Math.random() * 80 - 40) + 'px';
+                cracker.style.top = (y + Math.random() * 80 - 40) + 'px';
+                cracker.style.background = crackerColors[Math.floor(Math.random() * crackerColors.length)];
+                cracker.style.animationDelay = (Math.random() * 0.3) + 's';
+                document.getElementById('fireworks').appendChild(cracker);
+
+                setTimeout(() => {
+                    cracker.remove();
+                }, 1500);
+            }
+        }
+
+        function createSparkles() {
+            for (let i = 0; i < 30; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = Math.random() * window.innerWidth + 'px';
+                sparkle.style.top = Math.random() * window.innerHeight + 'px';
+                sparkle.style.animationDelay = (Math.random() * 2) + 's';
+                document.getElementById('fireworks').appendChild(sparkle);
+
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 1000);
+            }
+        }
+
+        function startFireworks() {
+            const fireworksEl = document.getElementById('fireworks');
+            fireworksEl.classList.add('active');
+
+            // Create fireworks
+            const fireworkInterval = setInterval(() => {
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * (window.innerHeight * 0.7);
+                createFirework(x, y);
+            }, 200);
+
+            // Create crackers
+            const crackerInterval = setInterval(() => {
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * (window.innerHeight * 0.8);
+                createCracker(x, y);
+            }, 400);
+
+            // Create sparkles periodically
+            const sparkleInterval = setInterval(() => {
+                createSparkles();
+            }, 800);
+
+            setTimeout(() => {
+                clearInterval(fireworkInterval);
+                clearInterval(crackerInterval);
+                clearInterval(sparkleInterval);
+            }, 10000);
+
+            // Hide fireworks after 12 seconds
+            setTimeout(() => {
+                fireworksEl.classList.remove('active');
+            }, 12000);
+        }
+
+        function showWhatsAppLoader() {
+            const whatsappModal = document.getElementById('whatsappModal');
+            const loadingStatus = document.getElementById('loadingStatus');
+
+            whatsappModal.classList.add('active');
+
+            const statusMessages = [
+                'Connecting to customers...',
+                'Sending inauguration messages...',
+                'Notifying about new features...',
+                'Processing customer responses...',
+                'Finalizing notifications...'
+            ];
+
+            let messageIndex = 0;
+            const messageInterval = setInterval(() => {
+                if (messageIndex < statusMessages.length) {
+                    loadingStatus.textContent = statusMessages[messageIndex];
+                    messageIndex++;
+                } else {
+                    clearInterval(messageInterval);
+                    whatsappModal.classList.remove('active');
+
+                    // Show success modal
+                    setTimeout(() => {
+                        document.getElementById('successModal').classList.add('active');
+                    }, 500);
+                }
+            }, 600);
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.remove('active');
+
+            // Show scrolling success message with fireworks
+            setTimeout(() => {
+                showScrollingSuccess();
+            }, 500);
+        }
+
+
+        function createScrollFireworks(container) {
+            const colors = ['#ffeb3b', '#f44336', '#4caf50', '#2196f3', '#ff9800', '#e91e63'];
+
+            // Create multiple fireworks around the scrolling message
+            for (let i = 0; i < 8; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'scroll-firework';
+                firework.style.position = 'absolute';
+                firework.style.width = '6px';
+                firework.style.height = '6px';
+                firework.style.borderRadius = '50%';
+                firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+                // Random position around the message
+                const angle = (i / 8) * 2 * Math.PI;
+                const radius = 80 + Math.random() * 40;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+
+                firework.style.left = (100 + x) + 'px';
+                firework.style.top = (100 + y) + 'px';
+                firework.style.animation = `scroll-firework-burst 1.5s ease-out infinite`;
+                firework.style.animationDelay = (Math.random() * 1) + 's';
+
+                container.appendChild(firework);
+
+                // Remove after animation
+                setTimeout(() => {
+                    if (firework.parentNode) {
+                        firework.remove();
+                    }
+                }, 2000);
+            }
+        }
+
+        function showScrollingSuccess() {
+            const scrollingSuccess = document.getElementById('scrollingSuccess');
+            const scrollFireworks = document.getElementById('scrollFireworks');
+
+            scrollingSuccess.classList.add('active');
+
+            // Create fireworks continuously while scrolling
+            const fireworksInterval = setInterval(() => {
+                createScrollFireworks(scrollFireworks);
+            }, 800);
+
+            // Stop after one complete cycle
+            setTimeout(() => {
+                clearInterval(fireworksInterval);
+                scrollingSuccess.classList.remove('active');
+                // Clear existing fireworks
+                scrollFireworks.innerHTML = '';
+            }, 8000);
+        }
+
+        function openCurtains() {
+            const button = document.querySelector('.ribbon-inaugurate-button');
+            const curtainContainer = document.getElementById('curtainContainer');
+            const ribbon = document.getElementById('ribbon');
+            const launchContainer = document.getElementById('launchContainer');
+
+            // Animate button press
+            button.style.transform = 'scale(0.9)';
+            button.style.background = 'linear-gradient(45deg, #4caf50, #66bb6a)';
+            button.disabled = true;
+
+            // Show curtains
+            setTimeout(() => {
+                curtainContainer.classList.add('active');
+
+                // Open curtains after a brief pause
+                setTimeout(() => {
+                    curtainContainer.classList.add('opening');
+
+                    // Start fireworks during curtain opening
+                    setTimeout(() => {
+                        startFireworks();
+                    }, 1500);
+
+                    // Show ribbon cutting after curtains open
+                    setTimeout(() => {
+                        ribbon.classList.add('active');
+
+                        setTimeout(() => {
+                            ribbon.classList.add('cutting');
+                        }, 500);
+
+                        // Hide curtains and ribbon, then show WhatsApp loader
+                        setTimeout(() => {
+                            curtainContainer.classList.remove('active');
+                            ribbon.classList.remove('active');
+
+                            // Fade out original content
+                            launchContainer.style.transition = 'opacity 1s ease-out';
+                            launchContainer.style.opacity = '0';
+
+                            setTimeout(() => {
+                                // Show WhatsApp loader
+                                showWhatsAppLoader();
+                            }, 1000);
+
+                        }, 2500);
+                    }, 3000);
+                }, 1000);
+            }, 500);
+        }
+
+        function launchSoftware() {
+            // Keep this function for backward compatibility
+            openCurtains();
+        }
+
+        // Add some automatic floating particles
+        setInterval(() => {
+            const particles = document.querySelectorAll('.farm-particle');
+            particles.forEach((particle, index) => {
+                const delay = index * 2;
+                setTimeout(() => {
+                    if (!particle.style.animationPlayState || particle.style.animationPlayState === 'running') {
+                        particle.style.animationDelay = '0s';
+                    }
+                }, delay * 1000);
+            });
+        }, 20000);
+    </script>
+</body>
+</html>
