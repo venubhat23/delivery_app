@@ -1386,15 +1386,8 @@
                 console.log('💡 To manually trigger: triggerFarmLoader()');
                 console.log('🔧 To debug: debugLoader()');
 
-                // Show loader automatically after 1 second
-                setTimeout(function() {
-                    console.log('🚀 Auto-triggering farm loader...');
-                    if (window.farmLoader) {
-                        window.farmLoader.trigger();
-                    } else {
-                        triggerFarmLoader(); // Fallback
-                    }
-                }, 1000);
+                // Disable auto-loader for login page
+                console.log('🔒 Login page - Auto-loader disabled');
 
                 // Auto-hide flash messages
                 setTimeout(function() {
@@ -1418,28 +1411,16 @@
                     });
                 });
 
-                // Add click event to login button to trigger loader
+                // Login form - no loader trigger needed
                 const loginForm = document.querySelector('form');
                 if (loginForm) {
-                    loginForm.addEventListener('submit', function(e) {
-                        e.preventDefault(); // Prevent actual form submission for demo
-                        if (window.farmLoader) {
-                            window.farmLoader.trigger();
-                        }
-                    });
+                    console.log('📝 Login form found - proceeding with normal form submission');
                 }
 
-                // Add demo button to trigger loader (for testing)
+                // Login button - normal form submission
                 const loginButton = document.querySelector('.farm-btn');
                 if (loginButton) {
-                    loginButton.addEventListener('click', function(e) {
-                        if (e.target.textContent.includes('Sign In')) {
-                            e.preventDefault();
-                            if (window.farmLoader) {
-                                window.farmLoader.trigger();
-                            }
-                        }
-                    });
+                    console.log('🔑 Login button found - normal form submission enabled');
                 }
 
             } catch (error) {
