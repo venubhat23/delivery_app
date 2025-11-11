@@ -820,9 +820,305 @@
             animation: blade-sway 2s ease-in-out infinite;
             transform-origin: bottom;
         }
+
+        /* Attractive Loader Overlay */
+        .farm-loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(139, 69, 19, 0.4)),
+                        url('/images/farm1.png?v=2025110601') center/cover no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .farm-loader-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Loader Container */
+        .loader-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.6);
+            border: 3px solid rgba(139, 69, 19, 0.2);
+            padding: 3rem 2.5rem;
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+            transform: translateY(30px) scale(0.9);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .farm-loader-overlay.show .loader-container {
+            transform: translateY(0) scale(1);
+        }
+
+        .loader-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #8B4513, #D2B48C, #CD853F, #8B4513);
+            background-size: 400% 100%;
+            animation: gradient-shift 3s ease-in-out infinite;
+        }
+
+        /* Loader Title */
+        .loader-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #228B22, #32CD32);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: title-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes title-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Loader Message */
+        .loader-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            animation: message-fade 3s ease-in-out infinite;
+        }
+
+        @keyframes message-fade {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Progress Circle */
+        .progress-circle {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(50, 205, 50, 0.1);
+            stroke-width: 8;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: url(#progressGradient);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 0.3s ease;
+            filter: drop-shadow(0 0 10px rgba(50, 205, 50, 0.3));
+        }
+
+        /* Progress Percentage */
+        .progress-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #228B22, #32CD32);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: percentage-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes percentage-glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        /* Farm Icon */
+        .loader-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: #32CD32;
+            animation: icon-spin 4s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes icon-spin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Status Messages */
+        .status-message {
+            font-size: 0.95rem;
+            color: #888;
+            margin-bottom: 1rem;
+            min-height: 24px;
+            animation: status-slide 0.5s ease-in-out;
+        }
+
+        @keyframes status-slide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Success Animation */
+        .success-check {
+            display: none;
+            font-size: 4rem;
+            color: #32CD32;
+            animation: success-bounce 1s ease-in-out;
+        }
+
+        @keyframes success-bounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Farm Loading Animation */
+        .farm-loading-animation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 1rem 0;
+        }
+
+        .farm-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #32CD32, #228B22);
+            animation: farm-bounce 1.4s ease-in-out infinite;
+        }
+
+        .farm-dot:nth-child(1) { animation-delay: -0.32s; }
+        .farm-dot:nth-child(2) { animation-delay: -0.16s; }
+        .farm-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes farm-bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .loader-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .loader-title {
+                font-size: 1.5rem;
+            }
+
+            .progress-circle {
+                width: 120px;
+                height: 120px;
+            }
+
+            .progress-percentage {
+                font-size: 2rem;
+            }
+
+            .loader-icon {
+                font-size: 2.5rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Attractive Loader Overlay -->
+    <div class="farm-loader-overlay" id="farmLoader">
+        <div class="loader-container">
+            <h2 class="loader-title">Atma Nirbhar Farm</h2>
+            <p class="loader-message">Setting up your farm experience...</p>
+
+            <!-- Progress Circle -->
+            <div class="progress-circle">
+                <svg width="150" height="150" class="progress-ring">
+                    <!-- Gradient Definition -->
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#32CD32;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#228B22;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Background Circle -->
+                    <circle
+                        class="progress-ring-bg"
+                        cx="75"
+                        cy="75"
+                        r="70">
+                    </circle>
+                    <!-- Progress Circle -->
+                    <circle
+                        class="progress-ring-fill"
+                        cx="75"
+                        cy="75"
+                        r="70"
+                        id="progressCircle">
+                    </circle>
+                </svg>
+                <div class="progress-percentage" id="progressPercentage">0%</div>
+                <i class="fas fa-cow loader-icon" id="loaderIcon"></i>
+                <i class="fas fa-check success-check" id="successCheck"></i>
+            </div>
+
+            <!-- Status Message -->
+            <div class="status-message" id="statusMessage">Initializing...</div>
+
+            <!-- Farm Loading Animation -->
+            <div class="farm-loading-animation">
+                <div class="farm-dot"></div>
+                <div class="farm-dot"></div>
+                <div class="farm-dot"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="farm-wrapper">
         <!-- Farm Visual Elements -->
         <div class="farm-visual-elements">
@@ -853,7 +1149,7 @@
                         <!-- Header -->
                         <div class="farm-header">
                             <div class="farm-logo">
-                                <img src="https://marketincer-assets.s3.us-east-1.amazonaws.com/WhatsApp+Image+2025-06-25+at+8.04.23+AM.jpeg" alt="Atma Nirbhar Farm Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
+                                <img src="/images/farm5.png" alt="Atma Nirbhar Farm Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 0%;">
                             </div>
                             <h1 class="farm-title">Atma Nirbhar Farm</h1>
                             <p class="farm-subtitle">Premium Desi Cow Milk & Dairy Products</p>
@@ -912,6 +1208,13 @@
                                 <p class="text-muted mb-2">New to our farm?</p>
                                 <a href="/signup" class="text-success text-decoration-none fw-semibold">Join Our Farm Community</a>
                             </div>
+
+                            <!-- Demo Button for Testing Loader -->
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="triggerFarmLoader()">
+                                    <i class="fas fa-play me-2"></i>Demo Loader Animation
+                                </button>
+                            </div>
                             
                             <!-- Farm Features -->
                             <div class="farm-features">
@@ -950,29 +1253,204 @@
     </div>
 
     <script>
-        // Initialize page
+        // Attractive Loader with Farm Theme
+        class FarmLoader {
+            constructor() {
+                this.loader = document.getElementById('farmLoader');
+                this.progressCircle = document.getElementById('progressCircle');
+                this.progressPercentage = document.getElementById('progressPercentage');
+                this.statusMessage = document.getElementById('statusMessage');
+                this.loaderIcon = document.getElementById('loaderIcon');
+                this.successCheck = document.getElementById('successCheck');
+
+                this.currentProgress = 0;
+                this.targetProgress = 0;
+                this.isLoading = false;
+
+                // Status messages for different stages
+                this.statusMessages = [
+                    "Connecting to our farm...",
+                    "Loading fresh milk inventory...",
+                    "Preparing customer app link...",
+                    "Gathering delivery routes...",
+                    "Setting up farm dashboard...",
+                    "Sending customer app link...",
+                    "Finalizing your farm experience..."
+                ];
+
+                this.currentMessageIndex = 0;
+            }
+
+            updateProgress(percentage) {
+                this.targetProgress = percentage;
+                const circumference = 2 * Math.PI * 70; // radius = 70
+                const offset = circumference - (percentage / 100) * circumference;
+
+                // Smooth animation to target percentage
+                const animateProgress = () => {
+                    if (this.currentProgress < this.targetProgress) {
+                        this.currentProgress += 1;
+                        const currentOffset = circumference - (this.currentProgress / 100) * circumference;
+                        this.progressCircle.style.strokeDashoffset = currentOffset;
+                        this.progressPercentage.textContent = this.currentProgress + '%';
+
+                        requestAnimationFrame(animateProgress);
+                    }
+                };
+
+                requestAnimationFrame(animateProgress);
+            }
+
+            updateStatus(message) {
+                this.statusMessage.style.animation = 'none';
+                this.statusMessage.offsetHeight; // Trigger reflow
+                this.statusMessage.textContent = message;
+                this.statusMessage.style.animation = 'status-slide 0.5s ease-in-out';
+            }
+
+            showLoader() {
+                this.loader.classList.add('show');
+                this.isLoading = true;
+                this.startLoadingSequence();
+            }
+
+            hideLoader() {
+                this.loader.classList.remove('show');
+                this.isLoading = false;
+            }
+
+            startLoadingSequence() {
+                const sequence = [
+                    { progress: 5, message: this.statusMessages[0], delay: 500 },
+                    { progress: 15, message: this.statusMessages[1], delay: 800 },
+                    { progress: 25, message: this.statusMessages[2], delay: 600 },
+                    { progress: 45, message: this.statusMessages[3], delay: 700 },
+                    { progress: 65, message: this.statusMessages[4], delay: 600 },
+                    { progress: 85, message: this.statusMessages[5], delay: 800 },
+                    { progress: 100, message: this.statusMessages[6], delay: 500 }
+                ];
+
+                let currentStep = 0;
+
+                const executeStep = () => {
+                    if (currentStep < sequence.length && this.isLoading) {
+                        const step = sequence[currentStep];
+
+                        this.updateProgress(step.progress);
+                        this.updateStatus(step.message);
+
+                        // Special handling for 100%
+                        if (step.progress === 100) {
+                            setTimeout(() => {
+                                this.showSuccess();
+                            }, 1000);
+                        }
+
+                        currentStep++;
+
+                        setTimeout(executeStep, step.delay);
+                    }
+                };
+
+                executeStep();
+            }
+
+            showSuccess() {
+                // Hide loader icon and show success check
+                this.loaderIcon.style.display = 'none';
+                this.successCheck.style.display = 'block';
+
+                // Update status
+                this.updateStatus('Customer app link sent successfully! 🎉');
+
+                // Hide loader after showing success
+                setTimeout(() => {
+                    this.hideLoader();
+                }, 2000);
+            }
+
+            // Trigger loader manually
+            trigger() {
+                this.showLoader();
+            }
+        }
+
+        // Initialize page and loader
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-hide flash messages
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.farm-alert');
-                alerts.forEach(alert => {
-                    alert.style.animation = 'fadeOut 0.5s ease-out forwards';
-                    setTimeout(() => alert.remove(), 500);
-                });
-            }, 4000);
+            try {
+                // Initialize farm loader
+                window.farmLoader = new FarmLoader();
 
-            // Add subtle hover effects to farm images
-            const farmImages = document.querySelectorAll('.farm-visual-elements > div');
-            farmImages.forEach(img => {
-                img.addEventListener('mouseenter', function() {
-                    this.style.transform = 'scale(1.05)';
-                    this.style.transition = 'transform 0.3s ease';
+                // Show loader automatically after page load
+                console.log('🌾 Farm loader initialized successfully!');
+                console.log('💡 To manually trigger: triggerFarmLoader()');
+                console.log('🔧 To debug: debugLoader()');
+
+                // Show loader automatically after 1 second
+                setTimeout(function() {
+                    console.log('🚀 Auto-triggering farm loader...');
+                    if (window.farmLoader) {
+                        window.farmLoader.trigger();
+                    } else {
+                        triggerFarmLoader(); // Fallback
+                    }
+                }, 1000);
+
+                // Auto-hide flash messages
+                setTimeout(function() {
+                    const alerts = document.querySelectorAll('.farm-alert');
+                    alerts.forEach(alert => {
+                        alert.style.animation = 'fadeOut 0.5s ease-out forwards';
+                        setTimeout(() => alert.remove(), 500);
+                    });
+                }, 4000);
+
+                // Add subtle hover effects to farm images
+                const farmImages = document.querySelectorAll('.farm-visual-elements > div');
+                farmImages.forEach(img => {
+                    img.addEventListener('mouseenter', function() {
+                        this.style.transform = 'scale(1.05)';
+                        this.style.transition = 'transform 0.3s ease';
+                    });
+
+                    img.addEventListener('mouseleave', function() {
+                        this.style.transform = 'scale(1)';
+                    });
                 });
 
-                img.addEventListener('mouseleave', function() {
-                    this.style.transform = 'scale(1)';
-                });
-            });
+                // Add click event to login button to trigger loader
+                const loginForm = document.querySelector('form');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', function(e) {
+                        e.preventDefault(); // Prevent actual form submission for demo
+                        if (window.farmLoader) {
+                            window.farmLoader.trigger();
+                        }
+                    });
+                }
+
+                // Add demo button to trigger loader (for testing)
+                const loginButton = document.querySelector('.farm-btn');
+                if (loginButton) {
+                    loginButton.addEventListener('click', function(e) {
+                        if (e.target.textContent.includes('Sign In')) {
+                            e.preventDefault();
+                            if (window.farmLoader) {
+                                window.farmLoader.trigger();
+                            }
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error('Error initializing farm loader:', error);
+                // Fallback - try to show a simple loader
+                const loader = document.getElementById('farmLoader');
+                if (loader) {
+                    loader.style.display = 'flex';
+                    loader.classList.add('show');
+                }
+            }
         });
 
         // Add CSS for fade out animation
@@ -984,6 +1462,60 @@
             }
         `;
         document.head.appendChild(style);
+
+        // Expose loader for manual triggering
+        function triggerFarmLoader() {
+            console.log('Triggering farm loader...');
+            if (window.farmLoader) {
+                window.farmLoader.trigger();
+            } else {
+                console.warn('Farm loader not initialized, trying manual trigger...');
+                const loader = document.getElementById('farmLoader');
+                if (loader) {
+                    loader.classList.add('show');
+                    // Manual animation if class fails
+                    setTimeout(() => {
+                        const progressCircle = document.getElementById('progressCircle');
+                        const progressPercentage = document.getElementById('progressPercentage');
+                        const statusMessage = document.getElementById('statusMessage');
+
+                        let progress = 0;
+                        const interval = setInterval(() => {
+                            progress += 10;
+                            if (progressPercentage) progressPercentage.textContent = progress + '%';
+                            if (statusMessage) {
+                                if (progress === 30) statusMessage.textContent = 'Sending customer app link...';
+                                else if (progress === 100) {
+                                    statusMessage.textContent = 'Customer app link sent successfully! 🎉';
+                                    clearInterval(interval);
+                                    setTimeout(() => loader.classList.remove('show'), 2000);
+                                }
+                            }
+                        }, 500);
+                    }, 100);
+                }
+            }
+        }
+
+        // Debug function
+        function debugLoader() {
+            console.log('=== FARM LOADER DEBUG ===');
+            console.log('Window farmLoader exists:', !!window.farmLoader);
+            console.log('Loader element exists:', !!document.getElementById('farmLoader'));
+            console.log('Current URL:', window.location.href);
+
+            // Test image loading
+            const testImg = new Image();
+            testImg.onload = () => console.log('✅ farm1.png loaded successfully');
+            testImg.onerror = () => console.error('❌ farm1.png failed to load');
+            testImg.src = '/images/farm1.png?v=' + Date.now();
+        }
+
+        // Auto-run debug on console errors
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.error);
+            debugLoader();
+        });
     </script>
 </body>
 </html>
