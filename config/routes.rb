@@ -686,6 +686,9 @@ Rails.application.routes.draw do
   # Atma Nirbhar Farm launch page
   get '/atma-nirbhar-farm', to: 'public#atma_nirbhar', as: 'atma_nirbhar_farm'
 
+  # Welcome landing page
+  get '/welcome', to: 'public#welcome', as: 'welcome_page'
+
   # Webhook endpoints - direct routes to WebhooksController
   post '/webhooks/twilio/whatsapp', to: 'webhooks#twilio_whatsapp'
   post '/webhooks/twilio/status', to: 'webhooks#twilio_status'

@@ -81,14 +81,23 @@
 
         /* Header section */
         .farm-header {
-            margin-bottom: 60px;
+            margin-bottom: 40px;
             margin-top: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 40px 50px;
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 60px rgba(33, 150, 243, 0.2);
-            border: 2px solid rgba(33, 150, 243, 0.3);
+            background: linear-gradient(135deg,
+                rgba(255, 248, 220, 0.85),
+                rgba(255, 235, 205, 0.9),
+                rgba(250, 240, 230, 0.85));
+            padding: 65px 100px;
+            border-radius: 20px;
+            backdrop-filter: blur(25px);
+            box-shadow: 0 35px 120px rgba(255, 140, 0, 0.3),
+                        0 15px 40px rgba(255, 165, 0, 0.2),
+                        inset 0 2px 0 rgba(255, 255, 255, 0.4);
+            border: 3px solid rgba(255, 165, 0, 0.6);
+            width: 98%;
+            max-width: 1200px;
+            position: relative;
+            overflow: hidden;
         }
 
         .farm-title {
@@ -128,8 +137,48 @@
         .launch-date {
             font-size: 1.3rem;
             color: #1976d2;
-            margin-bottom: 60px;
+            margin-bottom: 20px;
             font-weight: 400;
+        }
+
+        .launch-details {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .launch-time, .launch-venue {
+            font-size: 1.2rem;
+            color: #1976d2;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .launch-description {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            line-height: 1.6;
+            margin-bottom: 0;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .sanskrit-motto {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .sanskrit-text-main {
+            font-size: 1.4rem;
+            color: #ff6b35;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin: 0;
+            letter-spacing: 1px;
         }
 
         /* Ribbon Inaugurate button */
@@ -138,22 +187,24 @@
             background: linear-gradient(45deg, #e91e63, #f06292, #e91e63);
             background-size: 400% 400%;
             border: none;
-            border-radius: 15px;
-            padding: 20px 50px;
-            font-size: 1.6rem;
+            border-radius: 25px;
+            padding: 25px 60px;
+            font-size: 1.8rem;
             font-weight: 700;
             color: white;
             cursor: pointer;
-            box-shadow: 0 15px 50px rgba(233, 30, 99, 0.4);
+            box-shadow: 0 20px 60px rgba(233, 30, 99, 0.5);
             transition: all 0.3s ease;
             animation: ribbon-gradient 3s ease-in-out infinite, ribbon-float 2s ease-in-out infinite;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
+            letter-spacing: 3px;
+            margin: 40px auto;
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: center;
+            gap: 20px;
             overflow: hidden;
+            width: fit-content;
         }
 
         .ribbon-inaugurate-button::before {
@@ -775,6 +826,7 @@
             left: 0;
             right: 0;
             width: 100%;
+            height: 120px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -785,15 +837,15 @@
 
         .second-logo {
             width: 160px;
-            height: 160px;
-            border: 5px solid #ff9800;
+            height: 120px;
+            border: 4px solid #ff9800;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
             pointer-events: all;
-            box-shadow: 0 15px 40px rgba(255, 152, 0, 0.4);
+            box-shadow: 0 10px 30px rgba(255, 152, 0, 0.4);
             overflow: hidden;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -802,12 +854,16 @@
 
         /* Make the center logo (farm5.png) a box instead of circle */
         .second-logo:nth-child(2) {
+            width: 180px;
+            height: 160px;
             border-radius: 20px;
             box-shadow: 0 15px 40px rgba(255, 152, 0, 0.6);
+            border-width: 5px;
         }
 
         .second-logo:nth-child(2) .second-logo-img {
             border-radius: 15px;
+            object-fit: cover;
         }
 
         @keyframes second-logo-glow {
@@ -1950,6 +2006,185 @@
             overflow: hidden;
         }
 
+        /* Cow Image Screen */
+        .cow-image-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 25%, #90caf9 50%, #64b5f6 75%, #42a5f5 100%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99997;
+            opacity: 0;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cow-image-screen.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .cow-image-screen.hide {
+            opacity: 0;
+        }
+
+        /* Cow Image Container */
+        .cow-image-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(139, 69, 19, 0.3);
+            padding: 2rem;
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+            animation: cow-screen-appear 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes cow-screen-appear {
+            0% {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .cow-image-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #8B4513, #D2B48C, #CD853F, #8B4513);
+            background-size: 400% 100%;
+            animation: cow-gradient-shift 3s ease-in-out infinite;
+        }
+
+        @keyframes cow-gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Cow Image Title */
+        .cow-image-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8B4513, #D2B48C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            animation: cow-title-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes cow-title-glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.1); }
+        }
+
+        /* Cow Image Wrapper */
+        .cow-image-wrapper {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(139, 69, 19, 0.3);
+            animation: cow-image-float 3s ease-in-out infinite;
+        }
+
+        @keyframes cow-image-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .cow-image-main {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .cow-image-wrapper:hover .cow-image-main {
+            transform: scale(1.05);
+        }
+
+        /* Cow Image Message */
+        .cow-image-text {
+            font-size: 1.3rem;
+            color: #8B4513;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            line-height: 1.6;
+            animation: cow-text-pulse 2s ease-in-out infinite;
+        }
+
+        .auto-proceed-text {
+            font-size: 1.2rem;
+            color: #ff6b35;
+            font-weight: 600;
+            animation: pulse 2s ease-in-out infinite;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes cow-text-pulse {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 1; }
+        }
+
+        /* Continue to Loader Button */
+        .continue-to-loader-btn {
+            background: linear-gradient(135deg, #8B4513, #D2B48C);
+            border: none;
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .continue-to-loader-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .continue-to-loader-btn:hover::before {
+            left: 100%;
+        }
+
+        .continue-to-loader-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(139, 69, 19, 0.5);
+        }
+
         .continue-btn::before {
             content: '';
             position: absolute;
@@ -2121,9 +2356,10 @@
             }
 
             .ribbon-inaugurate-button {
-                padding: 15px 35px;
-                font-size: 1.3rem;
-                gap: 10px;
+                padding: 20px 40px;
+                font-size: 1.4rem;
+                gap: 15px;
+                margin: 30px auto;
             }
 
             .ribbon-icon {
@@ -2169,14 +2405,17 @@
             }
 
             .second-logo {
-                width: 110px;
-                height: 110px;
-                border-width: 4px;
+                width: 90px;
+                height: 90px;
+                border-width: 3px;
             }
 
             /* Mobile responsive for center box logo */
             .second-logo:nth-child(2) {
+                width: 120px;
+                height: 120px;
                 border-radius: 15px;
+                border-width: 4px;
             }
 
             .second-logo:nth-child(2) .second-logo-img {
@@ -2193,8 +2432,10 @@
             }
 
             .farm-header {
-                padding: 20px 25px;
+                padding: 40px 45px;
                 margin-bottom: 40px;
+                width: 96%;
+                max-width: 600px;
             }
 
             .launch-message {
@@ -2327,6 +2568,25 @@
                 padding: 0.875rem 2rem;
                 font-size: 1rem;
             }
+
+            /* Mobile responsive for cow image screen */
+            .cow-image-container {
+                padding: 1.5rem;
+                max-width: 95%;
+            }
+
+            .cow-image-title {
+                font-size: 1.8rem;
+            }
+
+            .cow-image-text {
+                font-size: 1.1rem;
+            }
+
+            .continue-to-loader-btn {
+                padding: 0.875rem 2rem;
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -2380,6 +2640,24 @@
         </div>
     </div>
 
+    <!-- Cow Image Screen -->
+    <div class="cow-image-screen" id="cowImageScreen">
+        <div class="cow-image-container">
+            <h1 class="cow-image-title">🐄 Atma Nirbhar Farm Cows 🐄</h1>
+            <div class="cow-image-wrapper">
+                <img src="/images/Desi_cow_image.png" alt="Desi Cows at Atma Nirbhar Farm" class="cow-image-main">
+            </div>
+            <div class="cow-image-text">
+                Our beautiful desi cows are ready to provide you with the purest, freshest milk. <br>
+                These healthy cows are the heart of our Atma Nirbhar Farm mission.
+                <br><br>
+                <div class="auto-proceed-text">
+                    🚀 Automatically proceeding to launch...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Thank You Screen -->
     <div class="thank-you-screen" id="thankYouScreen">
         <div class="thank-you-container">
@@ -2417,9 +2695,6 @@
                 </div>
             </div>
 
-            <button class="continue-btn" onclick="proceedToMainPage()">
-                Continue to Celebration
-            </button>
         </div>
     </div>
 
@@ -2549,7 +2824,7 @@
             <img src="/images/farm1.png" alt="Farm Logo 1" class="second-logo-img">
         </div>
         <div class="second-logo">
-            <img src="/images/farm5.png" alt="Farm Logo 5" class="second-logo-img">
+            <img src="https://page.gensparksite.com/v1/base64_upload/be3d354b930192154d0fbaa1a07085fc" alt="Atma Nirbhar Farm Logo" class="second-logo-img">
         </div>
         <div class="second-logo">
             <img src="/images/farm2.png" alt="Farm Logo 2" class="second-logo-img">
@@ -2564,14 +2839,14 @@
             <h2 class="farm-subtitle">Software Product Launch</h2>
             <p class="launch-by">Shri Shri Shri Adrushya Kaada Siddeshwara Swamiji, Kanneri Mata, Kolhapur.</p>
             <p class="launch-date">📅 Date: 12th Nov, 2025, Wednesday</p>
-        </div>
 
-        <!-- Ribbon Inaugurate button -->
-        <button class="ribbon-inaugurate-button" onclick="openCurtains()">
-            <span class="ribbon-icon">🎀</span>
-            <span class="ribbon-text">Launch Software</span>
-            <span class="ribbon-icon">🎀</span>
-        </button>
+            <!-- Ribbon Inaugurate button -->
+            <button class="ribbon-inaugurate-button" onclick="openCurtains()">
+                <span class="ribbon-icon">🎀</span>
+                <span class="ribbon-text">Launch Software</span>
+                <span class="ribbon-icon">🎀</span>
+            </button>
+        </div>
 
 
         <!-- Product link -->
@@ -2635,7 +2910,6 @@
                     </a>
                 </div>
             </div>
-            <button class="success-close" onclick="closeSuccessModal()">Continue to Celebration</button>
         </div>
     </div>
 
@@ -2661,7 +2935,7 @@
                 <img src="/images/farm1.png" alt="Farm Logo 1" class="second-logo-img">
             </div>
             <div class="second-logo">
-                <img src="/images/farm5.png" alt="Farm Logo 5" class="second-logo-img">
+                <img src="https://page.gensparksite.com/v1/base64_upload/be3d354b930192154d0fbaa1a07085fc" alt="Atma Nirbhar Farm Logo" class="second-logo-img">
             </div>
             <div class="second-logo">
                 <img src="/images/farm2.png" alt="Farm Logo 2" class="second-logo-img">
@@ -2936,17 +3210,14 @@
                             ribbon.classList.add('cutting');
                         }, 500);
 
-                        // Hide curtains and ribbon, then show our custom loader
+                        // Hide curtains and ribbon, then show cow image screen
                         setTimeout(() => {
                             curtainContainer.classList.remove('active');
                             ribbon.classList.remove('active');
 
-                            // Start our custom loader AFTER curtains close
+                            // Show cow image screen AFTER curtains close
                             setTimeout(() => {
-                                if (window.farmLoader) {
-                                    console.log('🌾 Starting Atma Nirbhar Farm loader after curtains...');
-                                    window.farmLoader.showLoader();
-                                }
+                                showCowImageScreen();
                             }, 1000);
 
                         }, 2500);
@@ -3132,6 +3403,36 @@
             }
         }
 
+        // Function to show cow image screen
+        function showCowImageScreen() {
+            const cowImageScreen = document.getElementById('cowImageScreen');
+            console.log('🐄 Showing cow image screen...');
+            cowImageScreen.classList.add('show');
+
+            // Automatically proceed to loader after 3 seconds
+            setTimeout(() => {
+                console.log('🚀 Auto-proceeding to loader...');
+                proceedToLoader();
+            }, 3000);
+        }
+
+        // Function to proceed to loader from cow screen
+        function proceedToLoader() {
+            const cowImageScreen = document.getElementById('cowImageScreen');
+
+            // Hide cow image screen
+            cowImageScreen.classList.add('hide');
+
+            // Start loader after transition
+            setTimeout(() => {
+                cowImageScreen.classList.remove('show');
+                if (window.farmLoader) {
+                    console.log('🌾 Starting Atma Nirbhar Farm loader after cow screen...');
+                    window.farmLoader.showLoader();
+                }
+            }, 500);
+        }
+
         // Function to proceed to main page
         function proceedToMainPage() {
             if (window.farmLoader) {
@@ -3140,7 +3441,7 @@
 
             // Hide all overlay screens
             setTimeout(() => {
-                const overlays = document.querySelectorAll('.farm-loader-overlay, .thank-you-screen');
+                const overlays = document.querySelectorAll('.farm-loader-overlay, .thank-you-screen, .cow-image-screen');
                 overlays.forEach(overlay => {
                     overlay.style.display = 'none';
                 });
