@@ -25,4 +25,28 @@ class PublicController < ApplicationController
     # This is the welcome landing page for Atma Nirbhar Farm
     # The view is rendered automatically from app/views/public/welcome.html.erb
   end
+
+  def send_app_launch_notifications
+    begin
+      # Send app launch notifications to all customers asynchronously
+      result = AppLaunchNotificationService.send_to_all_customers
+
+      render json: {
+        success: result[:success],
+        message: result[:message],
+        total_customers: result[:total_customers],
+        success_count: result[:success_count],
+        failure_count: result[:failure_count]
+      }
+
+    rescue => e
+      Rails.logger.error "Error in send_app_launch_notifications: #{e.message}"
+
+      render json: {
+        success: false,
+        message: "Failed to send notifications",
+        error: e.message
+      }, status: 500
+    end
+  end
 end

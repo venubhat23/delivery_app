@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atma Nirbhar Farm Software Product Launch Event</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #fff;
+        }
+
+        .main-container {
+            position: relative;
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Sanskrit Quote */
+        .sanskrit-quote {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-top: 0;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .sanskrit-text {
+            font-family: 'Noto Sans Kannada', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ffd700, #ffeb3b, #fff176);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Logo Section - All in Same Line */
+        .logo-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo-left {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        .logo-center {
+            width: 180px;
+            height: 180px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 4px solid #fff;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: logoFloat 3s ease-in-out infinite;
+            animation-delay: 0.5s;
+        }
+
+        .logo-right {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: logoFloat 3s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .logo-left:hover, .logo-center:hover, .logo-right:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .logo-left img, .logo-center img, .logo-right img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-left:hover img, .logo-center:hover img, .logo-right:hover img {
+            transform: scale(1.1);
+        }
+
+        /* Main Title */
+        .main-title {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .product-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease-in-out infinite;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .launch-date {
+            font-size: 1.8rem;
+            color: #ffd700;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .welcome-message {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease-in-out infinite;
+            margin: 1.5rem 0;
+            font-weight: 700;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .blessing-text {
+            font-size: 1.2rem;
+            color: #e8f5e8;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        .organizer-info {
+            margin: 2rem auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .organizer-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: cardFloat 4s ease-in-out infinite;
+        }
+
+        .organizer-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
+        }
+
+        .organizer-icon {
+            font-size: 3rem;
+            animation: iconBounce 2s ease-in-out infinite;
+        }
+
+        .organizer-text {
+            color: #fff;
+            text-align: left;
+        }
+
+        .organizer-text strong {
+            font-size: 1.3rem;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .organizer-text em {
+            font-size: 1.1rem;
+            color: #e8f5e8;
+            font-weight: 500;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(0.5deg); }
+            50% { transform: translateY(-3px) rotate(-0.5deg); }
+            75% { transform: translateY(-7px) rotate(0.3deg); }
+        }
+
+        @keyframes iconBounce {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* PDF Download Button */
+        .app-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .app-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .app-button:hover::before {
+            left: 100%;
+        }
+
+        .app-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #ff5252, #ffb74d);
+        }
+
+        .app-button i {
+            font-size: 1.3rem;
+        }
+
+        /* Floating Particles */
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            font-size: 1.5rem;
+            animation: floatUp 15s infinite linear;
+            opacity: 0.6;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Animation delays for particles */
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 20%; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 30%; animation-delay: 4s; }
+        .particle:nth-child(4) { left: 40%; animation-delay: 6s; }
+        .particle:nth-child(5) { left: 50%; animation-delay: 8s; }
+        .particle:nth-child(6) { left: 60%; animation-delay: 10s; }
+        .particle:nth-child(7) { left: 70%; animation-delay: 12s; }
+        .particle:nth-child(8) { left: 80%; animation-delay: 14s; }
+        .particle:nth-child(9) { left: 90%; animation-delay: 16s; }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .sanskrit-text {
+                font-size: 1.8rem;
+            }
+
+            .product-title {
+                font-size: 2.5rem;
+            }
+
+            .launch-date {
+                font-size: 1.4rem;
+            }
+
+            .logo-section {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+
+            .logo-left, .logo-right {
+                width: 100px;
+                height: 100px;
+            }
+
+            .logo-center {
+                width: 120px;
+                height: 120px;
+            }
+
+            .main-container {
+                padding: 1rem;
+                padding-top: 1rem;
+            }
+
+            .app-button {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div class="floating-particles">
+        <div class="particle">🥛</div>
+        <div class="particle">🐄</div>
+        <div class="particle">🧀</div>
+        <div class="particle">🧈</div>
+        <div class="particle">🥛</div>
+        <div class="particle">🌾</div>
+        <div class="particle">🚚</div>
+        <div class="particle">🥛</div>
+        <div class="particle">🧀</div>
+    </div>
+
+    <div class="main-container">
+        <!-- Sanskrit Quote -->
+        <div class="sanskrit-quote">
+            <div class="sanskrit-text">ಗಾವೋ ವಿಶ್ವಸ್ಯ ಮಾತರ:</div>
+        </div>
+
+        <!-- Logo Section - All in Same Line -->
+        <div class="logo-section">
+            <div class="logo-left">
+                <img src="/images/farm1.png" alt="Atma Nirbhar Farm Logo 1">
+            </div>
+            <div class="logo-center">
+                <img src="/images/farm5.png" alt="Atma Nirbhar Farm Main Logo">
+            </div>
+            <div class="logo-right">
+                <img src="/images/farm1.png" alt="Atma Nirbhar Farm Logo 2">
+            </div>
+        </div>
+
+        <!-- Main Title Section -->
+        <div class="main-title">
+            <h1 class="product-title">Atma Nirbhar Farm Software Product Launch Event</h1>
+            <div class="launch-date">📅 12th Nov, 2025 | 🕐 11:30 AM | 📍 Vijaynagar</div>
+            <div class="welcome-message">
+                🙏 <strong>Welcome to the Future of Farm Management</strong> 🌾
+            </div>
+            <p class="blessing-text">
+                Blessed by <strong>Shri Shri Shri Adrushya Kaada Siddeshwara Swamiji, Kanneri Mata, Kolhapur</strong>
+            </p>
+            <div class="organizer-info">
+                <div class="organizer-card">
+                    <div class="organizer-icon">👨‍🌾</div>
+                    <div class="organizer-text">
+                        <strong>From: Ravi Ruddad</strong><br>
+                        <em>Atmanirbhar Farm</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download PDF Button -->
+        <div style="text-align: center; margin: 3rem 0;">
+            <button class="app-button" onclick="downloadWelcomePDF()">
+                <i class="fas fa-download"></i>
+                Download PDF
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced animations and interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logo rotation on click
+            const logos = document.querySelectorAll('.logo-top-left, .logo-center, .logo-right');
+            logos.forEach(logo => {
+                logo.addEventListener('click', function() {
+                    this.style.transform = 'rotate(360deg) scale(1.1)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 600);
+                });
+            });
+
+            console.log('🌾 Atma Nirbhar Farm Software Launch Event - Welcome Page Ready! 🥛');
+        });
+
+        // PDF Download Function
+        function downloadWelcomePDF() {
+            const button = document.querySelector('.app-button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            button.disabled = true;
+
+            setTimeout(() => {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Atma Nirbhar Farm Software Product Launch Event</title>
+                        <style>
+                            body {
+                                font-family: 'Arial', sans-serif;
+                                margin: 0;
+                                padding: 0;
+                                line-height: 1.6;
+                                color: #333;
+                                background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 50%, #87CEEB 100%);
+                                min-height: 100vh;
+                            }
+                            .header-image {
+                                width: 100%;
+                                height: 200px;
+                                background: linear-gradient(135deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin-bottom: 20px;
+                            }
+                            .header-text {
+                                background: rgba(255,255,255,0.9);
+                                padding: 15px 30px;
+                                border-radius: 15px;
+                                color: #2c3e50;
+                                font-size: 1.5rem;
+                                font-weight: bold;
+                                text-align: center;
+                                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                            }
+                            .content {
+                                margin: 20px 40px;
+                            }
+                            .logo-section {
+                                display: flex;
+                                justify-content: space-around;
+                                align-items: center;
+                                margin: 30px 0;
+                                padding: 20px;
+                                background: rgba(255,255,255,0.3);
+                                border-radius: 15px;
+                                backdrop-filter: blur(10px);
+                            }
+                            .logo-placeholder {
+                                width: 120px;
+                                height: 120px;
+                                border-radius: 50%;
+                                background: linear-gradient(45deg, #FFD700, #FFA500);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 3rem;
+                                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                                border: 3px solid #fff;
+                            }
+                            .center-logo {
+                                width: 150px;
+                                height: 150px;
+                                border-radius: 20px;
+                            }
+                            .title {
+                                text-align: center;
+                                color: #2c3e50;
+                                font-size: 2.5rem;
+                                margin: 20px 0;
+                                text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+                            }
+                            .sanskrit {
+                                text-align: center;
+                                font-size: 2rem;
+                                color: #8b4513;
+                                margin-bottom: 20px;
+                                font-weight: bold;
+                                background: rgba(255,255,255,0.7);
+                                padding: 15px;
+                                border-radius: 10px;
+                                display: inline-block;
+                                width: 100%;
+                                box-sizing: border-box;
+                            }
+                            .launch-info {
+                                background: rgba(255,255,255,0.8);
+                                backdrop-filter: blur(15px);
+                                padding: 30px;
+                                border-radius: 20px;
+                                margin: 30px 0;
+                                text-align: center;
+                                box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+                                border: 2px solid rgba(255,255,255,0.3);
+                            }
+                            .event-details {
+                                background: linear-gradient(135deg, #667eea, #764ba2);
+                                color: white;
+                                padding: 25px;
+                                border-radius: 15px;
+                                margin: 20px 0;
+                                text-align: center;
+                            }
+                            .organizer-section {
+                                background: rgba(255,215,0,0.2);
+                                border-left: 6px solid #FFD700;
+                                padding: 20px;
+                                margin: 20px 0;
+                                border-radius: 10px;
+                            }
+                            .footer {
+                                text-align: center;
+                                margin-top: 40px;
+                                padding: 30px;
+                                background: rgba(255,255,255,0.7);
+                                backdrop-filter: blur(10px);
+                                border-radius: 15px;
+                                color: #2c3e50;
+                            }
+                            @media print {
+                                body {
+                                    margin: 0;
+                                    background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 50%, #87CEEB 100%);
+                                }
+                                .content { margin: 10px 20px; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header-image">
+                            <div class="header-text">🌾 ಗಾವೋ ವಿಶ್ವಸ್ಯ ಮಾತರ: 🌾</div>
+                        </div>
+
+                        <div class="content">
+                            <div class="logo-section">
+                                <div class="logo-placeholder">🐄</div>
+                                <div class="logo-placeholder center-logo">🌾</div>
+                                <div class="logo-placeholder">👨‍🌾</div>
+                            </div>
+
+                            <h1 class="title">ATMA NIRBHAR FARM</h1>
+                            <h2 style="text-align: center; color: #667eea; font-size: 2rem;">Software Product Launch Event</h2>
+
+                            <div class="launch-info">
+                                <div class="event-details">
+                                    <h2>🎉 Launch Event Details</h2>
+                                    <div style="font-size: 1.3rem; margin: 15px 0;">
+                                        <p><strong>📅 Date:</strong> 12th November, 2025 - Wednesday</p>
+                                        <p><strong>🕐 Time:</strong> 11:30 AM</p>
+                                        <p><strong>📍 Venue:</strong> Vijaynagar</p>
+                                    </div>
+                                </div>
+
+                                <p style="margin: 20px 0; font-size: 1.2rem;"><strong>🙏 Blessed by:</strong><br>Shri Shri Shri Adrushya Kaada Siddeshwara Swamiji, Kanneri Mata, Kolhapur</p>
+
+                                <div class="organizer-section">
+                                    <p style="margin: 0; font-size: 1.3rem;"><strong>👨‍🌾 From: Ravi Ruddad</strong></p>
+                                    <p style="margin: 5px 0 0 0; font-style: italic; font-size: 1.1rem;"><em>Atmanirbhar Farm</em></p>
+                                </div>
+                            </div>
+
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 15px; margin: 30px 0; text-align: center;">
+                                <h3>🌾 Welcome to the Future of Farm Management 🐄</h3>
+                                <p>Join us for the official launch of our comprehensive farm management software solution that will revolutionize dairy farming operations.</p>
+                                <p><strong>Experience innovation, tradition, and technology coming together!</strong></p>
+                            </div>
+
+                            <div class="footer">
+                                <p><strong>Thank you for being part of the Atma Nirbhar Farm journey!</strong></p>
+                                <p>Together, we're building a sustainable future with pure, natural dairy products and innovative farm management technology.</p>
+                                <p style="margin-top: 20px; font-weight: bold;">© 2025 Atma Nirbhar Farm. All rights reserved.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+
+                printWindow.document.close();
+                printWindow.focus();
+
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 500);
+            }, 1500);
+        }
+
+        // Particle regeneration
+        setInterval(() => {
+            const particles = document.querySelectorAll('.particle');
+            particles.forEach((particle, index) => {
+                const delay = index * 2;
+                setTimeout(() => {
+                    if (!particle.style.animationPlayState || particle.style.animationPlayState === 'running') {
+                        particle.style.animationDelay = '0s';
+                    }
+                }, delay * 1000);
+            });
+        }, 20000);
+    </script>
+</body>
+</html>

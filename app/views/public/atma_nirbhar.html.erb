@@ -3703,6 +3703,131 @@
                 }, delay * 1000);
             });
         }, 20000);
+
+        // App Launch Notification Handler
+        class AppLaunchHandler {
+            constructor() {
+                this.isProcessing = false;
+                this.initializeLaunchButton();
+            }
+
+            initializeLaunchButton() {
+                // Add click event listener to Launch Software button
+                const launchButton = document.querySelector('.ribbon-inaugurate-button');
+
+                if (launchButton) {
+                    launchButton.addEventListener('click', (e) => {
+                        // Send notifications after 5 seconds of ceremony start
+                        setTimeout(() => {
+                            this.sendAppLaunchNotifications();
+                        }, 5000);
+                    });
+
+                    console.log('🚀 App Launch Handler initialized');
+                }
+            }
+
+            async sendAppLaunchNotifications() {
+                if (this.isProcessing) {
+                    console.log('⏳ Notification sending already in progress...');
+                    return;
+                }
+
+                this.isProcessing = true;
+
+                try {
+                    console.log('📱 Starting to send app launch notifications...');
+
+                    // Show notification
+                    this.showNotification('Sending app notifications to customers...', 'info');
+
+                    // Get CSRF token
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+                    // Make API call
+                    const response = await fetch('/send-app-launch-notifications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken
+                        },
+                        body: JSON.stringify({
+                            source: 'atma_nirbhar_launch_page'
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        console.log('✅ App launch notifications sent successfully!');
+                        console.log(`📊 Total: ${result.total_customers}, Success: ${result.success_count}, Failed: ${result.failure_count}`);
+
+                        this.showNotification(
+                            `🎉 App notifications sent! ${result.success_count}/${result.total_customers} customers notified.`,
+                            'success'
+                        );
+                    } else {
+                        console.error('❌ Failed to send app launch notifications:', result.message);
+                        this.showNotification('Failed to send notifications: ' + result.message, 'error');
+                    }
+
+                } catch (error) {
+                    console.error('💥 Error sending app launch notifications:', error);
+                    this.showNotification('Error sending notifications. Please try again.', 'error');
+                } finally {
+                    this.isProcessing = false;
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.textContent = message;
+
+                // Style the notification
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 10000;
+                    max-width: 300px;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                `;
+
+                document.body.appendChild(notification);
+
+                // Fade in
+                setTimeout(() => {
+                    notification.style.opacity = '1';
+                }, 100);
+
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }, 5000);
+            }
+        }
+
+        // Initialize the app launch handler
+        const appLaunchHandler = new AppLaunchHandler();
+
+        // Expose for manual testing
+        window.triggerAppLaunchNotifications = () => {
+            appLaunchHandler.sendAppLaunchNotifications();
+        };
+
     </script>
 </body>
 </html>

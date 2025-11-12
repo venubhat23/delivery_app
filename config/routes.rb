@@ -686,6 +686,9 @@ Rails.application.routes.draw do
   # Atma Nirbhar Farm launch page
   get '/atma-nirbhar-farm', to: 'public#atma_nirbhar', as: 'atma_nirbhar_farm'
 
+  # App launch notification API
+  post '/send-app-launch-notifications', to: 'public#send_app_launch_notifications', as: 'send_app_launch_notifications'
+
   # Welcome landing page
   get '/welcome', to: 'public#welcome', as: 'welcome_page'
 
