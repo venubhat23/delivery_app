@@ -5,16 +5,16 @@ class AppLaunchNotificationService
       Rails.logger.info "Starting app launch event notifications to all customers"
 
       # Check if Twilio environment variables are present and enabled
-      if true
-        Rails.logger.warn "Twilio environment variables not configured. Notifications disabled."
-        return {
-          success: false,
-          message: "WhatsApp notifications are disabled. Twilio credentials not configured.",
-          total_customers: 0,
-          success_count: 0,
-          failure_count: 0
-        }
-      end
+      # if true
+      #   Rails.logger.warn "Twilio environment variables not configured. Notifications disabled."
+      #   return {
+      #     success: false,
+      #     message: "WhatsApp notifications are disabled. Twilio credentials not configured.",
+      #     total_customers: 0,
+      #     success_count: 0,
+      #     failure_count: 0
+      #   }
+      # end
 
       # Get all customers with phone numbers
       customers = Customer.where.not(phone_number: [nil, ''])
@@ -65,7 +65,6 @@ class AppLaunchNotificationService
         end
       end
 
-      Rails.logger.info "Tomorrow's event notifications completed. Success: #{success_count}, Failed: #{failure_count}"
 
       {
         success: true,
@@ -76,12 +75,6 @@ class AppLaunchNotificationService
       }
 
     rescue => e
-      Rails.logger.error "Error in send_to_all_customers: #{e.message}"
-      {
-        success: false,
-        error: e.message,
-        message: "Failed to send event invitations"
-      }
     end
   end
 
