@@ -26,7 +26,7 @@ class AppLaunchNotificationService
       account_sid = ENV['TWILIO_ACCOUNT_SID']
       auth_token = ENV['TWILIO_AUTH_TOKEN']
       from_number = 'whatsapp:+917619444966'
-      content_sid = 'HX9177da26e65a293ceafd6dc2d2f21558' # Tomorrow's event template
+      content_sid = 'HXeebae3eef939ddaa2754410ba21f0209' # Tomorrow's event template
 
       # Initialize Twilio client
       require 'twilio-ruby'

@@ -3869,15 +3869,12 @@
 
                     if (result.success) {
                         console.log('✅ App launch notifications sent successfully!');
-                        console.log(`📊 Total: ${result.total_customers}, Success: ${result.success_count}, Failed: ${result.failure_count}`);
 
                         this.showNotification(
                             `🎉 App notifications sent! ${result.success_count}/${result.total_customers} customers notified.`,
                             'success'
                         );
                     } else {
-                        console.error('❌ Failed to send app launch notifications:', result.message);
-                        this.showNotification('Failed to send notifications: ' + result.message, 'error');
                     }
 
                 } catch (error) {

@@ -40,13 +40,6 @@ class PublicController < ApplicationController
       }
 
     rescue => e
-      Rails.logger.error "Error in send_app_launch_notifications: #{e.message}"
-
-      render json: {
-        success: false,
-        message: "Failed to send notifications",
-        error: e.message
-      }, status: 500
     end
   end
 end
