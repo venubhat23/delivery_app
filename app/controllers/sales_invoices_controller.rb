@@ -170,7 +170,6 @@ class SalesInvoicesController < ApplicationController
         price: product.price,
         tax_rate: 0, # Products don't have tax_rate in current structure
         hsn_sac: '', # Products don't have HSN/SAC in current structure
-        current_stock: product.available_quantity,
         type: 'Product'
       }
     else

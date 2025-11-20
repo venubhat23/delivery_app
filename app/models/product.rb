@@ -5,11 +5,23 @@ class Product < ApplicationRecord
     in: %w[liters kg pieces bottles packets],
     message: "%{value} is not a valid unit type" 
   }
-  validates :price, presence: true, numericality: { 
+  validates :price, presence: true, numericality: {
     greater_than: 0,
-    message: "must be greater than 0" 
+    message: "must be greater than 0"
+  }
+  validates :price_without_discount, presence: true, numericality: {
+    greater_than: 0,
+    message: "must be greater than 0"
+  }
+  validates :discount, numericality: {
+    greater_than_or_equal_to: 0,
+    less_than: 100,
+    message: "must be between 0 and 100"
   }
   validates :description, length: { maximum: 5000 }
+
+  # Auto-calculate price before saving
+  before_save :calculate_discounted_price
 
   # Associations
   belongs_to :category
@@ -78,11 +90,36 @@ class Product < ApplicationRecord
   end
 
   def formatted_price
-    "$#{price.to_f.round(2)}"
+    "₹#{price.to_f.round(2)}"
+  end
+
+  def formatted_price_without_discount
+    "₹#{price_without_discount.to_f.round(2)}"
+  end
+
+  def discount_amount
+    return 0 unless price_without_discount.present? && discount.present?
+    (price_without_discount.to_f * discount.to_f / 100).round(2)
+  end
+
+  def discount_percentage
+    discount.to_f.round(2)
+  end
+
+  def has_discount?
+    discount.present? && discount.to_f > 0
   end
 
   def display_name
-    "#{name} (#{available_quantity} #{unit_type})"
+    "#{name} (#{unit_type})"
+  end
+
+  def price_display
+    if has_discount?
+      "₹#{price} (#{discount}% off from ₹#{price_without_discount})"
+    else
+      "₹#{price}"
+    end
   end
 
   def category_name
@@ -140,5 +177,27 @@ class Product < ApplicationRecord
       ['Bottles', 'bottles'],
       ['Packets', 'packets']
     ]
+  end
+
+  # Override as_json to exclude available_quantity from API responses but include discount info
+  def as_json(options = {})
+    super(options.merge(except: [:available_quantity])).merge({
+      'discount_amount' => discount_amount,
+      'has_discount' => has_discount?,
+      'price_display' => price_display
+    })
+  end
+
+  private
+
+  def calculate_discounted_price
+    return unless price_without_discount.present?
+
+    if discount.present? && discount.to_f > 0
+      discount_amt = price_without_discount.to_f * discount.to_f / 100
+      self.price = (price_without_discount.to_f - discount_amt).round(2)
+    else
+      self.price = price_without_discount.to_f
+    end
   end
 end

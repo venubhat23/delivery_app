@@ -83,26 +83,16 @@
                   <span class="price-unit">per <%= product.unit_type %></span>
                 </div>
                 <div class="stock-info">
-                  <% if product.available_quantity > 10 %>
-                    <span class="stock-badge in-stock">
-                      <i class="fas fa-check-circle me-1"></i>In Stock
-                    </span>
-                  <% elsif product.available_quantity > 0 %>
-                    <span class="stock-badge low-stock">
-                      <i class="fas fa-exclamation-triangle me-1"></i>Low Stock
-                    </span>
-                  <% else %>
-                    <span class="stock-badge out-stock">
-                      <i class="fas fa-times-circle me-1"></i>Out of Stock
-                    </span>
-                  <% end %>
+                  <span class="stock-badge in-stock">
+                    <i class="fas fa-check-circle me-1"></i>Available
+                  </span>
                 </div>
               </div>
 
               <div class="product-actions">
                 <div class="quantity-selector">
                   <button class="qty-btn minus" data-action="minus">-</button>
-                  <input type="number" class="qty-input" value="1" min="1" max="<%= product.available_quantity %>" data-product-id="<%= product.id %>">
+                  <input type="number" class="qty-input" value="1" min="1" data-product-id="<%= product.id %>">
                   <button class="qty-btn plus" data-action="plus">+</button>
                 </div>
                 <button class="add-to-cart-btn"
@@ -111,9 +101,9 @@
                         data-product-price="<%= product.price %>"
                         data-product-unit="<%= product.unit_type %>"
                         data-product-image="<%= product.image_url %>"
-                        <%= 'disabled' if product.available_quantity <= 0 %>>
+>
                   <i class="fas fa-shopping-cart me-2"></i>
-                  <%= product.available_quantity > 0 ? 'Add to Cart' : 'Out of Stock' %>
+                  Add to Cart
                 </button>
               </div>
             </div>

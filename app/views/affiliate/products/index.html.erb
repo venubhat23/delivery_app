@@ -83,17 +83,23 @@
             <% end %>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <span class="h4 text-success fw-bold mb-0">₹<%= product.price %></span>
-                <% if product.unit_type.present? %>
-                  <small class="text-muted">per <%= product.unit_type %></small>
+              <div class="price-display">
+                <div>
+                  <span class="h4 text-success fw-bold mb-0">₹<%= product.price %></span>
+                  <% if product.unit_type.present? %>
+                    <small class="text-muted">per <%= product.unit_type %></small>
+                  <% end %>
+                </div>
+                <% if product.has_discount? %>
+                  <div>
+                    <small class="text-muted">
+                      <s>₹<%= number_with_precision(product.price_without_discount, precision: 2) %></s>
+                      <span class="badge bg-danger ms-1"><%= product.discount %>% off</span>
+                    </small>
+                  </div>
                 <% end %>
               </div>
-              <% if product.available_quantity && product.available_quantity > 0 %>
-                <span class="badge bg-success">In Stock</span>
-              <% else %>
-                <span class="badge bg-warning text-dark">Limited</span>
-              <% end %>
+              <span class="badge bg-success">Available</span>
             </div>
 
             <!-- Add to Cart Form -->

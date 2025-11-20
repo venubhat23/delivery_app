@@ -1,9 +1,6 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
   <h1 class="h2">
     <i class="fas fa-box me-2"></i><%= @product.name %>
-    <% if @product.available_quantity.to_f < 10 %>
-      <span class="badge bg-danger ms-2">Low Stock</span>
-    <% end %>
   </h1>
   <div>
     <% if @product.category %>
@@ -57,19 +54,24 @@
           </div>
           <div class="col-md-6 mb-3">
             <label class="form-label fw-bold text-muted">
-              <i class="fas fa-warehouse me-1"></i>Available Quantity
-            </label>
-            <p class="fs-5 fw-bold <%= @product.available_quantity.to_f < 10 ? 'text-danger' : 'text-success' %>">
-              <%= @product.available_quantity %> <%= @product.unit_type %>
-            </p>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label fw-bold text-muted">
               <i class="fas fa-rupee-sign me-1"></i>Price per Unit
             </label>
-            <p class="fs-4 fw-bold text-success">
-              <i class="fas fa-rupee-sign"></i><%= number_with_precision(@product.price, precision: 2) %>
-            </p>
+            <div class="price-display">
+              <p class="fs-4 fw-bold text-success mb-1">
+                <i class="fas fa-rupee-sign"></i><%= number_with_precision(@product.price, precision: 2) %>
+              </p>
+              <% if @product.has_discount? %>
+                <p class="mb-0">
+                  <small class="text-muted">
+                    Original: <s>₹<%= number_with_precision(@product.price_without_discount, precision: 2) %></s>
+                  </small>
+                  <span class="badge bg-danger ms-1"><%= @product.discount %>% discount</span>
+                </p>
+                <small class="text-success">
+                  You save: ₹<%= number_with_precision(@product.discount_amount, precision: 2) %>
+                </small>
+              <% end %>
+            </div>
           </div>
           <div class="col-12 mb-3">
             <label class="form-label fw-bold text-muted">
@@ -131,6 +133,43 @@
           <% end %>
         </div>
         <!-- End GST Section -->
+
+        <!-- Pricing Details Section -->
+        <% if @product.price_without_discount.present? %>
+          <div class="row mt-4">
+            <div class="col-12">
+              <h5 class="text-secondary fw-bold mb-3">
+                <i class="fas fa-money-bill-wave me-2"></i>Pricing Breakdown
+              </h5>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold text-muted">Original Price</label>
+              <p class="fs-5 fw-bold">₹<%= number_with_precision(@product.price_without_discount, precision: 2) %></p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold text-muted">Discount</label>
+              <p class="fs-5 fw-bold text-warning">
+                <%= @product.discount.presence || 0 %>%
+                <span class="text-muted">(₹<%= number_with_precision(@product.discount_amount, precision: 2) %>)</span>
+              </p>
+            </div>
+            <div class="col-12">
+              <div class="alert alert-success">
+                <h6 class="mb-1">
+                  <i class="fas fa-tag me-2"></i>Final Selling Price:
+                  <strong>₹<%= number_with_precision(@product.price, precision: 2) %></strong>
+                </h6>
+                <% if @product.has_discount? %>
+                  <small class="text-success">
+                    Customer saves ₹<%= number_with_precision(@product.discount_amount, precision: 2) %>
+                    with this discount!
+                  </small>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        <!-- End Pricing Details Section -->
       </div>
     </div>
   </div>
@@ -142,20 +181,6 @@
         </h6>
       </div>
       <div class="card-body">
-        <div class="mb-3">
-          <small class="text-muted">Stock Status</small>
-          <div class="progress" style="height: 10px;">
-            <% stock_percentage = [@product.available_quantity.to_f / 100 * 100, 100].min %>
-            <div class="progress-bar <%= @product.available_quantity.to_f < 10 ? 'bg-danger' : @product.available_quantity.to_f < 50 ? 'bg-warning' : 'bg-success' %>" 
-                 style="width: <%= stock_percentage %>%"></div>
-          </div>
-        </div>
-        <div class="mb-3">
-          <small class="text-muted">Total Value</small>
-          <p class="fw-bold text-success mb-0">
-            <i class="fas fa-rupee-sign"></i><%= number_with_precision(@product.available_quantity.to_f * @product.price.to_f, precision: 2) %>
-          </p>
-        </div>
         <div class="mb-3">
           <small class="text-muted">Created Date</small>
           <p class="mb-0"><%= @product.created_at.strftime("%B %d, %Y") %></p>

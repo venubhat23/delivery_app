@@ -72,7 +72,6 @@
                 <th><i class="fas fa-tag me-1"></i>Product Name</th>
                 <th><i class="fas fa-tags me-1"></i>Current Category</th>
                 <th><i class="fas fa-balance-scale me-1"></i>Unit Type</th>
-                <th><i class="fas fa-warehouse me-1"></i>Quantity</th>
                 <th><i class="fas fa-rupee-sign me-1"></i>Price</th>
                 <th><i class="fas fa-info-circle me-1"></i>Status</th>
               </tr>
@@ -109,23 +108,20 @@
                     <span class="badge bg-info"><%= product.unit_type %></span>
                   </td>
                   <td>
-                    <span class="fw-bold <%= product.available_quantity.to_f < 10 ? 'text-danger' : 'text-success' %>">
-                      <%= product.available_quantity %> <%= product.unit_type %>
-                    </span>
+                    <div class="price-display">
+                      <span class="fw-bold text-success">
+                        <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.price, precision: 2) %>
+                      </span>
+                      <% if product.has_discount? %>
+                        <br><small class="text-muted">
+                          <s>₹<%= number_with_precision(product.price_without_discount, precision: 2) %></s>
+                          <span class="badge bg-danger ms-1"><%= product.discount %>%</span>
+                        </small>
+                      <% end %>
+                    </div>
                   </td>
                   <td>
-                    <span class="fw-bold text-success">
-                      <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.price, precision: 2) %>
-                    </span>
-                  </td>
-                  <td>
-                    <% if product.available_quantity.to_f <= 0 %>
-                      <span class="badge bg-danger">Out of Stock</span>
-                    <% elsif product.available_quantity.to_f < 10 %>
-                      <span class="badge bg-warning">Low Stock</span>
-                    <% else %>
-                      <span class="badge bg-success">In Stock</span>
-                    <% end %>
+                    <span class="badge bg-success">Available</span>
                   </td>
                 </tr>
               <% end %>

@@ -91,14 +91,22 @@
                       <small class="text-muted d-block"><%= product.description.present? ? truncate(product.description, length: 50) : "No description" %></small>
                     </td>
                     <td>
-                      <span class="badge bg-<%= product.stock_status_class %> fs-6">
-                        <%= product.available_quantity %> <%= product.unit_type %>
+                      <span class="badge bg-info fs-6">
+                        <%= product.unit_type %>
                       </span>
                     </td>
                     <td>
-                      <span class="fw-bold text-success">
-                        <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.price, precision: 2) %>
-                      </span>
+                      <div class="price-display">
+                        <span class="fw-bold text-success">
+                          <i class="fas fa-rupee-sign"></i><%= number_with_precision(product.price, precision: 2) %>
+                        </span>
+                        <% if product.has_discount? %>
+                          <br><small class="text-muted">
+                            <s>₹<%= number_with_precision(product.price_without_discount, precision: 2) %></s>
+                            <span class="badge bg-danger ms-1"><%= product.discount %>%</span>
+                          </small>
+                        <% end %>
+                      </div>
                     </td>
                     <td>
                       <span class="fw-bold text-primary">

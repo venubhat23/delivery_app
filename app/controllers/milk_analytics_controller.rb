@@ -145,7 +145,7 @@ class MilkAnalyticsController < ApplicationController
       to_start_date = Date.parse("#{to_month}-01")
       to_end_date = to_start_date.end_of_month
 
-      # Find schedules from the source month (August 2025)
+      # Find schedules from the source month
       source_schedules = current_user.procurement_schedules
                                     .where(from_date: from_start_date..from_end_date)
                                     .where(status: ['active', 'completed'])
@@ -230,9 +230,11 @@ class MilkAnalyticsController < ApplicationController
       else
         render json: {
           success: true,
-          message: "Successfully processed schedules",
+          message: "Successfully copied #{copied_schedules} schedules from #{from_start_date.strftime('%B %Y')} to #{to_start_date.strftime('%B %Y')} with #{created_assignments} delivery assignments",
           copied_schedules: copied_schedules,
           created_assignments: created_assignments,
+          source_month: from_start_date.strftime('%B %Y'),
+          target_month: to_start_date.strftime('%B %Y'),
           errors: errors
         }
       end

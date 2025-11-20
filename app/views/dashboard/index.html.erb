@@ -354,8 +354,8 @@
                 </div>
                 <div class="product-metrics">
                   <div class="metric">
-                    <span class="metric-value"><%= product.available_quantity || 0 %></span>
-                    <span class="metric-label">Available</span>
+                    <span class="metric-value"><%= product.unit_type %></span>
+                    <span class="metric-label">Unit</span>
                   </div>
                   <div class="metric">
                     <span class="metric-value">₹<%= number_with_delimiter(product.price || 0) %></span>

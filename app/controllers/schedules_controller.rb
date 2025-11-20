@@ -115,15 +115,24 @@ class SchedulesController < ApplicationController
     current_start_date = current_date.beginning_of_month
     current_end_date = current_date.end_of_month
 
-    # Find schedules in the last month
-    source_schedules = DeliverySchedule.includes(:customer, :delivery_assignments)
+    # Define specific products to copy (only milk products)
+    allowed_products = ['Desi cow milk packet', 'Desi A2 Cow Milk Bottel']
+
+    # Find schedules in the last month for specific products only
+    source_schedules = DeliverySchedule.includes(:customer, :delivery_assignments, :product)
+                                      .joins(:product)
+                                      .where(products: { name: allowed_products })
                                       .where(start_date: source_start_date..source_end_date)
-                                      .or(DeliverySchedule.where(end_date: source_start_date..source_end_date))
-                                      .or(DeliverySchedule.where('start_date <= ? AND end_date >= ?', source_start_date, source_end_date))
+                                      .or(DeliverySchedule.joins(:product)
+                                                         .where(products: { name: allowed_products })
+                                                         .where(end_date: source_start_date..source_end_date))
+                                      .or(DeliverySchedule.joins(:product)
+                                                         .where(products: { name: allowed_products })
+                                                         .where('start_date <= ? AND end_date >= ?', source_start_date, source_end_date))
 
     if source_schedules.empty?
-      render json: { 
-        error: "No delivery schedules found for #{last_month_date.strftime('%B %Y')}. Please ensure there are schedules to import." 
+      render json: {
+        error: "No delivery schedules found for milk products (#{allowed_products.join(', ')}) in #{last_month_date.strftime('%B %Y')}. Please ensure there are schedules to import."
       }, status: :not_found
       return
     end
@@ -218,7 +227,9 @@ class SchedulesController < ApplicationController
         assignments_created: created_assignments_count,
         customers_affected: customers_affected.count,
         source_month: last_month_date.strftime("%B %Y"),
-        target_month: current_date.strftime("%B %Y")
+        target_month: current_date.strftime("%B %Y"),
+        products_imported: allowed_products,
+        message: "Successfully imported #{created_schedules_count} schedules for milk products (#{allowed_products.join(', ')}) from #{last_month_date.strftime("%B %Y")} to #{current_date.strftime("%B %Y")}"
       }
     }
     

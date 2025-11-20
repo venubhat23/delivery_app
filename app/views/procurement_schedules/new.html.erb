@@ -408,7 +408,6 @@ document.addEventListener('DOMContentLoaded', function() {
         name: "<%= product.name.gsub('"', '\\"') %>",
         unit_type: "<%= product.unit_type %>",
         price: "<%= product.price %>",
-        available_quantity: "<%= product.available_quantity || 0 %>",
         description: "<%= product.description&.gsub('"', '\\"') || 'No description' %>",
         category: "<%= product.category_name.gsub('"', '\\"') %>"
       }<%= index < Product.all.count - 1 ? ',' : '' %>
@@ -493,13 +492,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="mb-1 small text-muted">${product.description}</p>
                     <div class="d-flex gap-3 flex-wrap">
                       <small class="text-success"><i class="fas fa-tag me-1"></i><strong>₹${product.price}/${product.unit_type}</strong></small>
-                      <small class="text-info"><i class="fas fa-box me-1"></i>${product.available_quantity} ${product.unit_type}</small>
                       <small class="text-warning"><i class="fas fa-folder me-1"></i>${product.category}</small>
                     </div>
                   </div>
                   <div class="text-end">
-                    <span class="badge ${product.available_quantity > 0 ? 'bg-success' : 'bg-warning'}">
-                      ${product.available_quantity > 0 ? 'Available' : 'Low Stock'}
+                    <span class="badge bg-success">
+                      Available
                     </span>
                   </div>
                 </div>
@@ -533,7 +531,6 @@ document.addEventListener('DOMContentLoaded', function() {
         <h6 class="mb-1 text-success"><i class="fas fa-check-circle me-2"></i>Selected: ${product.name}</h6>
         <div class="d-flex gap-3 small flex-wrap">
           <span class="text-muted"><i class="fas fa-tag me-1"></i>Price: ₹${product.price}/${product.unit_type}</span>
-          <span class="text-muted"><i class="fas fa-box me-1"></i>Available: ${product.available_quantity} ${product.unit_type}</span>
           <span class="text-muted"><i class="fas fa-folder me-1"></i>Category: ${product.category}</span>
         </div>
       </div>

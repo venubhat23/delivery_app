@@ -13,9 +13,6 @@
   <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
       <i class="fas fa-box me-2"></i><%= product.name.presence || 'New Product' %>
-      <% if product.persisted? && product.available_quantity.to_f < 10 %>
-        <span class="badge bg-danger ms-2">Low Stock</span>
-      <% end %>
     </h1>
     <div>
       <% if product.persisted? %>
@@ -131,39 +128,64 @@
   </div>
 
   <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-4">
       <div class="mb-3">
-        <%= form.label :available_quantity, class: "form-label fw-bold" do %>
-          <i class="fas fa-warehouse me-1"></i>Available Quantity *
-        <% end %>
-        <%= form.number_field :available_quantity, 
-            class: "form-control", 
-            step: 0.01,
-            min: 0,
-            required: true, 
-            placeholder: "0.00" %>
-        <div class="invalid-feedback">
-          Please provide available quantity.
-        </div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="mb-3">
-        <%= form.label :price, class: "form-label fw-bold" do %>
-          <i class="fas fa-rupee-sign me-1"></i>Price per Unit *
+        <%= form.label :price_without_discount, class: "form-label fw-bold" do %>
+          <i class="fas fa-rupee-sign me-1"></i>Original Price *
         <% end %>
         <div class="input-group">
           <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
-          <%= form.number_field :price, 
-              class: "form-control", 
+          <%= form.number_field :price_without_discount,
+              class: "form-control",
               step: 0.01,
               min: 0,
-              required: true, 
-              placeholder: "0.00" %>
+              required: true,
+              placeholder: "0.00",
+              id: "price_without_discount",
+              onchange: "calculatePrice()" %>
           <div class="invalid-feedback">
-            Please provide a price.
+            Please provide an original price.
           </div>
         </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :discount, class: "form-label fw-bold" do %>
+          <i class="fas fa-percent me-1"></i>Discount %
+        <% end %>
+        <div class="input-group">
+          <%= form.number_field :discount,
+              class: "form-control",
+              step: 0.01,
+              min: 0,
+              max: 99.99,
+              placeholder: "0.00",
+              id: "discount",
+              onchange: "calculatePrice()" %>
+          <span class="input-group-text">%</span>
+          <div class="invalid-feedback">
+            Please provide a valid discount percentage.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :price, class: "form-label fw-bold" do %>
+          <i class="fas fa-rupee-sign me-1"></i>Final Price *
+        <% end %>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+          <%= form.number_field :price,
+              class: "form-control",
+              step: 0.01,
+              min: 0,
+              readonly: true,
+              placeholder: "0.00",
+              id: "final_price" %>
+        </div>
+        <small class="form-text text-muted">Automatically calculated</small>
       </div>
     </div>
   </div>
@@ -270,8 +292,25 @@
     
     // Image upload functionality
     setupImageUpload();
+
+    // Calculate initial price on page load
+    calculatePrice();
   }, false);
 })();
+
+// Price calculation function
+function calculatePrice() {
+  const priceWithoutDiscount = parseFloat(document.getElementById('price_without_discount').value) || 0;
+  const discount = parseFloat(document.getElementById('discount').value) || 0;
+
+  if (priceWithoutDiscount > 0) {
+    const discountAmount = (priceWithoutDiscount * discount) / 100;
+    const finalPrice = priceWithoutDiscount - discountAmount;
+    document.getElementById('final_price').value = finalPrice.toFixed(2);
+  } else {
+    document.getElementById('final_price').value = '0.00';
+  }
+}
 
 // Image upload functions
 function setupImageUpload() {

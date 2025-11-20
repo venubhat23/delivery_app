@@ -63,8 +63,8 @@ module Api
       def low_stock
         products = Product.active.includes(:category)
                          .where('stock_alert_threshold IS NOT NULL AND available_quantity <= stock_alert_threshold')
-                         .order(:available_quantity)
-        
+                         .order(:name)
+
         render json: products, status: :ok
       end
       
@@ -77,8 +77,8 @@ module Api
       end
       
       def product_params
-        params.permit(:name, :description, :unit_type, :available_quantity, :price, 
-                      :category_id, :image_url, :sku, :stock_alert_threshold, 
+        params.permit(:name, :description, :unit_type, :price_without_discount, :discount,
+                      :category_id, :image_url, :sku, :stock_alert_threshold,
                       :is_subscription_eligible, :is_active, :is_gst_applicable,
                       :total_gst_percentage, :total_cgst_percentage, :total_sgst_percentage, :total_igst_percentage)
       end
