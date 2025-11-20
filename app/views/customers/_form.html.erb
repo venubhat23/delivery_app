@@ -528,7 +528,7 @@ async function handleCustomerFileUpload(event) {
       uploadArea.style.display = 'none';
     }
 
-    const response = await fetch('/api/upload', {
+    const response = await fetch('/api/upload/customers', {
       method: 'POST',
       body: formData
     });

@@ -197,7 +197,7 @@ async function handleFileUpload(event) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('https://atmanirbharfarmbangalore.com/api/upload/', {
+    const response = await fetch('/api/upload/advertisements', {
       method: 'POST',
       body: formData
     });
