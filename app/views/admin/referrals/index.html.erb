@@ -1,0 +1,184 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="mb-0">
+        <i class="fas fa-handshake me-2"></i>
+        Customer Referrals Management
+      </h2>
+      <p class="text-muted mb-0">Review and approve customer referrals from affiliates</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <div class="text-warning mb-2">
+            <i class="fas fa-clock fa-2x"></i>
+          </div>
+          <h4 class="text-warning"><%= @total_pending %></h4>
+          <p class="text-muted mb-0">Pending Review</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <div class="text-success mb-2">
+            <i class="fas fa-check-circle fa-2x"></i>
+          </div>
+          <h4 class="text-success"><%= @approved_referrals.count %></h4>
+          <p class="text-muted mb-0">Approved</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <div class="text-danger mb-2">
+            <i class="fas fa-times-circle fa-2x"></i>
+          </div>
+          <h4 class="text-danger"><%= @rejected_referrals.count %></h4>
+          <p class="text-muted mb-0">Rejected</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <div class="text-info mb-2">
+            <i class="fas fa-rupee-sign fa-2x"></i>
+          </div>
+          <h4 class="text-info">₹<%= number_with_delimiter(@total_reward_amount.to_i) %></h4>
+          <p class="text-muted mb-0">Total Rewards</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-light border-0">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <%= link_to admin_referrals_path,
+              class: "nav-link #{'active' if params[:status].blank?}" do %>
+            <i class="fas fa-list me-1"></i>All Referrals
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_referrals_path(status: 'pending'),
+              class: "nav-link #{'active' if params[:status] == 'pending'}" do %>
+            <i class="fas fa-clock me-1"></i>
+            Pending <span class="badge bg-warning ms-1"><%= @total_pending %></span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_referrals_path(status: 'approved'),
+              class: "nav-link #{'active' if params[:status] == 'approved'}" do %>
+            <i class="fas fa-check me-1"></i>Approved
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_referrals_path(status: 'rejected'),
+              class: "nav-link #{'active' if params[:status] == 'rejected'}" do %>
+            <i class="fas fa-times me-1"></i>Rejected
+          <% end %>
+        </li>
+      </ul>
+    </div>
+    <div class="card-body">
+      <% if @referrals.any? %>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Customer Details</th>
+                <th>Affiliate</th>
+                <th>Reward Amount</th>
+                <th>Status</th>
+                <th>Submitted Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @referrals.each do |referral| %>
+                <tr>
+                  <td>
+                    <strong><%= referral.customer_name %></strong><br>
+                    <small class="text-muted">
+                      <i class="fas fa-phone me-1"></i><%= referral.customer_phone %><br>
+                      <% if referral.customer_email.present? %>
+                        <i class="fas fa-envelope me-1"></i><%= referral.customer_email %>
+                      <% end %>
+                    </small>
+                  </td>
+                  <td>
+                    <strong><%= referral.affiliate.name %></strong><br>
+                    <small class="text-muted"><%= referral.affiliate.referral_code %></small>
+                  </td>
+                  <td>
+                    <h6 class="mb-0">₹<%= number_with_delimiter(referral.reward_amount.to_i) %></h6>
+                  </td>
+                  <td>
+                    <span class="badge bg-<%= referral.pending? ? 'warning' : referral.approved? ? 'success' : 'danger' %>">
+                      <%= referral.status.capitalize %>
+                    </span>
+                    <% if referral.approved? && referral.approved_at %>
+                      <br><small class="text-muted">Approved: <%= referral.approved_at.strftime("%d %b %Y") %></small>
+                    <% elsif referral.rejected? && referral.rejected_at %>
+                      <br><small class="text-muted">Rejected: <%= referral.rejected_at.strftime("%d %b %Y") %></small>
+                    <% end %>
+                  </td>
+                  <td>
+                    <%= referral.created_at.strftime("%d %b %Y") %><br>
+                    <small class="text-muted"><%= referral.created_at.strftime("%I:%M %p") %></small>
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <%= link_to admin_referral_path(referral), class: "btn btn-outline-primary btn-sm" do %>
+                        <i class="fas fa-eye"></i>
+                      <% end %>
+                      <% if referral.pending? %>
+                        <%= link_to approve_admin_referral_path(referral), method: :patch,
+                            class: "btn btn-outline-success btn-sm",
+                            confirm: "Approve this referral and credit ₹#{referral.reward_amount.to_i} to the affiliate?" do %>
+                          <i class="fas fa-check"></i>
+                        <% end %>
+                        <%= link_to reject_admin_referral_path(referral), method: :patch,
+                            class: "btn btn-outline-danger btn-sm",
+                            confirm: "Reject this referral?" do %>
+                          <i class="fas fa-times"></i>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="text-center py-5">
+          <i class="fas fa-handshake fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No Referrals Found</h5>
+          <p class="text-muted">
+            <% if params[:status] == 'pending' %>
+              No pending referrals at the moment.
+            <% elsif params[:status] == 'approved' %>
+              No approved referrals yet.
+            <% elsif params[:status] == 'rejected' %>
+              No rejected referrals.
+            <% else %>
+              No referrals have been submitted yet.
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

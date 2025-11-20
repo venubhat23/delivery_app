@@ -1,0 +1,232 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="text-dark mb-0">
+    <i class="fas fa-shopping-basket me-2 text-primary"></i>
+    Browse Products
+  </h2>
+  <div class="d-flex align-items-center gap-3">
+    <span class="badge bg-primary fs-6">
+      <i class="fas fa-shopping-cart me-1"></i>
+      Cart: <%= @cart_count %> items
+    </span>
+  </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="row mb-4">
+  <div class="col-lg-8 col-xl-9">
+    <%= form_with url: affiliate_products_path, method: :get, class: "d-flex gap-2", local: true do |form| %>
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="fas fa-search text-muted"></i>
+        </span>
+        <%= form.text_field :search,
+            value: params[:search],
+            class: "form-control",
+            placeholder: "Search products..." %>
+      </div>
+      <%= form.select :category_id,
+          options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
+          { prompt: 'All Categories' },
+          { class: "form-select" } %>
+      <%= form.submit "Search", class: "btn btn-primary" %>
+      <% if params[:search].present? || params[:category_id].present? %>
+        <%= link_to "Clear", affiliate_products_path, class: "btn btn-outline-secondary" %>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="col-lg-4 col-xl-3 text-end">
+    <%= link_to affiliate_cart_path, class: "btn btn-success" do %>
+      <i class="fas fa-shopping-cart me-2"></i>
+      View Cart (<%= @cart_count %>)
+    <% end %>
+  </div>
+</div>
+
+<!-- Products Grid -->
+<% if @products.any? %>
+  <div class="row">
+    <% @products.each do |product| %>
+      <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-0 product-card">
+          <% if product.image_url.present? %>
+            <div class="card-img-top position-relative overflow-hidden" style="height: 200px;">
+              <img src="<%= product.image_url %>"
+                   class="img-fluid w-100 h-100"
+                   style="object-fit: cover;"
+                   alt="<%= product.name %>" />
+              <% if product.category %>
+                <span class="badge bg-primary position-absolute top-0 start-0 m-2">
+                  <%= product.category.name %>
+                </span>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+              <i class="fas fa-image fa-3x text-muted"></i>
+              <% if product.category %>
+                <span class="badge bg-primary position-absolute top-0 start-0 m-2">
+                  <%= product.category.name %>
+                </span>
+              <% end %>
+            </div>
+          <% end %>
+
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-dark fw-bold">
+              <%= link_to product.name, affiliate_product_path(product), class: "text-decoration-none text-dark" %>
+            </h5>
+
+            <% if product.description.present? %>
+              <p class="card-text text-muted small mb-2">
+                <%= truncate(product.description, length: 100) %>
+              </p>
+            <% end %>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <span class="h4 text-success fw-bold mb-0">₹<%= product.price %></span>
+                <% if product.unit_type.present? %>
+                  <small class="text-muted">per <%= product.unit_type %></small>
+                <% end %>
+              </div>
+              <% if product.available_quantity && product.available_quantity > 0 %>
+                <span class="badge bg-success">In Stock</span>
+              <% else %>
+                <span class="badge bg-warning text-dark">Limited</span>
+              <% end %>
+            </div>
+
+            <!-- Add to Cart Form -->
+            <%= form_with url: affiliate_cart_add_path, method: :post, class: "mt-auto", data: { remote: true } do |form| %>
+              <%= form.hidden_field :product_id, value: product.id %>
+              <%= form.hidden_field :price, value: product.price %>
+
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <%= form.number_field :quantity,
+                      value: 1,
+                      min: 1,
+                      step: 0.1,
+                      class: "form-control form-control-sm",
+                      placeholder: "Qty" %>
+                </div>
+                <div class="col-6">
+                  <%= form.submit "Add to Cart", class: "btn btn-primary btn-sm w-100" %>
+                </div>
+              </div>
+            <% end %>
+
+            <div class="d-grid">
+              <%= link_to affiliate_product_path(product), class: "btn btn-outline-primary btn-sm" do %>
+                <i class="fas fa-eye me-1"></i>
+                View Details
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Pagination if needed -->
+  <div class="d-flex justify-content-center mt-4">
+    <nav aria-label="Products pagination">
+      <!-- Add pagination here if implementing Kaminari or similar -->
+    </nav>
+  </div>
+<% else %>
+  <div class="text-center py-5">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No Products Found</h4>
+    <p class="text-muted">
+      <% if params[:search].present? || params[:category_id].present? %>
+        Try adjusting your search criteria or browse all products.
+        <br>
+        <%= link_to "View All Products", affiliate_products_path, class: "btn btn-primary mt-2" %>
+      <% else %>
+        No products are currently available.
+      <% end %>
+    </p>
+  </div>
+<% end %>
+
+<!-- Toast for Add to Cart feedback -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="cartToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        Product added to cart successfully!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<style>
+.product-card {
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.card-img-top img {
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .card-img-top img {
+  transform: scale(1.05);
+}
+</style>
+
+<script>
+// Handle AJAX cart addition
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle form submissions for adding to cart
+  document.querySelectorAll('form[data-remote="true"]').forEach(form => {
+    form.addEventListener('ajax:success', function(event) {
+      const response = event.detail[0];
+
+      // Show toast notification
+      const toastElement = document.getElementById('cartToast');
+      const toast = new bootstrap.Toast(toastElement);
+
+      // Update toast message
+      const toastBody = toastElement.querySelector('.toast-body');
+      toastBody.textContent = response.message;
+
+      // Update cart count in navigation and header
+      updateCartCount(response.cart_count);
+
+      // Show toast
+      toast.show();
+    });
+
+    form.addEventListener('ajax:error', function(event) {
+      alert('Error adding product to cart. Please try again.');
+    });
+  });
+
+  function updateCartCount(count) {
+    // Update cart count in sidebar badge
+    const sidebarBadge = document.querySelector('.sidebar .badge');
+    if (sidebarBadge) {
+      sidebarBadge.textContent = count;
+    }
+
+    // Update cart count in header badge
+    const headerBadge = document.querySelector('.badge.bg-primary');
+    if (headerBadge) {
+      headerBadge.innerHTML = `<i class="fas fa-shopping-cart me-1"></i>Cart: ${count} items`;
+    }
+
+    // Update view cart button
+    const cartButton = document.querySelector('a[href*="cart"]');
+    if (cartButton) {
+      cartButton.innerHTML = `<i class="fas fa-shopping-cart me-2"></i>View Cart (${count})`;
+    }
+  }
+});
+</script>

@@ -23,6 +23,7 @@ gem 'twilio-ruby'
 gem 'bootstrap', '~> 5.2'
 gem 'jquery-rails'
 gem 'sassc-rails'
+gem 'cssbundling-rails'
 group :development do
   gem 'pry'
   gem 'pry-rails'

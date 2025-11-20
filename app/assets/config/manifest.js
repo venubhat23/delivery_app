@@ -1,6 +1,5 @@
 //= link_tree ../images
-//= link_directory ../stylesheets .css
-//= link application.scss
+//= link_tree ../builds
 //= link application.js
-//= link application.css
 //= link date_helpers.js
+//= link controllers/application.js

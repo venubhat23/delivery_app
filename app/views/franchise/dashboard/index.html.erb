@@ -1,0 +1,241 @@
+<!-- Franchise Dashboard -->
+<div class="container-fluid">
+  <!-- Welcome Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="welcome-header bg-gradient p-4 rounded-3 text-white">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h1 class="display-6 mb-2">
+              <i class="fas fa-store me-3"></i>
+              Welcome, <%= current_franchise.name %>!
+            </h1>
+            <p class="lead mb-0">
+              <i class="fas fa-map-marker-alt me-2"></i>
+              <%= current_franchise.location %>
+            </p>
+          </div>
+          <div class="col-md-4 text-md-end">
+            <%= link_to new_franchise_booking_path, class: 'btn btn-light btn-lg' do %>
+              <i class="fas fa-plus me-2"></i>New Booking
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card h-100">
+        <div class="card-body text-center">
+          <div class="stat-icon bg-primary">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <h4 class="card-title mt-3"><%= @total_bookings %></h4>
+          <p class="card-text text-muted">Total Bookings</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card h-100">
+        <div class="card-body text-center">
+          <div class="stat-icon bg-success">
+            <i class="fas fa-rupee-sign"></i>
+          </div>
+          <h4 class="card-title mt-3">₹<%= number_with_delimiter(@total_amount || 0) %></h4>
+          <p class="card-text text-muted">Total Amount</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card h-100">
+        <div class="card-body text-center">
+          <div class="stat-icon bg-warning">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h4 class="card-title mt-3"><%= @pending_bookings %></h4>
+          <p class="card-text text-muted">Pending Bookings</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card h-100">
+        <div class="card-body text-center">
+          <div class="stat-icon bg-info">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h4 class="card-title mt-3"><%= @completed_bookings %></h4>
+          <p class="card-text text-muted">Completed Bookings</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Recent Bookings -->
+    <div class="col-lg-8 mb-4">
+      <div class="card">
+        <div class="card-header bg-white border-bottom-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-history me-2 text-primary"></i>
+              Recent Bookings
+            </h5>
+            <%= link_to franchise_bookings_path, class: 'btn btn-outline-primary btn-sm' do %>
+              View All <i class="fas fa-arrow-right ms-1"></i>
+            <% end %>
+          </div>
+        </div>
+        <div class="card-body">
+          <% if @recent_bookings.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @recent_bookings.each do |booking| %>
+                    <tr>
+                      <td>
+                        <strong><%= booking.product.name %></strong>
+                        <% if booking.product.category %>
+                          <br><small class="text-muted"><%= booking.product.category.name %></small>
+                        <% end %>
+                      </td>
+                      <td><%= booking.quantity %> <%= booking.product.unit_type %></td>
+                      <td>₹<%= number_with_delimiter(booking.price) %></td>
+                      <td>
+                        <span class="badge bg-<%= booking.status == 'pending' ? 'warning' : 'success' %>">
+                          <%= booking.status.humanize %>
+                        </span>
+                      </td>
+                      <td>
+                        <%= booking.booking_date.strftime('%b %d') %>
+                        <br><small class="text-muted"><%= time_ago_in_words(booking.created_at) %> ago</small>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-5">
+              <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No bookings yet</h5>
+              <p class="text-muted">Create your first booking to get started!</p>
+              <%= link_to new_franchise_booking_path, class: 'btn btn-primary' do %>
+                <i class="fas fa-plus me-1"></i>Create Booking
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Available Products -->
+    <div class="col-lg-4 mb-4">
+      <div class="card">
+        <div class="card-header bg-white border-bottom-0">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-box me-2 text-success"></i>
+            Available Products
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @products.any? %>
+            <div class="product-list">
+              <% @products.limit(5).each do |product| %>
+                <div class="product-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                  <div>
+                    <strong><%= product.name %></strong>
+                    <% if product.category %>
+                      <br><small class="text-muted"><%= product.category.name %></small>
+                    <% end %>
+                    <br><small class="text-success">₹<%= product.price %>/<%= product.unit_type %></small>
+                  </div>
+                  <%= link_to new_franchise_booking_path(product_id: product.id), class: 'btn btn-sm btn-outline-primary' do %>
+                    <i class="fas fa-cart-plus"></i>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+            <% if @products.count > 5 %>
+              <div class="text-center mt-3">
+                <%= link_to new_franchise_booking_path, class: 'btn btn-outline-secondary btn-sm' do %>
+                  View All Products <i class="fas fa-arrow-right ms-1"></i>
+                <% end %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
+              <p class="text-muted mb-0">No products available</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .welcome-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  }
+
+  .stat-card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s ease;
+    border-radius: 12px;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  .card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+  }
+
+  .product-item {
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+  }
+
+  .product-item:hover {
+    background-color: rgba(102, 126, 234, 0.05) !important;
+    border-color: rgba(102, 126, 234, 0.2);
+  }
+</style>

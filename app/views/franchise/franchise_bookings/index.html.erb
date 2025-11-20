@@ -1,0 +1,248 @@
+<!-- Franchise Bookings Index -->
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="page-header bg-gradient p-4 rounded-3 text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="display-6 mb-2">
+              <i class="fas fa-shopping-cart me-3"></i>My Bookings
+            </h1>
+            <p class="mb-0">Manage your product orders and deliveries</p>
+          </div>
+          <div>
+            <%= link_to new_franchise_booking_path, class: 'btn btn-light btn-lg' do %>
+              <i class="fas fa-plus me-2"></i>New Booking
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Row -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card text-center">
+        <div class="card-body">
+          <div class="stat-icon bg-primary mb-3">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <h4><%= @total_bookings %></h4>
+          <p class="text-muted mb-0">Total Bookings</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card text-center">
+        <div class="card-body">
+          <div class="stat-icon bg-success mb-3">
+            <i class="fas fa-rupee-sign"></i>
+          </div>
+          <h4>₹<%= number_with_delimiter(@total_amount || 0) %></h4>
+          <p class="text-muted mb-0">Total Value</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card text-center">
+        <div class="card-body">
+          <div class="stat-icon bg-warning mb-3">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h4><%= @pending_count %></h4>
+          <p class="text-muted mb-0">Pending</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card text-center">
+        <div class="card-body">
+          <div class="stat-icon bg-info mb-3">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h4><%= @completed_count %></h4>
+          <p class="text-muted mb-0">Completed</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookings Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-white border-bottom">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="fas fa-list me-2 text-primary"></i>
+              All Bookings
+            </h5>
+            <div class="d-flex gap-2">
+              <!-- Filter buttons could go here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <% if @bookings.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="border-0">Booking ID</th>
+                    <th class="border-0">Product</th>
+                    <th class="border-0">Quantity</th>
+                    <th class="border-0">Price</th>
+                    <th class="border-0">Status</th>
+                    <th class="border-0">Booking Date</th>
+                    <th class="border-0">Created</th>
+                    <th class="border-0">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @bookings.each do |booking| %>
+                    <tr>
+                      <td class="align-middle">
+                        <strong>#<%= booking.id %></strong>
+                      </td>
+                      <td class="align-middle">
+                        <div>
+                          <strong><%= booking.product.name %></strong>
+                          <% if booking.product.category %>
+                            <br><small class="text-muted"><%= booking.product.category.name %></small>
+                          <% end %>
+                        </div>
+                      </td>
+                      <td class="align-middle">
+                        <strong><%= booking.quantity %></strong> <%= booking.product.unit_type %>
+                      </td>
+                      <td class="align-middle">
+                        <strong>₹<%= number_with_delimiter(booking.price) %></strong>
+                        <br><small class="text-muted">₹<%= booking.product.price %>/<%= booking.product.unit_type %></small>
+                      </td>
+                      <td class="align-middle">
+                        <span class="badge badge-<%= booking.status == 'pending' ? 'warning' : 'success' %> fs-6">
+                          <i class="fas fa-<%= booking.status == 'pending' ? 'clock' : 'check' %> me-1"></i>
+                          <%= booking.status.humanize %>
+                        </span>
+                      </td>
+                      <td class="align-middle">
+                        <strong><%= booking.booking_date.strftime('%b %d, %Y') %></strong>
+                      </td>
+                      <td class="align-middle">
+                        <div>
+                          <%= booking.created_at.strftime('%b %d, %Y') %>
+                          <br><small class="text-muted"><%= time_ago_in_words(booking.created_at) %> ago</small>
+                        </div>
+                      </td>
+                      <td class="align-middle">
+                        <div class="btn-group" role="group">
+                          <%= link_to franchise_booking_path(booking), class: 'btn btn-outline-primary btn-sm' do %>
+                            <i class="fas fa-eye"></i>
+                          <% end %>
+                          <% if booking.status == 'pending' %>
+                            <%= link_to edit_franchise_booking_path(booking), class: 'btn btn-outline-secondary btn-sm' do %>
+                              <i class="fas fa-edit"></i>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if respond_to?(:paginate) && @bookings.respond_to?(:current_page) %>
+              <div class="card-footer bg-white border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="text-muted">
+                    Showing <%= @bookings.offset_value + 1 %> to <%= [@bookings.offset_value + @bookings.limit_value, @bookings.total_count].min %> of <%= @bookings.total_count %> bookings
+                  </div>
+                  <%= paginate @bookings if @bookings.respond_to?(:current_page) %>
+                </div>
+              </div>
+            <% end %>
+
+          <% else %>
+            <!-- Empty State -->
+            <div class="text-center py-5">
+              <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
+              <h4 class="text-muted">No bookings yet</h4>
+              <p class="text-muted mb-4">You haven't created any bookings. Start by creating your first booking!</p>
+              <%= link_to new_franchise_booking_path, class: 'btn btn-primary btn-lg' do %>
+                <i class="fas fa-plus me-2"></i>Create Your First Booking
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  }
+
+  .stat-card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s ease;
+    border-radius: 12px;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: white;
+    font-size: 1.25rem;
+  }
+
+  .card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+  }
+
+  .badge-warning {
+    background-color: #f6ad55;
+    color: #2d3748;
+  }
+
+  .badge-success {
+    background-color: #48bb78;
+    color: white;
+  }
+
+  .btn-group .btn {
+    border-radius: 6px;
+    margin-right: 4px;
+  }
+
+  .btn-group .btn:last-child {
+    margin-right: 0;
+  }
+</style>

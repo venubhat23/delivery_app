@@ -1,0 +1,144 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-8 col-xl-6 mx-auto">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-warning text-dark">
+          <h4 class="mb-0">
+            <i class="fas fa-user-edit me-2"></i>
+            Edit Affiliate: <%= @affiliate.name %>
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <%= form_with model: [:admin, @affiliate], local: true, class: "needs-validation", novalidate: true do |form| %>
+            <% if @affiliate.errors.any? %>
+              <div class="alert alert-danger mb-4">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                <ul class="mb-0">
+                  <% @affiliate.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :name, "Full Name", class: "form-label" %>
+                <%= form.text_field :name, class: "form-control", placeholder: "Enter full name", required: true %>
+                <div class="invalid-feedback">Please provide a valid name.</div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :email, "Email Address", class: "form-label" %>
+                <%= form.email_field :email, class: "form-control", placeholder: "Enter email address", required: true %>
+                <div class="invalid-feedback">Please provide a valid email.</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :phone, "Phone Number", class: "form-label" %>
+                <%= form.text_field :phone, class: "form-control", placeholder: "Enter phone number", required: true %>
+                <div class="invalid-feedback">Please provide a valid phone number.</div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :commission_rate, "Commission Rate (%)", class: "form-label" %>
+                <%= form.number_field :commission_rate, class: "form-control", placeholder: "e.g., 5.0", step: 0.1, min: 0.1, required: true %>
+                <div class="invalid-feedback">Please provide a valid commission rate.</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :location, "Location", class: "form-label" %>
+              <%= form.text_field :location, class: "form-control", placeholder: "Enter location/city", required: true %>
+              <div class="invalid-feedback">Please provide a location.</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :password, "New Password (Optional)", class: "form-label" %>
+                <%= form.password_field :password, class: "form-control", placeholder: "Leave blank to keep current", minlength: 6 %>
+                <div class="form-text">Leave blank to keep current password</div>
+                <div class="invalid-feedback">Password must be at least 6 characters.</div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :password_confirmation, "Confirm New Password", class: "form-label" %>
+                <%= form.password_field :password_confirmation, class: "form-control", placeholder: "Confirm new password" %>
+                <div class="form-text">Required only if changing password</div>
+                <div class="invalid-feedback">Please confirm the password.</div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="form-check">
+                <%= form.check_box :active, class: "form-check-input" %>
+                <%= form.label :active, "Active Status", class: "form-check-label" %>
+              </div>
+              <div class="form-text">Inactive affiliates cannot login or earn commissions.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <%= form.submit "Update Affiliate", class: "btn btn-warning px-4" %>
+              <%= link_to admin_affiliate_path(@affiliate), class: "btn btn-outline-primary" do %>
+                <i class="fas fa-eye me-1"></i>
+                View Details
+              <% end %>
+              <%= link_to admin_affiliates_path, class: "btn btn-outline-secondary" do %>
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to List
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Bootstrap form validation with password confirmation
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        var password = form.querySelector('#affiliate_password');
+        var passwordConfirmation = form.querySelector('#affiliate_password_confirmation');
+
+        // Check if passwords match (only if password is provided)
+        if (password && passwordConfirmation && password.value.length > 0) {
+          if (password.value !== passwordConfirmation.value) {
+            passwordConfirmation.setCustomValidity('Passwords do not match');
+          } else {
+            passwordConfirmation.setCustomValidity('');
+          }
+        } else if (passwordConfirmation) {
+          passwordConfirmation.setCustomValidity('');
+        }
+
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+
+      // Real-time password confirmation validation
+      var passwordConfirmation = form.querySelector('#affiliate_password_confirmation');
+      if (passwordConfirmation) {
+        passwordConfirmation.addEventListener('input', function() {
+          var password = form.querySelector('#affiliate_password');
+          if (password && password.value.length > 0 && this.value !== password.value) {
+            this.setCustomValidity('Passwords do not match');
+          } else {
+            this.setCustomValidity('');
+          }
+        });
+      }
+    });
+  }, false);
+})();
+</script>

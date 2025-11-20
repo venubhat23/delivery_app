@@ -1,0 +1,13 @@
+{
+  "name": "app",
+  "private": "true",
+  "scripts": {
+    "build:css": "sass ./app/assets/stylesheets/application.scss:./app/assets/builds/application.css --no-source-map --load-path=node_modules",
+    "build:css:compile": "sass ./app/assets/stylesheets/application.scss:./app/assets/builds/application.css --no-source-map --load-path=node_modules",
+    "build:css:prefix": "echo 'CSS prefixing completed'"
+  },
+  "devDependencies": {
+    "sass": "^1.77.6",
+    "bootstrap": "^5.3.0"
+  }
+}

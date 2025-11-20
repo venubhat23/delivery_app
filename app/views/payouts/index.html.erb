@@ -1,0 +1,289 @@
+<!-- Enhanced Payouts Index Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h2 mb-2">
+        <i class="fas fa-credit-card me-3"></i>Payout Management
+      </h1>
+      <p class="text-muted mb-0">Track and manage all your business payments and transactions</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to new_payout_path, class: 'btn btn-success' do %>
+        <i class="fas fa-plus me-2"></i>New Payout
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <div class="stats-card-body">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-primary">
+            <i class="fas fa-receipt"></i>
+          </div>
+          <div>
+            <h3 class="stats-number"><%= @total_payouts %></h3>
+            <p class="stats-label">Total Transactions</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <div class="stats-card-body">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-success">
+            <i class="fas fa-rupee-sign"></i>
+          </div>
+          <div>
+            <h3 class="stats-number">₹<%= number_with_delimiter(@total_amount.to_f) %></h3>
+            <p class="stats-label">Total Amount</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <div class="stats-card-body">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-warning">
+            <i class="fas fa-money-bill-alt"></i>
+          </div>
+          <div>
+            <h3 class="stats-number"><%= @cash_payments %></h3>
+            <p class="stats-label">Cash Transactions</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <div class="stats-card-body">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-info">
+            <i class="fas fa-university"></i>
+          </div>
+          <div>
+            <h3 class="stats-number"><%= @non_cash_payments %></h3>
+            <p class="stats-label">Digital Transactions</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body">
+    <%= form_with url: payouts_path, method: :get, local: true, class: 'row g-2' do |form| %>
+      <div class="col-lg-2 col-md-6">
+        <%= form.date_field :from_date, value: params[:from_date], class: 'form-control', placeholder: 'From Date' %>
+      </div>
+      <div class="col-lg-2 col-md-6">
+        <%= form.date_field :to_date, value: params[:to_date], class: 'form-control', placeholder: 'To Date' %>
+      </div>
+      <div class="col-lg-2 col-md-6">
+        <%= form.select :payout_type, options_for_select([
+          ['All Types', ''],
+          ['Payments', 'payment'],
+          ['Receipts', 'receipt']
+        ], params[:payout_type]), {}, { class: 'form-select' } %>
+      </div>
+      <div class="col-lg-2 col-md-6">
+        <%= form.select :payin_payout, options_for_select([
+          ['All Directions', ''],
+          ['Payin', 'payin'],
+          ['Payout', 'payout']
+        ], params[:payin_payout]), {}, { class: 'form-select' } %>
+      </div>
+      <div class="col-lg-2 col-md-6">
+        <%= form.select :paid_via, options_for_select([
+          ['All Methods', ''],
+          ['Cash', 'Cash'],
+          ['UPI', 'UPI'],
+          ['Net Banking', 'NetBanking'],
+          ['Credit Card', 'CreditCard'],
+          ['Debit Card', 'DebitCard'],
+          ['Cheque', 'Cheque'],
+          ['NEFT', 'NEFT'],
+          ['RTGS', 'RTGS']
+        ], params[:paid_via]), {}, { class: 'form-select' } %>
+      </div>
+      <div class="col-lg-1 col-md-6">
+        <%= form.text_field :search, value: params[:search], class: 'form-control', placeholder: 'Search...' %>
+      </div>
+      <div class="col-lg-1 col-md-12">
+        <%= form.submit 'Filter', class: 'btn btn-outline-primary w-100' %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Payouts Table -->
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Direction</th>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Payment Method</th>
+            <th>Transaction ID</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @payouts.each do |payout| %>
+            <tr>
+              <td>
+                <span class="fw-medium"><%= payout.date.strftime('%d %b %Y') %></span>
+              </td>
+              <td>
+                <span class="badge <%= payout.payin_payout_badge_color %>">
+                  <i class="fas <%= payout.payin_payout == 'payin' ? 'fa-arrow-circle-down' : 'fa-arrow-circle-up' %>"></i>
+                  <%= payout.payin_payout_display %>
+                </span>
+              </td>
+              <td>
+                <span class="badge <%= payout.payout_type == 'payment' ? 'bg-danger' : 'bg-success' %>">
+                  <i class="fas <%= payout.type_icon %>"></i>
+                  <%= payout.type_display %>
+                </span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm bg-light rounded me-2 d-flex align-items-center justify-content-center">
+                    <i class="fas fa-user text-muted"></i>
+                  </div>
+                  <span class="fw-medium"><%= payout.name %></span>
+                </div>
+              </td>
+              <td>
+                <span class="badge <%= payout.payin_payout_badge_color %> fs-6"><%= payout.formatted_amount %></span>
+              </td>
+              <td>
+                <span class="badge <%= payout.paid_via == 'Cash' ? 'bg-warning' : 'bg-info' %>">
+                  <i class="fas <%= payout.paid_via == 'Cash' ? 'fa-money-bill-alt' : 'fa-credit-card' %> me-1"></i>
+                  <%= payout.payment_method_display %>
+                </span>
+              </td>
+              <td>
+                <% if payout.transaction_id.present? %>
+                  <code class="text-primary"><%= payout.transaction_id %></code>
+                <% else %>
+                  <span class="text-muted">-</span>
+                <% end %>
+              </td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <%= link_to payout_path(payout), class: 'btn btn-outline-primary btn-sm' do %>
+                    <i class="fas fa-eye"></i>
+                  <% end %>
+                  <%= link_to edit_payout_path(payout), class: 'btn btn-outline-secondary btn-sm' do %>
+                    <i class="fas fa-edit"></i>
+                  <% end %>
+                  <%= button_to payout_path(payout),
+                              method: :delete,
+                              class: 'btn btn-outline-danger btn-sm',
+                              data: { confirm: 'Are you sure you want to delete this payout?' } do %>
+                    <i class="fas fa-trash"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @payouts.empty? %>
+        <div class="text-center py-5">
+          <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No Payouts Found</h5>
+          <p class="text-muted">Start by creating your first payout entry</p>
+          <%= link_to 'Create Payout', new_payout_path, class: 'btn btn-primary' %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .stats-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 1px solid #e3e6f0;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    height: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  .stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  }
+
+  .stats-card-body {
+    padding: 1.5rem;
+  }
+
+  .stats-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: white;
+    font-size: 1.2rem;
+  }
+
+  .stats-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    color: #2d3748;
+  }
+
+  .stats-label {
+    font-size: 0.85rem;
+    color: #718096;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .avatar-sm {
+    width: 36px;
+    height: 36px;
+  }
+
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  }
+</style>

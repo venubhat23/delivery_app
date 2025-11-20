@@ -1,0 +1,252 @@
+<!-- New Franchise Booking -->
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="page-header bg-gradient p-4 rounded-3 text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="display-6 mb-2">
+              <i class="fas fa-plus me-3"></i>Create New Booking
+            </h1>
+            <p class="mb-0">Select products and quantities for your franchise</p>
+          </div>
+          <div>
+            <%= link_to franchise_bookings_path, class: 'btn btn-light' do %>
+              <i class="fas fa-arrow-left me-2"></i>Back to Bookings
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <%= form_with model: [@booking], url: franchise_bookings_path, local: true, class: 'needs-validation', novalidate: true do |form| %>
+            <% if @booking.errors.any? %>
+              <div class="alert alert-danger mb-4" role="alert">
+                <h6 class="mb-3">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  Please fix the following errors:
+                </h6>
+                <ul class="mb-0">
+                  <% @booking.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <!-- Product Selection -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <%= form.label :product_id, class: 'form-label fw-bold' do %>
+                  <i class="fas fa-box me-1 text-primary"></i>
+                  Select Product <span class="text-danger">*</span>
+                <% end %>
+                <%= form.select :product_id,
+                      options_from_collection_for_select(@products, :id, :name, params[:product_id] || @booking.product_id),
+                      { prompt: 'Choose a product...' },
+                      {
+                        class: 'form-select form-select-lg',
+                        required: true,
+                        id: 'product_select'
+                      } %>
+                <div class="invalid-feedback">
+                  Please select a product.
+                </div>
+              </div>
+            </div>
+
+            <!-- Product Details Display -->
+            <div id="product_details" class="row mb-4" style="display: none;">
+              <div class="col-12">
+                <div class="alert alert-info">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <strong>Category:</strong> <span id="product_category">-</span><br>
+                      <strong>Unit:</strong> <span id="product_unit_type">-</span>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Price per Unit:</strong> ₹<span id="product_price">0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quantity and Price -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <%= form.label :quantity, class: 'form-label fw-bold' do %>
+                  <i class="fas fa-hashtag me-1 text-primary"></i>
+                  Quantity <span class="text-danger">*</span>
+                <% end %>
+                <%= form.number_field :quantity,
+                      class: 'form-control form-control-lg',
+                      placeholder: 'Enter quantity',
+                      required: true,
+                      min: 1,
+                      step: 0.01,
+                      id: 'quantity_input' %>
+                <div class="invalid-feedback">
+                  Please enter a valid quantity.
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <%= form.label :price, class: 'form-label fw-bold' do %>
+                  <i class="fas fa-rupee-sign me-1 text-primary"></i>
+                  Total Price <span class="text-danger">*</span>
+                <% end %>
+                <%= form.number_field :price,
+                      class: 'form-control form-control-lg',
+                      placeholder: 'Auto-calculated',
+                      required: true,
+                      min: 0,
+                      step: 0.01,
+                      id: 'price_input' %>
+                <div class="invalid-feedback">
+                  Please enter a valid price.
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <%= form.label :notes, class: 'form-label fw-bold' do %>
+                  <i class="fas fa-sticky-note me-1 text-primary"></i>
+                  Notes (Optional)
+                <% end %>
+                <%= form.text_area :notes,
+                      class: 'form-control',
+                      rows: 3,
+                      placeholder: 'Any additional notes or special requirements...' %>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex gap-3">
+                  <%= form.submit 'Create Booking',
+                        class: 'btn btn-success btn-lg px-4' %>
+                  <%= link_to franchise_bookings_path,
+                        class: 'btn btn-secondary btn-lg px-4' do %>
+                    Cancel
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Products Data for JavaScript -->
+<script type="application/json" id="products_data">
+  <%= raw @products.to_json(include: { category: { only: :name } }) %>
+</script>
+
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  }
+
+  .card {
+    border: none;
+    border-radius: 15px;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    border: none;
+    border-radius: 10px;
+  }
+
+  .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+  }
+
+  .alert-info {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('product_select');
+    const productDetails = document.getElementById('product_details');
+    const quantityInput = document.getElementById('quantity_input');
+    const priceInput = document.getElementById('price_input');
+    const productsData = JSON.parse(document.getElementById('products_data').textContent);
+
+    let currentProduct = null;
+
+    function updateProductDetails() {
+      const selectedProductId = productSelect.value;
+
+      if (selectedProductId) {
+        currentProduct = productsData.find(p => p.id == selectedProductId);
+
+        if (currentProduct) {
+          document.getElementById('product_category').textContent =
+            currentProduct.category ? currentProduct.category.name : 'N/A';
+          document.getElementById('product_unit_type').textContent = currentProduct.unit_type || 'pieces';
+          document.getElementById('product_price').textContent = currentProduct.price || '0';
+
+          productDetails.style.display = 'block';
+          calculatePrice();
+        }
+      } else {
+        productDetails.style.display = 'none';
+        currentProduct = null;
+        priceInput.value = '';
+      }
+    }
+
+    function calculatePrice() {
+      if (currentProduct && quantityInput.value) {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitPrice = parseFloat(currentProduct.price) || 0;
+        const totalPrice = quantity * unitPrice;
+
+        priceInput.value = totalPrice.toFixed(2);
+      }
+    }
+
+    productSelect.addEventListener('change', updateProductDetails);
+    quantityInput.addEventListener('input', calculatePrice);
+
+    // Initialize if product is pre-selected
+    updateProductDetails();
+
+    // Bootstrap form validation
+    (function() {
+      'use strict';
+      var forms = document.getElementsByClassName('needs-validation');
+      var validation = Array.prototype.filter.call(forms, function(form) {
+        form.addEventListener('submit', function(event) {
+          if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+  });
+</script>

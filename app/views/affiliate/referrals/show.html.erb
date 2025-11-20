@@ -1,0 +1,77 @@
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
+          <i class="fas fa-handshake me-2"></i>
+          Referral Details
+        </h4>
+        <div>
+          <% if @referral.pending? %>
+            <%= link_to edit_affiliate_referral_path(@referral), class: "btn btn-light btn-sm" do %>
+              <i class="fas fa-edit me-1"></i>Edit
+            <% end %>
+          <% end %>
+          <%= link_to affiliate_referrals_path, class: "btn btn-outline-light btn-sm" do %>
+            <i class="fas fa-arrow-left me-1"></i>Back
+          <% end %>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-2">Customer Information</h6>
+            <p><strong>Name:</strong> <%= @referral.customer_name %></p>
+            <p><strong>Phone:</strong> <%= @referral.customer_phone %></p>
+            <p><strong>Email:</strong> <%= @referral.customer_email.presence || 'Not provided' %></p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted mb-2">Referral Details</h6>
+            <p>
+              <strong>Status:</strong>
+              <span class="badge bg-<%= @referral.pending? ? 'warning' : @referral.approved? ? 'success' : 'danger' %>">
+                <%= @referral.status&.capitalize || 'Pending' %>
+              </span>
+            </p>
+            <p><strong>Reward Amount:</strong> ₹<%= number_with_delimiter(@referral.reward_amount.to_i) %></p>
+            <p><strong>Submitted:</strong> <%= @referral.created_at.strftime("%d %B %Y at %I:%M %p") %></p>
+
+            <% if @referral.approved? && @referral.approved_at %>
+              <p><strong>Approved:</strong> <%= @referral.approved_at.strftime("%d %B %Y at %I:%M %p") %></p>
+            <% elsif @referral.rejected? && @referral.rejected_at %>
+              <p><strong>Rejected:</strong> <%= @referral.rejected_at.strftime("%d %B %Y at %I:%M %p") %></p>
+            <% end %>
+          </div>
+        </div>
+
+        <% if @referral.notes.present? %>
+          <div class="mb-4">
+            <h6 class="text-muted mb-2">Notes</h6>
+            <div class="bg-light p-3 rounded">
+              <%= simple_format(@referral.notes) %>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="text-center">
+          <% if @referral.pending? %>
+            <div class="alert alert-warning">
+              <i class="fas fa-clock me-2"></i>
+              This referral is pending admin approval. You'll be notified once it's reviewed.
+            </div>
+          <% elsif @referral.approved? %>
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle me-2"></i>
+              Congratulations! This referral has been approved and ₹<%= @referral.reward_amount.to_i %> has been credited to your account.
+            </div>
+          <% elsif @referral.rejected? %>
+            <div class="alert alert-danger">
+              <i class="fas fa-times-circle me-2"></i>
+              This referral was rejected. Please contact support if you have questions.
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

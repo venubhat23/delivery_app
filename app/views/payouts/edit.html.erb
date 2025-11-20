@@ -1,0 +1,278 @@
+<!-- Edit Payout Page -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="mb-4">
+        <h1 class="h2 mb-1">
+          <i class="fas fa-edit me-3 text-warning"></i>Edit Payout
+        </h1>
+        <p class="text-muted mb-0">Modify payment details for <strong><%= @payout.name %></strong></p>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-receipt me-2"></i>Update Payout Details
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <%= form_with model: @payout, local: true, class: 'needs-validation', novalidate: true do |form| %>
+                <div class="row">
+                  <!-- Name Field -->
+                  <div class="col-md-6 mb-3">
+                    <%= form.label :name, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-user me-2 text-primary"></i>Name *
+                    <% end %>
+                    <%= form.text_field :name, class: 'form-control', placeholder: 'Enter recipient name', required: true %>
+                    <% if @payout.errors[:name].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:name].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Payin/Payout Field -->
+                  <div class="col-md-6 mb-3">
+                    <%= form.label :payin_payout, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-arrows-alt-h me-2 text-primary"></i>Pay Direction *
+                    <% end %>
+                    <%= form.select :payin_payout,
+                        options_for_select([
+                          ['Payin (Money Coming In)', 'payin'],
+                          ['Payout (Money Going Out)', 'payout']
+                        ], @payout.payin_payout),
+                        {},
+                        { class: 'form-select', required: true, id: 'payin_payout_select' } %>
+                    <% if @payout.errors[:payin_payout].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:payin_payout].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Payout Type Field -->
+                  <div class="col-md-6 mb-3">
+                    <%= form.label :payout_type, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-exchange-alt me-2 text-primary"></i>Transaction Type *
+                    <% end %>
+                    <%= form.select :payout_type,
+                        options_for_select([
+                          ['Payment (Money Out)', 'payment'],
+                          ['Receipt (Money In)', 'receipt']
+                        ], @payout.payout_type),
+                        {},
+                        { class: 'form-select', required: true, id: 'payout_type_select' } %>
+                    <% if @payout.errors[:payout_type].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:payout_type].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- GST Field -->
+                  <div class="col-md-6 mb-3">
+                    <%= form.label :gst, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-file-invoice me-2 text-primary"></i>GST Number
+                    <% end %>
+                    <%= form.text_field :gst, class: 'form-control', placeholder: 'Enter GST number (optional)' %>
+                    <% if @payout.errors[:gst].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:gst].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Amount Field -->
+                  <div class="col-md-6 mb-3">
+                    <%= form.label :amount, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-rupee-sign me-2 text-success"></i>Amount *
+                    <% end %>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <%= form.number_field :amount, step: 0.01, class: 'form-control', placeholder: '0.00', required: true %>
+                    </div>
+                    <% if @payout.errors[:amount].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:amount].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Date Field -->
+                  <div class="col-md-6 mb-3">
+                    <%= form.label :date, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-calendar-alt me-2 text-info"></i>Payment Date *
+                    <% end %>
+                    <%= form.date_field :date, class: 'form-control', required: true %>
+                    <% if @payout.errors[:date].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:date].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Payment Method Field -->
+                  <div class="col-md-6 mb-3">
+                    <%= form.label :paid_via, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-credit-card me-2 text-warning"></i>Payment Method *
+                    <% end %>
+                    <%= form.select :paid_via,
+                        options_for_select([
+                          ['Cash', 'Cash'],
+                          ['UPI', 'UPI'],
+                          ['Net Banking', 'NetBanking'],
+                          ['Credit Card', 'CreditCard'],
+                          ['Debit Card', 'DebitCard'],
+                          ['Cheque', 'Cheque'],
+                          ['NEFT', 'NEFT'],
+                          ['RTGS', 'RTGS']
+                        ], @payout.paid_via),
+                        {},
+                        { class: 'form-select', required: true, id: 'paid_via_select' } %>
+                    <% if @payout.errors[:paid_via].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:paid_via].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Transaction ID Field -->
+                  <div class="col-md-6 mb-3" id="transaction_id_field">
+                    <%= form.label :transaction_id, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-hashtag me-2 text-secondary"></i>Transaction ID
+                    <% end %>
+                    <%= form.text_field :transaction_id, class: 'form-control', placeholder: 'Enter transaction ID' %>
+                    <small class="form-text text-muted">Required for digital payments</small>
+                    <% if @payout.errors[:transaction_id].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:transaction_id].first %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Description Field -->
+                  <div class="col-12 mb-4">
+                    <%= form.label :description, class: 'form-label fw-medium' do %>
+                      <i class="fas fa-sticky-note me-2 text-info"></i>Description
+                    <% end %>
+                    <%= form.text_area :description, rows: 3, class: 'form-control', placeholder: 'Enter payment description or notes...' %>
+                    <% if @payout.errors[:description].any? %>
+                      <div class="invalid-feedback d-block">
+                        <%= @payout.errors[:description].first %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-3 pt-3 border-top">
+                  <%= form.submit 'Update Payout', class: 'btn btn-warning px-4' do %>
+                    <i class="fas fa-save me-2"></i>Update Payout
+                  <% end %>
+                  <%= link_to payouts_path, class: 'btn btn-secondary px-4' do %>
+                    <i class="fas fa-times me-2"></i>Cancel
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Audit Information -->
+          <div class="card mt-4">
+            <div class="card-header bg-light">
+              <h6 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2"></i>Record Information
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row text-sm">
+                <div class="col-md-6">
+                  <strong>Created:</strong> <%= @payout.created_at.strftime('%B %d, %Y at %I:%M %p') %>
+                </div>
+                <div class="col-md-6">
+                  <strong>Last Updated:</strong> <%= @payout.updated_at.strftime('%B %d, %Y at %I:%M %p') %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const paidViaSelect = document.getElementById('paid_via_select');
+  const transactionField = document.getElementById('transaction_id_field');
+  const transactionInput = document.querySelector('#transaction_id_field input');
+
+  function toggleTransactionField() {
+    const selectedMethod = paidViaSelect.value;
+    if (selectedMethod === 'Cash') {
+      transactionInput.required = false;
+      transactionField.style.opacity = '0.6';
+    } else {
+      transactionInput.required = true;
+      transactionField.style.opacity = '1';
+    }
+  }
+
+  paidViaSelect.addEventListener('change', toggleTransactionField);
+  toggleTransactionField(); // Initial call
+});
+</script>
+
+<style>
+  .card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  }
+
+  .card-header {
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+  }
+
+  .form-label {
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    padding: 0.75rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .input-group-text {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.15s ease-in-out;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .text-sm {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+</style>

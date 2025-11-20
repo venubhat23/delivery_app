@@ -1,5 +1,9 @@
 class DashboardController < ApplicationController
   def index
+    # Check if user is a franchise and redirect to franchise dashboard
+    if franchise_logged_in?
+      return render_franchise_dashboard
+    end
     # Cache basic counts for 5 minutes
     @total_customers = Rails.cache.fetch("dashboard_customers_count", expires_in: 5.minutes) do
       Customer.count
@@ -230,6 +234,20 @@ class DashboardController < ApplicationController
         total_revenue: stat.total_revenue.to_f
       )
     end
+  end
+
+  def render_franchise_dashboard
+    @total_bookings = current_franchise.total_bookings
+    @total_amount = current_franchise.total_bookings_amount
+    @pending_bookings = current_franchise.pending_bookings.count
+    @completed_bookings = current_franchise.completed_bookings.count
+
+    @recent_bookings = current_franchise.franchise_bookings
+                                      .includes(:product)
+                                      .order(created_at: :desc)
+                                      .limit(5)
+
+    render 'dashboard/franchise_index'
   end
 
 end

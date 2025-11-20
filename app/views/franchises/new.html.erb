@@ -1,0 +1,132 @@
+<!-- Add New Franchise Form -->
+<div class="container-fluid">
+  <div class="row" style="margin-top: 2rem; margin-left: 1rem; padding-top: 1.5rem;">
+    <div class="col-12">
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">
+              <i class="fas fa-plus me-3"></i>Add New Franchise
+            </h1>
+            <p class="text-muted mb-0">Create a new franchise partner</p>
+          </div>
+          <div>
+            <%= link_to franchises_path, class: 'btn btn-secondary' do %>
+              <i class="fas fa-arrow-left me-2"></i>Back to Franchises
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <%= form_with model: @franchise, local: true, class: 'row g-3' do |form| %>
+            <% if @franchise.errors.any? %>
+              <div class="col-12">
+                <div class="alert alert-danger" role="alert">
+                  <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                  <ul class="mb-0">
+                    <% @franchise.errors.full_messages.each do |message| %>
+                      <li><%= message %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              </div>
+            <% end %>
+
+            <div class="col-md-6">
+              <%= form.label :name, class: 'form-label' do %>
+                <i class="fas fa-store me-1"></i>Franchise Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :name, class: 'form-control', placeholder: 'Enter franchise name', required: true %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :email, class: 'form-label' do %>
+                <i class="fas fa-envelope me-1"></i>Email Address <span class="text-danger">*</span>
+              <% end %>
+              <%= form.email_field :email, class: 'form-control', placeholder: 'Enter email address', required: true %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :phone, class: 'form-label' do %>
+                <i class="fas fa-phone me-1"></i>Phone Number <span class="text-danger">*</span>
+              <% end %>
+              <%= form.telephone_field :phone, class: 'form-control', placeholder: 'Enter phone number', required: true %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :password, class: 'form-label' do %>
+                <i class="fas fa-lock me-1"></i>Password <span class="text-danger">*</span>
+              <% end %>
+              <%= form.password_field :password, class: 'form-control', placeholder: 'Enter password', required: true %>
+            </div>
+
+            <div class="col-12">
+              <%= form.label :location, class: 'form-label' do %>
+                <i class="fas fa-map-marker-alt me-1"></i>Location <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_area :location, class: 'form-control', rows: 3, placeholder: 'Enter franchise location/address', required: true %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :gst_number, class: 'form-label' do %>
+                <i class="fas fa-file-invoice me-1"></i>GST Number
+              <% end %>
+              <%= form.text_field :gst_number, class: 'form-control', placeholder: 'Enter GST number (optional)' %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :active, class: 'form-label' do %>
+                <i class="fas fa-toggle-on me-1"></i>Status
+              <% end %>
+              <div class="form-control">
+                <%= form.check_box :active, { checked: true, class: 'form-check-input me-2' } %>
+                <%= form.label :active, 'Active', class: 'form-check-label' %>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex gap-2">
+                <%= form.submit 'Create Franchise', class: 'btn btn-success' %>
+                <%= link_to 'Cancel', franchises_path, class: 'btn btn-secondary' %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  }
+
+  .card {
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e3e6f0;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #4a5568;
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .text-danger {
+    color: #e53e3e !important;
+  }
+</style>

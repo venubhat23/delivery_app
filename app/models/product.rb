@@ -72,6 +72,11 @@ class Product < ApplicationRecord
     (available_quantity.to_f * price.to_f).round(2)
   end
 
+  # Backward compatibility method
+  def unit
+    unit_type
+  end
+
   def formatted_price
     "$#{price.to_f.round(2)}"
   end

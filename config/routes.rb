@@ -1,4 +1,68 @@
 Rails.application.routes.draw do
+  # Admin interface
+  namespace :admin do
+    resources :affiliates do
+      member do
+        patch :approve
+        patch :suspend
+      end
+    end
+    resources :referrals, only: [:index, :show] do
+      member do
+        patch :approve
+        patch :reject
+      end
+    end
+  end
+
+  # Affiliate Authentication and Management
+  namespace :affiliate do
+    get 'login', to: 'sessions#new'
+    post 'login', to: 'sessions#create'
+    delete 'logout', to: 'sessions#destroy'
+    get 'dashboard', to: 'dashboard#index'
+
+    resources :products, only: [:index, :show]
+
+    # Shopping cart routes
+    get 'cart', to: 'cart#index'
+    post 'cart/add', to: 'cart#add'
+    patch 'cart/update', to: 'cart#update'
+    delete 'cart/remove', to: 'cart#remove'
+    delete 'cart/clear', to: 'cart#clear'
+    get 'cart/checkout', to: 'cart#checkout'
+    post 'cart/place_order', to: 'cart#place_order'
+
+    resources :bookings
+    resources :referrals do
+      member do
+        patch :cancel
+      end
+    end
+  end
+
+  # Franchise Management (Admin)
+  resources :franchises do
+    member do
+      patch :reset_password
+      patch :toggle_status
+    end
+    resources :franchise_bookings, path: 'bookings'
+  end
+
+  # Franchise main interface (for logged-in franchises)
+  resources :franchise_bookings_main, path: 'my-bookings', only: [:index, :show, :new, :create, :edit, :update, :destroy]
+
+  # Franchise Authentication
+  namespace :franchise do
+    get 'login', to: 'sessions#new'
+    post 'login', to: 'sessions#create'
+    delete 'logout', to: 'sessions#destroy'
+    get 'dashboard', to: 'dashboard#index'
+    get 'profile', to: 'profile#show'
+    patch 'profile', to: 'profile#update'
+    resources :bookings, controller: 'franchise_bookings'
+  end
   # Congratulations page
   get '/congratulations', to: 'congratulations#show'
   resources :ai_insights, path: 'ai-insights', only: [:index] do
@@ -24,6 +88,13 @@ Rails.application.routes.draw do
     member do
       patch :add_funds
       patch :deduct_funds
+    end
+  end
+
+  # Payouts Management
+  resources :payouts do
+    collection do
+      get :statistics
     end
   end
   # Handle Chrome DevTools requests with a simple 404 response
@@ -515,11 +586,13 @@ Rails.application.routes.draw do
         collection do
           get :today
           post :start_nearest
+          post :bulk_complete  # New bulk completion API
         end
 
         member do
           post :complete
           post :add_items
+          post :mark_completed  # New simple API
         end
 
         # Nested delivery items

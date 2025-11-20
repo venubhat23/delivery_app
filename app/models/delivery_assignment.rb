@@ -6,6 +6,7 @@ class DeliveryAssignment < ApplicationRecord
   belongs_to :product
   belongs_to :delivery_schedule, optional: true
   belongs_to :invoice, optional: true
+  belongs_to :franchise, optional: true
 
   validates :customer_id, presence: true, unless: :belongs_to_quick_invoice?
   validates :product_id, :scheduled_date, :unit, presence: true

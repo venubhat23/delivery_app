@@ -1,0 +1,339 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="text-dark mb-0">
+    <i class="fas fa-list-check me-2 text-primary"></i>
+    My Orders
+  </h2>
+  <div class="d-flex gap-2">
+    <%= link_to affiliate_products_path, class: "btn btn-primary" do %>
+      <i class="fas fa-plus me-1"></i>
+      Place New Order
+    <% end %>
+  </div>
+</div>
+
+<!-- Filter and Search -->
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <%= form_with url: affiliate_bookings_path, method: :get, class: "d-flex gap-2", local: true do |form| %>
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="fas fa-search text-muted"></i>
+        </span>
+        <%= form.text_field :search,
+            value: params[:search],
+            class: "form-control",
+            placeholder: "Search orders..." %>
+      </div>
+      <%= form.select :status,
+          options_for_select([
+            ['All Status', ''],
+            ['Pending', 'pending'],
+            ['Confirmed', 'confirmed'],
+            ['Processing', 'processing'],
+            ['Shipped', 'shipped'],
+            ['Delivered', 'delivered'],
+            ['Cancelled', 'cancelled']
+          ], params[:status]),
+          {},
+          { class: "form-select" } %>
+      <%= form.submit "Filter", class: "btn btn-outline-primary" %>
+      <% if params[:search].present? || params[:status].present? %>
+        <%= link_to "Clear", affiliate_bookings_path, class: "btn btn-outline-secondary" %>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="col-lg-4 text-end">
+    <span class="text-muted">
+      Total Orders: <span class="badge bg-primary"><%= @bookings.count %></span>
+    </span>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-primary mb-2">
+          <i class="fas fa-shopping-cart fa-2x"></i>
+        </div>
+        <h4 class="text-primary"><%= @total_bookings %></h4>
+        <p class="text-muted mb-0">Total Bookings</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-warning mb-2">
+          <i class="fas fa-clock fa-2x"></i>
+        </div>
+        <h4 class="text-warning"><%= @pending_bookings %></h4>
+        <p class="text-muted mb-0">Pending</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-info mb-2">
+          <i class="fas fa-check-circle fa-2x"></i>
+        </div>
+        <h4 class="text-info"><%= @confirmed_bookings %></h4>
+        <p class="text-muted mb-0">Confirmed</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-success mb-2">
+          <i class="fas fa-check-double fa-2x"></i>
+        </div>
+        <h4 class="text-success"><%= @completed_bookings %></h4>
+        <p class="text-muted mb-0">Completed</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Orders Grid/List -->
+<% if @bookings.any? %>
+  <div class="row">
+    <% @bookings.each do |booking| %>
+      <div class="col-lg-6 col-xl-4 mb-4">
+        <div class="card h-100 shadow-sm border-0 booking-card">
+          <!-- Status Header -->
+          <div class="card-header d-flex justify-content-between align-items-center
+                      <%= case booking.status
+                          when 'pending' then 'bg-warning text-dark'
+                          when 'confirmed' then 'bg-info text-white'
+                          when 'processing' then 'bg-primary text-white'
+                          when 'shipped' then 'bg-secondary text-white'
+                          when 'delivered' then 'bg-success text-white'
+                          when 'cancelled' then 'bg-danger text-white'
+                          else 'bg-light text-dark'
+                          end %>">
+            <h6 class="mb-0">
+              Order #<%= booking.id %>
+            </h6>
+            <span class="badge
+                         <%= case booking.status
+                             when 'pending' then 'bg-light text-dark'
+                             when 'confirmed' then 'bg-light text-primary'
+                             when 'processing' then 'bg-light text-primary'
+                             when 'shipped' then 'bg-light text-secondary'
+                             when 'delivered' then 'bg-light text-success'
+                             when 'cancelled' then 'bg-light text-danger'
+                             else 'bg-secondary'
+                             end %>">
+              <%= booking.status.humanize %>
+            </span>
+          </div>
+
+          <div class="card-body">
+            <!-- Product Info -->
+            <div class="d-flex align-items-center mb-3">
+              <% if booking.product.image_url.present? %>
+                <img src="<%= booking.product.image_url %>"
+                     class="rounded me-3"
+                     style="height: 50px; width: 50px; object-fit: cover;"
+                     alt="<%= booking.product.name %>" />
+              <% else %>
+                <div class="bg-light rounded d-flex align-items-center justify-content-center me-3"
+                     style="height: 50px; width: 50px;">
+                  <i class="fas fa-image text-muted"></i>
+                </div>
+              <% end %>
+              <div>
+                <h6 class="mb-1 fw-bold"><%= booking.product.name %></h6>
+                <% if booking.product.category %>
+                  <small class="badge bg-light text-dark"><%= booking.product.category.name %></small>
+                <% end %>
+              </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="row text-center mb-3">
+              <div class="col-4">
+                <div class="border rounded p-2">
+                  <small class="text-muted d-block">Quantity</small>
+                  <span class="fw-bold text-primary">
+                    <%= booking.quantity %> <%= booking.product.unit_type || 'units' %>
+                  </span>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="border rounded p-2">
+                  <small class="text-muted d-block">Price/Unit</small>
+                  <span class="fw-bold text-success">₹<%= booking.price %></span>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="border rounded p-2">
+                  <small class="text-muted d-block">Total</small>
+                  <span class="fw-bold text-success">₹<%= booking.total_amount.to_i %></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Booking Date -->
+            <div class="d-flex align-items-center mb-3">
+              <i class="fas fa-calendar-alt text-muted me-2"></i>
+              <span class="small">
+                <strong>Ordered:</strong> <%= booking.booking_date&.strftime("%B %d, %Y") %>
+              </span>
+            </div>
+
+            <!-- Notes if present -->
+            <% if booking.notes.present? %>
+              <div class="mb-3">
+                <small class="text-muted">
+                  <i class="fas fa-sticky-note me-1"></i>
+                  <%= truncate(booking.notes, length: 80) %>
+                </small>
+              </div>
+            <% end %>
+
+            <!-- Status Timeline -->
+            <div class="progress mb-3" style="height: 6px;">
+              <% progress_percentage = case booking.status
+                                      when 'pending' then 20
+                                      when 'confirmed' then 40
+                                      when 'processing' then 60
+                                      when 'shipped' then 80
+                                      when 'delivered' then 100
+                                      when 'cancelled' then 0
+                                      else 10
+                                      end %>
+              <div class="progress-bar
+                          <%= booking.status == 'cancelled' ? 'bg-danger' : 'bg-success' %>"
+                   style="width: <%= progress_percentage %>%"></div>
+            </div>
+          </div>
+
+          <!-- Card Footer with Actions -->
+          <div class="card-footer bg-light d-flex gap-2">
+            <%= link_to affiliate_booking_path(booking),
+                class: "btn btn-outline-primary btn-sm flex-grow-1" do %>
+              <i class="fas fa-eye me-1"></i>
+              View Details
+            <% end %>
+
+            <% if booking.can_be_cancelled? %>
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown">
+                  <i class="fas fa-cog"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <%= link_to edit_affiliate_booking_path(booking), class: "dropdown-item" do %>
+                      <i class="fas fa-edit me-2"></i>Edit Order
+                    <% end %>
+                  </li>
+                  <li>
+                    <%= link_to affiliate_booking_path(booking),
+                        method: :delete,
+                        class: "dropdown-item text-danger",
+                        data: { confirm: "Are you sure you want to cancel this order?" } do %>
+                      <i class="fas fa-times me-2"></i>Cancel Order
+                    <% end %>
+                  </li>
+                </ul>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="row mt-4">
+    <div class="col-lg-12">
+      <div class="card bg-light border-0">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-2">
+              <h4 class="text-warning"><%= @bookings.where(status: 'pending').count %></h4>
+              <small class="text-muted">Pending</small>
+            </div>
+            <div class="col-md-2">
+              <h4 class="text-info"><%= @bookings.where(status: 'confirmed').count %></h4>
+              <small class="text-muted">Confirmed</small>
+            </div>
+            <div class="col-md-2">
+              <h4 class="text-primary"><%= @bookings.where(status: 'processing').count %></h4>
+              <small class="text-muted">Processing</small>
+            </div>
+            <div class="col-md-2">
+              <h4 class="text-secondary"><%= @bookings.where(status: 'shipped').count %></h4>
+              <small class="text-muted">Shipped</small>
+            </div>
+            <div class="col-md-2">
+              <h4 class="text-success"><%= @bookings.where(status: 'delivered').count %></h4>
+              <small class="text-muted">Delivered</small>
+            </div>
+            <div class="col-md-2">
+              <h4 class="text-danger"><%= @bookings.where(status: 'cancelled').count %></h4>
+              <small class="text-muted">Cancelled</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <!-- Empty State -->
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i class="fas fa-clipboard-list fa-5x text-muted mb-3"></i>
+      <h3 class="text-muted">No Orders Found</h3>
+      <p class="text-muted">
+        <% if params[:search].present? || params[:status].present? %>
+          No orders match your search criteria.
+          <br>
+          <%= link_to "View All Orders", affiliate_bookings_path, class: "btn btn-outline-primary mt-2" %>
+        <% else %>
+          You haven't placed any orders yet. Start shopping to place your first order.
+        <% end %>
+      </p>
+    </div>
+
+    <div class="d-grid gap-2 d-md-block">
+      <%= link_to affiliate_products_path, class: "btn btn-primary btn-lg" do %>
+        <i class="fas fa-shopping-basket me-2"></i>
+        Browse Products
+      <% end %>
+      <%= link_to affiliate_dashboard_path, class: "btn btn-outline-secondary btn-lg" do %>
+        <i class="fas fa-home me-2"></i>
+        Go to Dashboard
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<style>
+.booking-card {
+  transition: all 0.3s ease;
+}
+
+.booking-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.progress {
+  background-color: #e9ecef;
+}
+
+@media (max-width: 768px) {
+  .col-4 .border {
+    margin-bottom: 0.25rem;
+  }
+}
+</style>

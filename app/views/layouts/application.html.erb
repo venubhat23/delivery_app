@@ -867,6 +867,7 @@
         backdrop-filter: blur(10px);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
+
       
       /* Production-Ready Sidebar */
       .sidebar {
@@ -1344,15 +1345,40 @@
                   <div class="user-menu dropdown">
                     <a href="#" class="dropdown-toggle text-decoration-none" id="userDropdown" data-bs-toggle="dropdown">
                       <div class="user-avatar">
-                        <%= current_user.name.first.upcase %>
+                        <% if franchise_logged_in? && current_franchise&.name.present? %>
+                          <%= current_franchise.name.first.upcase %>
+                        <% elsif current_user&.name.present? %>
+                          <%= current_user.name.first.upcase %>
+                        <% else %>
+                          U
+                        <% end %>
                       </div>
                       <span class="user-name ms-2 d-none d-md-inline">
-                        <%= current_user.name %>
+                        <% if franchise_logged_in? && current_franchise&.name.present? %>
+                          <%= current_franchise.name %>
+                        <% elsif current_user&.name.present? %>
+                          <%= current_user.name %>
+                        <% else %>
+                          Guest User
+                        <% end %>
                       </span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                      <li><h6 class="dropdown-header">Welcome, <%= current_user.name %></h6></li>
+                      <li><h6 class="dropdown-header">
+                        Welcome,
+                        <% if franchise_logged_in? && current_franchise&.name.present? %>
+                          <%= current_franchise.name %>
+                        <% elsif current_user&.name.present? %>
+                          <%= current_user.name %>
+                        <% else %>
+                          Guest User
+                        <% end %>
+                      </h6></li>
                       <li><hr class="dropdown-divider"></li>
+                      <% if franchise_logged_in? %>
+                        <li><span class="dropdown-item-text"><small class="text-muted">Franchise Portal</small></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                      <% end %>
                       <li>
                         <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logoutModal">
                           <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -1381,6 +1407,19 @@
                   <span class="nav-text">Dashboard</span>
                 <% end %>
               </li>
+
+              <% if franchise_logged_in? %>
+                <!-- Franchise-specific menu items -->
+                <li class="nav-item" role="none">
+                  <%= link_to franchise_bookings_main_index_path,
+                      class: "nav-link #{'active' if controller_name == 'franchise_bookings_main'}",
+                      role: "menuitem" do %>
+                    <i class="fas fa-shopping-cart nav-icon" aria-hidden="true"></i>
+                    <span class="nav-text">My Bookings</span>
+                  <% end %>
+                </li>
+              <% else %>
+                <!-- Admin menu items -->
 
               <li class="nav-item" role="none">
                 <%= link_to orders_path,
@@ -1566,6 +1605,37 @@
               </li>
 
               <li class="nav-item" role="none">
+                <%= link_to franchises_path,
+                    class: "nav-link #{'active' if current_page?(franchises_path) || controller_name == 'franchises'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(franchises_path) || controller_name == 'franchises') ? "page" : nil do %>
+                  <i class="fas fa-store nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">Franchises</span>
+                <% end %>
+              </li>
+
+              <!-- Affiliate Management Section -->
+              <li class="nav-item" role="none">
+                <%= link_to admin_affiliates_path,
+                    class: "nav-link #{'active' if controller_name == 'affiliates' && request.path.include?('/admin/')}",
+                    role: "menuitem",
+                    "aria-current": (controller_name == 'affiliates' && request.path.include?('/admin/')) ? "page" : nil do %>
+                  <i class="fas fa-users nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">🤝 Affiliates</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
+                <%= link_to admin_referrals_path,
+                    class: "nav-link #{'active' if controller_name == 'referrals' && request.path.include?('/admin/')}",
+                    role: "menuitem",
+                    "aria-current": (controller_name == 'referrals' && request.path.include?('/admin/')) ? "page" : nil do %>
+                  <i class="fas fa-handshake nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">👥 Customer Referrals</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
                 <%= link_to pending_payments_path,
                     class: "nav-link #{'active' if current_page?(pending_payments_path) || controller_name == 'pending_payments'}",
                     role: "menuitem",
@@ -1576,8 +1646,18 @@
               </li>
 
               <li class="nav-item" role="none">
-                <%= link_to '/delivery-review', 
-                    class: "nav-link #{'active' if controller_name == 'delivery_review'}", 
+                <%= link_to payouts_path,
+                    class: "nav-link #{'active' if current_page?(payouts_path) || controller_name == 'payouts'}",
+                    role: "menuitem",
+                    "aria-current": (current_page?(payouts_path) || controller_name == 'payouts') ? "page" : nil do %>
+                  <i class="fas fa-credit-card nav-icon" aria-hidden="true"></i>
+                  <span class="nav-text">💳 Payouts</span>
+                <% end %>
+              </li>
+
+              <li class="nav-item" role="none">
+                <%= link_to '/delivery-review',
+                    class: "nav-link #{'active' if controller_name == 'delivery_review'}",
                     role: "menuitem",
                     "aria-current": controller_name == 'delivery_review' ? "page" : nil do %>
                   <i class="fas fa-truck nav-icon" aria-hidden="true"></i>
@@ -1634,6 +1714,7 @@
                   <span class="nav-text">Settings</span>
                 <% end %>
               </li>
+              <% end %>
             </ul>
           </div>
         </nav>
@@ -2663,6 +2744,36 @@
         // Re-initialize after Turbo navigation (for Rails with Turbo)
         document.addEventListener('turbo:load', function() {
           makeImagesZoomable();
+        });
+
+        // Payout Statistics Loader
+        function loadPayoutStats() {
+          fetch('/payouts/statistics')
+            .then(response => response.json())
+            .then(data => {
+              const totalPayoutsEl = document.getElementById('totalPayouts');
+              const totalAmountEl = document.getElementById('totalAmount');
+              const cashPaymentsEl = document.getElementById('cashPayments');
+              const digitalPaymentsEl = document.getElementById('digitalPayments');
+
+              if (totalPayoutsEl) totalPayoutsEl.textContent = data.total_payouts || '0';
+              if (totalAmountEl) totalAmountEl.textContent = `₹${(data.total_amount || 0).toLocaleString()}`;
+              if (cashPaymentsEl) cashPaymentsEl.textContent = data.cash_payments || '0';
+              if (digitalPaymentsEl) digitalPaymentsEl.textContent = data.non_cash_payments || '0';
+            })
+            .catch(error => {
+              console.warn('Could not load payout statistics:', error);
+            });
+        }
+
+        // Load payout statistics on page load
+        document.addEventListener('DOMContentLoaded', function() {
+          loadPayoutStats();
+        });
+
+        // Reload stats after Turbo navigation
+        document.addEventListener('turbo:load', function() {
+          loadPayoutStats();
         });
         
         // Handle modal keyboard navigation

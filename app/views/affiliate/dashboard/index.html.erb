@@ -1,0 +1,260 @@
+<div>
+  <!-- Welcome Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h2 class="card-title text-success mb-2">
+            <i class="fas fa-hand-wave me-2"></i>
+            Welcome back, <%= current_affiliate.name %>!
+          </h2>
+          <p class="text-muted mb-0">
+            <i class="fas fa-map-marker-alt me-1"></i>
+            <%= current_affiliate.location %> |
+            <i class="fas fa-tag me-1"></i>
+            Referral Code: <strong><%= current_affiliate.referral_code %></strong> |
+            <i class="fas fa-percentage me-1"></i>
+            Commission Rate: <strong><%= current_affiliate.commission_rate %>%</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-primary mb-2">
+            <i class="fas fa-users fa-2x"></i>
+          </div>
+          <h3 class="text-primary"><%= @total_referrals %></h3>
+          <p class="text-muted mb-0">Total Referrals</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-success mb-2">
+            <i class="fas fa-check-circle fa-2x"></i>
+          </div>
+          <h3 class="text-success"><%= @approved_referrals %></h3>
+          <p class="text-muted mb-0">Approved Referrals</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-warning mb-2">
+            <i class="fas fa-clock fa-2x"></i>
+          </div>
+          <h3 class="text-warning"><%= @pending_referrals %></h3>
+          <p class="text-muted mb-0">Pending Referrals</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-info mb-2">
+            <i class="fas fa-rupee-sign fa-2x"></i>
+          </div>
+          <h3 class="text-info">₹<%= number_with_delimiter(@total_earnings.to_i) %></h3>
+          <p class="text-muted mb-0">Total Earnings</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Stats -->
+  <div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-chart-line me-2"></i>
+            Monthly Performance
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <div class="text-center">
+                <h4 class="text-success"><%= @monthly_stats[:this_month_referrals] %></h4>
+                <small class="text-muted">This Month Referrals</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center">
+                <h4 class="text-secondary"><%= @monthly_stats[:last_month_referrals] %></h4>
+                <small class="text-muted">Last Month Referrals</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-shopping-cart me-2"></i>
+            Booking Stats
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <div class="text-center">
+                <h4 class="text-primary"><%= @monthly_stats[:this_month_bookings] %></h4>
+                <small class="text-muted">This Month Bookings</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center">
+                <h4 class="text-secondary"><%= @monthly_stats[:last_month_bookings] %></h4>
+                <small class="text-muted">Last Month Bookings</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-handshake me-2"></i>
+            Recent Referrals
+          </h5>
+          <%= link_to affiliate_referrals_path, class: "btn btn-outline-success btn-sm" do %>
+            <i class="fas fa-eye me-1"></i>View All
+          <% end %>
+        </div>
+        <div class="card-body">
+          <% if @recent_referrals.any? %>
+            <% @recent_referrals.each do |referral| %>
+              <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                <div>
+                  <strong><%= referral.customer_name %></strong><br>
+                  <small class="text-muted"><%= referral.customer_phone %></small>
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-<%= referral.pending? ? 'warning' : referral.approved? ? 'success' : 'danger' %>">
+                    <%= referral.status.capitalize %>
+                  </span><br>
+                  <small class="text-muted">₹<%= referral.reward_amount.to_i %></small>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center text-muted py-3">
+              <i class="fas fa-user-plus fa-2x mb-2"></i>
+              <p>No referrals yet. Start referring customers!</p>
+              <%= link_to new_affiliate_referral_path, class: "btn btn-success btn-sm" do %>
+                <i class="fas fa-plus me-1"></i>Add First Referral
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-shopping-cart me-2"></i>
+            Recent Bookings
+          </h5>
+          <%= link_to affiliate_bookings_path, class: "btn btn-outline-primary btn-sm" do %>
+            <i class="fas fa-eye me-1"></i>View All
+          <% end %>
+        </div>
+        <div class="card-body">
+          <% if @recent_bookings.any? %>
+            <% @recent_bookings.each do |booking| %>
+              <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                <div>
+                  <strong><%= booking.product.name %></strong><br>
+                  <small class="text-muted">Qty: <%= booking.quantity %> <%= booking.product.unit %></small>
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-<%= booking.pending? ? 'warning' : booking.confirmed? ? 'info' : booking.completed? ? 'success' : 'danger' %>">
+                    <%= booking.status.capitalize %>
+                  </span><br>
+                  <small class="text-muted">₹<%= number_with_delimiter(booking.total_amount.to_i) %></small>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center text-muted py-3">
+              <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+              <p>No bookings yet. Start making bookings!</p>
+              <%= link_to new_affiliate_booking_path, class: "btn btn-primary btn-sm" do %>
+                <i class="fas fa-plus me-1"></i>New Booking
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-bolt me-2"></i>
+            Quick Actions
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-lg-3 col-md-6 mb-3">
+              <%= link_to new_affiliate_referral_path, class: "btn btn-success w-100 py-3" do %>
+                <i class="fas fa-user-plus fa-lg mb-2 d-block"></i>
+                <strong>Add Customer Referral</strong><br>
+                <small>Refer new customers and earn rewards</small>
+              <% end %>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+              <%= link_to new_affiliate_booking_path, class: "btn btn-primary w-100 py-3" do %>
+                <i class="fas fa-plus fa-lg mb-2 d-block"></i>
+                <strong>Create New Booking</strong><br>
+                <small>Book products for your customers</small>
+              <% end %>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+              <%= link_to affiliate_referrals_path, class: "btn btn-info w-100 py-3" do %>
+                <i class="fas fa-list fa-lg mb-2 d-block"></i>
+                <strong>View All Referrals</strong><br>
+                <small>Track your referral performance</small>
+              <% end %>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+              <%= link_to affiliate_bookings_path, class: "btn btn-warning w-100 py-3" do %>
+                <i class="fas fa-shopping-cart fa-lg mb-2 d-block"></i>
+                <strong>Manage Bookings</strong><br>
+                <small>View and track your bookings</small>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
