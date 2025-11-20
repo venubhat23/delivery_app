@@ -220,3 +220,191 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_134130) do
     t.index ["preferred_language"], name: "index_customers_on_preferred_language"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
+
+  create_table "deliveries", force: :cascade do |t|
+    t.integer "delivery_person_id"
+    t.bigint "customer_id", null: false
+    t.string "status"
+    t.date "delivery_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_deliveries_on_customer_id"
+  end
+
+  create_table "delivery_assignments", force: :cascade do |t|
+    t.bigint "delivery_schedule_id"
+    t.bigint "customer_id", null: false
+    t.bigint "user_id"
+    t.date "scheduled_date"
+    t.string "status"
+    t.datetime "completed_at"
+    t.bigint "product_id", null: false
+    t.float "quantity"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "invoice_generated", default: false
+    t.bigint "invoice_id"
+    t.integer "delivery_person_id"
+    t.text "special_instructions"
+    t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0"
+    t.decimal "final_amount_after_discount", precision: 10, scale: 2
+    t.text "cancellation_reason"
+    t.integer "booked_by"
+    t.index ["customer_id", "scheduled_date", "product_id"], name: "index_da_on_customer_date_product"
+    t.index ["customer_id", "scheduled_date", "status"], name: "index_delivery_assignments_customer_date_status"
+    t.index ["customer_id", "scheduled_date"], name: "index_delivery_assignments_on_customer_and_date"
+    t.index ["customer_id", "scheduled_date"], name: "index_delivery_assignments_on_customer_id_and_scheduled_date"
+    t.index ["customer_id"], name: "index_delivery_assignments_on_customer_id"
+    t.index ["delivery_schedule_id"], name: "index_delivery_assignments_on_delivery_schedule_id"
+    t.index ["discount_amount"], name: "index_delivery_assignments_on_discount_amount"
+    t.index ["final_amount_after_discount"], name: "index_delivery_assignments_on_final_amount_after_discount"
+    t.index ["invoice_generated"], name: "index_delivery_assignments_on_invoice_generated"
+    t.index ["invoice_id"], name: "index_delivery_assignments_on_invoice_id"
+    t.index ["product_id", "scheduled_date", "quantity"], name: "index_delivery_assignments_product_date_quantity"
+    t.index ["product_id", "scheduled_date", "status"], name: "index_delivery_assignments_composite"
+    t.index ["product_id", "status", "completed_at"], name: "idx_delivery_product_status_completed"
+    t.index ["product_id", "status", "scheduled_date"], name: "idx_delivery_product_status_date"
+    t.index ["product_id"], name: "index_delivery_assignments_on_product_id"
+    t.index ["scheduled_date", "customer_id"], name: "index_delivery_assignments_on_date_and_customer"
+    t.index ["scheduled_date", "final_amount_after_discount", "quantity"], name: "idx_delivery_assignments_date_revenue_qty"
+    t.index ["scheduled_date", "final_amount_after_discount"], name: "index_delivery_assignments_date_revenue"
+    t.index ["scheduled_date", "product_id", "quantity"], name: "idx_delivery_assignments_completed_date_product", where: "((status)::text = 'completed'::text)"
+    t.index ["scheduled_date", "product_id"], name: "index_delivery_assignments_completed", where: "((status)::text = 'completed'::text)"
+    t.index ["scheduled_date", "quantity", "final_amount_after_discount"], name: "idx_delivery_assignments_date_qty_amount"
+    t.index ["scheduled_date", "quantity", "final_amount_after_discount"], name: "index_delivery_assignments_date_qty_revenue"
+    t.index ["scheduled_date", "status", "product_id"], name: "idx_delivery_assignments_date_status_product"
+    t.index ["scheduled_date", "status"], name: "index_delivery_assignments_on_date_and_status"
+    t.index ["status", "completed_at", "product_id"], name: "idx_delivery_status_completed_product"
+    t.index ["status", "completed_at"], name: "idx_delivery_status_completed_at"
+    t.index ["status", "scheduled_date"], name: "idx_delivery_status_scheduled_date"
+    t.index ["user_id"], name: "index_delivery_assignments_on_user_id"
+  end
+
+  create_table "delivery_items", force: :cascade do |t|
+    t.bigint "delivery_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "quantity"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_id"], name: "index_delivery_items_on_delivery_id"
+    t.index ["product_id"], name: "index_delivery_items_on_product_id"
+  end
+
+  create_table "delivery_schedules", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "user_id", null: false
+    t.string "frequency"
+    t.date "start_date"
+    t.date "end_date"
+    t.string "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "default_quantity", precision: 8, scale: 2, default: "1.0"
+    t.string "default_unit", default: "pieces"
+    t.bigint "product_id"
+    t.integer "delivery_person_id"
+    t.decimal "default_discount_amount", precision: 10, scale: 2, default: "0.0"
+    t.boolean "cod", default: false
+    t.integer "booked_by"
+    t.index ["customer_id"], name: "index_delivery_schedules_on_customer_id"
+    t.index ["default_discount_amount"], name: "index_delivery_schedules_on_default_discount_amount"
+    t.index ["delivery_person_id"], name: "index_delivery_schedules_on_delivery_person_id"
+    t.index ["product_id"], name: "index_delivery_schedules_on_product_id"
+    t.index ["user_id"], name: "index_delivery_schedules_on_user_id"
+  end
+
+  create_table "faqs", force: :cascade do |t|
+    t.string "category"
+    t.text "question", null: false
+    t.text "answer", null: false
+    t.string "locale", default: "en", null: false
+    t.boolean "is_active", default: true, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "customer_id", null: false
+    t.boolean "submitted_by_user"
+    t.integer "status"
+    t.text "admin_response"
+    t.index ["category", "locale"], name: "index_faqs_on_category_and_locale"
+    t.index ["customer_id"], name: "index_faqs_on_customer_id"
+    t.index ["is_active"], name: "index_faqs_on_is_active"
+    t.index ["locale"], name: "index_faqs_on_locale"
+    t.index ["sort_order"], name: "index_faqs_on_sort_order"
+  end
+
+  create_table "franchise_bookings", force: :cascade do |t|
+    t.bigint "franchise_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "quantity"
+    t.decimal "price"
+    t.string "status"
+    t.date "booking_date"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["franchise_id"], name: "index_franchise_bookings_on_franchise_id"
+    t.index ["product_id"], name: "index_franchise_bookings_on_product_id"
+  end
+
+  create_table "franchises", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "email", null: false
+    t.string "phone", null: false
+    t.string "password_digest", null: false
+    t.string "location", null: false
+    t.string "gst_number"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_franchises_on_active"
+    t.index ["email"], name: "index_franchises_on_email", unique: true
+  end
+
+  create_table "invoice_items", force: :cascade do |t|
+    t.bigint "invoice_id", null: false
+    t.bigint "product_id"
+    t.decimal "quantity"
+    t.decimal "unit_price"
+    t.decimal "total_price"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "description"
+    t.index ["invoice_id"], name: "index_invoice_items_on_invoice_id"
+    t.index ["product_id"], name: "index_invoice_items_on_product_id"
+  end
+
+  create_table "invoices", force: :cascade do |t|
+    t.bigint "customer_id"
+    t.float "total_amount"
+    t.string "status"
+    t.date "invoice_date"
+    t.date "due_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "invoice_number"
+    t.string "invoice_type", default: "manual"
+    t.datetime "paid_at"
+    t.datetime "last_reminder_sent_at"
+    t.text "notes"
+    t.string "phone_number"
+    t.string "share_token"
+    t.datetime "shared_at"
+    t.integer "month"
+    t.integer "year"
+    t.string "quick_customer_name"
+    t.string "quick_customer_phone_number"
+    t.boolean "is_quick_invoice", default: false
+    t.index ["customer_id"], name: "index_invoices_on_customer_id"
+    t.index ["due_date"], name: "index_invoices_on_due_date"
+    t.index ["invoice_date"], name: "index_invoices_on_invoice_date"
+    t.index ["invoice_number"], name: "index_invoices_on_invoice_number", unique: true
+    t.index ["invoice_type"], name: "index_invoices_on_invoice_type"
+    t.index ["month", "year"], name: "index_invoices_on_month_and_year"
+    t.index ["share_token"], name: "index_invoices_on_share_token", unique: true
+    t.index ["status"], name: "index_invoices_on_status"
+    t.index ["total_amount", "created_at"], name: "index_invoices_on_total_amount_and_created_at"
+    t.index ["total_amount"], name: "index_invoices_on_total_amount"
+    t.index ["year"], name: "index_invoices_on_year"
+  end

@@ -20,8 +20,9 @@ class Product < ApplicationRecord
   }
   validates :description, length: { maximum: 5000 }
 
-  # Auto-calculate price before saving
-  before_save :calculate_discounted_price
+  # Set defaults and calculate price
+  before_validation :set_pricing_defaults
+  before_validation :calculate_discounted_price
 
   # Associations
   belongs_to :category
@@ -189,6 +190,16 @@ class Product < ApplicationRecord
   end
 
   private
+
+  def set_pricing_defaults
+    # If price_without_discount is not set but price is, use price as the base
+    if price_without_discount.blank? && price.present?
+      self.price_without_discount = price
+    end
+
+    # Set default discount to 0 if not provided
+    self.discount = 0 if discount.blank?
+  end
 
   def calculate_discounted_price
     return unless price_without_discount.present?

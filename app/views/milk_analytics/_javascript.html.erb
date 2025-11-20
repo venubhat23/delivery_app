@@ -543,8 +543,8 @@ function copySchedulesFromLastMonth() {
       'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     },
     body: JSON.stringify({
-      from_month: '2025-08',
-      to_month: '2025-09'
+      from_month: previousDate.toISOString().slice(0, 7), // Format: YYYY-MM
+      to_month: currentDate.toISOString().slice(0, 7)     // Format: YYYY-MM
     })
   })
   .then(response => response.json())
