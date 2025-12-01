@@ -1174,11 +1174,12 @@ class CustomerPatternsController < ApplicationController
              ORDER BY COUNT(*) DESC
              LIMIT 1) as scheduled_product
           FROM customers c
-          LEFT JOIN users u ON c.delivery_person_id = u.id
+          INNER JOIN users u ON c.delivery_person_id = u.id
           LEFT JOIN delivery_assignments da ON c.id = da.customer_id
             AND da.scheduled_date BETWEEN $3 AND $4
           LEFT JOIN products p ON da.product_id = p.id
           WHERE c.is_active = true
+            AND c.delivery_person_id IS NOT NULL
             #{delivery_person_id.present? ? 'AND c.delivery_person_id = $5' : ''}
             #{customer_id.present? ? "AND c.id = $#{delivery_person_id.present? ? '6' : '5'}" : ''}
             #{customer_name.present? ? "AND c.name ILIKE $#{5 + [delivery_person_id, customer_id].compact.size}" : ''}
