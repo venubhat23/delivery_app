@@ -53,9 +53,11 @@ class TwilioWhatsappService
 
     # Send direct WhatsApp message instead of using template
 
+    # Show previous month (delivery month) instead of current month
+    delivery_month = (invoice.created_at - 1.month)
     content_variables = {
       '1' => invoice.customer.name,
-      '2' => invoice.created_at.strftime('%B %Y'),  # Month year
+      '2' => delivery_month.strftime('%B %Y'),  # Month year (delivery month)
       '3' => invoice.invoice_number,
       '4' => invoice.total_amount.to_s,
       '5' => invoice.due_date.strftime('%d/%m/%Y'),

@@ -131,19 +131,25 @@ module Api
         end
       end
       
-      # GET /api/v1/orders?customer_id=5
+      # GET /api/v1/orders?customer_id=5&booked_by_customer=true
       def index
         customer_id = params[:customer_id]
-        
+
         unless customer_id.present?
           return render json: { error: "Customer ID is required" }, status: :bad_request
         end
-        
+
         # Get single-day orders (delivery schedules where start_date == end_date)
         orders = DeliverySchedule.includes(:customer, :user, :product, :delivery_assignments)
                                 .where(customer_id: customer_id)
                                 .where('start_date = end_date')
-                                .order(start_date: :desc)
+
+        # Filter for customer-booked orders if requested
+        if params[:booked_by_customer] == 'true'
+          orders = orders.where(booked_by: 1)
+        end
+
+        orders = orders.order(start_date: :desc)
         
         orders_data = orders.map do |order|
           {

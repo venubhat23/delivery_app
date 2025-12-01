@@ -363,7 +363,10 @@ class Invoice < ApplicationRecord
     # Check for previous month's pending invoice
     previous_month_invoice = check_previous_month_pending_invoice(customer, month, year)
 
-    invoice = create_invoice_from_assignments(customer, assignments, start_date, previous_month_invoice)
+    # Set invoice date to current month (December 2025) instead of delivery month
+    current_date = Date.current
+    invoice_date = Date.new(current_date.year, current_date.month, 1)
+    invoice = create_invoice_from_assignments(customer, assignments, invoice_date, previous_month_invoice)
 
     if invoice
       { success: true, invoice: invoice, message: "Invoice generated successfully" }
@@ -562,7 +565,7 @@ class Invoice < ApplicationRecord
     invoice = Invoice.new(
       customer: customer,
       invoice_date: invoice_date,
-      due_date: invoice_date + 10.days,
+      due_date: invoice_date + 5.days,
       status: 'pending',
       invoice_type: 'monthly'
     )

@@ -143,7 +143,7 @@ class WhatsappInvoiceService
     <<~MESSAGE
       Hi #{invoice.customer.name}! 👋
 
-      Your invoice for #{invoice.created_at.strftime('%B %Y')} is ready!
+      Your invoice for #{(invoice.created_at - 1.month).strftime('%B %Y')} is ready!
 
       📄 Invoice #: #{invoice.invoice_number}
       💰 Amount: ₹#{invoice.total_amount}
