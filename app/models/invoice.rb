@@ -515,8 +515,8 @@ class Invoice < ApplicationRecord
   def set_month_and_year
     if month.blank? || year.blank?
       date_to_use = invoice_date || Date.current
-      self.month = date_to_use.month
-      self.year = date_to_use.year
+      self.month = (date_to_use-1.day).month
+      self.year = (date_to_use-1.day).year
       Rails.logger.info "Set month/year: #{month}/#{year} based on #{date_to_use}"
     end
   end
