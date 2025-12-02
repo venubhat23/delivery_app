@@ -1179,6 +1179,7 @@ end
 
         customers = Customer.includes(:delivery_person)
                            .where.not(id: customer_ids_with_invoices)
+                           .where.not(delivery_person_id: nil)
                            .order(:name).limit(1000)
       end
 
