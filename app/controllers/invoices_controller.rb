@@ -1176,7 +1176,7 @@ end
           "month = ? AND year = ?",
           month, year
         ).distinct.pluck(:customer_id).compact
-
+        
         customers = Customer.includes(:delivery_person)
                            .where.not(id: customer_ids_with_invoices)
                            .where.not(delivery_person_id: nil)
