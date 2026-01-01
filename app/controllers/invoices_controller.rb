@@ -198,7 +198,7 @@ end
       # Apply customer/delivery person filters to existing invoices
       if customer_ids.present? && !customer_ids.include?('all')
         selected_customer_ids = customer_ids.reject { |id| id == 'all' }
-        existing_invoices_query = existing_invoices_query.where(customer_id: selected_customer_ids).where(status: "completed").where.not(paid_at: nil)
+        existing_invoices_query = existing_invoices_query.where(customer_id: selected_customer_ids).where.not(status: "completed").where(paid_at: nil)
       elsif delivery_person_id.present? && delivery_person_id != 'all'
         existing_invoices_query = existing_invoices_query.joins(:customer)
                                                          .where(customers: { delivery_person_id: delivery_person_id })
