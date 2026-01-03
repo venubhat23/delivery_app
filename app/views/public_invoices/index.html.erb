@@ -1286,13 +1286,21 @@
                   <i class="fas fa-eye"></i>
                   View Invoice
                 </a>
+                <%
+                  # Get invoice month/year for WhatsApp message
+                  invoice_month_year = if invoice.month.present? && invoice.year.present?
+                    "#{Date::MONTHNAMES[invoice.month]} #{invoice.year}"
+                  else
+                    invoice.invoice_date&.strftime('%B %Y') || Date.current.strftime('%B %Y')
+                  end
+                %>
                 <% if invoice.customer&.phone_number.present? %>
-                  <button class="btn-whatsapp" onclick="shareViaWhatsApp('<%= invoice.customer.phone_number %>', '<%= public_url %>', '<%= invoice.formatted_number %>', '<%= number_with_delimiter(invoice.total_amount, delimiter: ',') %>', '<%= invoice.customer.name %>')">
+                  <button class="btn-whatsapp" onclick="shareViaWhatsApp('<%= invoice.customer.phone_number %>', '<%= public_url %>', '<%= invoice.formatted_number %>', '<%= number_with_delimiter(invoice.total_amount, delimiter: ',') %>', '<%= invoice.customer.name %>', '<%= invoice_month_year %>')">
                     <i class="fab fa-whatsapp"></i>
                     Share WhatsApp
                   </button>
                 <% else %>
-                  <button class="btn-whatsapp" onclick="shareViaWhatsApp('', '<%= public_url %>', '<%= invoice.formatted_number %>', '<%= number_with_delimiter(invoice.total_amount, delimiter: ',') %>', '<%= invoice.customer&.name || 'Customer' %>')">
+                  <button class="btn-whatsapp" onclick="shareViaWhatsApp('', '<%= public_url %>', '<%= invoice.formatted_number %>', '<%= number_with_delimiter(invoice.total_amount, delimiter: ',') %>', '<%= invoice.customer&.name || 'Customer' %>', '<%= invoice_month_year %>')">
                     <i class="fab fa-whatsapp"></i>
                     Share WhatsApp
                   </button>
@@ -1458,10 +1466,12 @@
       return metaTag ? metaTag.getAttribute('content') : '';
     }
 
-    function shareViaWhatsApp(phoneNumber, invoiceUrl, invoiceNumber, amount, customerName) {
-      // Get current month and year (you can enhance this to get actual invoice date)
-      const currentDate = new Date();
-      const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    function shareViaWhatsApp(phoneNumber, invoiceUrl, invoiceNumber, amount, customerName, monthYear) {
+      // Use the month/year passed from the server, or fallback to current date
+      if (!monthYear) {
+        const currentDate = new Date();
+        monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      }
 
       // Build WhatsApp message in the enhanced format
       const message = `👋 Hello ${customerName}!
