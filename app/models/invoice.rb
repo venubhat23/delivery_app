@@ -365,7 +365,7 @@ class Invoice < ApplicationRecord
 
     # Set invoice date to current month (December 2025) instead of delivery month
     current_date = Date.current
-    invoice_date = Date.new(current_date.year, current_date.month, 1)
+    invoice_date = Date.today
     invoice = create_invoice_from_assignments(customer, assignments, invoice_date, previous_month_invoice)
 
     if invoice
